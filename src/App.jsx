@@ -63,15 +63,13 @@ function Modal({ open, onClose, title, children }) {
   if (!open) return null;
   return (
     <div style={{ position:"fixed",inset:0,zIndex:300,background:"rgba(15,23,42,.5)",
-      backdropFilter:"blur(4px)",display:"flex",alignItems:"flex-end",justifyContent:"center",
-      padding:"0" }}
+      backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",
+      padding:"16px" }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:"16px 16px 0 0",
-        width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto",
-        boxShadow:"0 -8px 40px rgba(0,0,0,.12)",padding:"20px 20px 32px" }}
+      <div style={{ background:"#fff",borderRadius:16,
+        width:"100%",maxWidth:560,maxHeight:"92vh",overflowY:"auto",
+        boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:"24px 24px 28px" }}
         onClick={e=>e.stopPropagation()}>
-        {/* drag handle */}
-        <div style={{ width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 18px" }}/>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>{title}</h2>
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
