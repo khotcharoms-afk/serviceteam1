@@ -5,12 +5,7 @@ import {
   setDoc, deleteDoc, writeBatch
 } from "firebase/firestore";
 
-const WARRANTY_OPTS = [
-  { value: "none", label: "ไม่มีประกัน", color: "#94a3b8", years: 0 },
-  { value: "1yr",  label: "ประกัน 1 ปี", color: "#3b82f6", years: 1 },
-  { value: "3yr",  label: "ประกัน 3 ปี", color: "#8b5cf6", years: 3 },
-  { value: "5yr",  label: "ประกัน 5 ปี", color: "#10b981", years: 5 },
-];
+// warranty stored as warrantyEnd date string or null
 const STATUS_OPTS = [
   { value: "open",       label: "เปิดเคส",        color: "#f59e0b", bg: "#fef3c7" },
   { value: "inprogress", label: "กำลังดำเนินการ",  color: "#3b82f6", bg: "#dbeafe" },
@@ -21,10 +16,10 @@ const SERVICE_TYPES = ["ติดตั้งอุปกรณ์","เปล�
 const COLOR_OPTS = ["#3b82f6","#8b5cf6","#10b981","#f97316","#ec4899","#f59e0b"];
 
 const today = () => new Date().toISOString().slice(0,10);
-const addYears = (d,y) => { if(!d||!y) return null; const dt=new Date(d); dt.setFullYear(dt.getFullYear()+y); return dt.toISOString().slice(0,10); };
+
 const daysLeft = (s) => { if(!s) return null; return Math.ceil((new Date(s)-new Date())/86400000); };
 const fmtDate = (s) => { if(!s) return "—"; const [y,m,d]=s.split("-"); return `${d}/${m}/${y}`; };
-const emptyCase = { projectId:"",site:"",title:"",type:SERVICE_TYPES[0],tech:"",date:today(),warranty:"none",status:"open",note:"" };
+const emptyCase = { projectId:"",site:"",title:"",type:SERVICE_TYPES[0],tech:"",date:today(),warrantyEnd:"",status:"open",note:"" };
 
 const IS = (x={}) => ({
   width:"100%", background:"#fff", border:"1px solid #e2e8f0",
@@ -32,18 +27,21 @@ const IS = (x={}) => ({
   outline:"none", fontFamily:"inherit", boxSizing:"border-box", ...x,
 });
 
-function WarrantyPill({ warranty, warrantyEnd }) {
-  const opt = WARRANTY_OPTS.find(w=>w.value===warranty)||WARRANTY_OPTS[0];
+function WarrantyPill({ warrantyEnd }) {
+  if (!warrantyEnd) return (
+    <span style={{ display:"inline-flex",alignItems:"center",gap:4,
+      background:"#f1f5f9",color:"#94a3b8",borderRadius:20,
+      padding:"3px 9px",fontSize:11,fontWeight:700 }}>ไม่มีประกัน</span>
+  );
   const days = daysLeft(warrantyEnd);
-  const col = days!==null&&days<0?"#ef4444":days!==null&&days<=90?"#f59e0b":opt.color;
+  const col = days<0?"#ef4444":days<=90?"#f59e0b":days<=365?"#3b82f6":"#10b981";
+  const label = days<0?"หมดแล้ว":days===0?"หมดวันนี้":days<=90?`เหลือ ${days} วัน`:days<=365?`เหลือ ${days} วัน`:`เหลือ ${Math.floor(days/365)} ปี ${Math.floor((days%365)/30)} เดือน`;
   return (
     <span style={{ display:"inline-flex",alignItems:"center",gap:4,
       background:col+"18",color:col,border:`1px solid ${col}40`,
       borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700,whiteSpace:"nowrap" }}>
       <span style={{ width:5,height:5,borderRadius:"50%",background:col,flexShrink:0 }}/>
-      {opt.label}
-      {days!==null&&days<0&&" (หมดแล้ว)"}
-      {days!==null&&days>=0&&days<=90&&` (${days}วัน)`}
+      🛡 {label}
     </span>
   );
 }
@@ -131,7 +129,7 @@ function CaseCard({ c, proj, onClick, onEdit, onDel }) {
         {c.tech && <span style={{ fontSize:11,color:"#64748b",background:"#f8fafc",
           borderRadius:6,padding:"2px 8px",border:"1px solid #e2e8f0" }}>👤 {c.tech}</span>}
         {c.date && <span style={{ fontSize:11,color:"#64748b" }}>📅 {fmtDate(c.date)}</span>}
-        <WarrantyPill warranty={c.warranty} warrantyEnd={c.warrantyEnd}/>
+        <WarrantyPill warrantyEnd={c.warrantyEnd}/>
       </div>
       {days!==null&&days>=0&&days<=90 && (
         <div style={{ marginTop:6,fontSize:11,color:"#f59e0b",fontWeight:600 }}>⚠ ประกันเหลือ {days} วัน</div>
@@ -191,9 +189,8 @@ export default function App() {
   function openEditCase(c){ setCaseForm({...c}); setEditCase(c.id); setCaseModal(true); }
   async function submitCase(){
     if(!caseForm.title||!caseForm.projectId) return;
-    const w=WARRANTY_OPTS.find(x=>x.value===caseForm.warranty);
-    const warrantyEnd=addYears(caseForm.date,w?.years||0);
-    await setDoc(doc(db,"cases",editCase||Date.now().toString()),{...caseForm,warrantyEnd:warrantyEnd||null});
+    const payload = {...caseForm, warrantyEnd: caseForm.warrantyEnd||null};
+    await setDoc(doc(db,"cases",editCase||Date.now().toString()),payload);
     setCaseModal(false); setEditCase(null);
   }
   async function deleteCase(id){ await deleteDoc(doc(db,"cases",id)); setDelCase(null); setDetailCase(null); }
@@ -471,21 +468,47 @@ export default function App() {
             <input type="date" style={IS()} value={caseForm.date}
               onChange={e=>setCaseForm(f=>({...f,date:e.target.value}))}/>
           </Field>
-          <Field label="ระยะเวลาประกัน">
-            <select style={IS({ cursor:"pointer" })} value={caseForm.warranty}
-              onChange={e=>setCaseForm(f=>({...f,warranty:e.target.value}))}>
-              {WARRANTY_OPTS.map(w=><option key={w.value} value={w.value}>{w.label}</option>)}
-            </select>
-          </Field>
-        </div>
-        {caseForm.warranty!=="none"&&caseForm.date&&(
-          <Field label="วันสิ้นสุดประกัน (อัตโนมัติ)">
-            <div style={{ background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,
-              padding:"10px 13px",fontSize:14,color:"#2563eb",fontWeight:600 }}>
-              {fmtDate(addYears(caseForm.date,WARRANTY_OPTS.find(w=>w.value===caseForm.warranty)?.years||0))}
+          </div>
+        <Field label="วันหมดประกัน (ถ้ามี)">
+          <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
+            <input type="date" style={IS({ flex:1,minWidth:160 })} value={caseForm.warrantyEnd||""}
+              onChange={e=>setCaseForm(f=>({...f,warrantyEnd:e.target.value}))}/>
+            <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+              {[
+                {label:"+1 ปี", y:1},{label:"+2 ปี", y:2},
+                {label:"+3 ปี", y:3},{label:"+5 ปี", y:5},
+              ].map(btn=>{
+                const base = caseForm.date||today();
+                const d = new Date(base); d.setFullYear(d.getFullYear()+btn.y);
+                const val = d.toISOString().slice(0,10);
+                const active = caseForm.warrantyEnd===val;
+                return (
+                  <button key={btn.label} type="button"
+                    onClick={()=>setCaseForm(f=>({...f,warrantyEnd:val}))}
+                    style={{ background:active?"#2563eb":"#f1f5f9",
+                      border:`1px solid ${active?"#2563eb":"#e2e8f0"}`,
+                      color:active?"#fff":"#475569",borderRadius:7,
+                      padding:"6px 12px",fontSize:12,cursor:"pointer",
+                      fontFamily:"inherit",fontWeight:600,whiteSpace:"nowrap" }}>
+                    {btn.label}
+                  </button>
+                );
+              })}
+              <button type="button" onClick={()=>setCaseForm(f=>({...f,warrantyEnd:""}))}
+                style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                  borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
+                ล้าง
+              </button>
             </div>
-          </Field>
-        )}
+          </div>
+          {caseForm.warrantyEnd && (()=>{
+            const days=daysLeft(caseForm.warrantyEnd);
+            const col=days<0?"#ef4444":days<=90?"#f59e0b":"#10b981";
+            return <div style={{ marginTop:6,fontSize:12,color:col,fontWeight:600 }}>
+              📅 {fmtDate(caseForm.warrantyEnd)} • {days<0?`หมดไปแล้ว ${Math.abs(days)} วัน`:days===0?"หมดวันนี้":`เหลือ ${days} วัน (${(days/365).toFixed(1)} ปี)`}
+            </div>;
+          })()}
+        </Field>
         <Field label="สถานะ">
           <select style={IS({ cursor:"pointer" })} value={caseForm.status}
             onChange={e=>setCaseForm(f=>({...f,status:e.target.value}))}>
@@ -524,7 +547,7 @@ export default function App() {
                   ))}
                 <div>
                   <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>ประกัน</div>
-                  <WarrantyPill warranty={detailCase.warranty} warrantyEnd={detailCase.warrantyEnd}/>
+                  <WarrantyPill warrantyEnd={detailCase.warrantyEnd}/>
                 </div>
                 {detailCase.warrantyEnd&&(
                   <div>
