@@ -80,13 +80,13 @@ function HandoverModal({ open, onClose, caseData, onSave, users }) {
   }
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
-      backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,transition:"background .2s" }}
+      backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:T.surface,borderRadius:16,padding:"24px",width:"100%",maxWidth:460,
+      <div style={{ background:"#fff",borderRadius:16,padding:"24px",width:"100%",maxWidth:460,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20 }}>
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>📤 ส่งต่องาน</h2>
-          <button onClick={onClose} style={{ background:T.pillBg,border:"none",color:T.textSub,
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14,display:"flex",
             alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
@@ -163,13 +163,13 @@ function Modal({ open, onClose, title, children }) {
       backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",
       padding:"16px" }}
       onClick={onClose}>
-      <div style={{ background:T.surface,borderRadius:16,
+      <div style={{ background:"#fff",borderRadius:16,
         width:"100%",maxWidth:560,maxHeight:"92vh",overflowY:"auto",
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:"24px 24px 28px" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>{title}</h2>
-          <button onClick={onClose} style={{ background:T.pillBg,border:"none",color:T.textSub,
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8,
             display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
@@ -211,18 +211,15 @@ function GhostBtn({ onClick, children }) {
 }
 
 // ── Case Card (mobile) ──────────────────────────────────────
-function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, dark=false }) {
+function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover }) {
   const days = daysLeft(c.warrantyEnd);
   return (
-    <div onClick={onClick} style={{
-      background:dark?"#1a1d2e":"#fff",
-      border:`1.5px solid ${dark?"#2a2d45":"#e2e8f0"}`,
+    <div onClick={onClick} style={{ background:"#fff",border:"1.5px solid #e2e8f0",
       borderRadius:12,padding:"14px 16px",marginBottom:10,cursor:"pointer",
-      borderLeft:`4px solid ${proj?.color||"#e2e8f0"}`,
-      boxShadow:dark?"0 1px 3px rgba(0,0,0,.3)":"0 1px 3px rgba(0,0,0,.04)" }}>
+      borderLeft:`4px solid ${proj?.color||"#e2e8f0"}`,boxShadow:"0 1px 3px rgba(0,0,0,.04)" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
         <div style={{ flex:1,paddingRight:8 }}>
-          <div style={{ fontSize:14,fontWeight:700,color:dark?"#e2e8ff":"#0f172a",lineHeight:1.3 }}>{c.title}</div>
+          <div style={{ fontSize:14,fontWeight:700,color:"#0f172a",lineHeight:1.3 }}>{c.title}</div>
           {c.site && <div style={{ fontSize:12,color:"#3b82f6",marginTop:3 }}>📍 {c.site}</div>}
         </div>
         <StatusPill value={c.status}/>
@@ -246,11 +243,11 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, dark=false }) {
       )}
       <div style={{ display:"flex",gap:6,marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9" }}
         onClick={e=>e.stopPropagation()}>
-        <button onClick={onEdit} style={{ background:dark?"#12142a":"#f8fafc",border:dark?"1px solid #2a2d45":"1px solid #e2e8f0",
-          color:dark?"#8892b0":"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
-        <button onClick={onHandover} style={{ background:dark?"#1e2d5a":"#eff6ff",border:dark?"1px solid #2a4a9a":"1px solid #bfdbfe",
+        <button onClick={onEdit} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
+          color:"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
+        <button onClick={onHandover} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
           color:"#2563eb",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📤 ส่งต่อ</button>
-        <button onClick={onDel} style={{ background:dark?"#2d1a1a":"#fff5f5",border:dark?"1px solid #5a2020":"1px solid #fecaca",
+        <button onClick={onDel} style={{ background:"#fff5f5",border:"1px solid #fecaca",
           color:"#ef4444",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✕ ลบ</button>
       </div>
     </div>
@@ -269,7 +266,6 @@ export default function App({ currentUser, onSignOut }) {
   const [search,setSearch]         = useState("");
   const [menuOpen,setMenuOpen]     = useState(false);
   const [adminPage,setAdminPage]   = useState(false);
-  const [dark,setDark]             = useState(()=>localStorage.getItem("theme")==="dark");
 
   const [caseModal,setCaseModal]   = useState(false);
   const [editCase,setEditCase]     = useState(null);
@@ -350,35 +346,15 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)}/>;
 
-  // Theme tokens
-  const T = {
-    bg:       dark?"#0f1117":"#f8fafc",
-    surface:  dark?"#1a1d2e":"#ffffff",
-    border:   dark?"#2a2d45":"#e2e8f0",
-    text:     dark?"#e2e8ff":"#1e293b",
-    textSub:  dark?"#8892b0":"#64748b",
-    textMute: dark?"#4a5180":"#94a3b8",
-    input:    dark?"#12142a":"#ffffff",
-    hover:    dark?"#1e2240":"#f8fafc",
-    cardBg:   dark?"#1a1d2e":"#ffffff",
-    statBg:   dark?"#1a1d2e":"#ffffff",
-    pillBg:   dark?"#12142a":"#f8fafc",
-  };
-  const IS2 = (x={}) => ({
-    width:"100%", background:T.input, border:`1px solid ${T.border}`,
-    borderRadius:8, color:T.text, padding:"10px 13px", fontSize:14,
-    outline:"none", fontFamily:"inherit", boxSizing:"border-box", ...x,
-  });
-
   return (
-    <div style={{ minHeight:"100vh",background:T.bg,fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:T.text,transition:"background .2s,color .2s" }}>
+    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         ::-webkit-scrollbar{width:4px;background:#f1f5f9}
         ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
         input::placeholder,textarea::placeholder{color:#cbd5e1}
-        select option{background:var(--select-bg,#fff)}
+        select option{background:#fff}
         input:focus,select:focus,textarea:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #dbeafe !important;outline:none}
       `}</style>
 
@@ -400,24 +376,18 @@ export default function App({ currentUser, onSignOut }) {
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
           {currentUser?.role==="admin" && (
-            <button onClick={()=>setAdminPage(true)} style={{ background:dark?"#2d2060":"#f5f3ff",border:"1px solid #ddd6fe",
+            <button onClick={()=>setAdminPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
               color:"#7c3aed",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,
               cursor:"pointer",fontFamily:"inherit" }}>
               👥
             </button>
           )}
-          <button onClick={()=>{ const nd=!dark; setDark(nd); localStorage.setItem("theme",nd?"dark":"light"); }}
-            style={{ background:T.pillBg,border:`1px solid ${T.border}`,
-              color:T.textSub,borderRadius:8,padding:"8px 10px",fontSize:15,cursor:"pointer" }}
-            title={dark?"โหมดกลางวัน":"โหมดกลางคืน"}>
-            {dark?"☀️":"🌙"}
-          </button>
           <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
             borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             + เคสใหม่
           </button>
-          <button onClick={onSignOut} style={{ background:T.pillBg,border:`1px solid ${T.border}`,
-            color:T.textSub,borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
+          <button onClick={onSignOut} style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",
+            color:"#64748b",borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
             title="ออกจากระบบ">
             🚪
           </button>
@@ -427,7 +397,7 @@ export default function App({ currentUser, onSignOut }) {
       {/* ── DRAWER MENU ── */}
       {menuOpen && (
         <div style={{ position:"fixed",inset:0,zIndex:200 }} onClick={()=>setMenuOpen(false)}>
-          <div style={{ position:"absolute",inset:0,background:dark?"rgba(0,0,0,.7)":"rgba(15,23,42,.4)",backdropFilter:"blur(2px)" }}/>
+          <div style={{ position:"absolute",inset:0,background:"rgba(15,23,42,.4)",backdropFilter:"blur(2px)" }}/>
           <div style={{ position:"absolute",left:0,top:0,bottom:0,width:280,background:"#fff",
             boxShadow:"4px 0 24px rgba(0,0,0,.12)",padding:"20px 12px",overflowY:"auto" }}
             onClick={e=>e.stopPropagation()}>
@@ -558,7 +528,7 @@ export default function App({ currentUser, onSignOut }) {
         {/* Project cards on overview */}
         {view==="overview" && projects.length>0 && (
           <div style={{ marginBottom:16 }}>
-            <div style={{ fontSize:11,color:T.textMute,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>โครงการทั้งหมด</div>
+            <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>โครงการทั้งหมด</div>
             <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
               {projects.map(p=>{
                 const pl=cases.filter(c=>c.projectId===p.id);
@@ -584,7 +554,7 @@ export default function App({ currentUser, onSignOut }) {
         )}
 
         {/* Case list */}
-        <div style={{ fontSize:11,color:T.textMute,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>
+        <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>
           เคส ({visibleCases.length})
         </div>
 
@@ -605,8 +575,7 @@ export default function App({ currentUser, onSignOut }) {
               onClick={()=>setDetailCase(c)}
               onEdit={()=>openEditCase(c)}
               onHandover={()=>setHandoverCase(c)}
-              onDel={()=>setDelCase(c.id)}
-              dark={dark}/>
+              onDel={()=>setDelCase(c.id)}/>
           );
         })}
       </div>
@@ -654,7 +623,7 @@ export default function App({ currentUser, onSignOut }) {
         </Field>
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
           <Field label="วันที่ดำเนินการ">
-            <input type="date" style={IS2()} value={caseForm.date}
+            <input type="date" style={IS()} value={caseForm.date}
               onChange={e=>setCaseForm(f=>({...f,date:e.target.value}))}/>
           </Field>
           </div>
@@ -853,7 +822,7 @@ function DrawerItem({ active, onClick, icon, label, count, color }) {
       marginBottom:2,textAlign:"left" }}>
       <span style={{ display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0 }}>
         <span style={{ fontSize:9,color:active?color:"#cbd5e1" }}>{icon}</span>
-        <span style={{ fontSize:13,color:active?"#e2e8ff":"#64748b",fontWeight:active?700:400,
+        <span style={{ fontSize:13,color:active?"#0f172a":"#64748b",fontWeight:active?700:400,
           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
       <span style={{ fontSize:11,background:active?color+"15":"#f1f5f9",borderRadius:20,
