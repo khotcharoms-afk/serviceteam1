@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import AdminUsers from "./AdminUsers.jsx";
 import { db } from "./firebase";
 import {
   collection, doc, onSnapshot,
@@ -60,23 +59,22 @@ function StatusPill({ value }) {
 
 
 // ── Handover Modal ────────────────────────────────────────────
-function HandoverModal({ open, onClose, caseData, onSave, users }) {
-  const [toId, setToId]   = useState("");
-  const [note, setNote]   = useState("");
+function HandoverModal({ open, onClose, caseData, onSave }) {
+  const [toName, setToName] = useState("");
+  const [note, setNote]     = useState("");
   if (!open || !caseData) return null;
-  const toUser = users.find(u=>u.id===toId);
   function submit() {
-    if (!toId) return;
+    if (!toName.trim()) return;
     const entry = {
       from: caseData.tech||"ไม่ระบุ",
-      to:   toUser?.name||toId,
+      to:   toName.trim(),
       note: note.trim(),
       date: new Date().toISOString().slice(0,10),
       time: new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}),
     };
     const log = [...(caseData.handoverLog||[]), entry];
-    onSave({ ...caseData, tech: toUser?.name||toId, handoverLog: log, status:"inprogress" });
-    setToId(""); setNote(""); onClose();
+    onSave({ ...caseData, tech: toName.trim(), handoverLog: log, status:"inprogress" });
+    setToName(""); setNote(""); onClose();
   }
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
@@ -101,15 +99,11 @@ function HandoverModal({ open, onClose, caseData, onSave, users }) {
         {/* To */}
         <div style={{ marginBottom:14 }}>
           <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>ส่งต่อให้ *</div>
-          <select value={toId} onChange={e=>setToId(e.target.value)}
+          <input value={toName} onChange={e=>setToName(e.target.value)}
+            placeholder="ชื่อผู้รับงาน"
             style={{ width:"100%",background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
               color:"#1e293b",padding:"10px 13px",fontSize:14,outline:"none",
-              fontFamily:"inherit",boxSizing:"border-box",cursor:"pointer" }}>
-            <option value="">— เลือกผู้รับงาน —</option>
-            {users.filter(u=>u.role!=="pending"&&u.name!==caseData.tech).map(u=>(
-              <option key={u.id} value={u.id}>{u.name} {u.role==="admin"?"(Admin)":""}</option>
-            ))}
-          </select>
+              fontFamily:"inherit",boxSizing:"border-box" }}/>
         </div>
 
         {/* Note */}
@@ -255,17 +249,15 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover }) {
 }
 
 // ── Main ───────────────────────────────────────────────────────
-export default function App({ currentUser, onSignOut }) {
+export default function App() {
   const [projects,setProjects] = useState([]);
   const [cases,setCases]       = useState([]);
-  const [users,setUsers]       = useState([]);
   const [loading,setLoading]   = useState(true);
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
   const [search,setSearch]         = useState("");
   const [menuOpen,setMenuOpen]     = useState(false);
-  const [adminPage,setAdminPage]   = useState(false);
 
   const [caseModal,setCaseModal]   = useState(false);
   const [editCase,setEditCase]     = useState(null);
@@ -282,8 +274,7 @@ export default function App({ currentUser, onSignOut }) {
   useEffect(()=>{
     const u1=onSnapshot(collection(db,"projects"),snap=>{ setProjects(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); });
     const u2=onSnapshot(collection(db,"cases"),snap=>{ setCases(snap.docs.map(d=>({id:d.id,...d.data()}))); });
-    const u3=onSnapshot(collection(db,"users"),snap=>{ setUsers(snap.docs.map(d=>({id:d.id,...d.data()}))); });
-    return()=>{u1();u2();u3();};
+    return()=>{u1();u2();};
   },[]);
 
   const activeProj = projects.find(p=>p.id===view)||null;
@@ -295,7 +286,7 @@ export default function App({ currentUser, onSignOut }) {
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
   });
 
-  function openAddCase(){ const pid=view!=="overview"?view:(projects[0]?.id||""); setCaseForm({...emptyCase,projectId:pid,tech:currentUser?.name||""}); setEditCase(null); setCaseModal(true); }
+  function openAddCase(){ const pid=view!=="overview"?view:(projects[0]?.id||""); setCaseForm({...emptyCase,projectId:pid}); setEditCase(null); setCaseModal(true); }
   function openEditCase(c){ setCaseForm({...c}); setEditCase(c.id); setCaseModal(true); }
   async function submitCase(){
     if(!caseForm.title||!caseForm.projectId) return;
@@ -344,8 +335,6 @@ export default function App({ currentUser, onSignOut }) {
     </div>
   );
 
-  if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)}/>;
-
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
       <style>{`
@@ -374,24 +363,10 @@ export default function App({ currentUser, onSignOut }) {
             </div>
           </div>
         </div>
-        <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-          {currentUser?.role==="admin" && (
-            <button onClick={()=>setAdminPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
-              color:"#7c3aed",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,
-              cursor:"pointer",fontFamily:"inherit" }}>
-              👥
-            </button>
-          )}
-          <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
-            borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            + เคสใหม่
-          </button>
-          <button onClick={onSignOut} style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",
-            color:"#64748b",borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
-            title="ออกจากระบบ">
-            🚪
-          </button>
-        </div>
+        <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
+          borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+          + เคสใหม่
+        </button>
       </header>
 
       {/* ── DRAWER MENU ── */}
@@ -404,27 +379,6 @@ export default function App({ currentUser, onSignOut }) {
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,padding:"0 6px" }}>
               <div style={{ fontSize:15,fontWeight:800,color:"#0f172a" }}>เมนู</div>
               <button onClick={()=>setMenuOpen(false)} style={{ background:"none",border:"none",fontSize:18,color:"#94a3b8",cursor:"pointer" }}>✕</button>
-            </div>
-
-            {/* User info */}
-            <div style={{ background:"#f8fafc",borderRadius:10,padding:"10px 12px",
-              marginBottom:12,border:"1px solid #e2e8f0" }}>
-              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>{currentUser?.name}</div>
-              <div style={{ fontSize:11,color:"#94a3b8",marginTop:2 }}>{currentUser?.email}</div>
-              <div style={{ display:"flex",gap:6,marginTop:8 }}>
-                {currentUser?.role==="admin" && (
-                  <button onClick={()=>{ setAdminPage(true); setMenuOpen(false); }}
-                    style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",
-                      borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
-                    👥 จัดการ User
-                  </button>
-                )}
-                <button onClick={onSignOut}
-                  style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-                    borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
-                  🚪 ออกจากระบบ
-                </button>
-              </div>
             </div>
 
             <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
@@ -613,13 +567,8 @@ export default function App({ currentUser, onSignOut }) {
           </select>
         </Field>
         <Field label="ผู้ดำเนินการ">
-          <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
-            padding:"10px 13px",fontSize:14,color:"#475569",display:"flex",
-            alignItems:"center",gap:8 }}>
-            <span style={{ fontSize:16 }}>👤</span>
-            <span style={{ fontWeight:600,color:"#1e293b" }}>{caseForm.tech||currentUser?.name||"—"}</span>
-            <span style={{ fontSize:11,color:"#94a3b8",marginLeft:"auto" }}>ผู้เปิดเคส</span>
-          </div>
+          <input style={IS()} value={caseForm.tech} placeholder="ชื่อช่าง / ทีมงาน"
+            onChange={e=>setCaseForm(f=>({...f,tech:e.target.value}))}/>
         </Field>
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
           <Field label="วันที่ดำเนินการ">
@@ -798,7 +747,7 @@ export default function App({ currentUser, onSignOut }) {
       </Modal>
 
       <HandoverModal open={!!handoverCase} onClose={()=>setHandoverCase(null)}
-        caseData={handoverCase} onSave={saveHandover} users={users}/>
+        caseData={handoverCase} onSave={saveHandover}/>
 
       <Modal open={!!delProj} onClose={()=>setDelProj(null)} title="ลบโครงการ?">
         <p style={{ color:"#64748b",fontSize:14,marginBottom:4 }}>โครงการและเคสทั้งหมดจะถูกลบถาวร</p>
