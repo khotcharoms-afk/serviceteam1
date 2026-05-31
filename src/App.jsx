@@ -60,32 +60,33 @@ function StatusPill({ value }) {
 
 
 // ── Handover Modal ────────────────────────────────────────────
-function HandoverModal({ open, onClose, caseData, onSave }) {
-  const [toName, setToName] = useState("");
-  const [note, setNote]     = useState("");
+function HandoverModal({ open, onClose, caseData, onSave, users }) {
+  const [toId, setToId]   = useState("");
+  const [note, setNote]   = useState("");
   if (!open || !caseData) return null;
+  const toUser = users.find(u=>u.id===toId);
   function submit() {
-    if (!toName.trim()) return;
+    if (!toId) return;
     const entry = {
       from: caseData.tech||"ไม่ระบุ",
-      to:   toName.trim(),
+      to:   toUser?.name||toId,
       note: note.trim(),
       date: new Date().toISOString().slice(0,10),
       time: new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}),
     };
     const log = [...(caseData.handoverLog||[]), entry];
-    onSave({ ...caseData, tech: toName.trim(), handoverLog: log, status:"inprogress" });
-    setToName(""); setNote(""); onClose();
+    onSave({ ...caseData, tech: toUser?.name||toId, handoverLog: log, status:"inprogress" });
+    setToId(""); setNote(""); onClose();
   }
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
       backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:"24px",width:"100%",maxWidth:460,
+      <div style={{ background:T.surface,borderRadius:16,padding:"24px",width:"100%",maxWidth:460,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20 }}>
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>📤 ส่งต่องาน</h2>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <button onClick={onClose} style={{ background:T.pillBg,border:"none",color:T.textSub,
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14,display:"flex",
             alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
@@ -100,11 +101,15 @@ function HandoverModal({ open, onClose, caseData, onSave }) {
         {/* To */}
         <div style={{ marginBottom:14 }}>
           <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>ส่งต่อให้ *</div>
-          <input value={toName} onChange={e=>setToName(e.target.value)}
-            placeholder="ชื่อผู้รับงาน"
+          <select value={toId} onChange={e=>setToId(e.target.value)}
             style={{ width:"100%",background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
               color:"#1e293b",padding:"10px 13px",fontSize:14,outline:"none",
-              fontFamily:"inherit",boxSizing:"border-box" }}/>
+              fontFamily:"inherit",boxSizing:"border-box",cursor:"pointer" }}>
+            <option value="">— เลือกผู้รับงาน —</option>
+            {users.filter(u=>u.role!=="pending"&&u.name!==caseData.tech).map(u=>(
+              <option key={u.id} value={u.id}>{u.name} {u.role==="admin"?"(Admin)":""}</option>
+            ))}
+          </select>
         </div>
 
         {/* Note */}
@@ -158,13 +163,13 @@ function Modal({ open, onClose, title, children }) {
       backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",
       padding:"16px" }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,
+      <div style={{ background:T.surface,borderRadius:16,
         width:"100%",maxWidth:560,maxHeight:"92vh",overflowY:"auto",
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:"24px 24px 28px" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>{title}</h2>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <button onClick={onClose} style={{ background:T.pillBg,border:"none",color:T.textSub,
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8,
             display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
@@ -177,7 +182,7 @@ function Modal({ open, onClose, title, children }) {
 function Field({ label, children }) {
   return (
     <div style={{ marginBottom:14 }}>
-      <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>{label}</div>
+      <div style={{ fontSize:11,color:T.textSub,fontWeight:600,marginBottom:5 }}>{label}</div>
       {children}
     </div>
   );
@@ -253,6 +258,7 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover }) {
 export default function App({ currentUser, onSignOut }) {
   const [projects,setProjects] = useState([]);
   const [cases,setCases]       = useState([]);
+  const [users,setUsers]       = useState([]);
   const [loading,setLoading]   = useState(true);
 
   const [view,setView]             = useState("overview");
@@ -260,6 +266,7 @@ export default function App({ currentUser, onSignOut }) {
   const [search,setSearch]         = useState("");
   const [menuOpen,setMenuOpen]     = useState(false);
   const [adminPage,setAdminPage]   = useState(false);
+  const [dark,setDark]             = useState(()=>localStorage.getItem("theme")==="dark");
 
   const [caseModal,setCaseModal]   = useState(false);
   const [editCase,setEditCase]     = useState(null);
@@ -276,7 +283,8 @@ export default function App({ currentUser, onSignOut }) {
   useEffect(()=>{
     const u1=onSnapshot(collection(db,"projects"),snap=>{ setProjects(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); });
     const u2=onSnapshot(collection(db,"cases"),snap=>{ setCases(snap.docs.map(d=>({id:d.id,...d.data()}))); });
-    return()=>{u1();u2();};
+    const u3=onSnapshot(collection(db,"users"),snap=>{ setUsers(snap.docs.map(d=>({id:d.id,...d.data()}))); });
+    return()=>{u1();u2();u3();};
   },[]);
 
   const activeProj = projects.find(p=>p.id===view)||null;
@@ -288,7 +296,7 @@ export default function App({ currentUser, onSignOut }) {
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
   });
 
-  function openAddCase(){ const pid=view!=="overview"?view:(projects[0]?.id||""); setCaseForm({...emptyCase,projectId:pid}); setEditCase(null); setCaseModal(true); }
+  function openAddCase(){ const pid=view!=="overview"?view:(projects[0]?.id||""); setCaseForm({...emptyCase,projectId:pid,tech:currentUser?.name||""}); setEditCase(null); setCaseModal(true); }
   function openEditCase(c){ setCaseForm({...c}); setEditCase(c.id); setCaseModal(true); }
   async function submitCase(){
     if(!caseForm.title||!caseForm.projectId) return;
@@ -339,8 +347,28 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)}/>;
 
+  // Theme tokens
+  const T = {
+    bg:       dark?"#0f1117":"#f8fafc",
+    surface:  dark?"#1a1d2e":"#ffffff",
+    border:   dark?"#2a2d45":"#e2e8f0",
+    text:     dark?"#e2e8ff":"#1e293b",
+    textSub:  dark?"#8892b0":"#64748b",
+    textMute: dark?"#4a5180":"#94a3b8",
+    input:    dark?"#12142a":"#ffffff",
+    hover:    dark?"#1e2240":"#f8fafc",
+    cardBg:   dark?"#1a1d2e":"#ffffff",
+    statBg:   dark?"#1a1d2e":"#ffffff",
+    pillBg:   dark?"#12142a":"#f8fafc",
+  };
+  const IS2 = (x={}) => ({
+    width:"100%", background:T.input, border:`1px solid ${T.border}`,
+    borderRadius:8, color:T.text, padding:"10px 13px", fontSize:14,
+    outline:"none", fontFamily:"inherit", boxSizing:"border-box", ...x,
+  });
+
   return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
+    <div style={{ minHeight:"100vh",background:T.bg,fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:T.text,transition:"background .2s,color .2s" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -369,18 +397,24 @@ export default function App({ currentUser, onSignOut }) {
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
           {currentUser?.role==="admin" && (
-            <button onClick={()=>setAdminPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
+            <button onClick={()=>setAdminPage(true)} style={{ background:dark?"#2d2060":"#f5f3ff",border:"1px solid #ddd6fe",
               color:"#7c3aed",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,
               cursor:"pointer",fontFamily:"inherit" }}>
               👥
             </button>
           )}
+          <button onClick={()=>{ const nd=!dark; setDark(nd); localStorage.setItem("theme",nd?"dark":"light"); }}
+            style={{ background:T.pillBg,border:`1px solid ${T.border}`,
+              color:T.textSub,borderRadius:8,padding:"8px 10px",fontSize:15,cursor:"pointer" }}
+            title={dark?"โหมดกลางวัน":"โหมดกลางคืน"}>
+            {dark?"☀️":"🌙"}
+          </button>
           <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
             borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             + เคสใหม่
           </button>
-          <button onClick={onSignOut} style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",
-            color:"#64748b",borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
+          <button onClick={onSignOut} style={{ background:T.pillBg,border:`1px solid ${T.border}`,
+            color:T.textSub,borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
             title="ออกจากระบบ">
             🚪
           </button>
@@ -606,12 +640,17 @@ export default function App({ currentUser, onSignOut }) {
           </select>
         </Field>
         <Field label="ผู้ดำเนินการ">
-          <input style={IS()} value={caseForm.tech} placeholder="ชื่อช่าง / ทีมงาน"
-            onChange={e=>setCaseForm(f=>({...f,tech:e.target.value}))}/>
+          <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
+            padding:"10px 13px",fontSize:14,color:"#475569",display:"flex",
+            alignItems:"center",gap:8 }}>
+            <span style={{ fontSize:16 }}>👤</span>
+            <span style={{ fontWeight:600,color:"#1e293b" }}>{caseForm.tech||currentUser?.name||"—"}</span>
+            <span style={{ fontSize:11,color:"#94a3b8",marginLeft:"auto" }}>ผู้เปิดเคส</span>
+          </div>
         </Field>
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
           <Field label="วันที่ดำเนินการ">
-            <input type="date" style={IS()} value={caseForm.date}
+            <input type="date" style={IS2()} value={caseForm.date}
               onChange={e=>setCaseForm(f=>({...f,date:e.target.value}))}/>
           </Field>
           </div>
@@ -786,7 +825,7 @@ export default function App({ currentUser, onSignOut }) {
       </Modal>
 
       <HandoverModal open={!!handoverCase} onClose={()=>setHandoverCase(null)}
-        caseData={handoverCase} onSave={saveHandover}/>
+        caseData={handoverCase} onSave={saveHandover} users={users}/>
 
       <Modal open={!!delProj} onClose={()=>setDelProj(null)} title="ลบโครงการ?">
         <p style={{ color:"#64748b",fontSize:14,marginBottom:4 }}>โครงการและเคสทั้งหมดจะถูกลบถาวร</p>
