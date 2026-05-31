@@ -80,7 +80,7 @@ function HandoverModal({ open, onClose, caseData, onSave, users }) {
   }
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
-      backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,transition:"background .2s" }}
       onClick={onClose}>
       <div style={{ background:T.surface,borderRadius:16,padding:"24px",width:"100%",maxWidth:460,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }} onClick={e=>e.stopPropagation()}>
@@ -182,7 +182,7 @@ function Modal({ open, onClose, title, children }) {
 function Field({ label, children }) {
   return (
     <div style={{ marginBottom:14 }}>
-      <div style={{ fontSize:11,color:T.textSub,fontWeight:600,marginBottom:5 }}>{label}</div>
+      <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>{label}</div>
       {children}
     </div>
   );
@@ -211,15 +211,18 @@ function GhostBtn({ onClick, children }) {
 }
 
 // ── Case Card (mobile) ──────────────────────────────────────
-function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover }) {
+function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, dark=false }) {
   const days = daysLeft(c.warrantyEnd);
   return (
-    <div onClick={onClick} style={{ background:"#fff",border:"1.5px solid #e2e8f0",
+    <div onClick={onClick} style={{
+      background:dark?"#1a1d2e":"#fff",
+      border:`1.5px solid ${dark?"#2a2d45":"#e2e8f0"}`,
       borderRadius:12,padding:"14px 16px",marginBottom:10,cursor:"pointer",
-      borderLeft:`4px solid ${proj?.color||"#e2e8f0"}`,boxShadow:"0 1px 3px rgba(0,0,0,.04)" }}>
+      borderLeft:`4px solid ${proj?.color||"#e2e8f0"}`,
+      boxShadow:dark?"0 1px 3px rgba(0,0,0,.3)":"0 1px 3px rgba(0,0,0,.04)" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
         <div style={{ flex:1,paddingRight:8 }}>
-          <div style={{ fontSize:14,fontWeight:700,color:"#0f172a",lineHeight:1.3 }}>{c.title}</div>
+          <div style={{ fontSize:14,fontWeight:700,color:dark?"#e2e8ff":"#0f172a",lineHeight:1.3 }}>{c.title}</div>
           {c.site && <div style={{ fontSize:12,color:"#3b82f6",marginTop:3 }}>📍 {c.site}</div>}
         </div>
         <StatusPill value={c.status}/>
@@ -243,11 +246,11 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover }) {
       )}
       <div style={{ display:"flex",gap:6,marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9" }}
         onClick={e=>e.stopPropagation()}>
-        <button onClick={onEdit} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
-          color:"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
-        <button onClick={onHandover} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
+        <button onClick={onEdit} style={{ background:dark?"#12142a":"#f8fafc",border:dark?"1px solid #2a2d45":"1px solid #e2e8f0",
+          color:dark?"#8892b0":"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
+        <button onClick={onHandover} style={{ background:dark?"#1e2d5a":"#eff6ff",border:dark?"1px solid #2a4a9a":"1px solid #bfdbfe",
           color:"#2563eb",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📤 ส่งต่อ</button>
-        <button onClick={onDel} style={{ background:"#fff5f5",border:"1px solid #fecaca",
+        <button onClick={onDel} style={{ background:dark?"#2d1a1a":"#fff5f5",border:dark?"1px solid #5a2020":"1px solid #fecaca",
           color:"#ef4444",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✕ ลบ</button>
       </div>
     </div>
@@ -375,7 +378,7 @@ export default function App({ currentUser, onSignOut }) {
         ::-webkit-scrollbar{width:4px;background:#f1f5f9}
         ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
         input::placeholder,textarea::placeholder{color:#cbd5e1}
-        select option{background:#fff}
+        select option{background:var(--select-bg,#fff)}
         input:focus,select:focus,textarea:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #dbeafe !important;outline:none}
       `}</style>
 
@@ -424,7 +427,7 @@ export default function App({ currentUser, onSignOut }) {
       {/* ── DRAWER MENU ── */}
       {menuOpen && (
         <div style={{ position:"fixed",inset:0,zIndex:200 }} onClick={()=>setMenuOpen(false)}>
-          <div style={{ position:"absolute",inset:0,background:"rgba(15,23,42,.4)",backdropFilter:"blur(2px)" }}/>
+          <div style={{ position:"absolute",inset:0,background:dark?"rgba(0,0,0,.7)":"rgba(15,23,42,.4)",backdropFilter:"blur(2px)" }}/>
           <div style={{ position:"absolute",left:0,top:0,bottom:0,width:280,background:"#fff",
             boxShadow:"4px 0 24px rgba(0,0,0,.12)",padding:"20px 12px",overflowY:"auto" }}
             onClick={e=>e.stopPropagation()}>
@@ -555,7 +558,7 @@ export default function App({ currentUser, onSignOut }) {
         {/* Project cards on overview */}
         {view==="overview" && projects.length>0 && (
           <div style={{ marginBottom:16 }}>
-            <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>โครงการทั้งหมด</div>
+            <div style={{ fontSize:11,color:T.textMute,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>โครงการทั้งหมด</div>
             <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
               {projects.map(p=>{
                 const pl=cases.filter(c=>c.projectId===p.id);
@@ -581,7 +584,7 @@ export default function App({ currentUser, onSignOut }) {
         )}
 
         {/* Case list */}
-        <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>
+        <div style={{ fontSize:11,color:T.textMute,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>
           เคส ({visibleCases.length})
         </div>
 
@@ -602,7 +605,8 @@ export default function App({ currentUser, onSignOut }) {
               onClick={()=>setDetailCase(c)}
               onEdit={()=>openEditCase(c)}
               onHandover={()=>setHandoverCase(c)}
-              onDel={()=>setDelCase(c.id)}/>
+              onDel={()=>setDelCase(c.id)}
+              dark={dark}/>
           );
         })}
       </div>
@@ -849,7 +853,7 @@ function DrawerItem({ active, onClick, icon, label, count, color }) {
       marginBottom:2,textAlign:"left" }}>
       <span style={{ display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0 }}>
         <span style={{ fontSize:9,color:active?color:"#cbd5e1" }}>{icon}</span>
-        <span style={{ fontSize:13,color:active?"#0f172a":"#64748b",fontWeight:active?700:400,
+        <span style={{ fontSize:13,color:active?"#e2e8ff":"#64748b",fontWeight:active?700:400,
           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
       <span style={{ fontSize:11,background:active?color+"15":"#f1f5f9",borderRadius:20,
