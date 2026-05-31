@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import AdminUsers from "./AdminUsers.jsx";
 import { db } from "./firebase";
 import {
   collection, doc, onSnapshot,
@@ -249,7 +250,7 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover }) {
 }
 
 // ── Main ───────────────────────────────────────────────────────
-export default function App() {
+export default function App({ currentUser, onSignOut }) {
   const [projects,setProjects] = useState([]);
   const [cases,setCases]       = useState([]);
   const [loading,setLoading]   = useState(true);
@@ -258,6 +259,7 @@ export default function App() {
   const [filterStat,setFilterStat] = useState("all");
   const [search,setSearch]         = useState("");
   const [menuOpen,setMenuOpen]     = useState(false);
+  const [adminPage,setAdminPage]   = useState(false);
 
   const [caseModal,setCaseModal]   = useState(false);
   const [editCase,setEditCase]     = useState(null);
@@ -335,6 +337,8 @@ export default function App() {
     </div>
   );
 
+  if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)}/>;
+
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
       <style>{`
@@ -363,10 +367,24 @@ export default function App() {
             </div>
           </div>
         </div>
-        <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
-          borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-          + เคสใหม่
-        </button>
+        <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+          {currentUser?.role==="admin" && (
+            <button onClick={()=>setAdminPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
+              color:"#7c3aed",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,
+              cursor:"pointer",fontFamily:"inherit" }}>
+              👥
+            </button>
+          )}
+          <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
+            borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            + เคสใหม่
+          </button>
+          <button onClick={onSignOut} style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",
+            color:"#64748b",borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
+            title="ออกจากระบบ">
+            🚪
+          </button>
+        </div>
       </header>
 
       {/* ── DRAWER MENU ── */}
@@ -379,6 +397,27 @@ export default function App() {
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,padding:"0 6px" }}>
               <div style={{ fontSize:15,fontWeight:800,color:"#0f172a" }}>เมนู</div>
               <button onClick={()=>setMenuOpen(false)} style={{ background:"none",border:"none",fontSize:18,color:"#94a3b8",cursor:"pointer" }}>✕</button>
+            </div>
+
+            {/* User info */}
+            <div style={{ background:"#f8fafc",borderRadius:10,padding:"10px 12px",
+              marginBottom:12,border:"1px solid #e2e8f0" }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>{currentUser?.name}</div>
+              <div style={{ fontSize:11,color:"#94a3b8",marginTop:2 }}>{currentUser?.email}</div>
+              <div style={{ display:"flex",gap:6,marginTop:8 }}>
+                {currentUser?.role==="admin" && (
+                  <button onClick={()=>{ setAdminPage(true); setMenuOpen(false); }}
+                    style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",
+                      borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
+                    👥 จัดการ User
+                  </button>
+                )}
+                <button onClick={onSignOut}
+                  style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                    borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
+                  🚪 ออกจากระบบ
+                </button>
+              </div>
             </div>
 
             <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
