@@ -296,6 +296,11 @@ export default function App() {
   }
   async function deleteCase(id){ await deleteDoc(doc(db,"cases",id)); setDelCase(null); setDetailCase(null); }
 
+  async function saveHandover(updated) {
+    await setDoc(doc(db,"cases",updated.id), updated);
+    setHandoverCase(null);
+  }
+
   function openAddProj(){ setEditProjId(null); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setProjModal(true); }
   function openEditProj(p){ setEditProjId(p.id); setNewProjName(p.name); setNewProjColor(p.color); setProjModal(true); }
   async function submitProj(){
