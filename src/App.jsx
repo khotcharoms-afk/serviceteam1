@@ -676,6 +676,30 @@ export default function App() {
                   <div style={{ fontSize:13,color:"#475569",lineHeight:1.8 }}>{detailCase.note}</div>
                 </div>
               )}
+              {(detailCase.handoverLog||[]).length>0&&(
+                <div style={{ marginBottom:16 }}>
+                  <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontWeight:700 }}>
+                    🔁 ประวัติการส่งต่อ ({detailCase.handoverLog.length} ครั้ง)
+                  </div>
+                  <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+                    {[...(detailCase.handoverLog||[])].reverse().map((h,i)=>(
+                      <div key={i} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
+                        borderRadius:10,padding:"10px 14px" }}>
+                        <div style={{ display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:h.note?4:0 }}>
+                          <span style={{ fontSize:13,fontWeight:700,color:"#475569" }}>{h.from}</span>
+                          <span style={{ color:"#93c5fd",fontSize:14 }}>→</span>
+                          <span style={{ fontSize:13,fontWeight:700,color:"#2563eb" }}>{h.to}</span>
+                          <span style={{ fontSize:11,color:"#94a3b8",marginLeft:"auto" }}>{h.date} {h.time}</span>
+                        </div>
+                        {h.note&&<div style={{ fontSize:12,color:"#64748b",lineHeight:1.6,
+                          background:"#fff",borderRadius:6,padding:"5px 8px",border:"1px solid #f1f5f9" }}>
+                          "{h.note}"
+                        </div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
                 <GhostBtn onClick={()=>{ openEditCase(detailCase); setDetailCase(null); }}>✎ แก้ไข</GhostBtn>
                 <button onClick={()=>{ setHandoverCase(detailCase); setDetailCase(null); }}
