@@ -120,7 +120,7 @@ function HandoverModal({ open, onClose, caseData, onSave, users }) {
         <div style={{ marginBottom:14 }}>
           <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>ส่งต่อให้ *</div>
           <select value={toId} onChange={e=>setToId(e.target.value)}
-            style={{ width:"100%",background:"#fff",border:dark?"1px solid #2a2d45":"1px solid #e2e8f0",borderRadius:8,
+            style={{ width:"100%",background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
               color:"#1e293b",padding:"10px 13px",fontSize:14,outline:"none",
               fontFamily:"inherit",boxSizing:"border-box",cursor:"pointer" }}>
             <option value="">— เลือกผู้รับงาน —</option>
@@ -135,7 +135,7 @@ function HandoverModal({ open, onClose, caseData, onSave, users }) {
           <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>หมายเหตุ / ทำไปถึงไหนแล้ว</div>
           <textarea value={note} onChange={e=>setNote(e.target.value)}
             placeholder="เช่น ติดตั้งเสร็จแล้ว รอ config เพิ่ม..."
-            style={{ width:"100%",background:"#fff",border:dark?"1px solid #2a2d45":"1px solid #e2e8f0",borderRadius:8,
+            style={{ width:"100%",background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
               color:"#1e293b",padding:"10px 13px",fontSize:14,outline:"none",resize:"vertical",
               minHeight:80,fontFamily:"inherit",boxSizing:"border-box",lineHeight:1.6 }}/>
         </div>
@@ -147,7 +147,7 @@ function HandoverModal({ open, onClose, caseData, onSave, users }) {
             <div style={{ display:"flex",flexDirection:"column",gap:6,maxHeight:160,overflowY:"auto" }}>
               {[...(caseData.handoverLog||[])].reverse().map((h,i)=>(
                 <div key={i} style={{ background:"#f8fafc",borderRadius:8,padding:"8px 12px",
-                  border:dark?"1px solid #2a2d45":"1px solid #e2e8f0",fontSize:12 }}>
+                  border:"1px solid #e2e8f0",fontSize:12 }}>
                   <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:2 }}>
                     <span style={{ color:"#475569",fontWeight:600 }}>{h.from}</span>
                     <span style={{ color:"#94a3b8" }}>→</span>
@@ -270,11 +270,11 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover }) {
       )}
       <div style={{ display:"flex",gap:6,marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9" }}
         onClick={e=>e.stopPropagation()}>
-        <button onClick={onEdit} style={{ background:"#f8fafc",border:dark?"1px solid #2a2d45":"1px solid #e2e8f0",
+        <button onClick={onEdit} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
           color:"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
-        <button onClick={onHandover} style={{ background:"#eff6ff",border:dark?"1px solid #2a4a9a":"1px solid #bfdbfe",
+        <button onClick={onHandover} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
           color:"#2563eb",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📤 ส่งต่อ</button>
-        <button onClick={onDel} style={{ background:"#fff5f5",border:dark?"1px solid #5a2020":"1px solid #fecaca",
+        <button onClick={onDel} style={{ background:"#fff5f5",border:"1px solid #fecaca",
           color:"#ef4444",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✕ ลบ</button>
       </div>
     </div>
@@ -410,12 +410,6 @@ export default function App({ currentUser, onSignOut }) {
               👥
             </button>
           )}
-          <button onClick={()=>{ const nd=!dark; setDark(nd); localStorage.setItem("theme",nd?"dark":"light"); }}
-            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
-              color:"#64748b",borderRadius:8,padding:"8px 10px",fontSize:15,cursor:"pointer" }}
-            title={dark?"โหมดกลางวัน":"โหมดกลางคืน"}>
-            {dark?"☀️":"🌙"}
-          </button>
           <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
             borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             + เคสใหม่
