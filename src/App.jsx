@@ -590,8 +590,8 @@ export default function App({ currentUser, onSignOut }) {
               color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",
               fontFamily:"inherit",cursor:"pointer",minWidth:160 }}>
             <option value="all">ทั้งหมด</option>
-            {[...new Set(scopeCases.map(c=>c.tech).filter(Boolean))].sort().map(t=>(
-              <option key={t} value={t}>{t}</option>
+            {users.filter(u=>u.role!=="pending").sort((a,b)=>a.name.localeCompare(b.name)).map(u=>(
+              <option key={u.id} value={u.name}>{u.name}{u.role==="admin"?" (Admin)":""}</option>
             ))}
           </select>
           {filterTech!=="all"&&(
