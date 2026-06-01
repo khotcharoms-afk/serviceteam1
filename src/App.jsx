@@ -290,6 +290,9 @@ export default function App({ currentUser, onSignOut }) {
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
+  const [dateFrom,setDateFrom]     = useState("");
+  const [dateTo,setDateTo]         = useState("");
+  const [filterTech,setFilterTech] = useState("all");
   const [search,setSearch]         = useState("");
   const [menuOpen,setMenuOpen]     = useState(false);
   const [adminPage,setAdminPage]   = useState(false);
@@ -318,6 +321,9 @@ export default function App({ currentUser, onSignOut }) {
   const visibleCases = cases.filter(c=>{
     if(view!=="overview"&&c.projectId!==view) return false;
     if(filterStat!=="all"&&c.status!==filterStat) return false;
+    if(dateFrom && c.date && c.date < dateFrom) return false;
+    if(dateTo   && c.date && c.date > dateTo)   return false;
+    if(filterTech!=="all" && c.tech!==filterTech) return false;
     const q=search.toLowerCase();
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
   });
@@ -537,6 +543,67 @@ export default function App({ currentUser, onSignOut }) {
           <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:"#cbd5e1",fontSize:16 }}>⌕</span>
           <input placeholder="ค้นหา..." value={search} onChange={e=>setSearch(e.target.value)}
             style={IS({ paddingLeft:36,borderRadius:10,fontSize:14 })}/>
+        </div>
+
+        {/* Date filter */}
+        <div style={{ display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center" }}>
+          <span style={{ fontSize:12,color:"#94a3b8",fontWeight:600,whiteSpace:"nowrap" }}>📅 ช่วงวันที่:</span>
+          <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+            style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
+              color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",
+              fontFamily:"inherit",cursor:"pointer" }}/>
+          <span style={{ fontSize:12,color:"#94a3b8" }}>ถึง</span>
+          <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+            style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
+              color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",
+              fontFamily:"inherit",cursor:"pointer" }}/>
+          {/* Quick presets */}
+          <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+            {[
+              { label:"วันนี้",    fn:()=>{ const t=today(); setDateFrom(t); setDateTo(t); }},
+              { label:"7 วัน",    fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-6); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); }},
+              { label:"30 วัน",   fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-29); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); }},
+              { label:"เดือนนี้", fn:()=>{ const n=new Date(); setDateFrom(n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"); setDateTo(today()); }},
+            ].map(p=>(
+              <button key={p.label} onClick={p.fn}
+                style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",
+                  fontFamily:"inherit",fontWeight:600 }}>
+                {p.label}
+              </button>
+            ))}
+            {(dateFrom||dateTo)&&(
+              <button onClick={()=>{ setDateFrom(""); setDateTo(""); }}
+                style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                  borderRadius:7,padding:"5px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
+                ล้าง
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tech filter */}
+        <div style={{ display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap" }}>
+          <span style={{ fontSize:12,color:"#94a3b8",fontWeight:600,whiteSpace:"nowrap" }}>👤 ผู้ดำเนินการ:</span>
+          <select value={filterTech} onChange={e=>setFilterTech(e.target.value)}
+            style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
+              color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",
+              fontFamily:"inherit",cursor:"pointer",minWidth:160 }}>
+            <option value="all">ทั้งหมด</option>
+            {[...new Set(scopeCases.map(c=>c.tech).filter(Boolean))].sort().map(t=>(
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          {filterTech!=="all"&&(
+            <span style={{ background:"#dbeafe",color:"#2563eb",borderRadius:20,
+              padding:"3px 10px",fontSize:12,fontWeight:600,display:"inline-flex",
+              alignItems:"center",gap:6 }}>
+              {filterTech}
+              <button onClick={()=>setFilterTech("all")}
+                style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",
+                  fontSize:13,padding:0,lineHeight:1 }}>×</button>
+            </span>
+          )}
         </div>
 
         {/* Status filter pills */}
