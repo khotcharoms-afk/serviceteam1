@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -6,25 +6,48 @@ import App from "./App.jsx";
 import Auth from "./Auth.jsx";
 
 export default function Root() {
-  const [authUser, setAuthUser]   = useState(undefined); // undefined = loading
-  const [userDoc,  setUserDoc]    = useState(null);
-  const [unsub,    setUnsub]      = useState(null);
+  const [authUser, setAuthUser] = useState(undefined);
+  const [userDoc,  setUserDoc]  = useState(null);
+  const unsubRef = useRef(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const off = onAuthStateChanged(auth, (user) => {
-      setAuthUser(user);
-      if (unsub) unsub();
+      if (!mounted) return;
+
+      // cleanup previous firestore listener
+      if (unsubRef.current) { unsubRef.current(); unsubRef.current = null; }
+
+      setAuthUser(user || null);
+
       if (user) {
-        // Listen to user's Firestore doc for role
-        const u = onSnapshot(doc(db, "users", user.uid), snap => {
-          setUserDoc(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-        });
-        setUnsub(() => u);
+        try {
+          const u = onSnapshot(
+            doc(db, "users", user.uid),
+            (snap) => {
+              if (!mounted) return;
+              setUserDoc(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+            },
+            (err) => { console.error("Firestore error:", err); }
+          );
+          unsubRef.current = u;
+        } catch(e) {
+          console.error("onSnapshot error:", e);
+        }
       } else {
         setUserDoc(null);
       }
+    }, (err) => {
+      console.error("Auth error:", err);
+      if (mounted) setAuthUser(null);
     });
-    return () => { off(); if (unsub) unsub(); };
+
+    return () => {
+      mounted = false;
+      off();
+      if (unsubRef.current) unsubRef.current();
+    };
   }, []);
 
   // Loading
@@ -42,8 +65,20 @@ export default function Root() {
   // Not logged in
   if (!authUser) return <Auth />;
 
-  // Logged in but pending approval
-  if (!userDoc || userDoc.role === "pending") return (
+  // Logged in but no userDoc yet (loading role)
+  if (userDoc === null) return (
+    <div style={{ minHeight:"100vh", background:"#f8fafc", display:"flex",
+      alignItems:"center", justifyContent:"center",
+      fontFamily:"'Noto Sans Thai',sans-serif", color:"#94a3b8", fontSize:14 }}>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ fontSize:32, color:"#2563eb", marginBottom:10 }}>◈</div>
+        กำลังตรวจสอบสิทธิ์...
+      </div>
+    </div>
+  );
+
+  // Pending approval
+  if (userDoc.role === "pending") return (
     <div style={{ minHeight:"100vh", background:"#f8fafc", display:"flex",
       alignItems:"center", justifyContent:"center",
       fontFamily:"'Noto Sans Thai',sans-serif", padding:20 }}>
@@ -51,9 +86,7 @@ export default function Root() {
         maxWidth:400, width:"100%", textAlign:"center",
         boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e2e8f0" }}>
         <div style={{ fontSize:40, marginBottom:16 }}>⏳</div>
-        <div style={{ fontSize:18, fontWeight:800, color:"#0f172a", marginBottom:8 }}>
-          รอการอนุมัติ
-        </div>
+        <div style={{ fontSize:18, fontWeight:800, color:"#0f172a", marginBottom:8 }}>รอการอนุมัติ</div>
         <div style={{ fontSize:14, color:"#64748b", lineHeight:1.7, marginBottom:24 }}>
           บัญชีของคุณอยู่ระหว่างรอ Admin อนุมัติ<br/>
           กรุณารอสักครู่แล้วลองใหม่อีกครั้ง
@@ -72,6 +105,5 @@ export default function Root() {
     </div>
   );
 
-  // Logged in and approved
   return <App currentUser={userDoc} onSignOut={() => signOut(auth)} />;
 }
