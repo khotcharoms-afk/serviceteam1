@@ -20,7 +20,7 @@ const today = () => new Date().toISOString().slice(0,10);
 
 const daysLeft = (s) => { if(!s) return null; return Math.ceil((new Date(s)-new Date())/86400000); };
 const fmtDate = (s) => { if(!s) return "—"; const [y,m,d]=s.split("-"); return `${d}/${m}/${y}`; };
-const emptyCase = { projectId:"",site:"",title:"",type:SERVICE_TYPES[0],tech:"",date:today(),warrantyEnd:"",leaseEnd:"",status:"open",note:"",handoverLog:[],updateLog:[] };
+const emptyCase = { projectId:"",site:"",title:"",type:SERVICE_TYPES[0],tech:"",date:today(),status:"open",note:"",handoverLog:[],updateLog:[] };
 
 const IS = (x={}) => ({
   width:"100%", background:"#ffffff", border:"1px solid #e2e8f0",
@@ -456,7 +456,13 @@ export default function App({ currentUser, onSignOut }) {
   function openEditCase(c){ setCaseForm({...c}); setEditCase(c.id); setCaseModal(true); }
   async function submitCase(){
     if(!caseForm.title||!caseForm.projectId) return;
-    const payload = {...caseForm, warrantyEnd: caseForm.warrantyEnd||null};
+    const proj = projects.find(p=>p.id===caseForm.projectId);
+    const payload = {
+      ...caseForm,
+      warrantyEnd: proj?.warrantyEnd||null,
+      leaseEnd:    proj?.leaseEnd||null,
+      site: caseForm.site==="__other__" ? "" : caseForm.site,
+    };
     await setDoc(doc(db,"cases",editCase||Date.now().toString()),payload);
     setCaseModal(false); setEditCase(null);
   }
@@ -916,9 +922,26 @@ export default function App({ currentUser, onSignOut }) {
           <input style={IS()} value={caseForm.title} placeholder="อธิบายงานที่ดำเนินการ..."
             onChange={e=>setCaseForm(f=>({...f,title:e.target.value}))}/>
         </Field>
-        <Field label="ชื่อไซต์ / สถานที่">
-          <input style={IS()} value={caseForm.site} placeholder="เช่น สาขากรุงเทพ, อาคาร A..."
-            onChange={e=>setCaseForm(f=>({...f,site:e.target.value}))}/>
+        <Field label="ไซต์ / สถานที่">
+          {(()=>{
+            const proj = projects.find(p=>p.id===caseForm.projectId);
+            const sites = proj?.sites||[];
+            return sites.length>0 ? (
+              <select style={IS({ cursor:"pointer" })} value={caseForm.site}
+                onChange={e=>setCaseForm(f=>({...f,site:e.target.value}))}>
+                <option value="">— เลือกไซต์ —</option>
+                {sites.map(s=><option key={s} value={s}>{s}</option>)}
+                <option value="__other__">อื่นๆ (พิมพ์เอง)</option>
+              </select>
+            ) : (
+              <input style={IS()} value={caseForm.site} placeholder="เช่น สาขากรุงเทพ, อาคาร A..."
+                onChange={e=>setCaseForm(f=>({...f,site:e.target.value}))}/>
+            );
+          })()}
+          {caseForm.site==="__other__"&&(
+            <input style={IS({ marginTop:8 })} placeholder="พิมพ์ชื่อไซต์..."
+              onChange={e=>setCaseForm(f=>({...f,site:e.target.value==="__other__"?"":e.target.value}))}/>
+          )}
         </Field>
         <Field label="ประเภทงาน">
           <select style={IS({ cursor:"pointer" })} value={caseForm.type}
