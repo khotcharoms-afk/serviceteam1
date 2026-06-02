@@ -294,8 +294,11 @@ export default function App({ currentUser, onSignOut }) {
   const [dateTo,setDateTo]         = useState("");
   const [filterTech,setFilterTech] = useState("all");
   const [search,setSearch]         = useState("");
-  const [menuOpen,setMenuOpen]     = useState(false);
-  const [adminPage,setAdminPage]   = useState(false);
+  const [menuOpen,setMenuOpen]       = useState(false);
+  const [adminPage,setAdminPage]     = useState(false);
+  const [notifOpen,setNotifOpen]     = useState(false);
+  const [notifications,setNotifs]    = useState([]);
+  const [lastSeen,setLastSeen]       = useState(()=>localStorage.getItem("notif-seen")||"");
 
   const [caseModal,setCaseModal]   = useState(false);
   const [editCase,setEditCase]     = useState(null);
@@ -313,7 +316,13 @@ export default function App({ currentUser, onSignOut }) {
     const u1=onSnapshot(collection(db,"projects"),snap=>{ setProjects(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); });
     const u2=onSnapshot(collection(db,"cases"),snap=>{ setCases(snap.docs.map(d=>({id:d.id,...d.data()}))); });
     const u3=onSnapshot(collection(db,"users"),snap=>{ setUsers(snap.docs.map(d=>({id:d.id,...d.data()}))); });
-    return()=>{u1();u2();u3();};
+    const u4=onSnapshot(collection(db,"notifications"),snap=>{
+      const all = snap.docs.map(d=>({id:d.id,...d.data()}))
+        .filter(n=> n.toUid===currentUser?.id || (n.type==="new_user" && currentUser?.role==="admin"))
+        .sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+      setNotifs(all);
+    });
+    return()=>{u1();u2();u3();u4();};
   },[]);
 
   const activeProj = projects.find(p=>p.id===view)||null;
@@ -340,6 +349,25 @@ export default function App({ currentUser, onSignOut }) {
 
   async function saveHandover(updated) {
     await setDoc(doc(db,"cases",updated.id), updated);
+    // Create notification for the recipient
+    const log = updated.handoverLog||[];
+    const latest = log[log.length-1];
+    if(latest) {
+      const toUser = users.find(u=>u.name===latest.to);
+      if(toUser) {
+        await setDoc(doc(db,"notifications",Date.now().toString()), {
+          type:      "handover",
+          toUid:     toUser.id,
+          toName:    toUser.name,
+          fromName:  latest.from,
+          caseTitle: updated.title,
+          caseId:    updated.id,
+          note:      latest.note||"",
+          createdAt: new Date().toISOString(),
+          read:      false,
+        });
+      }
+    }
     setHandoverCase(null);
   }
 
@@ -377,11 +405,12 @@ export default function App({ currentUser, onSignOut }) {
     </div>
   );
 
-  if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)}/>;
+  if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
+  const unreadCount = notifications.filter(n=>!n.read).length;
 
 
   return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
+    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }} onClick={()=>setNotifOpen(false)}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -416,6 +445,71 @@ export default function App({ currentUser, onSignOut }) {
               👥
             </button>
           )}
+          {/* Bell notification */}
+          <div style={{ position:"relative" }}>
+            <button onClick={()=>setNotifOpen(v=>!v)}
+              style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
+                padding:"8px 10px",fontSize:18,cursor:"pointer",lineHeight:1,position:"relative" }}>
+              🔔
+              {unreadCount>0&&(
+                <span style={{ position:"absolute",top:-4,right:-4,background:"#ef4444",
+                  color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:10,
+                  fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                  {unreadCount>9?"9+":unreadCount}
+                </span>
+              )}
+            </button>
+            {/* Notification dropdown */}
+            {notifOpen&&(
+              <div style={{ position:"absolute",right:0,top:"calc(100% + 8px)",width:320,
+                background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,
+                boxShadow:"0 8px 32px rgba(0,0,0,.12)",zIndex:100,overflow:"hidden" }}
+                onClick={e=>e.stopPropagation()}>
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
+                  padding:"12px 14px",borderBottom:"1px solid #f1f5f9" }}>
+                  <span style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>🔔 การแจ้งเตือน</span>
+                  {unreadCount>0&&(
+                    <button onClick={markAllRead}
+                      style={{ background:"none",border:"none",color:"#2563eb",fontSize:11,
+                        cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
+                      อ่านทั้งหมด
+                    </button>
+                  )}
+                </div>
+                <div style={{ maxHeight:360,overflowY:"auto" }}>
+                  {notifications.length===0?(
+                    <div style={{ padding:"32px 14px",textAlign:"center",color:"#cbd5e1",fontSize:13 }}>
+                      ไม่มีการแจ้งเตือน
+                    </div>
+                  ):notifications.map(n=>(
+                    <div key={n.id} onClick={()=>markNotifRead(n.id)}
+                      style={{ padding:"12px 14px",borderBottom:"1px solid #f8fafc",
+                        background:n.read?"#fff":"#eff6ff",cursor:"pointer",
+                        transition:"background .15s" }}>
+                      <div style={{ display:"flex",gap:8,alignItems:"flex-start" }}>
+                        <span style={{ fontSize:18,flexShrink:0 }}>
+                          {n.type==="handover"?"📤":"👤"}
+                        </span>
+                        <div style={{ flex:1,minWidth:0 }}>
+                          <div style={{ fontSize:13,fontWeight:n.read?400:700,color:"#0f172a",lineHeight:1.4 }}>
+                            {n.type==="handover"
+                              ? <>{n.fromName} ส่งงาน <span style={{ color:"#2563eb" }}>"{n.caseTitle}"</span> ให้คุณ</>
+                              : <>มีผู้ใช้ใหม่สมัครเข้าระบบ: <span style={{ color:"#7c3aed" }}>{n.toName}</span></>
+                            }
+                          </div>
+                          {n.note&&<div style={{ fontSize:11,color:"#64748b",marginTop:3 }}>"{n.note}"</div>}
+                          <div style={{ fontSize:10,color:"#94a3b8",marginTop:4 }}>
+                            {n.createdAt?new Date(n.createdAt).toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"}):""}
+                          </div>
+                        </div>
+                        {!n.read&&<span style={{ width:8,height:8,borderRadius:"50%",background:"#2563eb",flexShrink:0,marginTop:4 }}/>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
             borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             + เคสใหม่
@@ -837,17 +931,29 @@ export default function App({ currentUser, onSignOut }) {
                   ))}
                 <div>
                   <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>ประกัน</div>
-                  <WarrantyPill warrantyEnd={detailCase.warrantyEnd}/>
+                  {detailCase.warrantyEnd ? (
+                    <>
+                      <WarrantyPill warrantyEnd={detailCase.warrantyEnd}/>
+                      <div style={{ fontSize:11,color:days!==null&&days<0?"#ef4444":days!==null&&days<=90?"#f59e0b":"#94a3b8",marginTop:3,fontWeight:600 }}>
+                        {fmtDate(detailCase.warrantyEnd)} {days!==null&&(days<0?"(หมดแล้ว)":`(เหลือ ${days} วัน)`)}
+                      </div>
+                    </>
+                  ) : <span style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มีประกัน</span>}
                 </div>
-                {detailCase.warrantyEnd&&(
-                  <div>
-                    <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:3,fontWeight:700 }}>วันหมดประกัน</div>
-                    <div style={{ fontSize:14,fontWeight:600,color:days!==null&&days<0?"#ef4444":days!==null&&days<=90?"#f59e0b":"#1e293b" }}>
-                      {fmtDate(detailCase.warrantyEnd)}
-                      {days!==null&&<span style={{ fontSize:11,marginLeft:4 }}>{days<0?"(หมดแล้ว)":`(เหลือ ${days} วัน)`}</span>}
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>สัญญาเช่า</div>
+                  {detailCase.leaseEnd ? (()=>{
+                    const ld=daysLeft(detailCase.leaseEnd);
+                    return (
+                      <>
+                        <LeasePill leaseEnd={detailCase.leaseEnd}/>
+                        <div style={{ fontSize:11,color:ld!==null&&ld<0?"#ef4444":ld!==null&&ld<=90?"#f59e0b":"#94a3b8",marginTop:3,fontWeight:600 }}>
+                          {fmtDate(detailCase.leaseEnd)} {ld!==null&&(ld<0?"(หมดแล้ว)":`(เหลือ ${ld} วัน)`)}
+                        </div>
+                      </>
+                    );
+                  })() : <span style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มีสัญญาเช่า</span>}
+                </div>
                 <div>
                   <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>สถานะ</div>
                   <StatusPill value={detailCase.status}/>
