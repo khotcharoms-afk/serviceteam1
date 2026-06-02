@@ -440,6 +440,14 @@ export default function App({ currentUser, onSignOut }) {
     return()=>{u1();u2();u3();u4();};
   },[]);
 
+  // Close notif dropdown on outside click
+  useEffect(()=>{
+    if(!notifOpen) return;
+    const handler = ()=>setNotifOpen(false);
+    document.addEventListener("click", handler);
+    return ()=>document.removeEventListener("click", handler);
+  },[notifOpen]);
+
   const activeProj = projects.find(p=>p.id===view)||null;
 
   const visibleCases = cases.filter(c=>{
@@ -467,6 +475,16 @@ export default function App({ currentUser, onSignOut }) {
     setCaseModal(false); setEditCase(null);
   }
   async function deleteCase(id){ await deleteDoc(doc(db,"cases",id)); setDelCase(null); setDetailCase(null); }
+
+  async function markNotifRead(nid) {
+    await setDoc(doc(db,"notifications",nid),{ read:true },{ merge:true });
+  }
+
+  async function markAllRead() {
+    for(const n of notifications.filter(x=>!x.read)) {
+      await setDoc(doc(db,"notifications",n.id),{ read:true },{ merge:true });
+    }
+  }
 
   async function saveUpdate(updated) {
     await setDoc(doc(db,"cases",updated.id), updated);
@@ -535,8 +553,10 @@ export default function App({ currentUser, onSignOut }) {
   const unreadCount = notifications.filter(n=>!n.read).length;
 
 
+
+
   return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }} onClick={()=>setNotifOpen(false)}>
+    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -573,7 +593,7 @@ export default function App({ currentUser, onSignOut }) {
           )}
           {/* Bell notification */}
           <div style={{ position:"relative" }}>
-            <button onClick={()=>setNotifOpen(v=>!v)}
+            <button onClick={e=>{ e.stopPropagation(); setNotifOpen(v=>!v); }}
               style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
                 padding:"8px 10px",fontSize:18,cursor:"pointer",lineHeight:1,position:"relative" }}>
               🔔
