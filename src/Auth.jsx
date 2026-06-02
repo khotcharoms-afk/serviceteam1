@@ -5,7 +5,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 
 const IS = (x={}) => ({
   width:"100%", background:"#fff", border:"1px solid #e2e8f0",
@@ -52,6 +52,20 @@ export default function Auth() {
         role: "pending",
         createdAt: new Date().toISOString(),
       });
+      // Notify all admins about new registration
+      const adminsSnap = await getDocs(query(collection(db,"users"), where("role","==","admin")));
+      for(const adminDoc of adminsSnap.docs) {
+        await setDoc(doc(db,"notifications",`newuser-${cred.user.uid}-${adminDoc.id}`), {
+          type:      "new_user",
+          toUid:     adminDoc.id,
+          toName:    name.trim(),
+          fromName:  name.trim(),
+          caseTitle: "",
+          note:      email.toLowerCase(),
+          createdAt: new Date().toISOString(),
+          read:      false,
+        });
+      }
     } catch (err) {
       setError(errMsg(err.code));
     }
