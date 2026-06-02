@@ -440,6 +440,14 @@ export default function App({ currentUser, onSignOut }) {
     return()=>{u1();u2();u3();u4();};
   },[]);
 
+  // Close notif dropdown on outside click
+  useEffect(()=>{
+    if(!notifOpen) return;
+    const handler = ()=>setNotifOpen(false);
+    document.addEventListener("click", handler);
+    return ()=>document.removeEventListener("click", handler);
+  },[notifOpen]);
+
   const activeProj = projects.find(p=>p.id===view)||null;
 
   const visibleCases = cases.filter(c=>{
@@ -534,13 +542,7 @@ export default function App({ currentUser, onSignOut }) {
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   const unreadCount = notifications.filter(n=>!n.read).length;
 
-  // Close notif on outside click
-  useEffect(()=>{
-    if(!notifOpen) return;
-    const handler = ()=>setNotifOpen(false);
-    document.addEventListener("click", handler);
-    return ()=>document.removeEventListener("click", handler);
-  },[notifOpen]);
+
 
 
   return (
