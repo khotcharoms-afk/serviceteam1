@@ -476,6 +476,16 @@ export default function App({ currentUser, onSignOut }) {
   }
   async function deleteCase(id){ await deleteDoc(doc(db,"cases",id)); setDelCase(null); setDetailCase(null); }
 
+  async function markNotifRead(nid) {
+    await setDoc(doc(db,"notifications",nid),{ read:true },{ merge:true });
+  }
+
+  async function markAllRead() {
+    for(const n of notifications.filter(x=>!x.read)) {
+      await setDoc(doc(db,"notifications",n.id),{ read:true },{ merge:true });
+    }
+  }
+
   async function saveUpdate(updated) {
     await setDoc(doc(db,"cases",updated.id), updated);
     setUpdateCase(null);
