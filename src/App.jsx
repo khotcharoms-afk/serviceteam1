@@ -41,6 +41,10 @@ export default function App({ currentUser, onSignOut }) {
   const [caseForm,setCaseForm]     = useState(emptyCase);
   const [newProjName,setNewProjName] = useState("");
   const [newProjColor,setNewProjColor] = useState(COLOR_OPTS[0]);
+  const [newProjWarranty,setNewProjWarranty] = useState("");
+  const [newProjLease,setNewProjLease] = useState("");
+  const [newProjSites,setNewProjSites] = useState([]);
+  const [newSiteInput,setNewSiteInput] = useState("");
 
   useEffect(()=>{
     const errHandler = (e)=>{ console.error("Firestore listener error:", e); setLoading(false); };
@@ -131,11 +135,16 @@ export default function App({ currentUser, onSignOut }) {
     setHandoverCase(null);
   }
 
-  function openAddProj(){ setEditProjId(null); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjName(p.name); setNewProjColor(p.color); setProjModal(true); }
+  function openAddProj(){ setEditProjId(null); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setNewSiteInput(""); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites(p.sites||[]); setNewSiteInput(""); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name) return;
-    await setDoc(doc(db,"projects",editProjId||Date.now().toString()),{name,color:newProjColor});
+    await setDoc(doc(db,"projects",editProjId||Date.now().toString()),{
+      name, color:newProjColor,
+      warrantyEnd:newProjWarranty||null,
+      leaseEnd:newProjLease||null,
+      sites:newProjSites
+    });
     setNewProjName(""); setEditProjId(null); setProjModal(false);
   }
   async function removeProj(pid){
@@ -575,83 +584,40 @@ export default function App({ currentUser, onSignOut }) {
               onChange={e=>setCaseForm(f=>({...f,date:e.target.value}))}/>
           </Field>
           </div>
-        <Field label="วันหมดประกัน (ถ้ามี)">
-          <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
-            <input type="date" style={IS({ flex:1,minWidth:160 })} value={caseForm.warrantyEnd||""}
-              onChange={e=>setCaseForm(f=>({...f,warrantyEnd:e.target.value}))}/>
-            <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
-              {[
-                {label:"+1 ปี", y:1},{label:"+2 ปี", y:2},
-                {label:"+3 ปี", y:3},{label:"+5 ปี", y:5},
-              ].map(btn=>{
-                const base = caseForm.date||today();
-                const d = new Date(base); d.setFullYear(d.getFullYear()+btn.y);
-                const val = d.toISOString().slice(0,10);
-                const active = caseForm.warrantyEnd===val;
-                return (
-                  <button key={btn.label} type="button"
-                    onClick={()=>setCaseForm(f=>({...f,warrantyEnd:val}))}
-                    style={{ background:active?"#2563eb":"#f1f5f9",
-                      border:`1px solid ${active?"#2563eb":"#e2e8f0"}`,
-                      color:active?"#fff":"#475569",borderRadius:7,
-                      padding:"6px 12px",fontSize:12,cursor:"pointer",
-                      fontFamily:"inherit",fontWeight:600,whiteSpace:"nowrap" }}>
-                    {btn.label}
-                  </button>
-                );
-              })}
-              <button type="button" onClick={()=>setCaseForm(f=>({...f,warrantyEnd:""}))}
-                style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-                  borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
-                ล้าง
-              </button>
+        {/* Auto-fill warranty & lease from selected project */}
+        {(()=>{
+          const proj = projects.find(p=>p.id===caseForm.projectId);
+          if(!proj) return null;
+          const wd = daysLeft(proj.warrantyEnd);
+          const ld = daysLeft(proj.leaseEnd);
+          return (
+            <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
+              padding:"12px 14px",marginBottom:14 }}>
+              <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,
+                textTransform:"uppercase",marginBottom:8 }}>ข้อมูลจากโครงการ (อัตโนมัติ)</div>
+              <div style={{ display:"flex",gap:16,flexWrap:"wrap" }}>
+                <div>
+                  <div style={{ fontSize:10,color:"#94a3b8",marginBottom:2 }}>🛡 ประกัน</div>
+                  {proj.warrantyEnd ? (
+                    <div style={{ fontSize:12,fontWeight:600,
+                      color:wd<0?"#ef4444":wd<=90?"#f59e0b":"#3b82f6" }}>
+                      {fmtDate(proj.warrantyEnd)} {wd<0?"(หมดแล้ว)":`(เหลือ ${wd} วัน)`}
+                    </div>
+                  ) : <div style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มี</div>}
+                </div>
+                <div>
+                  <div style={{ fontSize:10,color:"#94a3b8",marginBottom:2 }}>📋 สัญญาเช่า</div>
+                  {proj.leaseEnd ? (
+                    <div style={{ fontSize:12,fontWeight:600,
+                      color:ld<0?"#ef4444":ld<=90?"#f59e0b":"#8b5cf6" }}>
+                      {fmtDate(proj.leaseEnd)} {ld<0?"(หมดแล้ว)":`(เหลือ ${ld} วัน)`}
+                    </div>
+                  ) : <div style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มี</div>}
+                </div>
+              </div>
             </div>
-          </div>
-          {caseForm.warrantyEnd && (()=>{
-            const days=daysLeft(caseForm.warrantyEnd);
-            const col=days<0?"#ef4444":days<=90?"#f59e0b":"#10b981";
-            return <div style={{ marginTop:6,fontSize:12,color:col,fontWeight:600 }}>
-              📅 {fmtDate(caseForm.warrantyEnd)} • {days<0?`หมดไปแล้ว ${Math.abs(days)} วัน`:days===0?"หมดวันนี้":`เหลือ ${days} วัน (${(days/365).toFixed(1)} ปี)`}
-            </div>;
-          })()}
-        </Field>
-        <Field label="วันหมดสัญญาเช่า (ถ้ามี)">
-          <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
-            <input type="date" style={IS({ flex:1,minWidth:160 })} value={caseForm.leaseEnd||""}
-              onChange={e=>setCaseForm(f=>({...f,leaseEnd:e.target.value}))}/>
-            <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
-              {[{label:"+1 ปี",y:1},{label:"+2 ปี",y:2},{label:"+3 ปี",y:3},{label:"+5 ปี",y:5}].map(btn=>{
-                const base=caseForm.date||today();
-                const d=new Date(base); d.setFullYear(d.getFullYear()+btn.y);
-                const val=d.toISOString().slice(0,10);
-                const active=caseForm.leaseEnd===val;
-                return (
-                  <button key={btn.label} type="button"
-                    onClick={()=>setCaseForm(f=>({...f,leaseEnd:val}))}
-                    style={{ background:active?"#8b5cf6":"#f1f5f9",
-                      border:`1px solid ${active?"#8b5cf6":"#e2e8f0"}`,
-                      color:active?"#fff":"#475569",borderRadius:7,
-                      padding:"6px 12px",fontSize:12,cursor:"pointer",
-                      fontFamily:"inherit",fontWeight:600,whiteSpace:"nowrap" }}>
-                    {btn.label}
-                  </button>
-                );
-              })}
-              <button type="button" onClick={()=>setCaseForm(f=>({...f,leaseEnd:""}))}
-                style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-                  borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
-                ล้าง
-              </button>
-            </div>
-          </div>
-          {caseForm.leaseEnd&&(()=>{
-            const days=daysLeft(caseForm.leaseEnd);
-            const col=days<0?"#ef4444":days<=90?"#f59e0b":"#8b5cf6";
-            return <div style={{ marginTop:6,fontSize:12,color:col,fontWeight:600 }}>
-              📋 {fmtDate(caseForm.leaseEnd)} • {days<0?`หมดไปแล้ว ${Math.abs(days)} วัน`:days===0?"หมดวันนี้":`เหลือ ${days} วัน (${(days/365).toFixed(1)} ปี)`}
-            </div>;
-          })()}
-        </Field>
+          );
+        })()}
         <Field label="สถานะ">
           <select style={IS({ cursor:"pointer" })} value={caseForm.status}
             onChange={e=>setCaseForm(f=>({...f,status:e.target.value}))}>
@@ -802,6 +768,76 @@ export default function App({ currentUser, onSignOut }) {
             ))}
           </div>
         </Field>
+
+        {/* Warranty */}
+        <Field label="วันหมดประกัน (ถ้ามี)">
+          <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
+            <input type="date" style={IS({ flex:1,minWidth:140 })} value={newProjWarranty}
+              onChange={e=>setNewProjWarranty(e.target.value)}/>
+            {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b=>{
+              const d=new Date(); d.setFullYear(d.getFullYear()+b.y);
+              const v=d.toISOString().slice(0,10);
+              return <button key={b.l} type="button" onClick={()=>setNewProjWarranty(v)}
+                style={{ background:newProjWarranty===v?"#3b82f6":"#f1f5f9",
+                  border:"1px solid #e2e8f0",color:newProjWarranty===v?"#fff":"#475569",
+                  borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>{b.l}</button>;
+            })}
+            {newProjWarranty&&<button type="button" onClick={()=>setNewProjWarranty("")}
+              style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                borderRadius:7,padding:"6px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ล้าง</button>}
+          </div>
+          {newProjWarranty&&<div style={{ fontSize:11,color:"#3b82f6",marginTop:4,fontWeight:600 }}>
+            🛡 {fmtDate(newProjWarranty)} (เหลือ {daysLeft(newProjWarranty)} วัน)
+          </div>}
+        </Field>
+
+        {/* Lease */}
+        <Field label="วันหมดสัญญาเช่า (ถ้ามี)">
+          <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
+            <input type="date" style={IS({ flex:1,minWidth:140 })} value={newProjLease}
+              onChange={e=>setNewProjLease(e.target.value)}/>
+            {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b=>{
+              const d=new Date(); d.setFullYear(d.getFullYear()+b.y);
+              const v=d.toISOString().slice(0,10);
+              return <button key={b.l} type="button" onClick={()=>setNewProjLease(v)}
+                style={{ background:newProjLease===v?"#8b5cf6":"#f1f5f9",
+                  border:"1px solid #e2e8f0",color:newProjLease===v?"#fff":"#475569",
+                  borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>{b.l}</button>;
+            })}
+            {newProjLease&&<button type="button" onClick={()=>setNewProjLease("")}
+              style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                borderRadius:7,padding:"6px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ล้าง</button>}
+          </div>
+          {newProjLease&&<div style={{ fontSize:11,color:"#8b5cf6",marginTop:4,fontWeight:600 }}>
+            📋 {fmtDate(newProjLease)} (เหลือ {daysLeft(newProjLease)} วัน)
+          </div>}
+        </Field>
+
+        {/* Sites */}
+        <Field label="ไซต์ย่อย">
+          <div style={{ display:"flex",gap:8,marginBottom:8 }}>
+            <input style={IS({ flex:1 })} value={newSiteInput} placeholder="ชื่อไซต์ เช่น อาคาร A, สาขานนทบุรี"
+              onChange={e=>setNewSiteInput(e.target.value)}
+              onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); if(newSiteInput.trim()){ setNewProjSites(s=>[...s,newSiteInput.trim()]); setNewSiteInput(""); }}}}/>
+            <button type="button" onClick={()=>{ if(newSiteInput.trim()){ setNewProjSites(s=>[...s,newSiteInput.trim()]); setNewSiteInput(""); }}}
+              style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
+                padding:"0 16px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,whiteSpace:"nowrap" }}>+ เพิ่ม</button>
+          </div>
+          <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
+            {newProjSites.map((s,i)=>(
+              <span key={i} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
+                color:"#2563eb",borderRadius:20,padding:"3px 10px",fontSize:12,
+                fontWeight:600,display:"inline-flex",alignItems:"center",gap:6 }}>
+                📍 {s}
+                <button type="button" onClick={()=>setNewProjSites(p=>p.filter((_,j)=>j!==i))}
+                  style={{ background:"none",border:"none",color:"#93c5fd",cursor:"pointer",
+                    fontSize:13,padding:0,lineHeight:1 }}>×</button>
+              </span>
+            ))}
+            {newProjSites.length===0&&<span style={{ fontSize:12,color:"#cbd5e1" }}>ยังไม่มีไซต์</span>}
+          </div>
+        </Field>
+
         <div style={{ display:"flex",gap:10,marginTop:4 }}>
           <GhostBtn onClick={()=>setProjModal(false)}>ยกเลิก</GhostBtn>
           <PrimaryBtn onClick={submitProj} full>{editProjId?"บันทึก":"สร้างโครงการ"}</PrimaryBtn>
