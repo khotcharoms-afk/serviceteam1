@@ -46,6 +46,9 @@ export default function App({ currentUser, onSignOut }) {
   const [newProjSites,setNewProjSites] = useState([]);
   const [newSiteInput,setNewSiteInput] = useState("");
 
+  const [toast,setToast]   = useState(null);   // {msg, type:"error"|"success"}
+  const [saving,setSaving] = useState(false);   // กันกดบันทึกซ้ำขณะกำลังเขียน
+
   useEffect(()=>{
     const errHandler = (e)=>{ console.error("Firestore listener error:", e); setLoading(false); };
     const u1=onSnapshot(collection(db,"projects"),snap=>{ setProjects(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); }, errHandler);
@@ -68,6 +71,14 @@ export default function App({ currentUser, onSignOut }) {
     return ()=>document.removeEventListener("click", handler);
   },[notifOpen]);
 
+  // Toast auto-dismiss
+  useEffect(()=>{
+    if(!toast) return;
+    const t=setTimeout(()=>setToast(null), toast.type==="error"?4500:2500);
+    return ()=>clearTimeout(t);
+  },[toast]);
+  function showToast(msg, type="error"){ setToast({ msg, type }); }
+
   const activeProj = projects.find(p=>p.id===view)||null;
 
   const visibleCases = cases.filter(c=>{
@@ -84,87 +95,150 @@ export default function App({ currentUser, onSignOut }) {
   function openEditCase(c){ setCaseForm({...c}); setEditCase(c.id); setCaseModal(true); }
   async function submitCase(){
     if(!caseForm.title||!caseForm.projectId) return;
-    const proj = projects.find(p=>p.id===caseForm.projectId);
-    const { siteOther, ...rest } = caseForm;
-    const payload = {
-      ...rest,
-      warrantyEnd: proj?.warrantyEnd||null,
-      leaseEnd:    proj?.leaseEnd||null,
-      site: caseForm.site==="__other__" ? "" : caseForm.site,
-    };
-    await setDoc(doc(db,"cases",editCase||Date.now().toString()),payload);
-    setCaseModal(false); setEditCase(null);
+    if(saving) return;
+    setSaving(true);
+    try {
+      const proj = projects.find(p=>p.id===caseForm.projectId);
+      const { siteOther, ...rest } = caseForm;
+      const payload = {
+        ...rest,
+        warrantyEnd: proj?.warrantyEnd||null,
+        leaseEnd:    proj?.leaseEnd||null,
+        site: caseForm.site==="__other__" ? "" : caseForm.site,
+      };
+      await setDoc(doc(db,"cases",editCase||Date.now().toString()),payload);
+      setCaseModal(false); setEditCase(null);
+      showToast(editCase?"แก้ไขเคสเรียบร้อย":"บันทึกเคสเรียบร้อย","success");
+    } catch(e) {
+      console.error("submitCase error:",e);
+      showToast("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
+    } finally {
+      setSaving(false);
+    }
   }
-  async function deleteCase(id){ await deleteDoc(doc(db,"cases",id)); setDelCase(null); setDetailCase(null); }
+  async function deleteCase(id){
+    try {
+      await deleteDoc(doc(db,"cases",id));
+      setDelCase(null); setDetailCase(null);
+      showToast("ลบเคสแล้ว","success");
+    } catch(e) {
+      console.error("deleteCase error:",e);
+      showToast("ลบไม่สำเร็จ ลองใหม่อีกครั้ง");
+    }
+  }
 
   async function markNotifRead(nid) {
-    await setDoc(doc(db,"notifications",nid),{ read:true },{ merge:true });
+    try { await setDoc(doc(db,"notifications",nid),{ read:true },{ merge:true }); }
+    catch(e){ console.error("markNotifRead error:",e); }
   }
 
   async function markAllRead() {
-    for(const n of notifications.filter(x=>!x.read)) {
-      await setDoc(doc(db,"notifications",n.id),{ read:true },{ merge:true });
+    try {
+      const batch = writeBatch(db);
+      notifications.filter(x=>!x.read).forEach(n=>{
+        batch.set(doc(db,"notifications",n.id),{ read:true },{ merge:true });
+      });
+      await batch.commit();
+    } catch(e) {
+      console.error("markAllRead error:",e);
+      showToast("อ่านทั้งหมดไม่สำเร็จ ลองใหม่");
     }
   }
 
   async function saveUpdate(updated) {
-    await setDoc(doc(db,"cases",updated.id), updated);
-    setUpdateCase(null);
+    if(saving) return;
+    setSaving(true);
+    try {
+      await setDoc(doc(db,"cases",updated.id), updated);
+      setUpdateCase(null);
+      showToast("อัปเดตความคืบหน้าแล้ว","success");
+    } catch(e) {
+      console.error("saveUpdate error:",e);
+      showToast("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveHandover(updated) {
-    await setDoc(doc(db,"cases",updated.id), updated);
-    // Create notification for the recipient
-    const log = updated.handoverLog||[];
-    const latest = log[log.length-1];
-    if(latest) {
-      const toUser = users.find(u=>u.name===latest.to);
-      if(toUser) {
-        await setDoc(doc(db,"notifications",Date.now().toString()), {
-          type:      "handover",
-          toUid:     toUser.id,
-          toName:    toUser.name,
-          fromName:  latest.from,
-          caseTitle: updated.title,
-          caseId:    updated.id,
-          note:      latest.note||"",
-          createdAt: new Date().toISOString(),
-          read:      false,
-        });
+    if(saving) return;
+    setSaving(true);
+    try {
+      await setDoc(doc(db,"cases",updated.id), updated);
+      // Create notification for the recipient
+      const log = updated.handoverLog||[];
+      const latest = log[log.length-1];
+      if(latest) {
+        const toUser = users.find(u=>u.name===latest.to);
+        if(toUser) {
+          await setDoc(doc(db,"notifications",Date.now().toString()), {
+            type:      "handover",
+            toUid:     toUser.id,
+            toName:    toUser.name,
+            fromName:  latest.from,
+            caseTitle: updated.title,
+            caseId:    updated.id,
+            note:      latest.note||"",
+            createdAt: new Date().toISOString(),
+            read:      false,
+          });
+        }
       }
+      setHandoverCase(null);
+      showToast("ส่งต่องานเรียบร้อย","success");
+    } catch(e) {
+      console.error("saveHandover error:",e);
+      showToast("ส่งต่องานไม่สำเร็จ ลองใหม่อีกครั้ง");
+    } finally {
+      setSaving(false);
     }
-    setHandoverCase(null);
   }
 
   function openAddProj(){ setEditProjId(null); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setNewSiteInput(""); setProjModal(true); }
   function openEditProj(p){ setEditProjId(p.id); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites(p.sites||[]); setNewSiteInput(""); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name) return;
-    const pid = editProjId||Date.now().toString();
-    const warrantyEnd = newProjWarranty||null;
-    const leaseEnd    = newProjLease||null;
-    const batch = writeBatch(db);
-    batch.set(doc(db,"projects",pid),{
-      name, color:newProjColor,
-      warrantyEnd, leaseEnd,
-      sites:newProjSites
-    });
-    // แก้ไขโครงการที่มีอยู่ → sync ประกัน/เช่าของทุกเคสในโครงการให้ตรงกัน
-    if(editProjId){
-      cases.filter(c=>c.projectId===editProjId).forEach(c=>{
-        batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd },{ merge:true });
+    if(saving) return;
+    setSaving(true);
+    try {
+      const pid = editProjId||Date.now().toString();
+      const warrantyEnd = newProjWarranty||null;
+      const leaseEnd    = newProjLease||null;
+      const batch = writeBatch(db);
+      batch.set(doc(db,"projects",pid),{
+        name, color:newProjColor,
+        warrantyEnd, leaseEnd,
+        sites:newProjSites
       });
+      // แก้ไขโครงการที่มีอยู่ → sync ประกัน/เช่าของทุกเคสในโครงการให้ตรงกัน
+      if(editProjId){
+        cases.filter(c=>c.projectId===editProjId).forEach(c=>{
+          batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd },{ merge:true });
+        });
+      }
+      await batch.commit();
+      setNewProjName(""); setEditProjId(null); setProjModal(false);
+      showToast(editProjId?"บันทึกโครงการแล้ว":"สร้างโครงการแล้ว","success");
+    } catch(e) {
+      console.error("submitProj error:",e);
+      showToast("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
+    } finally {
+      setSaving(false);
     }
-    await batch.commit();
-    setNewProjName(""); setEditProjId(null); setProjModal(false);
   }
   async function removeProj(pid){
-    const batch=writeBatch(db);
-    batch.delete(doc(db,"projects",pid));
-    cases.filter(c=>c.projectId===pid).forEach(c=>batch.delete(doc(db,"cases",c.id)));
-    await batch.commit();
-    if(view===pid) setView("overview");
-    setDelProj(null);
+    try {
+      const batch=writeBatch(db);
+      batch.delete(doc(db,"projects",pid));
+      cases.filter(c=>c.projectId===pid).forEach(c=>batch.delete(doc(db,"cases",c.id)));
+      await batch.commit();
+      if(view===pid) setView("overview");
+      setDelProj(null);
+      showToast("ลบโครงการแล้ว","success");
+    } catch(e) {
+      console.error("removeProj error:",e);
+      showToast("ลบโครงการไม่สำเร็จ ลองใหม่อีกครั้ง");
+    }
   }
 
   const scopeCases = view==="overview"?cases:cases.filter(c=>c.projectId===view);
@@ -656,7 +730,7 @@ export default function App({ currentUser, onSignOut }) {
         </Field>
         <div style={{ display:"flex",gap:10,marginTop:4 }}>
           <GhostBtn onClick={()=>setCaseModal(false)}>ยกเลิก</GhostBtn>
-          <PrimaryBtn onClick={submitCase} full>{editCase?"บันทึกการแก้ไข":"บันทึกเคส"}</PrimaryBtn>
+          <PrimaryBtn onClick={submitCase} full>{saving?"กำลังบันทึก…":(editCase?"บันทึกการแก้ไข":"บันทึกเคส")}</PrimaryBtn>
         </div>
       </Modal>
 
@@ -865,7 +939,7 @@ export default function App({ currentUser, onSignOut }) {
 
         <div style={{ display:"flex",gap:10,marginTop:4 }}>
           <GhostBtn onClick={()=>setProjModal(false)}>ยกเลิก</GhostBtn>
-          <PrimaryBtn onClick={submitProj} full>{editProjId?"บันทึก":"สร้างโครงการ"}</PrimaryBtn>
+          <PrimaryBtn onClick={submitProj} full>{saving?"กำลังบันทึก…":(editProjId?"บันทึก":"สร้างโครงการ")}</PrimaryBtn>
         </div>
       </Modal>
 
@@ -967,6 +1041,22 @@ export default function App({ currentUser, onSignOut }) {
             borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14 }}>ลบโครงการ</button>
         </div>
       </Modal>
+
+      {/* ── Toast ── */}
+      {toast&&(
+        <div style={{ position:"fixed",left:"50%",bottom:24,transform:"translateX(-50%)",
+          zIndex:9999,maxWidth:"90vw",pointerEvents:"none" }}>
+          <div style={{ display:"flex",alignItems:"center",gap:10,
+            background:toast.type==="error"?"#fef2f2":"#f0fdf4",
+            border:`1px solid ${toast.type==="error"?"#fecaca":"#bbf7d0"}`,
+            color:toast.type==="error"?"#b91c1c":"#15803d",
+            borderRadius:12,padding:"12px 18px",fontSize:14,fontWeight:600,
+            boxShadow:"0 8px 24px rgba(0,0,0,.12)",fontFamily:"inherit" }}>
+            <span style={{ fontSize:16 }}>{toast.type==="error"?"⚠️":"✅"}</span>
+            <span>{toast.msg}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
