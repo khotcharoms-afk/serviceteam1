@@ -78,7 +78,7 @@ export default function App({ currentUser, onSignOut }) {
     if(filterTech!=="all" && c.tech!==filterTech) return false;
     const q=search.toLowerCase();
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
-  });
+  }).sort((a,b)=>Number(b.id)-Number(a.id)); // เคสสร้างล่าสุดอยู่บนสุด
 
   function openAddCase(){ const pid=view!=="overview"?view:(projects[0]?.id||""); setCaseForm({...emptyCase,projectId:pid,tech:currentUser?.name||""}); setEditCase(null); setCaseModal(true); }
   function openEditCase(c){ setCaseForm({...c}); setEditCase(c.id); setCaseModal(true); }
