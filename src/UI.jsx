@@ -64,12 +64,12 @@ export function PrimaryBtn({ onClick, children, full, style = {} }) {
   );
 }
 
-export function GhostBtn({ onClick, children }) {
+export function GhostBtn({ onClick, children, full, style = {} }) {
   return (
     <button onClick={onClick}
       style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
         borderRadius:10,padding:"12px 20px",fontSize:14,fontWeight:600,
-        cursor:"pointer",fontFamily:"inherit" }}
+        cursor:"pointer",fontFamily:"inherit",width:full?"100%":"auto",...style }}
       onMouseEnter={e=>e.currentTarget.style.background="#f1f5f9"}
       onMouseLeave={e=>e.currentTarget.style.background="#f8fafc"}>
       {children}
