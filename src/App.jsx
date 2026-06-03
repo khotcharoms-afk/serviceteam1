@@ -1026,7 +1026,7 @@ export default function App({ currentUser, onSignOut }) {
 
       {/* ── Toast ── */}
       {toast&&(
-        <div style={{ position:"fixed",left:"50%",bottom:24,transform:"translateX(-50%)",
+        <div style={{ position:"fixed",left:"50%",top:18,transform:"translateX(-50%)",
           zIndex:9999,maxWidth:"90vw",pointerEvents:"none" }}>
           <div style={{ display:"flex",alignItems:"center",gap:10,
             background:toast.type==="error"?"#fef2f2":"#f0fdf4",
