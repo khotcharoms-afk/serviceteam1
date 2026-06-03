@@ -605,60 +605,7 @@ export default function App({ currentUser, onSignOut }) {
                 </span>
               )}
             </button>
-            {/* Notification dropdown */}
-            {notifOpen&&(
-              <div style={{ position:"absolute",right:0,top:"calc(100% + 8px)",width:320,
-                background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,
-                boxShadow:"0 8px 32px rgba(0,0,0,.12)",zIndex:100,overflow:"hidden" }}
-                onClick={e=>e.stopPropagation()}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
-                  padding:"12px 14px",borderBottom:"1px solid #f1f5f9" }}>
-                  <span style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>🔔 การแจ้งเตือน</span>
-                  {unreadCount>0&&(
-                    <button onClick={markAllRead}
-                      style={{ background:"none",border:"none",color:"#2563eb",fontSize:11,
-                        cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
-                      อ่านทั้งหมด
-                    </button>
-                  )}
-                </div>
-                <div style={{ maxHeight:360,overflowY:"auto" }}>
-                  {notifications.length===0?(
-                    <div style={{ padding:"32px 14px",textAlign:"center",color:"#cbd5e1",fontSize:13 }}>
-                      ไม่มีการแจ้งเตือน
-                    </div>
-                  ):notifications.map(n=>(
-                    <div key={n.id} onClick={()=>{
-                        markNotifRead(n.id);
-                        setNotifOpen(false);
-                        if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}
-                      }}
-                      style={{ padding:"12px 14px",borderBottom:"1px solid #f8fafc",
-                        background:n.read?"#fff":"#eff6ff",cursor:"pointer",
-                        transition:"background .15s" }}>
-                      <div style={{ display:"flex",gap:8,alignItems:"flex-start" }}>
-                        <span style={{ fontSize:18,flexShrink:0 }}>
-                          {n.type==="handover"?"📤":"👤"}
-                        </span>
-                        <div style={{ flex:1,minWidth:0 }}>
-                          <div style={{ fontSize:13,fontWeight:n.read?400:700,color:"#0f172a",lineHeight:1.4 }}>
-                            {n.type==="handover"
-                              ? <>{n.fromName} ส่งงาน <span style={{ color:"#2563eb" }}>"{n.caseTitle}"</span> ให้คุณ</>
-                              : <>มีผู้ใช้ใหม่สมัครเข้าระบบ: <span style={{ color:"#7c3aed" }}>{n.toName}</span></>
-                            }
-                          </div>
-                          {n.note&&<div style={{ fontSize:11,color:"#64748b",marginTop:3 }}>"{n.note}"</div>}
-                          <div style={{ fontSize:10,color:"#94a3b8",marginTop:4 }}>
-                            {n.createdAt?new Date(n.createdAt).toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"}):""}
-                          </div>
-                        </div>
-                        {!n.read&&<span style={{ width:8,height:8,borderRadius:"50%",background:"#2563eb",flexShrink:0,marginTop:4 }}/>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
           </div>
           <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",
             borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -1218,6 +1165,85 @@ export default function App({ currentUser, onSignOut }) {
       </Modal>
 
       {/* ── Delete Confirms ── */}
+      {/* ── Notification Modal ── */}
+      {notifOpen&&(
+        <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(15,23,42,.55)",
+          backdropFilter:"blur(4px)",display:"flex",alignItems:"flex-end",justifyContent:"center",
+          padding:0 }}
+          onClick={()=>setNotifOpen(false)}>
+          <div style={{ background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:600,
+            height:"75vh",display:"flex",flexDirection:"column",
+            boxShadow:"0 -8px 40px rgba(0,0,0,.2)" }}
+            onClick={e=>e.stopPropagation()}>
+            {/* Handle */}
+            <div style={{ width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"12px auto 0" }}/>
+            {/* Header */}
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"14px 18px 12px",borderBottom:"1px solid #f1f5f9",flexShrink:0 }}>
+              <span style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>🔔 การแจ้งเตือน
+                {unreadCount>0&&<span style={{ background:"#ef4444",color:"#fff",borderRadius:20,
+                  padding:"1px 7px",fontSize:11,fontWeight:700,marginLeft:8 }}>{unreadCount}</span>}
+              </span>
+              <div style={{ display:"flex",gap:10,alignItems:"center" }}>
+                {unreadCount>0&&(
+                  <button onClick={markAllRead}
+                    style={{ background:"none",border:"none",color:"#2563eb",fontSize:12,
+                      cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
+                    อ่านทั้งหมด
+                  </button>
+                )}
+                <button onClick={()=>setNotifOpen(false)}
+                  style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+                    width:28,height:28,borderRadius:8,fontSize:13,display:"flex",
+                    alignItems:"center",justifyContent:"center" }}>✕</button>
+              </div>
+            </div>
+            {/* List */}
+            <div style={{ overflowY:"auto",flex:1 }}>
+              {notifications.length===0?(
+                <div style={{ padding:"48px 18px",textAlign:"center",color:"#cbd5e1",fontSize:14 }}>
+                  <div style={{ fontSize:32,marginBottom:8 }}>🔔</div>
+                  ไม่มีการแจ้งเตือน
+                </div>
+              ):notifications.map(n=>(
+                <div key={n.id} onClick={()=>{
+                    markNotifRead(n.id);
+                    setNotifOpen(false);
+                    if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}
+                  }}
+                  style={{ padding:"14px 18px",borderBottom:"1px solid #f8fafc",
+                    background:n.read?"#fff":"#eff6ff",cursor:"pointer",
+                    transition:"background .15s" }}>
+                  <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
+                    <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
+                      background:n.type==="handover"?"#dbeafe":"#f5f3ff",
+                      display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>
+                      {n.type==="handover"?"📤":"👤"}
+                    </div>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:14,fontWeight:n.read?400:700,color:"#0f172a",lineHeight:1.5 }}>
+                        {n.type==="handover"
+                          ? <>{n.fromName} ส่งงาน <span style={{ color:"#2563eb" }}>"{n.caseTitle}"</span> ให้คุณ</>
+                          : <>มีผู้ใช้ใหม่: <span style={{ color:"#7c3aed",fontWeight:700 }}>{n.toName}</span></>
+                        }
+                      </div>
+                      {n.note&&<div style={{ fontSize:12,color:"#64748b",marginTop:3,
+                        background:"#f8fafc",borderRadius:6,padding:"3px 8px",
+                        display:"inline-block" }}>"{n.note}"</div>}
+                      <div style={{ fontSize:11,color:"#94a3b8",marginTop:4 }}>
+                        {n.createdAt?new Date(n.createdAt).toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"}):""}
+                      </div>
+                    </div>
+                    {!n.read&&<span style={{ width:8,height:8,borderRadius:"50%",
+                      background:"#2563eb",flexShrink:0,marginTop:6 }}/>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <Modal open={!!delCase} onClose={()=>setDelCase(null)} title="ลบเคส?">
         <p style={{ color:"#64748b",fontSize:14,marginBottom:20 }}>เคสนี้จะถูกลบถาวร ยืนยันหรือไม่?</p>
         <div style={{ display:"flex",gap:10 }}>
