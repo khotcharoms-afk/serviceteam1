@@ -140,12 +140,22 @@ export default function App({ currentUser, onSignOut }) {
   function openEditProj(p){ setEditProjId(p.id); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites(p.sites||[]); setNewSiteInput(""); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name) return;
-    await setDoc(doc(db,"projects",editProjId||Date.now().toString()),{
+    const pid = editProjId||Date.now().toString();
+    const warrantyEnd = newProjWarranty||null;
+    const leaseEnd    = newProjLease||null;
+    const batch = writeBatch(db);
+    batch.set(doc(db,"projects",pid),{
       name, color:newProjColor,
-      warrantyEnd:newProjWarranty||null,
-      leaseEnd:newProjLease||null,
+      warrantyEnd, leaseEnd,
       sites:newProjSites
     });
+    // แก้ไขโครงการที่มีอยู่ → sync ประกัน/เช่าของทุกเคสในโครงการให้ตรงกัน
+    if(editProjId){
+      cases.filter(c=>c.projectId===editProjId).forEach(c=>{
+        batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd },{ merge:true });
+      });
+    }
+    await batch.commit();
     setNewProjName(""); setEditProjId(null); setProjModal(false);
   }
   async function removeProj(pid){
