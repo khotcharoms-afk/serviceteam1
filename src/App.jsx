@@ -43,15 +43,16 @@ export default function App({ currentUser, onSignOut }) {
   const [newProjColor,setNewProjColor] = useState(COLOR_OPTS[0]);
 
   useEffect(()=>{
-    const u1=onSnapshot(collection(db,"projects"),snap=>{ setProjects(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); });
-    const u2=onSnapshot(collection(db,"cases"),snap=>{ setCases(snap.docs.map(d=>({id:d.id,...d.data()}))); });
-    const u3=onSnapshot(collection(db,"users"),snap=>{ setUsers(snap.docs.map(d=>({id:d.id,...d.data()}))); });
+    const errHandler = (e)=>{ console.error("Firestore listener error:", e); setLoading(false); };
+    const u1=onSnapshot(collection(db,"projects"),snap=>{ setProjects(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); }, errHandler);
+    const u2=onSnapshot(collection(db,"cases"),snap=>{ setCases(snap.docs.map(d=>({id:d.id,...d.data()}))); }, errHandler);
+    const u3=onSnapshot(collection(db,"users"),snap=>{ setUsers(snap.docs.map(d=>({id:d.id,...d.data()}))); }, errHandler);
     const u4=onSnapshot(collection(db,"notifications"),snap=>{
       const all = snap.docs.map(d=>({id:d.id,...d.data()}))
         .filter(n=> n.toUid===auth.currentUser?.uid || (n.type==="new_user" && currentUser?.role==="admin"))
         .sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
       setNotifs(all);
-    });
+    }, errHandler);
     return()=>{u1();u2();u3();u4();};
   },[]);
 
