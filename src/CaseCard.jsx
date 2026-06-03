@@ -1,4 +1,4 @@
-import { daysLeft, fmtDate } from "../utils.js";
+import { daysLeft, fmtDate } from "./utils.js";
 import { WarrantyPill, LeasePill, StatusPill } from "./UI.jsx";
 
 function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate }) {
