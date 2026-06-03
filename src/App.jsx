@@ -85,8 +85,9 @@ export default function App({ currentUser, onSignOut }) {
   async function submitCase(){
     if(!caseForm.title||!caseForm.projectId) return;
     const proj = projects.find(p=>p.id===caseForm.projectId);
+    const { siteOther, ...rest } = caseForm;
     const payload = {
-      ...caseForm,
+      ...rest,
       warrantyEnd: proj?.warrantyEnd||null,
       leaseEnd:    proj?.leaseEnd||null,
       site: caseForm.site==="__other__" ? "" : caseForm.site,
@@ -546,22 +547,36 @@ export default function App({ currentUser, onSignOut }) {
           {(()=>{
             const proj = projects.find(p=>p.id===caseForm.projectId);
             const sites = proj?.sites||[];
-            return sites.length>0 ? (
-              <select style={IS({ cursor:"pointer" })} value={caseForm.site}
-                onChange={e=>setCaseForm(f=>({...f,site:e.target.value}))}>
-                <option value="">— เลือกไซต์ —</option>
-                {sites.map(s=><option key={s} value={s}>{s}</option>)}
-                <option value="__other__">อื่นๆ (พิมพ์เอง)</option>
-              </select>
-            ) : (
-              <input style={IS()} value={caseForm.site} placeholder="เช่น สาขากรุงเทพ, อาคาร A..."
-                onChange={e=>setCaseForm(f=>({...f,site:e.target.value}))}/>
+            // siteMode tracks whether user picked a preset or "other"
+            const isPreset = sites.includes(caseForm.site);
+            const showOther = caseForm.siteOther || (caseForm.site && !isPreset);
+            if (sites.length===0) {
+              return <input style={IS()} value={caseForm.site} placeholder="เช่น สาขากรุงเทพ, อาคาร A..."
+                onChange={e=>setCaseForm(f=>({...f,site:e.target.value}))}/>;
+            }
+            return (
+              <>
+                <select style={IS({ cursor:"pointer" })}
+                  value={showOther ? "__other__" : caseForm.site}
+                  onChange={e=>{
+                    if(e.target.value==="__other__"){
+                      setCaseForm(f=>({...f,site:"",siteOther:true}));
+                    } else {
+                      setCaseForm(f=>({...f,site:e.target.value,siteOther:false}));
+                    }
+                  }}>
+                  <option value="">— เลือกไซต์ —</option>
+                  {sites.map(s=><option key={s} value={s}>{s}</option>)}
+                  <option value="__other__">อื่นๆ (พิมพ์เอง)</option>
+                </select>
+                {showOther&&(
+                  <input style={IS({ marginTop:8 })} value={caseForm.site}
+                    placeholder="พิมพ์ชื่อไซต์..." autoFocus
+                    onChange={e=>setCaseForm(f=>({...f,site:e.target.value,siteOther:true}))}/>
+                )}
+              </>
             );
           })()}
-          {caseForm.site==="__other__"&&(
-            <input style={IS({ marginTop:8 })} placeholder="พิมพ์ชื่อไซต์..."
-              onChange={e=>setCaseForm(f=>({...f,site:e.target.value==="__other__"?"":e.target.value}))}/>
-          )}
         </Field>
         <Field label="ประเภทงาน">
           <select style={IS({ cursor:"pointer" })} value={caseForm.type}
