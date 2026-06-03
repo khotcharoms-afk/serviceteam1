@@ -4,11 +4,18 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import App from "./App.jsx";
 import Auth from "./Auth.jsx";
+import ResetPassword from "./ResetPassword.jsx";
 
 export default function Root() {
   const [authUser, setAuthUser] = useState(undefined);
   const [userDoc,  setUserDoc]  = useState(null);
   const unsubRef = useRef(null);
+
+  // Check URL for Firebase password-reset action
+  const params = new URLSearchParams(window.location.search);
+  const urlMode = params.get("mode");
+  const oobCode = params.get("oobCode");
+  const [showReset, setShowReset] = useState(urlMode === "resetPassword" && !!oobCode);
 
   useEffect(() => {
     let mounted = true;
@@ -49,6 +56,14 @@ export default function Root() {
       if (unsubRef.current) unsubRef.current();
     };
   }, []);
+
+  // Show custom reset password page if URL has reset action
+  if (showReset) {
+    return <ResetPassword oobCode={oobCode} onDone={() => {
+      window.history.replaceState({}, "", window.location.pathname);
+      setShowReset(false);
+    }} />;
+  }
 
   // Loading
   if (authUser === undefined) return (
