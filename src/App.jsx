@@ -5,10 +5,10 @@ import {
   setDoc, deleteDoc, writeBatch
 } from "firebase/firestore";
 import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, SERVICE_TYPES, STATUS_OPTS, IS } from "./utils.js";
-import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./components/UI.jsx";
-import CaseCard from "./components/CaseCard.jsx";
-import HandoverModal from "./modals/HandoverModal.jsx";
-import UpdateLogModal from "./modals/UpdateLogModal.jsx";
+import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
+import CaseCard from "./CaseCard.jsx";
+import HandoverModal from "./HandoverModal.jsx";
+import UpdateLogModal from "./UpdateLogModal.jsx";
 import AdminUsers from "./AdminUsers.jsx";
 
 export default function App({ currentUser, onSignOut }) {
