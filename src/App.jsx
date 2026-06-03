@@ -181,6 +181,34 @@ export default function App({ currentUser, onSignOut }) {
         input::placeholder,textarea::placeholder{color:#cbd5e1}
         select option{background:var(--select-bg,#fff)}
         input:focus,select:focus,textarea:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #dbeafe !important;outline:none}
+
+        /* Notification — desktop: dropdown top-right, mobile: bottom sheet */
+        .notif-backdrop{ position:fixed; inset:0; z-index:500; }
+        .notif-handle{ display:none; }
+        @media (min-width: 768px){
+          .notif-backdrop{ background:transparent; }
+          .notif-panel{
+            position:absolute; top:64px; right:16px; width:360px; max-height:70vh;
+            background:#fff; border:1px solid #e2e8f0; border-radius:14px;
+            box-shadow:0 12px 40px rgba(0,0,0,.15); display:flex; flex-direction:column;
+            overflow:hidden;
+          }
+        }
+        @media (max-width: 767px){
+          .notif-backdrop{
+            background:rgba(15,23,42,.55); backdrop-filter:blur(4px);
+            display:flex; align-items:flex-end; justify-content:center;
+          }
+          .notif-panel{
+            background:#fff; border-radius:20px 20px 0 0; width:100%;
+            height:75vh; display:flex; flex-direction:column;
+            box-shadow:0 -8px 40px rgba(0,0,0,.2);
+          }
+          .notif-handle{
+            display:block; width:40px; height:4px; background:#e2e8f0;
+            border-radius:2px; margin:12px auto 0;
+          }
+        }
       `}</style>
 
       {/* ── TOP NAV (mobile) ── */}
@@ -783,16 +811,10 @@ export default function App({ currentUser, onSignOut }) {
       {/* ── Delete Confirms ── */}
       {/* ── Notification Modal ── */}
       {notifOpen&&(
-        <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(15,23,42,.55)",
-          backdropFilter:"blur(4px)",display:"flex",alignItems:"flex-end",justifyContent:"center",
-          padding:0 }}
-          onClick={()=>setNotifOpen(false)}>
-          <div style={{ background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:600,
-            height:"75vh",display:"flex",flexDirection:"column",
-            boxShadow:"0 -8px 40px rgba(0,0,0,.2)" }}
-            onClick={e=>e.stopPropagation()}>
-            {/* Handle */}
-            <div style={{ width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"12px auto 0" }}/>
+        <div className="notif-backdrop" onClick={()=>setNotifOpen(false)}>
+          <div className="notif-panel" onClick={e=>e.stopPropagation()}>
+            {/* Handle (mobile only) */}
+            <div className="notif-handle"/>
             {/* Header */}
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
               padding:"14px 18px 12px",borderBottom:"1px solid #f1f5f9",flexShrink:0 }}>
