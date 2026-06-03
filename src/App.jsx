@@ -79,6 +79,24 @@ export default function App({ currentUser, onSignOut }) {
   },[toast]);
   function showToast(msg, type="error"){ setToast({ msg, type }); }
 
+  // เขียน Firestore แบบทนออฟไลน์:
+  // - สำเร็จเร็ว (ออนไลน์) → toast เขียวตาม successMsg
+  // - error จริงภายใน 4 วิ → toast แดง, คืน false (ไม่ปิด modal)
+  // - เกิน 4 วิยังไม่ยืนยัน (ออฟไลน์/เน็ตช้า) → ถือว่าคิวไว้แล้ว, ปิด modal ได้, sync เองเมื่อต่อเน็ต
+  async function commitWrite(promise, successMsg) {
+    let timer;
+    const settled = promise.then(()=>"ok", (e)=>{ console.error("write error:", e); return "err"; });
+    const timeout = new Promise(res=>{ timer=setTimeout(()=>res("queued"), 4000); });
+    const r = await Promise.race([settled, timeout]);
+    clearTimeout(timer);
+    if(r==="ok"){ showToast(successMsg, "success"); return true; }
+    if(r==="err"){ showToast("ทำรายการไม่สำเร็จ ตรวจสอบแล้วลองใหม่"); return false; }
+    // queued: ออฟไลน์/ช้า — แจ้งว่าเก็บในเครื่องแล้ว แล้วตามผลจริงทีหลัง
+    showToast("บันทึกในเครื่องแล้ว จะ sync อัตโนมัติเมื่อต่อเน็ต", "success");
+    settled.then(res=>{ if(res==="err") showToast("บางรายการ sync ไม่สำเร็จ ลองเปิดแอปใหม่"); });
+    return true;
+  }
+
   const activeProj = projects.find(p=>p.id===view)||null;
 
   const visibleCases = cases.filter(c=>{
@@ -97,34 +115,24 @@ export default function App({ currentUser, onSignOut }) {
     if(!caseForm.title||!caseForm.projectId) return;
     if(saving) return;
     setSaving(true);
-    try {
-      const proj = projects.find(p=>p.id===caseForm.projectId);
-      const { siteOther, ...rest } = caseForm;
-      const payload = {
-        ...rest,
-        warrantyEnd: proj?.warrantyEnd||null,
-        leaseEnd:    proj?.leaseEnd||null,
-        site: caseForm.site==="__other__" ? "" : caseForm.site,
-      };
-      await setDoc(doc(db,"cases",editCase||Date.now().toString()),payload);
-      setCaseModal(false); setEditCase(null);
-      showToast(editCase?"แก้ไขเคสเรียบร้อย":"บันทึกเคสเรียบร้อย","success");
-    } catch(e) {
-      console.error("submitCase error:",e);
-      showToast("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
-    } finally {
-      setSaving(false);
-    }
+    const proj = projects.find(p=>p.id===caseForm.projectId);
+    const { siteOther, ...rest } = caseForm;
+    const payload = {
+      ...rest,
+      warrantyEnd: proj?.warrantyEnd||null,
+      leaseEnd:    proj?.leaseEnd||null,
+      site: caseForm.site==="__other__" ? "" : caseForm.site,
+    };
+    const ok = await commitWrite(
+      setDoc(doc(db,"cases",editCase||Date.now().toString()),payload),
+      editCase?"แก้ไขเคสเรียบร้อย":"บันทึกเคสเรียบร้อย"
+    );
+    if(ok){ setCaseModal(false); setEditCase(null); }
+    setSaving(false);
   }
   async function deleteCase(id){
-    try {
-      await deleteDoc(doc(db,"cases",id));
-      setDelCase(null); setDetailCase(null);
-      showToast("ลบเคสแล้ว","success");
-    } catch(e) {
-      console.error("deleteCase error:",e);
-      showToast("ลบไม่สำเร็จ ลองใหม่อีกครั้ง");
-    }
+    const ok = await commitWrite(deleteDoc(doc(db,"cases",id)), "ลบเคสแล้ว");
+    if(ok){ setDelCase(null); setDetailCase(null); }
   }
 
   async function markNotifRead(nid) {
@@ -148,50 +156,38 @@ export default function App({ currentUser, onSignOut }) {
   async function saveUpdate(updated) {
     if(saving) return;
     setSaving(true);
-    try {
-      await setDoc(doc(db,"cases",updated.id), updated);
-      setUpdateCase(null);
-      showToast("อัปเดตความคืบหน้าแล้ว","success");
-    } catch(e) {
-      console.error("saveUpdate error:",e);
-      showToast("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
-    } finally {
-      setSaving(false);
-    }
+    const ok = await commitWrite(setDoc(doc(db,"cases",updated.id), updated), "อัปเดตความคืบหน้าแล้ว");
+    if(ok) setUpdateCase(null);
+    setSaving(false);
   }
 
   async function saveHandover(updated) {
     if(saving) return;
     setSaving(true);
-    try {
-      await setDoc(doc(db,"cases",updated.id), updated);
-      // Create notification for the recipient
-      const log = updated.handoverLog||[];
-      const latest = log[log.length-1];
-      if(latest) {
-        const toUser = users.find(u=>u.name===latest.to);
-        if(toUser) {
-          await setDoc(doc(db,"notifications",Date.now().toString()), {
-            type:      "handover",
-            toUid:     toUser.id,
-            toName:    toUser.name,
-            fromName:  latest.from,
-            caseTitle: updated.title,
-            caseId:    updated.id,
-            note:      latest.note||"",
-            createdAt: new Date().toISOString(),
-            read:      false,
-          });
-        }
+    // case + แจ้งเตือน ลงเป็น batch เดียว (สำเร็จ/ล้มเหลวพร้อมกัน)
+    const batch = writeBatch(db);
+    batch.set(doc(db,"cases",updated.id), updated);
+    const log = updated.handoverLog||[];
+    const latest = log[log.length-1];
+    if(latest) {
+      const toUser = users.find(u=>u.name===latest.to);
+      if(toUser) {
+        batch.set(doc(db,"notifications",Date.now().toString()), {
+          type:      "handover",
+          toUid:     toUser.id,
+          toName:    toUser.name,
+          fromName:  latest.from,
+          caseTitle: updated.title,
+          caseId:    updated.id,
+          note:      latest.note||"",
+          createdAt: new Date().toISOString(),
+          read:      false,
+        });
       }
-      setHandoverCase(null);
-      showToast("ส่งต่องานเรียบร้อย","success");
-    } catch(e) {
-      console.error("saveHandover error:",e);
-      showToast("ส่งต่องานไม่สำเร็จ ลองใหม่อีกครั้ง");
-    } finally {
-      setSaving(false);
     }
+    const ok = await commitWrite(batch.commit(), "ส่งต่องานเรียบร้อย");
+    if(ok) setHandoverCase(null);
+    setSaving(false);
   }
 
   function openAddProj(){ setEditProjId(null); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setNewSiteInput(""); setProjModal(true); }
@@ -200,45 +196,31 @@ export default function App({ currentUser, onSignOut }) {
     const name=newProjName.trim(); if(!name) return;
     if(saving) return;
     setSaving(true);
-    try {
-      const pid = editProjId||Date.now().toString();
-      const warrantyEnd = newProjWarranty||null;
-      const leaseEnd    = newProjLease||null;
-      const batch = writeBatch(db);
-      batch.set(doc(db,"projects",pid),{
-        name, color:newProjColor,
-        warrantyEnd, leaseEnd,
-        sites:newProjSites
+    const pid = editProjId||Date.now().toString();
+    const warrantyEnd = newProjWarranty||null;
+    const leaseEnd    = newProjLease||null;
+    const batch = writeBatch(db);
+    batch.set(doc(db,"projects",pid),{
+      name, color:newProjColor,
+      warrantyEnd, leaseEnd,
+      sites:newProjSites
+    });
+    // แก้ไขโครงการที่มีอยู่ → sync ประกัน/เช่าของทุกเคสในโครงการให้ตรงกัน
+    if(editProjId){
+      cases.filter(c=>c.projectId===editProjId).forEach(c=>{
+        batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd },{ merge:true });
       });
-      // แก้ไขโครงการที่มีอยู่ → sync ประกัน/เช่าของทุกเคสในโครงการให้ตรงกัน
-      if(editProjId){
-        cases.filter(c=>c.projectId===editProjId).forEach(c=>{
-          batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd },{ merge:true });
-        });
-      }
-      await batch.commit();
-      setNewProjName(""); setEditProjId(null); setProjModal(false);
-      showToast(editProjId?"บันทึกโครงการแล้ว":"สร้างโครงการแล้ว","success");
-    } catch(e) {
-      console.error("submitProj error:",e);
-      showToast("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
-    } finally {
-      setSaving(false);
     }
+    const ok = await commitWrite(batch.commit(), editProjId?"บันทึกโครงการแล้ว":"สร้างโครงการแล้ว");
+    if(ok){ setNewProjName(""); setEditProjId(null); setProjModal(false); }
+    setSaving(false);
   }
   async function removeProj(pid){
-    try {
-      const batch=writeBatch(db);
-      batch.delete(doc(db,"projects",pid));
-      cases.filter(c=>c.projectId===pid).forEach(c=>batch.delete(doc(db,"cases",c.id)));
-      await batch.commit();
-      if(view===pid) setView("overview");
-      setDelProj(null);
-      showToast("ลบโครงการแล้ว","success");
-    } catch(e) {
-      console.error("removeProj error:",e);
-      showToast("ลบโครงการไม่สำเร็จ ลองใหม่อีกครั้ง");
-    }
+    const batch=writeBatch(db);
+    batch.delete(doc(db,"projects",pid));
+    cases.filter(c=>c.projectId===pid).forEach(c=>batch.delete(doc(db,"cases",c.id)));
+    const ok = await commitWrite(batch.commit(), "ลบโครงการแล้ว");
+    if(ok){ if(view===pid) setView("overview"); setDelProj(null); }
   }
 
   const scopeCases = view==="overview"?cases:cases.filter(c=>c.projectId===view);
