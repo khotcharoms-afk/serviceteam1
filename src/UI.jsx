@@ -1,4 +1,4 @@
-import { daysLeft, fmtDate, STATUS_OPTS } from "../utils.js";
+import { daysLeft, fmtDate, STATUS_OPTS } from "./utils.js";
 
 // ── Pills ─────────────────────────────────────────────────────
 export function WarrantyPill({ warrantyEnd }) {
