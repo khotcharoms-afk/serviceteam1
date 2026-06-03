@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 
@@ -23,6 +24,20 @@ export default function Auth() {
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw]   = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  async function handleResetPassword() {
+    setError(""); setResetSent(false);
+    if (!email.trim()) return setError("กรุณาใส่อีเมลก่อน แล้วกดลืมรหัสผ่านอีกครั้ง");
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setResetSent(true);
+    } catch (err) {
+      setError(errMsg(err.code));
+    }
+    setLoading(false);
+  }
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -79,6 +94,7 @@ export default function Auth() {
       case "auth/invalid-credential": return "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
       case "auth/email-already-in-use": return "อีเมลนี้ถูกใช้งานแล้ว";
       case "auth/invalid-email": return "รูปแบบอีเมลไม่ถูกต้อง";
+      case "auth/missing-email": return "กรุณาใส่อีเมล";
       case "auth/too-many-requests": return "ลองใหม่อีกครั้งในภายหลัง";
       default: return "เกิดข้อผิดพลาด กรุณาลองใหม่";
     }
@@ -160,6 +176,16 @@ export default function Auth() {
                   {showPw?"🙈":"👁"}
                 </button>
               </div>
+              {/* Forgot password (login only) */}
+              {mode==="login" && (
+                <div style={{ textAlign:"right",marginTop:8 }}>
+                  <button type="button" onClick={handleResetPassword}
+                    style={{ background:"none",border:"none",color:"#2563eb",fontSize:12,
+                      cursor:"pointer",fontFamily:"inherit",fontWeight:600,padding:0 }}>
+                    ลืมรหัสผ่าน?
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Confirm Password (register only) */}
@@ -177,6 +203,15 @@ export default function Auth() {
               <div style={{ background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,
                 padding:"10px 12px",marginBottom:16,fontSize:12,color:"#3b82f6",lineHeight:1.6 }}>
                 ⚠️ หลังสมัครแล้ว Admin ต้องอนุมัติบัญชีก่อนจึงจะเข้าใช้งานได้
+              </div>
+            )}
+
+            {/* Reset email sent */}
+            {resetSent && (
+              <div style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:8,
+                padding:"10px 12px",marginBottom:16,fontSize:13,color:"#16a34a",
+                fontWeight:500,lineHeight:1.6 }}>
+                ✅ ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลแล้ว กรุณาเช็คกล่องจดหมาย (และโฟลเดอร์ Spam)
               </div>
             )}
 
