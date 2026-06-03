@@ -1020,7 +1020,7 @@ export default function App({ currentUser, onSignOut }) {
       <Modal open={!!delCase} onClose={()=>setDelCase(null)} title="ลบเคส?">
         <p style={{ color:"#64748b",fontSize:14,marginBottom:20 }}>เคสนี้จะถูกลบถาวร ยืนยันหรือไม่?</p>
         <div style={{ display:"flex",gap:10 }}>
-          <GhostBtn onClick={()=>setDelCase(null)}>ยกเลิก</GhostBtn>
+          <GhostBtn onClick={()=>setDelCase(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
           <button onClick={()=>deleteCase(delCase)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",
             borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14 }}>ลบ</button>
         </div>
@@ -1036,7 +1036,7 @@ export default function App({ currentUser, onSignOut }) {
         <p style={{ color:"#64748b",fontSize:14,marginBottom:4 }}>โครงการและเคสทั้งหมดจะถูกลบถาวร</p>
         <p style={{ color:"#ef4444",fontSize:13,marginBottom:20 }}>⚠ ไม่สามารถกู้คืนได้</p>
         <div style={{ display:"flex",gap:10 }}>
-          <GhostBtn onClick={()=>setDelProj(null)}>ยกเลิก</GhostBtn>
+          <GhostBtn onClick={()=>setDelProj(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
           <button onClick={()=>removeProj(delProj)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",
             borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14 }}>ลบโครงการ</button>
         </div>
