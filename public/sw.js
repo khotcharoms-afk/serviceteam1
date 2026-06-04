@@ -1,4 +1,4 @@
-const CACHE_NAME = 'servicelog-v2';
+const CACHE_NAME = 'servicelog-v3';
 const urlsToCache = ['/', '/index.html'];
 
 self.addEventListener('install', e => {
@@ -37,5 +37,35 @@ self.addEventListener('fetch', e => {
         // offline fallback
         return caches.match(e.request).then(cached => cached || Response.error());
       })
+  );
+});
+
+// ── FCM Push ──
+self.addEventListener('push', e => {
+  let payload = {};
+  try { payload = e.data ? e.data.json() : {}; }
+  catch (_) { payload = { notification: { title: 'ServiceLog', body: e.data ? e.data.text() : '' } }; }
+
+  const n = payload.notification || payload.data || payload || {};
+  const title = n.title || 'ServiceLog';
+  const options = {
+    body: n.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: payload.data || {},
+    tag: (payload.data && payload.data.caseId) || undefined,
+  };
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.startsWith(self.location.origin) && 'focus' in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('/');
+    })
   );
 });
