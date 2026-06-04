@@ -1,8 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { indexedDBLocalPersistence, initializeAuth } from "firebase/auth";
-import { isSupported } from "firebase/messaging";
-import { getInstallations, getToken as getFISToken } from "firebase/installations";
+import { isSupported, getMessaging, getToken } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMrGDqwru9eJYQgjDV268oOgUQ-Gisu2U",
@@ -21,18 +20,9 @@ export const auth = initializeAuth(app, {
   persistence: indexedDBLocalPersistence
 });
 
-// helper: แปลง VAPID key base64url → Uint8Array สำหรับ pushManager.subscribe
-function urlBase64ToUint8Array(b64) {
-  const pad = '='.repeat((4 - b64.length % 4) % 4);
-  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
-  const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
-}
-
-// ── FCM: ลงทะเบียน token แบบ manual ──────────────────────────────────────────
-// bypass firebase/messaging getToken() ที่มี bug ไม่ส่ง FIS auth header
-// แทนที่ด้วยการดึง FIS token โดยตรง แล้ว POST ไป fcmregistrations เอง
+// ── FCM: ขอ registration token ───────────────────────────────────────────────
+// ล้าง push subscription เก่า (ที่ไม่มี VAPID key) ก่อน แล้วค่อยให้ SDK สร้างใหม่
+// เหตุที่ต้องทำ: subscription เก่าทำให้ SDK ข้าม FIS auth → 401
 export async function getFcmToken(swRegistration) {
   try {
     if (!(await isSupported())) return null;
@@ -40,45 +30,23 @@ export async function getFcmToken(swRegistration) {
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
     if (!vapidKey) { console.error("FCM: VITE_FIREBASE_VAPID_KEY missing"); return null; }
 
-    // Step 1: ดึง FIS auth token โดยตรง (ไม่ผ่าน messaging SDK)
-    const installations = getInstallations(app);
-    const fisToken = await getFISToken(installations, true);
-    if (!fisToken) { console.error("FCM: FIS auth token is null"); return null; }
-    console.log("FCM: FIS token obtained ✅");
-
-    // Step 2: Force fresh subscription — ล้างของเก่า + สร้างใหม่ให้ตรงกับ VAPID key ปัจจุบัน
-    const old = await swRegistration.pushManager.getSubscription();
-    if (old) await old.unsubscribe();
-    const sub = await swRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidKey),
-    });
-    const { endpoint, keys } = sub.toJSON();
-
-    // Step 3: ลงทะเบียนกับ FCM พร้อม auth header ที่ถูกต้อง
-    const res = await fetch(
-      `https://fcmregistrations.googleapis.com/v1/projects/${app.options.projectId}/registrations`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `FIREBASE_INSTALLATIONS_AUTH ${fisToken}`,
-          'x-goog-api-key': app.options.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          web: { endpoint, auth: keys?.auth, p256dh: keys?.p256dh, applicationPubKey: vapidKey }
-        })
-      }
-    );
-
-    if (!res.ok) {
-      console.error("FCM: registration failed", res.status, await res.text());
-      return null;
+    // ล้าง push subscription เก่าทิ้ง → SDK จะสร้างใหม่พร้อม VAPID key ที่ถูกต้อง
+    const existingSub = await swRegistration.pushManager.getSubscription();
+    if (existingSub) {
+      console.log("FCM: clearing old push subscription...");
+      await existingSub.unsubscribe();
     }
 
-    const data = await res.json();
-    console.log("FCM: token registered ✅", data.token?.slice(0, 20) + "...");
-    return data.token || null;
+    // SDK จัดการ FIS auth + registration ให้ทั้งหมด
+    console.log("FCM: calling getToken()...");
+    const messaging = getMessaging(app);
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: swRegistration,
+    });
+
+    if (token) console.log("FCM: token registered ✅", token.slice(0,20)+"...");
+    return token || null;
   } catch (e) {
     console.error("getFcmToken error:", e);
     return null;
