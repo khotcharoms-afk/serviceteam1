@@ -200,8 +200,9 @@ export default function App({ currentUser, onSignOut }) {
     batch.set(doc(db,"cases",updated.id), updated);
     const log = updated.handoverLog||[];
     const latest = log[log.length-1];
+    let toUser = null;
     if(latest) {
-      const toUser = users.find(u=>u.name===latest.to);
+      toUser = users.find(u=>u.name===latest.to)||null;
       if(toUser) {
         batch.set(doc(db,"notifications",Date.now().toString()), {
           type:      "handover",
@@ -217,7 +218,22 @@ export default function App({ currentUser, onSignOut }) {
       }
     }
     const ok = await commitWrite(batch.commit(), "ส่งต่องานเรียบร้อย");
-    if(ok) setHandoverCase(null);
+    if(ok){
+      setHandoverCase(null);
+      // ยิง FCM push notification แบบ fire-and-forget (ไม่รอผล ไม่ทำให้ handover fail)
+      if(toUser && latest){
+        fetch("/api/send-notification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toUid: toUser.id,
+            title: `งานใหม่จาก ${latest.from}`,
+            body:  updated.title,
+            caseId: updated.id,
+          }),
+        }).catch(e => console.warn("send-notification fetch error:", e));
+      }
+    }
     setSaving(false);
   }
 
