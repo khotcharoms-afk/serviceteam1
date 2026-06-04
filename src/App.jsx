@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { db, auth } from "./firebase";
+import { db, auth, getFcmToken } from "./firebase";
 import {
   collection, doc, onSnapshot,
   setDoc, deleteDoc, writeBatch
@@ -70,6 +70,37 @@ export default function App({ currentUser, onSignOut }) {
     document.addEventListener("click", handler);
     return ()=>document.removeEventListener("click", handler);
   },[notifOpen]);
+
+  // ── FCM Push: ขอสิทธิ์ + เก็บ token ลง fcmTokens/{uid} ──
+  async function registerFcm(notify=false){
+    try{
+      const uid = auth.currentUser?.uid;
+      if(!uid || !("Notification" in window)) return;
+      if(Notification.permission==="default"){
+        const perm = await Notification.requestPermission();   // ต้องเรียกใน user gesture (iOS)
+        if(perm!=="granted") return;
+      } else if(Notification.permission!=="granted") return;
+      const reg = await navigator.serviceWorker.ready;
+      const token = await getFcmToken(reg);
+      if(!token) return;
+      await setDoc(doc(db,"fcmTokens",uid),{
+        uid, name: currentUser?.name||"", token, updatedAt: new Date().toISOString(),
+      });
+      if(notify) showToast("เปิดการแจ้งเตือนแล้ว","success");
+    }catch(e){ console.error("registerFcm error:", e); }
+  }
+  useEffect(()=>{
+    if(!currentUser) return;
+    if(!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    if(Notification.permission==="granted"){ registerFcm(false); return; }
+    if(Notification.permission==="default"){
+      // ขอสิทธิ์ตอนผู้ใช้แตะครั้งแรก (iOS ต้องการ user gesture)
+      const h=()=>{ document.removeEventListener("click",h); registerFcm(true); };
+      document.addEventListener("click",h,{ once:true });
+      return ()=>document.removeEventListener("click",h);
+    }
+    // denied → ไม่ทำอะไร
+  },[currentUser]);
 
   // Toast auto-dismiss
   useEffect(()=>{
