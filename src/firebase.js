@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { indexedDBLocalPersistence, initializeAuth } from "firebase/auth";
-import { isSupported, getMessaging, getToken } from "firebase/messaging";
+import { isSupported } from "firebase/messaging";
+import { getInstallations, getToken as getFISToken } from "firebase/installations";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMrGDqwru9eJYQgjDV268oOgUQ-Gisu2U",
@@ -15,38 +16,74 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = initializeAuth(app, { persistence: indexedDBLocalPersistence });
 
-export const auth = initializeAuth(app, {
-  persistence: indexedDBLocalPersistence
-});
+function urlBase64ToUint8Array(b64) {
+  const pad = '='.repeat((4 - b64.length % 4) % 4);
+  return Uint8Array.from(atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+}
 
-// ── FCM: ขอ registration token ───────────────────────────────────────────────
-// ล้าง push subscription เก่า (ที่ไม่มี VAPID key) ก่อน แล้วค่อยให้ SDK สร้างใหม่
-// เหตุที่ต้องทำ: subscription เก่าทำให้ SDK ข้าม FIS auth → 401
+function bufToBase64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
 export async function getFcmToken(swRegistration) {
   try {
     if (!(await isSupported())) return null;
-
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-    if (!vapidKey) { console.error("FCM: VITE_FIREBASE_VAPID_KEY missing"); return null; }
+    if (!vapidKey) { console.error("FCM: VAPID key missing"); return null; }
 
-    // ล้าง push subscription เก่าทิ้ง → SDK จะสร้างใหม่พร้อม VAPID key ที่ถูกต้อง
-    const existingSub = await swRegistration.pushManager.getSubscription();
-    if (existingSub) {
-      console.log("FCM: clearing old push subscription...");
-      await existingSub.unsubscribe();
-    }
+    // Step 1: FIS auth token
+    const installations = getInstallations(app);
+    const fisToken = await getFISToken(installations, true);
+    if (!fisToken) { console.error("FCM: FIS token null"); return null; }
+    console.log("FCM: FIS token ✅ len=" + fisToken.length);
 
-    // SDK จัดการ FIS auth + registration ให้ทั้งหมด
-    console.log("FCM: calling getToken()...");
-    const messaging = getMessaging(app);
-    const token = await getToken(messaging, {
-      vapidKey,
-      serviceWorkerRegistration: swRegistration,
+    // Step 2: Fresh push subscription
+    const old = await swRegistration.pushManager.getSubscription();
+    if (old) await old.unsubscribe();
+    const sub = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
 
-    if (token) console.log("FCM: token registered ✅", token.slice(0,20)+"...");
-    return token || null;
+    // Step 3: ดึง keys ด้วย getKey() โดยตรง (ปลอดภัยกว่า toJSON)
+    const authBuf  = sub.getKey('auth');
+    const p256dhBuf = sub.getKey('p256dh');
+    const auth   = authBuf  ? bufToBase64url(authBuf)  : null;
+    const p256dh = p256dhBuf ? bufToBase64url(p256dhBuf) : null;
+    const endpoint = sub.endpoint;
+
+    console.log("FCM: sub endpoint=" + endpoint?.slice(0,50));
+    console.log("FCM: auth=" + (auth ? auth.length + "chars" : "NULL"));
+    console.log("FCM: p256dh=" + (p256dh ? p256dh.length + "chars" : "NULL"));
+
+    // Step 4: ลงทะเบียน
+    const body = { web: { endpoint, auth, p256dh, applicationPubKey: vapidKey } };
+    console.log("FCM: sending body keys:", Object.keys(body.web).join(','));
+
+    const res = await fetch(
+      `https://fcmregistrations.googleapis.com/v1/projects/${app.options.projectId}/registrations`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `FIREBASE_INSTALLATIONS_AUTH ${fisToken}`,
+          'x-goog-api-key': app.options.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("FCM: registration failed", res.status, errText);
+      return null;
+    }
+
+    const data = await res.json();
+    console.log("FCM: token registered ✅", data.token?.slice(0,20)+"...");
+    return data.token || null;
   } catch (e) {
     console.error("getFcmToken error:", e);
     return null;
