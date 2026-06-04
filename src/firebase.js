@@ -46,14 +46,13 @@ export async function getFcmToken(swRegistration) {
     if (!fisToken) { console.error("FCM: FIS auth token is null"); return null; }
     console.log("FCM: FIS token obtained ✅");
 
-    // Step 2: ดึง push subscription (สร้างถ้ายังไม่มี)
-    let sub = await swRegistration.pushManager.getSubscription();
-    if (!sub) {
-      sub = await swRegistration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-      });
-    }
+    // Step 2: Force fresh subscription — ล้างของเก่า + สร้างใหม่ให้ตรงกับ VAPID key ปัจจุบัน
+    const old = await swRegistration.pushManager.getSubscription();
+    if (old) await old.unsubscribe();
+    const sub = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
+    });
     const { endpoint, keys } = sub.toJSON();
 
     // Step 3: ลงทะเบียนกับ FCM พร้อม auth header ที่ถูกต้อง
