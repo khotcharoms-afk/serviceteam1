@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, indexedDBLocalPersistence, initializeAuth } from "firebase/auth";
+import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMrGDqwru9eJYQgjDV268oOgUQ-Gisu2U",
@@ -19,3 +20,19 @@ export const db = getFirestore(app);
 export const auth = initializeAuth(app, {
   persistence: indexedDBLocalPersistence
 });
+
+// ── FCM: ขอ registration token (คืน null ถ้าเบราว์เซอร์ไม่รองรับ/ผิดพลาด) ──
+export async function getFcmToken(swRegistration) {
+  try {
+    if (!(await isSupported())) return null;   // เช่น iOS เก่ากว่า 16.4 / เบราว์เซอร์ไม่รองรับ
+    const messaging = getMessaging(app);
+    const token = await getToken(messaging, {
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: swRegistration,
+    });
+    return token || null;
+  } catch (e) {
+    console.error("getFcmToken error:", e);
+    return null;
+  }
+}
