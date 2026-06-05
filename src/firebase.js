@@ -66,8 +66,9 @@ export async function getFcmToken(swRegistration) {
     console.log("FCM: p256dh=", p256dh?.slice(0,8)+"...", "len="+p256dh?.length);
     console.log("FCM: vapidKey=", import.meta.env.VITE_FIREBASE_VAPID_KEY?.slice(0,15)+"...");
 
-    // Step 4: register กับ FCM
-    const body = { web: { origin, endpoint, auth, p256dh, applicationPubKey: vapidKey } };
+    // Step 4: register กับ FCM — ใช้ requestGetToken path (ไม่มี fcm_sdk_version)
+    // เพื่อให้ได้ {token: "...real FCM token (140+ chars)..."} ไม่ใช่ {name: "...short FID..."}
+    const body = { web: { origin, endpoint, auth, p256dh } }; // ไม่ใส่ applicationPubKey ป้องกัน INVALID_ARGUMENT
 
     const res = await fetch(
       `https://fcmregistrations.googleapis.com/v1/projects/${app.options.projectId}/registrations`,
@@ -76,10 +77,9 @@ export async function getFcmToken(swRegistration) {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'x-goog-api-key': app.options.apiKey,
-          'x-goog-firebase-installations-auth': `FIS ${fisToken}`,
+          'Authorization': `FIREBASE_INSTALLATIONS_AUTH ${fisToken}`,
         },
-        body: JSON.stringify({ fcm_sdk_version: "0.13.0", ...body })
+        body: JSON.stringify(body)
       }
     );
 
@@ -91,10 +91,9 @@ export async function getFcmToken(swRegistration) {
 
     const data = await res.json();
     console.log("FCM: raw response keys:", Object.keys(data).join(','));
-    // SDK returns {token:"..."} หรือ {name:"projects/.../registrations/TOKEN"}
-    const fcmToken = data.token || data.name?.split('/registrations/')[1] || null;
-    if (fcmToken) console.log("FCM: token registered ✅", fcmToken.slice(0, 20) + "...");
-    else console.error("FCM: no token in response", JSON.stringify(data).slice(0,200));
+    const fcmToken = data.token || null;
+    if (fcmToken) console.log("FCM: token registered ✅ len="+fcmToken.length+" start="+fcmToken.slice(0,15)+"...");
+    else console.error("FCM: no token in response", JSON.stringify(data).slice(0,300));
     return fcmToken;
   } catch (e) {
     console.error("getFcmToken error:", e);
