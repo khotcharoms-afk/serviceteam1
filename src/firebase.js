@@ -61,7 +61,7 @@ export async function getFcmToken(swRegistration) {
 
     console.log("FCM: origin=" + origin);
 
-    // Step 4: register กับ FCM — ใช้ headers และ body เหมือน Firebase SDK จริงๆ
+    // Step 4: register กับ FCM
     const body = { web: { origin, endpoint, auth, p256dh, applicationPubKey: vapidKey } };
 
     const res = await fetch(
@@ -73,6 +73,7 @@ export async function getFcmToken(swRegistration) {
           'Accept': 'application/json',
           'x-goog-api-key': app.options.apiKey,
           'x-goog-firebase-installations-auth': `FIS ${fisToken}`,
+          'Authorization': `FIREBASE_INSTALLATIONS_AUTH ${fisToken}`,
         },
         body: JSON.stringify(body)
       }
@@ -85,8 +86,12 @@ export async function getFcmToken(swRegistration) {
     }
 
     const data = await res.json();
-    console.log("FCM: token registered ✅", data.token?.slice(0, 20) + "...");
-    return data.token || null;
+    console.log("FCM: raw response keys:", Object.keys(data).join(','));
+    // SDK returns {token:"..."} หรือ {name:"projects/.../registrations/TOKEN"}
+    const fcmToken = data.token || data.name?.split('/registrations/')[1] || null;
+    if (fcmToken) console.log("FCM: token registered ✅", fcmToken.slice(0, 20) + "...");
+    else console.error("FCM: no token in response", JSON.stringify(data).slice(0,200));
+    return fcmToken;
   } catch (e) {
     console.error("getFcmToken error:", e);
     return null;
