@@ -69,7 +69,6 @@ export async function getFcmToken(swRegistration) {
         method: 'POST',
         headers: {
           'Authorization': `FIREBASE_INSTALLATIONS_AUTH ${fisToken}`,
-          'x-goog-api-key': app.options.apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body)
