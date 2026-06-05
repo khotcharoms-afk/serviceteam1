@@ -70,9 +70,6 @@ export async function getFcmToken(swRegistration) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-goog-api-key': app.options.apiKey,
-          'x-goog-firebase-installations-auth': `FIS ${fisToken}`,
           'Authorization': `FIREBASE_INSTALLATIONS_AUTH ${fisToken}`,
         },
         body: JSON.stringify(body)
