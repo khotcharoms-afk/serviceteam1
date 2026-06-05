@@ -18,8 +18,15 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate }) {
         <StatusPill value={c.status}/>
       </div>
       <div style={{ display:"flex",flexWrap:"wrap",gap:6,alignItems:"center" }}>
-        {c.tech && <span style={{ fontSize:11,color:"#64748b",background:"#f8fafc",
-          borderRadius:6,padding:"2px 8px",border:"1px solid #e2e8f0" }}>👤 {c.tech}</span>}
+        {(()=>{ 
+          const names = c.techs?.length ? c.techs : (c.tech ? [c.tech] : []);
+          return names.length>0 && (
+            <span style={{ fontSize:11,color:"#64748b",background:"#f8fafc",
+              borderRadius:6,padding:"2px 8px",border:"1px solid #e2e8f0" }}>
+              👤 {names.join(", ")}
+            </span>
+          );
+        })()}
         {c.date && <span style={{ fontSize:11,color:"#64748b" }}>📅 {fmtDate(c.date)}</span>}
         <WarrantyPill warrantyEnd={c.warrantyEnd}/>
         {c.leaseEnd && <LeasePill leaseEnd={c.leaseEnd}/>}
@@ -42,7 +49,7 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate }) {
       )}
       {(c.handoverLog||[]).length>0 && (
         <div style={{ marginTop:4,fontSize:11,color:"#8b5cf6",fontWeight:600 }}>
-          🔁 ส่งต่อแล้ว {c.handoverLog.length} ครั้ง • ปัจจุบัน: {c.tech}
+          🔁 ส่งต่อแล้ว {c.handoverLog.length} ครั้ง • ปัจจุบัน: {(c.techs?.length?c.techs:[c.tech]).join(", ")}
         </div>
       )}
       <div style={{ display:"flex",gap:6,marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9" }}
