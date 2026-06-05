@@ -143,16 +143,23 @@ export default function App({ currentUser, onSignOut }) {
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
   }).sort((a,b)=>Number(b.id)-Number(a.id)); // เคสสร้างล่าสุดอยู่บนสุด
 
-  function openAddCase(){ const pid=view!=="overview"?view:(projects[0]?.id||""); setCaseForm({...emptyCase,projectId:pid,tech:currentUser?.name||""}); setEditCase(null); setCaseModal(true); }
-  function openEditCase(c){ setCaseForm({...c}); setEditCase(c.id); setCaseModal(true); }
+  function openAddCase(){ const pid=view!=="overview"?view:(projects[0]?.id||""); setCaseForm({...emptyCase,projectId:pid,tech:currentUser?.name||"",techs:[currentUser?.name||""]}); setEditCase(null); setCaseModal(true); }
+  function openEditCase(c){ 
+  // migrate: ถ้าเคสเก่ายังไม่มี techs ให้แปลงจาก tech string
+  const techs = c.techs?.length ? c.techs : (c.tech ? [c.tech] : []);
+  setCaseForm({...c, techs}); setEditCase(c.id); setCaseModal(true); 
+}
   async function submitCase(){
     if(!caseForm.title||!caseForm.projectId) return;
     if(saving) return;
     setSaving(true);
     const proj = projects.find(p=>p.id===caseForm.projectId);
     const { siteOther, ...rest } = caseForm;
+    const techs = caseForm.techs?.length ? caseForm.techs : (caseForm.tech ? [caseForm.tech] : []);
     const payload = {
       ...rest,
+      techs,
+      tech: techs[0]||caseForm.tech||"",  // backward compat: tech = คนแรก
       warrantyEnd: proj?.warrantyEnd||null,
       leaseEnd:    proj?.leaseEnd||null,
       site: caseForm.site==="__other__" ? "" : caseForm.site,
@@ -703,12 +710,28 @@ export default function App({ currentUser, onSignOut }) {
           </select>
         </Field>
         <Field label="ผู้ดำเนินการ">
-          <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
-            padding:"10px 13px",fontSize:14,color:"#475569",display:"flex",
-            alignItems:"center",gap:8 }}>
-            <span style={{ fontSize:16 }}>👤</span>
-            <span style={{ fontWeight:600,color:"#1e293b" }}>{caseForm.tech||currentUser?.name||"—"}</span>
-            <span style={{ fontSize:11,color:"#94a3b8",marginLeft:"auto" }}>ผู้เปิดเคส</span>
+          <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"10px 13px" }}>
+            {users.filter(u=>u.role!=="pending").sort((a,b)=>a.name.localeCompare(b.name)).map(u=>{
+              const isSelf = u.name === (currentUser?.name||"");
+              const checked = (caseForm.techs||[]).includes(u.name);
+              return (
+                <label key={u.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"5px 0",
+                  cursor:isSelf?"default":"pointer",opacity:1 }}>
+                  <input type="checkbox" checked={checked} disabled={isSelf}
+                    onChange={()=>{
+                      if(isSelf) return;
+                      setCaseForm(f=>{
+                        const cur = f.techs||[];
+                        return { ...f, techs: checked ? cur.filter(x=>x!==u.name) : [...cur,u.name] };
+                      });
+                    }}
+                    style={{ width:16,height:16,accentColor:"#2563eb",cursor:isSelf?"default":"pointer" }}/>
+                  <span style={{ fontSize:14,color:"#1e293b",fontWeight:checked?600:400 }}>{u.name}</span>
+                  {isSelf && <span style={{ fontSize:11,color:"#94a3b8",marginLeft:4 }}>(คุณ)</span>}
+                  {u.role==="admin" && <span style={{ fontSize:10,color:"#7c3aed",marginLeft:4 }}>Admin</span>}
+                </label>
+              );
+            })}
           </div>
         </Field>
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
@@ -780,7 +803,7 @@ export default function App({ currentUser, onSignOut }) {
               <div style={{ fontSize:17,fontWeight:800,color:"#0f172a",marginBottom:16,lineHeight:1.4 }}>{detailCase.title}</div>
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16 }}>
                 {[["ไซต์",detailCase.site||"—"],["ประเภทงาน",detailCase.type],
-                  ["ผู้ดำเนินการ",detailCase.tech||"—"],["วันที่",fmtDate(detailCase.date)]]
+                  ["ผู้ดำเนินการ",(detailCase.techs?.length?detailCase.techs:detailCase.tech?[detailCase.tech]:[]).join(", ")||"—"],["วันที่",fmtDate(detailCase.date)]]
                   .map(([k,v])=>(
                     <div key={k}>
                       <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:3,fontWeight:700 }}>{k}</div>
