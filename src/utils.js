@@ -42,6 +42,6 @@ export const IS = (x = {}) => ({
 
 export const emptyCase = {
   projectId: "", site: "", siteOther: false, title: "", type: SERVICE_TYPES[0],
-  tech: "", date: today(), status: "open", note: "",
+  tech: "", techs: [], date: today(), status: "open", note: "",
   handoverLog: [], updateLog: [],
 };
