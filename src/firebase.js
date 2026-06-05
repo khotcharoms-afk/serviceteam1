@@ -62,10 +62,7 @@ export async function getFcmToken(swRegistration) {
     console.log("FCM: origin=" + origin);
 
     // Step 4: register กับ FCM — ใช้ headers และ body เหมือน Firebase SDK จริงๆ
-    const body = {
-      fcm_sdk_version: "0.13.0",
-      web: { origin, endpoint, auth, p256dh, applicationPubKey: vapidKey }
-    };
+    const body = { web: { origin, endpoint, auth, p256dh, applicationPubKey: vapidKey } };
 
     const res = await fetch(
       `https://fcmregistrations.googleapis.com/v1/projects/${app.options.projectId}/registrations`,
