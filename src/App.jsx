@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { db, auth, getFcmToken } from "./firebase";
+import { db, auth, registerPushSubscription } from "./firebase";
 import {
   collection, doc, onSnapshot,
   setDoc, deleteDoc, writeBatch
@@ -81,11 +81,8 @@ export default function App({ currentUser, onSignOut }) {
         if(perm!=="granted") return;
       } else if(Notification.permission!=="granted") return;
       const reg = await navigator.serviceWorker.ready;
-      const token = await getFcmToken(reg);
-      if(!token) return;
-      await setDoc(doc(db,"fcmTokens",uid),{
-        uid, name: currentUser?.name||"", token, updatedAt: new Date().toISOString(),
-      });
+      const ok = await registerPushSubscription(reg, uid, currentUser?.name||"");
+      if(!ok) return;
       if(notify) showToast("เปิดการแจ้งเตือนแล้ว","success");
     }catch(e){ console.error("registerFcm error:", e); }
   }
