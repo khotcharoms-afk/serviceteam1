@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db, auth, registerPushSubscription } from "./firebase";
 import {
-  collection, doc, onSnapshot,
+  collection, doc, onSnapshot, query, where,
   setDoc, deleteDoc, writeBatch
 } from "firebase/firestore";
 import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, SERVICE_TYPES, STATUS_OPTS, IS } from "./utils.js";
@@ -54,9 +54,15 @@ export default function App({ currentUser, onSignOut }) {
     const u1=onSnapshot(collection(db,"projects"),snap=>{ setProjects(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); }, errHandler);
     const u2=onSnapshot(collection(db,"cases"),snap=>{ setCases(snap.docs.map(d=>({id:d.id,...d.data()}))); }, errHandler);
     const u3=onSnapshot(collection(db,"users"),snap=>{ setUsers(snap.docs.map(d=>({id:d.id,...d.data()}))); }, errHandler);
-    const u4=onSnapshot(collection(db,"notifications"),snap=>{
+    const uid = auth.currentUser?.uid;
+    // โหลดเฉพาะ notifications ของตัวเอง (ลด Firestore reads ~90%)
+    // หมายเหตุ: new_user notification ต้องเขียน toUid = uid ของ admin ด้วย (ดู AdminUsers.jsx)
+    const notifQuery = query(
+      collection(db,"notifications"),
+      where("toUid","==",uid)
+    );
+    const u4=onSnapshot(notifQuery,snap=>{
       const all = snap.docs.map(d=>({id:d.id,...d.data()}))
-        .filter(n=> n.toUid===auth.currentUser?.uid || (n.type==="new_user" && currentUser?.role==="admin"))
         .sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
       setNotifs(all);
     }, errHandler);
