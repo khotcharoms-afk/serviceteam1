@@ -60,7 +60,10 @@ export async function getFcmToken(swRegistration) {
 
     // Step 4: ลงทะเบียน
     // ลอง 1: ไม่ส่ง applicationPubKey (subscription สร้างด้วย VAPID แล้ว server รู้ key จาก endpoint)
-    const body = { web: { endpoint, auth, p256dh } };
+    const body = {
+      appId: app.options.appId,
+      web: { endpoint, auth, p256dh, applicationPubKey: vapidKey }
+    };
     console.log("FCM: sending body keys:", Object.keys(body.web).join(','));
 
     const res = await fetch(
