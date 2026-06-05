@@ -59,7 +59,12 @@ export async function getFcmToken(swRegistration) {
     try { origin = new URL(swRegistration.scope).host; }
     catch { origin = window.location.host; }
 
-    console.log("FCM: origin=" + origin);
+    console.log("FCM: swScope=", swRegistration.scope);
+    console.log("FCM: origin=", origin);
+    console.log("FCM: endpoint=", endpoint?.slice(0,60));
+    console.log("FCM: auth=", auth?.slice(0,8)+"...", "len="+auth?.length);
+    console.log("FCM: p256dh=", p256dh?.slice(0,8)+"...", "len="+p256dh?.length);
+    console.log("FCM: vapidKey=", import.meta.env.VITE_FIREBASE_VAPID_KEY?.slice(0,15)+"...");
 
     // Step 4: register กับ FCM
     const body = { web: { origin, endpoint, auth, p256dh, applicationPubKey: vapidKey } };
@@ -70,9 +75,11 @@ export async function getFcmToken(swRegistration) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `FIREBASE_INSTALLATIONS_AUTH ${fisToken}`,
+          'Accept': 'application/json',
+          'x-goog-api-key': app.options.apiKey,
+          'x-goog-firebase-installations-auth': `FIS ${fisToken}`,
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ fcm_sdk_version: "0.13.0", ...body })
       }
     );
 
