@@ -438,8 +438,10 @@ export default function App({ currentUser, onSignOut }) {
                 <div style={{ display:"flex",gap:2,flexShrink:0 }}>
                   <button onClick={()=>{ openEditProj(p); setMenuOpen(false); }}
                     style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",padding:"6px",fontSize:13 }}>✎</button>
-                  <button onClick={()=>{ setDelProj(p.id); setMenuOpen(false); }}
-                    style={{ background:"none",border:"none",color:"#fca5a5",cursor:"pointer",padding:"6px",fontSize:13 }}>✕</button>
+                  {currentUser?.role==="admin"&&(
+                    <button onClick={()=>{ setDelProj(p.id); setMenuOpen(false); }}
+                      style={{ background:"none",border:"none",color:"#fca5a5",cursor:"pointer",padding:"6px",fontSize:13 }}>✕</button>
+                  )}
                 </div>
               </div>
             ))}
