@@ -120,13 +120,22 @@ export default function App({ currentUser, onSignOut }) {
   const activeProj = projects.find(p=>p.id===view)||null;
   const visibleCases = cases.filter(c=>{
     if(view!=="overview"&&c.projectId!==view) return false;
-    if(filterStat!=="all"&&c.status!==filterStat) return false;
+    if(filterStat==="__exp"){
+      const wd=daysLeft(c.warrantyEnd), ld=daysLeft(c.leaseEnd);
+      const wExp=(wd!==null&&wd>=0&&wd<=90), lExp=(ld!==null&&ld>=0&&ld<=90);
+      if(!wExp&&!lExp) return false;
+    } else if(filterStat!=="all"&&c.status!==filterStat) return false;
     if(dateFrom && c.date && c.date < dateFrom) return false;
     if(dateTo   && c.date && c.date > dateTo)   return false;
     if(filterTech!=="all" && c.tech!==filterTech) return false;
     const q=search.toLowerCase();
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
   }).sort((a,b)=>{
+    if(filterStat==="__exp"){
+      const da = Math.min(...[daysLeft(a.warrantyEnd),daysLeft(a.leaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
+      const db = Math.min(...[daysLeft(b.warrantyEnd),daysLeft(b.leaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
+      return da - db;
+    }
     const ta = b.updatedAt||b.id;
     const tb = a.updatedAt||a.id;
     return ta.localeCompare(tb);
@@ -447,7 +456,7 @@ export default function App({ currentUser, onSignOut }) {
             {label:"รอดำเนินการ",  val:stats.hold,         color:"#ef4444", key:"hold"},
             {label:"ใกล้หมด",     val:stats.expiringSoon, color:"#f59e0b", key:"__exp"},
           ].map(s=>(
-            <div key={s.key} onClick={()=>!s.key.startsWith("__")&&setFilterStat(filterStat===s.key?"all":s.key)}
+            <div key={s.key} onClick={()=>setFilterStat(filterStat===s.key?"all":s.key)}
               style={{ background:filterStat===s.key?s.color+"12":"#fff",
                 border:`1.5px solid ${filterStat===s.key?s.color+"50":"#e2e8f0"}`,
                 borderRadius:12,padding:"12px 10px",cursor:"pointer",textAlign:"center" }}>
@@ -557,6 +566,7 @@ export default function App({ currentUser, onSignOut }) {
               const proj=projects.find(p=>p.id===c.projectId);
               return (
                 <CaseCard key={c.id} c={c} proj={proj}
+                  showExpiry={filterStat==="__exp"}
                   onClick={()=>setDetailCase(c)}
                   onEdit={()=>openEditCase(c)}
                   onUpdate={()=>setUpdateCase(c)}
