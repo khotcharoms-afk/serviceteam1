@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Modal, Field, PrimaryBtn, GhostBtn } from "../UI.jsx";
 import { IS, SERVICE_TYPES, STATUS_OPTS, fmtDate, daysLeft } from "../utils.js";
 
@@ -5,18 +6,44 @@ export default function CaseModal({
   open, onClose, editCase, caseForm, setCaseForm,
   projects, users, currentUser, saving, onSubmit
 }) {
+  const [errors, setErrors] = useState({});
+
+  function validate() {
+    const e = {};
+    if (!caseForm.projectId) e.projectId = "กรุณาเลือกโครงการ";
+    if (!caseForm.title?.trim()) e.title = "กรุณากรอกชื่องาน / รายการเซอร์วิส";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function handleSubmit() {
+    if (validate()) onSubmit();
+  }
+
+  function handleClose() {
+    setErrors({});
+    onClose();
+  }
+
+  function Err({ field }) {
+    if (!errors[field]) return null;
+    return <div style={{ color:"#ef4444",fontSize:12,marginTop:4,fontWeight:500 }}>⚠ {errors[field]}</div>;
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title={editCase ? "แก้ไขเคส" : "บันทึกเคสใหม่"}>
+    <Modal open={open} onClose={handleClose} title={editCase ? "แก้ไขเคส" : "บันทึกเคสใหม่"}>
       <Field label="โครงการ *">
         <select style={IS({ cursor:"pointer" })} value={caseForm.projectId}
           onChange={e => setCaseForm(f => ({ ...f, projectId:e.target.value }))}>
           <option value="">— เลือกโครงการ —</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
+        <Err field="projectId"/>
       </Field>
       <Field label="ชื่องาน / รายการเซอร์วิส *">
         <input style={IS()} value={caseForm.title} placeholder="อธิบายงานที่ดำเนินการ..."
           onChange={e => setCaseForm(f => ({ ...f, title:e.target.value }))}/>
+        <Err field="title"/>
       </Field>
       <Field label="ไซต์ / สถานที่">
         {(()=>{
@@ -134,8 +161,8 @@ export default function CaseModal({
           onChange={e => setCaseForm(f => ({ ...f, note:e.target.value }))}/>
       </Field>
       <div style={{ display:"flex",gap:10,marginTop:4 }}>
-        <GhostBtn onClick={onClose}>ยกเลิก</GhostBtn>
-        <PrimaryBtn onClick={onSubmit} full>
+        <GhostBtn onClick={handleClose}>ยกเลิก</GhostBtn>
+        <PrimaryBtn onClick={handleSubmit} full>
           {saving ? "กำลังบันทึก…" : (editCase ? "บันทึกการแก้ไข" : "บันทึกเคส")}
         </PrimaryBtn>
       </div>
