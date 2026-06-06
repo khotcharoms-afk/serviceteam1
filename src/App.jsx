@@ -44,10 +44,11 @@ export default function App({ currentUser, onSignOut }) {
 
   const [toast,setToast]   = useState(null);
   const [saving,setSaving] = useState(false);
-  const [pageSize,setPageSize] = useState(20);
+  const [page,setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   // Reset pagination เมื่อ filter เปลี่ยน
-  useEffect(()=>{ setPageSize(20); },[view,filterStat,filterTech,search,dateFrom,dateTo]);
+  useEffect(()=>{ setPage(1); },[view,filterStat,filterTech,search,dateFrom,dateTo]);
 
   // Close notif on outside click
   useEffect(()=>{
@@ -114,8 +115,8 @@ export default function App({ currentUser, onSignOut }) {
     const q=search.toLowerCase();
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
   }).sort((a,b)=>Number(b.id)-Number(a.id));
-  const pagedCases = visibleCases.slice(0, pageSize);
-  const hasMore = visibleCases.length > pageSize;
+  const totalPages = Math.max(1, Math.ceil(visibleCases.length / PAGE_SIZE));
+  const pagedCases = visibleCases.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
 
   // ── Case actions ──
   function openAddCase(){
@@ -535,13 +536,26 @@ export default function App({ currentUser, onSignOut }) {
                   onDel={()=>setDelCase(c.id)}/>
               );
             })}
-            {hasMore && (
-              <button onClick={()=>setPageSize(p=>p+20)}
-                style={{ width:"100%",background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:12,
-                  padding:"14px",fontSize:13,fontWeight:600,color:"#2563eb",cursor:"pointer",
-                  fontFamily:"inherit",marginTop:4 }}>
-                โหลดเพิ่ม ({visibleCases.length - pageSize} รายการที่เหลือ)
-              </button>
+            {totalPages > 1 && (
+              <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:16,flexWrap:"wrap" }}>
+                <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+                  style={{ background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:8,
+                    padding:"8px 14px",fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",
+                    color:page===1?"#cbd5e1":"#475569",fontFamily:"inherit" }}>←</button>
+                {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
+                  <button key={p} onClick={()=>setPage(p)}
+                    style={{ background:page===p?"#2563eb":"#fff",
+                      border:`1.5px solid ${page===p?"#2563eb":"#e2e8f0"}`,
+                      borderRadius:8,padding:"8px 13px",fontSize:13,fontWeight:600,
+                      cursor:"pointer",color:page===p?"#fff":"#475569",fontFamily:"inherit",
+                      minWidth:38 }}>{p}</button>
+                ))}
+                <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                  style={{ background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:8,
+                    padding:"8px 14px",fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",
+                    color:page===totalPages?"#cbd5e1":"#475569",fontFamily:"inherit" }}>→</button>
+                <span style={{ fontSize:12,color:"#94a3b8",marginLeft:4 }}>หน้า {page}/{totalPages}</span>
+              </div>
             )}
           </>
         )}
