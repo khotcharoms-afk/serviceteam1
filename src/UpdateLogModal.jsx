@@ -5,10 +5,12 @@ import { STATUS_OPTS, today } from "./utils.js";
 function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
   if (!open || !caseData) return null;
 
   function submit() {
-    if (!text.trim()) return;
+    if (!text.trim()) { setError("กรุณากรอกรายละเอียดความคืบหน้าก่อนบันทึก"); return; }
+    setError("");
     const entry = {
       by:     currentUser?.name||"ไม่ระบุ",
       text:   text.trim(),
@@ -18,7 +20,7 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
     };
     const log = [...(caseData.updateLog||[]), entry];
     onSave({ ...caseData, updateLog:log, status:status||caseData.status });
-    setText(""); setStatus(""); onClose();
+    setText(""); setStatus(""); setError(""); onClose();
   }
 
   return (
@@ -60,11 +62,13 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
         {/* Update text */}
         <div style={{ marginBottom:16 }}>
           <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>รายละเอียดความคืบหน้า *</div>
-          <textarea value={text} onChange={e=>setText(e.target.value)}
+          <textarea value={text} onChange={e=>{ setText(e.target.value); if(e.target.value.trim()) setError(""); }}
             placeholder="อธิบายสิ่งที่ทำไปแล้ว, ปัญหาที่พบ, ขั้นตอนถัดไป..."
             style={{ width:"100%",background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
               color:"#1e293b",padding:"10px 13px",fontSize:14,outline:"none",resize:"vertical",
-              minHeight:100,fontFamily:"inherit",boxSizing:"border-box",lineHeight:1.6 }}/>
+              minHeight:100,fontFamily:"inherit",boxSizing:"border-box",lineHeight:1.6,
+              borderColor:error?"#ef4444":"#e2e8f0" }}/>
+          {error && <div style={{ color:"#ef4444",fontSize:12,marginTop:5,fontWeight:500 }}>⚠ {error}</div>}
         </div>
 
         {/* Previous updates */}
