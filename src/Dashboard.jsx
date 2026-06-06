@@ -56,6 +56,7 @@ export default function Dashboard({ onBack, cases, projects, users }) {
     if (!ts) return null;
     if (ts?.toDate) return ts.toDate().getTime();
     if (ts?.seconds) return ts.seconds * 1000;
+    if (typeof ts === "string") { const d = new Date(ts); return isNaN(d) ? null : d.getTime(); }
     const n = Number(ts);
     return isNaN(n) ? null : n;
   };
@@ -93,17 +94,6 @@ export default function Dashboard({ onBack, cases, projects, users }) {
       hold: pc.filter(c=>c.status==="hold").length,
     };
   });
-
-  // DEBUG — ลบออกหลังดู console แล้ว
-  console.log("🔍 pending sample:", pendingCases.slice(0,2).map(c=>({
-    title: c.title,
-    status: c.status,
-    updatedAt: c.updatedAt,
-    createdAt: c.createdAt,
-    updatedAt_type: typeof c.updatedAt,
-    has_seconds: c.updatedAt?.seconds,
-    has_toDate: typeof c.updatedAt?.toDate,
-  })));
 
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
