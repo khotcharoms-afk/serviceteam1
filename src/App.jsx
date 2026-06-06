@@ -50,6 +50,16 @@ export default function App({ currentUser, onSignOut }) {
   // Reset pagination เมื่อ filter เปลี่ยน
   useEffect(()=>{ setPage(1); },[view,filterStat,filterTech,search,dateFrom,dateTo]);
 
+  // Re-register push subscription เมื่อ user กลับมาเปิดแอป (แก้ปัญหา iOS/Android kill subscription)
+  useEffect(()=>{
+    if(!currentUser) return;
+    const onVisible = ()=>{
+      if(document.visibilityState==="visible") registerFcm(false);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return ()=>document.removeEventListener("visibilitychange", onVisible);
+  },[currentUser]);
+
   // Close notif on outside click
   useEffect(()=>{
     if(!notifOpen) return;
