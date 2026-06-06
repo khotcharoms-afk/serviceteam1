@@ -103,7 +103,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         </div>
       </div>
 
-      <div style={{ padding:"20px",maxWidth:1100,margin:"0 auto" }}>
+      <div style={{ padding:"20px",maxWidth:1200,margin:"0 auto" }}>
 
         {/* Month nav */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16 }}>
@@ -137,7 +137,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           </div>
         )}
 
-        {/* Calendar */}
+        {/* Calendar + วันหยุด side by side */}
+        <div style={{ display:"flex",gap:14,alignItems:"flex-start" }}>
+        <div style={{ flex:1,minWidth:0 }}>
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,overflow:"hidden" }}>
           <table style={{ width:"100%",borderCollapse:"collapse",tableLayout:"fixed" }}>
             <thead>
@@ -199,50 +201,44 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           </table>
         </div>
         {isAdmin && (
-          <div style={{ textAlign:"center",marginTop:10,fontSize:12,color:"#94a3b8" }}>
+          <div style={{ textAlign:"center",marginTop:8,fontSize:12,color:"#94a3b8" }}>
             กดที่วันเพื่อจัดกะ
           </div>
         )}
-      </div>
-
-      {/* ตารางวันหยุด */}
-      <div style={{ padding:"0 20px 48px",maxWidth:1100,margin:"0 auto" }}>
-        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,overflow:"hidden" }}>
-          <div style={{ background:"#854d0e",padding:"10px 16px" }}>
-            <span style={{ fontSize:13,fontWeight:700,color:"#fff" }}>📋 ตารางวันหยุดประจำ</span>
-          </div>
-          <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed" }}>
-            <thead>
-              <tr style={{ background:"#f8fafc" }}>
-                <th style={{ padding:"7px 14px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"25%" }}>ชื่อ</th>
-                {DAY_NAMES.map(d=>(
-                  <th key={d} style={{ padding:"7px 6px",textAlign:"center",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>{d}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {approvedUsers.map((u,i)=>{
-                const sch = userSchedules.find(s=>s.userName===u.name);
-                const offDays = sch?.offDays||[];
-                return (
-                  <tr key={u.id} style={{ background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #f1f5f9" }}>
-                    <td style={{ padding:"7px 14px",fontWeight:600,color:"#0f172a" }}>{u.name.split(" ")[0]}</td>
-                    {[0,1,2,3,4,5,6].map(d=>(
-                      <td key={d} style={{ padding:"6px",textAlign:"center" }}>
-                        {offDays.includes(d) ? (
-                          <span style={{ background:"#fee2e2",color:"#ef4444",borderRadius:4,
-                            padding:"2px 6px",fontSize:10,fontWeight:600 }}>หยุด</span>
-                        ) : (
-                          <span style={{ color:"#10b981",fontSize:14 }}>✓</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
+        </div>
+
+        {/* ตารางวันหยุด — ขวา */}
+        <div style={{ width:160,flexShrink:0 }}>
+          <div style={{ background:"#1E3A5F",padding:"8px 12px",borderRadius:"12px 12px 0 0",textAlign:"center" }}>
+            <span style={{ fontSize:12,fontWeight:700,color:"#fff" }}>ตารางวันหยุด</span>
+          </div>
+          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:"0 0 12px 12px",overflow:"hidden" }}>
+            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
+              <thead>
+                <tr style={{ background:"#f8fafc" }}>
+                  <th style={{ padding:"6px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>ชื่อ</th>
+                  <th style={{ padding:"6px 8px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>วันหยุด</th>
+                </tr>
+              </thead>
+              <tbody>
+                {approvedUsers.map((u,i)=>{
+                  const sch = userSchedules.find(s=>s.userName===u.name);
+                  const offDays = (sch?.offDays||[]).sort();
+                  const dayLabel = offDays.length>0 ? offDays.map(d=>DAY_NAMES[d]).join("–") : "–";
+                  return (
+                    <tr key={u.id} style={{ background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #f1f5f9" }}>
+                      <td style={{ padding:"6px 10px",fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{u.name.split(" ")[0]}</td>
+                      <td style={{ padding:"6px 8px",color:"#64748b",whiteSpace:"nowrap" }}>{dayLabel}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        </div>{/* end flex row */}
       </div>
 
       {/* Edit Day Modal */}
