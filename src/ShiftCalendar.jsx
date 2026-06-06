@@ -45,11 +45,20 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const isAdmin = currentUser?.role === "admin";
   const approvedUsers = users.filter(u => u.role !== "pending");
 
-  // สร้าง map: dateKey -> [{ userName, shiftTypeId, isOff }]
+  // สร้าง map: dateKey -> [{ userName, shiftTypeId, isOff }] เรียงตาม startTime
   const shiftMap = {};
   shifts.forEach(s => {
     if (!shiftMap[s.date]) shiftMap[s.date] = [];
     shiftMap[s.date].push(s);
+  });
+  Object.keys(shiftMap).forEach(dk => {
+    shiftMap[dk].sort((a, b) => {
+      if (a.isOff && !b.isOff) return 1;
+      if (!a.isOff && b.isOff) return -1;
+      const ta = shiftTypes.find(t => t.id === a.shiftTypeId)?.startTime || "99";
+      const tb = shiftTypes.find(t => t.id === b.shiftTypeId)?.startTime || "99";
+      return ta.localeCompare(tb);
+    });
   });
 
   const daysInMonth = getDaysInMonth(year, month);
