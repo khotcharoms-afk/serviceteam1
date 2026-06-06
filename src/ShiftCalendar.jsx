@@ -327,11 +327,24 @@ function MemberManager({ users, shiftMembers, onClose }) {
     setList(prev => prev.map((v,j) => j===i ? {...v, selected:!v.selected} : v));
   }
   function moveUp(i) {
-    if (i===0) return;
-    setList(prev => { const n=[...prev]; [n[i-1],n[i]]=[n[i],n[i-1]]; return n; });
+    setList(prev => {
+      const n = [...prev];
+      let j = i - 1;
+      while (j >= 0 && !n[j].selected) j--;
+      if (j < 0) return prev;
+      [n[j], n[i]] = [n[i], n[j]];
+      return n;
+    });
   }
   function moveDown(i) {
-    setList(prev => { if(i>=prev.length-1) return prev; const n=[...prev]; [n[i],n[i+1]]=[n[i+1],n[i]]; return n; });
+    setList(prev => {
+      const n = [...prev];
+      let j = i + 1;
+      while (j < n.length && !n[j].selected) j++;
+      if (j >= n.length) return prev;
+      [n[i], n[j]] = [n[j], n[i]];
+      return n;
+    });
   }
 
   async function save() {
@@ -377,15 +390,20 @@ function MemberManager({ users, shiftMembers, onClose }) {
               <span style={{ flex:1,fontSize:13,fontWeight:item.selected?600:400,color:"#0f172a" }}>{item.name}</span>
               {item.selected && (
                 <div style={{ display:"flex",gap:4,flexShrink:0 }}>
-                  <button onClick={()=>moveUp(i)} disabled={i===0||!list[i-1]?.selected}
-                    style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
-                      width:26,height:26,cursor:"pointer",fontSize:13,
-                      opacity:(i===0||!list[i-1]?.selected)?0.3:1 }}>↑</button>
-                  <button onClick={()=>moveDown(i)}
-                    disabled={i>=list.length-1||!list[i+1]?.selected}
-                    style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
-                      width:26,height:26,cursor:"pointer",fontSize:13,
-                      opacity:(i>=list.length-1||!list[i+1]?.selected)?0.3:1 }}>↓</button>
+                  {(()=>{
+                    const prevSel = list.slice(0,i).filter(x=>x.selected).length > 0;
+                    const nextSel = list.slice(i+1).some(x=>x.selected);
+                    return (<>
+                      <button onClick={()=>moveUp(i)} disabled={!prevSel}
+                        style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                          width:26,height:26,cursor:"pointer",fontSize:13,
+                          opacity:prevSel?1:0.3 }}>↑</button>
+                      <button onClick={()=>moveDown(i)} disabled={!nextSel}
+                        style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                          width:26,height:26,cursor:"pointer",fontSize:13,
+                          opacity:nextSel?1:0.3 }}>↓</button>
+                    </>);
+                  })()}
                 </div>
               )}
             </div>
