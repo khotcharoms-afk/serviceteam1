@@ -44,6 +44,10 @@ export default function App({ currentUser, onSignOut }) {
 
   const [toast,setToast]   = useState(null);
   const [saving,setSaving] = useState(false);
+  const [pageSize,setPageSize] = useState(20);
+
+  // Reset pagination เมื่อ filter เปลี่ยน
+  useEffect(()=>{ setPageSize(20); },[view,filterStat,filterTech,search,dateFrom,dateTo]);
 
   // Close notif on outside click
   useEffect(()=>{
@@ -110,6 +114,8 @@ export default function App({ currentUser, onSignOut }) {
     const q=search.toLowerCase();
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
   }).sort((a,b)=>Number(b.id)-Number(a.id));
+  const pagedCases = visibleCases.slice(0, pageSize);
+  const hasMore = visibleCases.length > pageSize;
 
   // ── Case actions ──
   function openAddCase(){
@@ -516,17 +522,29 @@ export default function App({ currentUser, onSignOut }) {
             <div style={{ fontSize:14,marginBottom:12 }}>ยังไม่มีเคส</div>
             <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,padding:"10px 20px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>+ บันทึกเคสแรก</button>
           </div>
-        ) : visibleCases.map(c=>{
-          const proj=projects.find(p=>p.id===c.projectId);
-          return (
-            <CaseCard key={c.id} c={c} proj={proj}
-              onClick={()=>setDetailCase(c)}
-              onEdit={()=>openEditCase(c)}
-              onUpdate={()=>setUpdateCase(c)}
-              onHandover={()=>setHandoverCase(c)}
-              onDel={()=>setDelCase(c.id)}/>
-          );
-        })}
+        ) : (
+          <>
+            {pagedCases.map(c=>{
+              const proj=projects.find(p=>p.id===c.projectId);
+              return (
+                <CaseCard key={c.id} c={c} proj={proj}
+                  onClick={()=>setDetailCase(c)}
+                  onEdit={()=>openEditCase(c)}
+                  onUpdate={()=>setUpdateCase(c)}
+                  onHandover={()=>setHandoverCase(c)}
+                  onDel={()=>setDelCase(c.id)}/>
+              );
+            })}
+            {hasMore && (
+              <button onClick={()=>setPageSize(p=>p+20)}
+                style={{ width:"100%",background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:12,
+                  padding:"14px",fontSize:13,fontWeight:600,color:"#2563eb",cursor:"pointer",
+                  fontFamily:"inherit",marginTop:4 }}>
+                โหลดเพิ่ม ({visibleCases.length - pageSize} รายการที่เหลือ)
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       {/* FAB */}
