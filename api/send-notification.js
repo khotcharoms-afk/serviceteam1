@@ -22,29 +22,40 @@ export default async function handler(req, res) {
     );
 
     const db = getFirestore(getAdminApp());
-    const snap = await db.collection("fcmTokens").doc(toUid).get();
-    if (!snap.exists) return res.status(200).json({ skipped: true, reason: "no subscription" });
 
-    const { endpoint, auth, p256dh } = snap.data();
-    if (!endpoint || !auth || !p256dh)
-      return res.status(200).json({ skipped: true, reason: "incomplete subscription" });
+    // query ทุก subscription ของ user นี้ (รองรับหลาย device)
+    const snaps = await db.collection("fcmTokens").where("uid","==",toUid).get();
+    if (snaps.empty) return res.status(200).json({ skipped: true, reason: "no subscription" });
 
-    // payload ต้องตรงกับที่ sw.js รับ
     const payload = JSON.stringify({
       notification: { title, body: body || '' },
       data: caseId ? { caseId: String(caseId) } : {}
     });
 
-    await webpush.sendNotification({ endpoint, keys: { auth, p256dh } }, payload);
-    return res.status(200).json({ success: true });
+    const results = await Promise.allSettled(
+      snaps.docs.map(async (d) => {
+        const { endpoint, auth, p256dh } = d.data();
+        if (!endpoint || !auth || !p256dh) return;
+        try {
+          await webpush.sendNotification({ endpoint, keys: { auth, p256dh } }, payload);
+          console.log("Push sent to device:", d.id);
+        } catch (err) {
+          // subscription หมดอายุ → ลบออก
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            console.log("Push: expired subscription, deleting:", d.id);
+            await db.collection("fcmTokens").doc(d.id).delete();
+          } else {
+            throw err;
+          }
+        }
+      })
+    );
+
+    const succeeded = results.filter(r => r.status === "fulfilled").length;
+    return res.status(200).json({ success: true, sent: succeeded, total: snaps.size });
 
   } catch (err) {
     console.error("send-notification error:", err);
-    // subscription หมดอายุ → ลบออก
-    if (err.statusCode === 410 || err.statusCode === 404) {
-      try { await getFirestore(getAdminApp()).collection("fcmTokens").doc(toUid).delete(); } catch (_) {}
-      return res.status(200).json({ skipped: true, reason: "subscription expired" });
-    }
     return res.status(500).json({ error: err.message });
   }
 }
