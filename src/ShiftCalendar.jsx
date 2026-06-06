@@ -166,17 +166,18 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                               <div key={ei} style={{ background:"#f1f5f9",borderRadius:3,
                                 padding:"1px 4px",fontSize:10,color:"#94a3b8",
                                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                                {e.userName} · หยุด
+                                {e.userName.split(" ")[0]} · หยุด
                               </div>
                             );
                             const typeIdx = shiftTypes.findIndex(t => t.id === e.shiftTypeId);
                             const c = getColorForType(typeIdx >= 0 ? typeIdx : 0);
                             const type = shiftTypes.find(t => t.id === e.shiftTypeId);
+                            const firstName = e.userName.split(" ")[0];
                             return (
                               <div key={ei} style={{ background:c.bg,borderRadius:3,
                                 padding:"1px 4px",fontSize:10,color:c.text,
                                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                                {e.userName} · {type ? `${type.startTime}–${type.endTime}` : ""}
+                                {firstName} · {type ? `${type.startTime}–${type.endTime}` : ""}
                               </div>
                             );
                           })}
