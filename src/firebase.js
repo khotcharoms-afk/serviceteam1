@@ -34,32 +34,52 @@ export async function registerPushSubscription(swRegistration, uid, userName) {
     const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     if (!vapidPublicKey) { console.error("VITE_VAPID_PUBLIC_KEY missing"); return false; }
 
-    // ลบ subscription เก่า → สร้างใหม่พร้อม VAPID key ใหม่
-    const old = await swRegistration.pushManager.getSubscription();
-    if (old) await old.unsubscribe();
+    let sub = await swRegistration.pushManager.getSubscription();
 
-    const sub = await swRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
+    // ตรวจสอบว่า subscription ปัจจุบันยังใช้ได้ไหม
+    // ถ้าหมดอายุหรือ endpoint ว่าง → unsubscribe แล้วสร้างใหม่
+    if (sub) {
+      const isExpired = !sub.endpoint || sub.expirationTime && sub.expirationTime < Date.now();
+      if (isExpired) {
+        console.log("Push: subscription expired, re-subscribing...");
+        await sub.unsubscribe();
+        sub = null;
+      }
+    }
 
-    const authBuf  = sub.getKey('auth');
+    if (!sub) {
+      // สร้าง subscription ใหม่
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
+      console.log("Push: new subscription created ✅");
+    } else {
+      console.log("Push: subscription still valid ✅");
+    }
+
+    const authBuf   = sub.getKey('auth');
     const p256dhBuf = sub.getKey('p256dh');
 
-    // บันทึก subscription ลง Firestore
+    // บันทึก/อัปเดต subscription ลง Firestore เสมอ (ให้ endpoint เป็นปัจจุบันเสมอ)
     await setDoc(doc(db, 'fcmTokens', uid), {
       uid,
       name: userName,
       endpoint: sub.endpoint,
-      auth: authBuf ? bufToBase64url(authBuf) : null,
+      auth:   authBuf   ? bufToBase64url(authBuf)   : null,
       p256dh: p256dhBuf ? bufToBase64url(p256dhBuf) : null,
       updatedAt: new Date().toISOString(),
     });
 
-    console.log("Push: subscription registered ✅", sub.endpoint.slice(0, 40) + "...");
     return true;
   } catch (e) {
     console.error("registerPushSubscription error:", e);
+    // ถ้า error เป็นเรื่อง subscription หมดอายุ ให้ลอง unsubscribe แล้ว return false
+    // App.jsx จะ call registerFcm ใหม่ในครั้งถัดไปที่ user กดอะไร
+    try {
+      const old = await swRegistration.pushManager.getSubscription();
+      if (old) await old.unsubscribe();
+    } catch(_) {}
     return false;
   }
 }
