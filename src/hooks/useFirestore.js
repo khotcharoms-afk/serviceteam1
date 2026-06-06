@@ -8,6 +8,8 @@ export function useFirestore() {
   const [users,    setUsers]    = useState([]);
   const [notifications, setNotifs] = useState([]);
   const [deletedCases, setDeletedCases] = useState([]);
+  const [shifts, setShifts] = useState([]);
+  const [shiftTypes, setShiftTypes] = useState([]);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
@@ -39,8 +41,15 @@ export function useFirestore() {
           .sort((a,b)=>(b.deletedAt||"").localeCompare(a.deletedAt||""));
         setDeletedCases(all);
       }, errHandler);
-    return () => { u1(); u2(); u3(); u4(); u5(); };
+    const u6 = onSnapshot(collection(db,"shifts"), snap => {
+      setShifts(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }, errHandler);
+    const u7 = onSnapshot(collection(db,"shiftTypes"), snap => {
+      setShiftTypes(snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||"")));
+    }, errHandler);
+    return () => { u1(); u2(); u3(); u4(); u5(); u6(); u7(); };
   }, []);
 
-  return { projects, cases, users, notifications, deletedCases, loading };
+  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, loading };
 }
