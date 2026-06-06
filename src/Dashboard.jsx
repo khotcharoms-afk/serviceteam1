@@ -67,10 +67,10 @@ export default function Dashboard({ onBack, cases, projects, users }) {
   }).length;
   const doneCases = cases.filter(c=>c.status==="done");
   const closeRate = cases.length>0?Math.round((doneCases.length/cases.length)*100):0;
-  const closedWithDates = doneCases.filter(c=>_toMs(c.createdAt)&&_toMs(c.updatedAt));
+  const closedWithDates = doneCases.filter(c=>(_toMs(c.createdAt)??Number(c.id))&&_toMs(c.updatedAt));
   const avgDays = closedWithDates.length>0
     ? Math.round(closedWithDates.reduce((sum,c)=>{
-        const cr = _toMs(c.createdAt);
+        const cr = _toMs(c.createdAt) ?? Number(c.id);
         const up = _toMs(c.updatedAt);
         return sum+(up-cr)/(1000*60*60*24);
       },0)/closedWithDates.length)
