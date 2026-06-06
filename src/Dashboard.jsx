@@ -76,10 +76,10 @@ export default function Dashboard({ onBack, cases, projects, users }) {
       },0)/closedWithDates.length)
     : null;
   const longestPending = pendingCases.reduce((max,c)=>{
-    const ms = _toMs(c.updatedAt) ?? _toMs(c.createdAt);
-    if (!ms) return max;
+    const ms = _toMs(c.updatedAt) ?? _toMs(c.createdAt) ?? Number(c.id) ?? null;
+    if (!ms || isNaN(ms)) return max;
     const days = Math.floor((_now.getTime() - ms) / (1000*60*60*24));
-    return days > max ? days : max;
+    return days > 0 && days > max ? days : max;
   }, 0);
 
   // ── สถิติต่อโครงการ ──
