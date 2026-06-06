@@ -47,10 +47,45 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
     return true;
   }).sort((a,b) => a.date.localeCompare(b.date));
 
-  const newCases  = filtered;
-  const doneCases = filtered.filter(c => c.status === "done");
-  const holdCases = filtered.filter(c => c.status === "hold");
+  const newCases     = filtered;
+  const doneCases    = filtered.filter(c => c.status === "done");
+  const holdCases    = filtered.filter(c => c.status === "hold");
   const pendingCases = filtered.filter(c => c.status !== "done");
+
+  // KPI
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const casesThisMonth = cases.filter(c => {
+    const d = new Date(c.createdAt?.seconds ? c.createdAt.seconds*1000 : c.createdAt);
+    return d >= startOfMonth;
+  }).length;
+  const allDone = cases.filter(c=>c.status==="done");
+  const closeRate = cases.length>0 ? Math.round((allDone.length/cases.length)*100) : 0;
+  const closedWithDates = allDone.filter(c=>c.createdAt&&c.updatedAt);
+  const avgDays = closedWithDates.length>0
+    ? Math.round(closedWithDates.reduce((sum,c)=>{
+        const cr = new Date(c.createdAt?.seconds?c.createdAt.seconds*1000:c.createdAt);
+        const up = new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
+        return sum+(up-cr)/(1000*60*60*24);
+      },0)/closedWithDates.length)
+    : null;
+  const allPending = cases.filter(c=>c.status!=="done");
+  const longestPending = allPending.reduce((max,c)=>{
+    if(!c.updatedAt) return max;
+    const d = new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
+    const days = Math.floor((now-d)/(1000*60*60*24));
+    return days>max?days:max;
+  },0);
+
+  // สถิติต่อโครงการ (เฉพาะที่มีเคส)
+  const projStats = projects.map(p=>{
+    const pc = cases.filter(c=>c.projectId===p.id);
+    return { ...p, total:pc.length,
+      open:pc.filter(c=>c.status==="open").length,
+      inprogress:pc.filter(c=>c.status==="inprogress").length,
+      done:pc.filter(c=>c.status==="done").length,
+      hold:pc.filter(c=>c.status==="hold").length };
+  }).filter(p=>p.total>0);
 
   function printReport() {
     window.print();
@@ -144,6 +179,68 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
             </div>
           ))}
         </div>
+
+        {/* KPI Cards */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:24 }}>
+          {[
+            { icon:"📋", label:"เคสเดือนนี้",  value:casesThisMonth, unit:"รายการ", color:"#6366f1", bg:"#eef2ff", border:"#c7d2fe", sub:null },
+            { icon:"✅", label:"อัตราปิดงาน",  value:closeRate,       unit:"%",      color:"#10b981", bg:"#ecfdf5", border:"#a7f3d0", sub:`${allDone.length}/${cases.length} เคส` },
+            { icon:"⏱️", label:"เฉลี่ยปิดงาน", value:avgDays!==null?avgDays:"—", unit:avgDays!==null?"วัน":"", color:"#f59e0b", bg:"#fffbeb", border:"#fde68a", sub:avgDays!==null?`${closedWithDates.length} เคส`:"ยังไม่มีข้อมูล" },
+            { icon:"🔥", label:"ค้างนานสุด",   value:allPending.length>0?longestPending:"—", unit:allPending.length>0?"วัน":"", color:longestPending>=7?"#ef4444":"#64748b", bg:longestPending>=7?"#fff5f5":"#f8fafc", border:longestPending>=7?"#fecaca":"#e2e8f0", sub:`${allPending.length} งานค้าง` },
+          ].map(k=>(
+            <div key={k.label} style={{ background:k.bg,border:`1px solid ${k.border}`,borderRadius:10,padding:"10px 12px" }}>
+              <div style={{ fontSize:14,marginBottom:2 }}>{k.icon}</div>
+              <div style={{ fontSize:9,color:"#94a3b8",fontWeight:600,letterSpacing:.3,marginBottom:2 }}>{k.label.toUpperCase()}</div>
+              <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
+                <span style={{ fontSize:20,fontWeight:800,color:k.color,lineHeight:1 }}>{k.value}</span>
+                {k.unit&&<span style={{ fontSize:10,color:k.color,fontWeight:600 }}>{k.unit}</span>}
+              </div>
+              {k.sub&&<div style={{ fontSize:9,color:"#94a3b8",marginTop:1 }}>{k.sub}</div>}
+            </div>
+          ))}
+        </div>
+
+        {/* สถิติต่อโครงการ — compact table */}
+        {projStats.length>0 && (
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:8,
+              paddingBottom:6,borderBottom:"1px solid #e2e8f0" }}>◆ สถิติต่อโครงการ</div>
+            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
+              <thead>
+                <tr style={{ background:"#f8fafc" }}>
+                  {["โครงการ","ทั้งหมด","เปิดเคส","กำลังทำ","เสร็จ","รอ"].map((h,i)=>(
+                    <th key={h} style={{ padding:"6px 10px",textAlign:i===0?"left":"center",
+                      fontSize:10,color:"#94a3b8",fontWeight:700,
+                      borderBottom:"1px solid #e2e8f0",letterSpacing:.3 }}>{h.toUpperCase()}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {projStats.map((p,i)=>(
+                  <tr key={p.id} style={{ background:i%2===0?"#fff":"#f8fafc" }}>
+                    <td style={{ padding:"6px 10px",borderBottom:"1px solid #f1f5f9" }}>
+                      <span style={{ display:"inline-flex",alignItems:"center",gap:5 }}>
+                        <span style={{ width:8,height:8,borderRadius:2,background:p.color,display:"inline-block",flexShrink:0 }}/>
+                        <span style={{ fontWeight:600,color:"#0f172a" }}>{p.name}</span>
+                      </span>
+                    </td>
+                    {[
+                      {v:p.total,c:"#64748b"},
+                      {v:p.open,c:"#f59e0b"},
+                      {v:p.inprogress,c:"#3b82f6"},
+                      {v:p.done,c:"#10b981"},
+                      {v:p.hold,c:"#ef4444"},
+                    ].map((x,j)=>(
+                      <td key={j} style={{ padding:"6px 10px",textAlign:"center",
+                        borderBottom:"1px solid #f1f5f9",
+                        fontWeight:700,color:x.c,fontSize:13 }}>{x.v}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* เคสที่เข้ามาในช่วงนี้ */}
         <ReportSection title="📋 เคสทั้งหมดในช่วงนี้" count={newCases.length}>
