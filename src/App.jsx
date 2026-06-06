@@ -12,9 +12,10 @@ import CaseModal from "./components/CaseModal.jsx";
 import ProjectModal from "./components/ProjectModal.jsx";
 import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
+import ShiftCalendar from "./ShiftCalendar.jsx";
 
 export default function App({ currentUser, onSignOut }) {
-  const { projects, cases, users, notifications, deletedCases, loading } = useFirestore();
+  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, loading } = useFirestore();
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
@@ -25,6 +26,7 @@ export default function App({ currentUser, onSignOut }) {
   const [menuOpen,setMenuOpen]     = useState(false);
   const [adminPage,setAdminPage]   = useState(false);
   const [dashboardPage,setDashboardPage] = useState(false);
+  const [shiftPage,setShiftPage] = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
 
@@ -295,6 +297,7 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
+  if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
   return (
@@ -350,6 +353,8 @@ export default function App({ currentUser, onSignOut }) {
             <button onClick={()=>setDashboardPage(true)} style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",
               color:"#16a34a",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📊</button>
           )}
+          <button onClick={()=>setShiftPage(true)} style={{ background:"#fefce8",border:"1px solid #fde68a",
+            color:"#854d0e",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📅</button>
           <div style={{ position:"relative" }}>
             <button onClick={e=>{ e.stopPropagation(); setNotifOpen(v=>!v); }}
               style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
