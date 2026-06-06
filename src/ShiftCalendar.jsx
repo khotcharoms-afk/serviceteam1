@@ -383,8 +383,6 @@ function ScheduleManager({ users, userSchedules, onClose }) {
   async function save() {
     setSaving(true);
     try {
-      const { doc, setDoc, collection } = await import("firebase/firestore");
-      const { db } = await import("./firebase");
       for (const sch of schedules) {
         const docId = sch.userName.replace(/\s/g,"_");
         await setDoc(doc(db,"userSchedules",docId), {
