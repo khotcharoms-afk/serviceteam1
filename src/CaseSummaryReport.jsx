@@ -79,8 +79,11 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
         @media print {
           .no-print { display:none !important; }
           body { background:#fff !important; }
-          .print-page { padding:20px !important; background:#fff !important; }
+          .print-page { padding:12px 16px !important; background:#fff !important; }
           .print-break { page-break-before: always; }
+          .summary-cards > div { padding:5px 7px !important; }
+          .summary-cards > div > div:first-child { font-size:14px !important; }
+          .summary-cards > div > div:last-child { font-size:9px !important; }
         }
       `}</style>
 
@@ -160,7 +163,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
         </div>
 
         {/* สรุปตัวเลข 4 ช่อง */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14 }}>
+        <div className="summary-cards" style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14 }}>
           {[
             { label:"เคสทั้งหมด",   val:newCases.length,    color:"#1d4ed8", bg:"#eff6ff", border:"#bfdbfe", top:"#3b82f6" },
             { label:"เสร็จสิ้น",    val:doneCases.length,   color:"#065f46", bg:"#f0fdf4", border:"#bbf7d0", top:"#10b981" },
@@ -218,16 +221,22 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
         )}
 
         {/* เคสที่เข้ามาในช่วงนี้ */}
-        <ReportSection title="📋 เคสทั้งหมดในช่วงนี้" count={newCases.length}>
+        <div style={{ marginBottom:16 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,
+            paddingBottom:6,borderBottom:"1px solid #e2e8f0" }}>
+            <div style={{ fontSize:12,fontWeight:700,color:"#0f172a" }}>📋 เคสทั้งหมดในช่วงนี้</div>
+            <span style={{ background:"#f1f5f9",color:"#64748b",borderRadius:20,
+              padding:"1px 7px",fontSize:10,fontWeight:700 }}>{newCases.length}</span>
+          </div>
           {newCases.length===0 ? <Empty/> : (
-            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:13 }}>
+            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:11,tableLayout:"fixed" }}>
               <thead>
                 <tr style={{ background:"#f8fafc" }}>
-                  {["วันที่","ชื่องาน","โครงการ","ผู้ดำเนินการ","สถานะ"].map(h=>(
-                    <th key={h} style={{ padding:"8px 12px",textAlign:"left",fontSize:11,
-                      color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",
-                      textTransform:"uppercase",letterSpacing:0.5 }}>{h}</th>
-                  ))}
+                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"12%" }}>วันที่</th>
+                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"30%" }}>ชื่องาน</th>
+                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>โครงการ</th>
+                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"26%" }}>ผู้ดำเนินการ</th>
+                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"12%" }}>สถานะ</th>
                 </tr>
               </thead>
               <tbody>
@@ -237,18 +246,15 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
                   const s = STATUS_LABEL[c.status]||STATUS_LABEL.open;
                   return (
                     <tr key={c.id} style={{ background:i%2===0?"#fff":"#f8fafc" }}>
-                      <td style={{ padding:"8px 12px",borderBottom:"1px solid #f1f5f9",
-                        color:"#64748b",whiteSpace:"nowrap" }}>{fmtDate(c.date)}</td>
-                      <td style={{ padding:"8px 12px",borderBottom:"1px solid #f1f5f9",
-                        color:"#0f172a",fontWeight:500 }}>{c.title}</td>
-                      <td style={{ padding:"8px 12px",borderBottom:"1px solid #f1f5f9" }}>
-                        {proj && <span style={{ color:proj.color,fontWeight:600,fontSize:12 }}>◆ {proj.name}</span>}
+                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",color:"#64748b",whiteSpace:"nowrap",fontSize:10 }}>{fmtDate(c.date)}</td>
+                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",color:"#0f172a",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{c.title}</td>
+                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+                        {proj && <span style={{ color:proj.color,fontWeight:600,fontSize:10 }}>◆ {proj.name}</span>}
                       </td>
-                      <td style={{ padding:"8px 12px",borderBottom:"1px solid #f1f5f9",
-                        color:"#475569" }}>{techs.join(", ")}</td>
-                      <td style={{ padding:"8px 12px",borderBottom:"1px solid #f1f5f9" }}>
+                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",color:"#475569",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{techs.join(", ")}</td>
+                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9" }}>
                         <span style={{ background:s.color+"15",color:s.color,borderRadius:20,
-                          padding:"2px 8px",fontSize:11,fontWeight:600 }}>{s.label}</span>
+                          padding:"1px 6px",fontSize:9,fontWeight:600 }}>{s.label}</span>
                       </td>
                     </tr>
                   );
@@ -256,7 +262,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
               </tbody>
             </table>
           )}
-        </ReportSection>
+        </div>
 
 
 
