@@ -50,6 +50,38 @@ export default function Dashboard({ onBack, cases, projects, users }) {
     return d !== null && d < 0;
   });
 
+  // ── KPI Cards ──
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // เคสเดือนนี้
+  const casesThisMonth = cases.filter(c => {
+    const d = new Date(c.createdAt?.seconds ? c.createdAt.seconds * 1000 : c.createdAt);
+    return d >= startOfMonth;
+  }).length;
+
+  // อัตราปิดงาน
+  const doneCases = cases.filter(c => c.status === "done");
+  const closeRate = cases.length > 0 ? Math.round((doneCases.length / cases.length) * 100) : 0;
+
+  // เฉลี่ยวันปิดงาน (เคส done ที่มี createdAt)
+  const closedWithDates = doneCases.filter(c => c.createdAt && c.updatedAt);
+  const avgDays = closedWithDates.length > 0
+    ? Math.round(closedWithDates.reduce((sum, c) => {
+        const created = new Date(c.createdAt?.seconds ? c.createdAt.seconds * 1000 : c.createdAt);
+        const updated = new Date(c.updatedAt?.seconds ? c.updatedAt.seconds * 1000 : c.updatedAt);
+        return sum + (updated - created) / (1000 * 60 * 60 * 24);
+      }, 0) / closedWithDates.length)
+    : null;
+
+  // เคสค้างนานสุด (status ไม่ใช่ done วัดจาก updatedAt)
+  const longestPending = pendingCases.reduce((max, c) => {
+    if (!c.updatedAt) return max;
+    const d = new Date(c.updatedAt?.seconds ? c.updatedAt.seconds * 1000 : c.updatedAt);
+    const days = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+    return days > max ? days : max;
+  }, 0);
+
   // ── สถิติต่อโครงการ ──
   const projStats = projects.map(p=>{
     const pc = cases.filter(c=>c.projectId===p.id);
@@ -156,6 +188,67 @@ export default function Dashboard({ onBack, cases, projects, users }) {
         </Section>
         </div>
         </div>{/* end 2-column grid */}
+
+        {/* KPI Cards */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12,marginBottom:20 }}>
+          {[
+            {
+              icon:"📋",
+              label:"เคสเดือนนี้",
+              value: casesThisMonth,
+              unit:"รายการ",
+              color:"#6366f1",
+              bg:"#eef2ff",
+              border:"#c7d2fe",
+            },
+            {
+              icon:"✅",
+              label:"อัตราปิดงาน",
+              value: closeRate,
+              unit:"%",
+              color:"#10b981",
+              bg:"#ecfdf5",
+              border:"#a7f3d0",
+              sub:`${doneCases.length} / ${cases.length} เคส`,
+            },
+            {
+              icon:"⏱️",
+              label:"เฉลี่ยปิดงาน",
+              value: avgDays !== null ? avgDays : "—",
+              unit: avgDays !== null ? "วัน" : "",
+              color:"#f59e0b",
+              bg:"#fffbeb",
+              border:"#fde68a",
+              sub: avgDays !== null ? `จาก ${closedWithDates.length} เคสที่เสร็จ` : "ยังไม่มีข้อมูล",
+            },
+            {
+              icon:"🔥",
+              label:"ค้างนานสุด",
+              value: pendingCases.length > 0 ? longestPending : "—",
+              unit: pendingCases.length > 0 ? "วัน" : "",
+              color: longestPending >= 7 ? "#ef4444" : "#64748b",
+              bg: longestPending >= 7 ? "#fff5f5" : "#f8fafc",
+              border: longestPending >= 7 ? "#fecaca" : "#e2e8f0",
+              sub: pendingCases.length > 0 ? `${pendingCases.length} งานค้างทั้งหมด` : "ไม่มีงานค้าง",
+            },
+          ].map(k=>(
+            <div key={k.label} style={{
+              background: k.bg,
+              border: `1px solid ${k.border}`,
+              borderRadius: 14,
+              padding: "16px 18px",
+              display:"flex", flexDirection:"column", gap:4,
+            }}>
+              <div style={{ fontSize:20 }}>{k.icon}</div>
+              <div style={{ fontSize:11, color:"#94a3b8", fontWeight:600, letterSpacing:.3 }}>{k.label.toUpperCase()}</div>
+              <div style={{ display:"flex", alignItems:"baseline", gap:4 }}>
+                <span style={{ fontSize:28, fontWeight:800, color:k.color, lineHeight:1 }}>{k.value}</span>
+                {k.unit && <span style={{ fontSize:12, color:k.color, fontWeight:600 }}>{k.unit}</span>}
+              </div>
+              {k.sub && <div style={{ fontSize:11, color:"#94a3b8" }}>{k.sub}</div>}
+            </div>
+          ))}
+        </div>
 
         {/* ประกันใกล้หมด */}
         {(warrantyExpiring.length>0||warrantyExpired.length>0) && (
