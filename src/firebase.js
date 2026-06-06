@@ -37,9 +37,8 @@ export async function registerPushSubscription(swRegistration, uid, userName) {
     let sub = await swRegistration.pushManager.getSubscription();
 
     // ตรวจสอบว่า subscription ปัจจุบันยังใช้ได้ไหม
-    // ถ้าหมดอายุหรือ endpoint ว่าง → unsubscribe แล้วสร้างใหม่
     if (sub) {
-      const isExpired = !sub.endpoint || sub.expirationTime && sub.expirationTime < Date.now();
+      const isExpired = !sub.endpoint || (sub.expirationTime && sub.expirationTime < Date.now());
       if (isExpired) {
         console.log("Push: subscription expired, re-subscribing...");
         await sub.unsubscribe();
@@ -48,7 +47,6 @@ export async function registerPushSubscription(swRegistration, uid, userName) {
     }
 
     if (!sub) {
-      // สร้าง subscription ใหม่
       sub = await swRegistration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
@@ -61,9 +59,14 @@ export async function registerPushSubscription(swRegistration, uid, userName) {
     const authBuf   = sub.getKey('auth');
     const p256dhBuf = sub.getKey('p256dh');
 
-    // บันทึก/อัปเดต subscription ลง Firestore เสมอ (ให้ endpoint เป็นปัจจุบันเสมอ)
-    await setDoc(doc(db, 'fcmTokens', uid), {
+    // สร้าง deviceId จาก endpoint (hash สั้นๆ) เพื่อแยก device
+    const deviceId = btoa(sub.endpoint).replace(/[^a-zA-Z0-9]/g,'').slice(-20);
+    const docId = `${uid}_${deviceId}`;
+
+    // บันทึก subscription แยกตาม device → 1 user มีได้หลาย device
+    await setDoc(doc(db, 'fcmTokens', docId), {
       uid,
+      deviceId,
       name: userName,
       endpoint: sub.endpoint,
       auth:   authBuf   ? bufToBase64url(authBuf)   : null,
@@ -71,11 +74,10 @@ export async function registerPushSubscription(swRegistration, uid, userName) {
       updatedAt: new Date().toISOString(),
     });
 
+    console.log("Push: saved subscription for device", deviceId);
     return true;
   } catch (e) {
     console.error("registerPushSubscription error:", e);
-    // ถ้า error เป็นเรื่อง subscription หมดอายุ ให้ลอง unsubscribe แล้ว return false
-    // App.jsx จะ call registerFcm ใหม่ในครั้งถัดไปที่ user กดอะไร
     try {
       const old = await swRegistration.pushManager.getSubscription();
       if (old) await old.unsubscribe();
