@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db, auth, registerPushSubscription } from "./firebase";
-import { doc, setDoc, deleteDoc, writeBatch } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc } from "firebase/firestore";
 import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS } from "./utils.js";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
@@ -14,7 +14,7 @@ import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
 
 export default function App({ currentUser, onSignOut }) {
-  const { projects, cases, users, notifications, loading } = useFirestore();
+  const { projects, cases, users, notifications, deletedCases, loading } = useFirestore();
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
@@ -176,6 +176,18 @@ export default function App({ currentUser, onSignOut }) {
     setSaving(false);
   }
   async function deleteCase(id){
+    const c = cases.find(x=>x.id===id);
+    const proj = projects.find(p=>p.id===c?.projectId);
+    // บันทึก log ก่อนลบ
+    try {
+      await addDoc(collection(db,"deletedCases"), {
+        caseTitle:   c?.title||"ไม่ระบุ",
+        projectName: proj?.name||"ไม่ระบุ",
+        projectId:   c?.projectId||null,
+        deletedBy:   currentUser?.name||"ไม่ระบุ",
+        deletedAt:   new Date().toISOString(),
+      });
+    } catch(e){ console.error("log delete failed", e); }
     const ok = await commitWrite(deleteDoc(doc(db,"cases",id)), "ลบเคสแล้ว");
     if(ok){ setDelCase(null); setDetailCase(null); }
   }
@@ -283,7 +295,7 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
-  if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users}/>;
+  if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
