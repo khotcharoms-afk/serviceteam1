@@ -4,7 +4,9 @@ import CaseSummaryReport from "./CaseSummaryReport.jsx";
 
 export default function Dashboard({ onBack, cases, projects, users, deletedCases=[] }) {
   const [showReport, setShowReport] = useState(false);
+  const [showDeleteLog, setShowDeleteLog] = useState(false);
   if(showReport) return <CaseSummaryReport onBack={()=>setShowReport(false)} cases={cases} projects={projects}/>;
+  if(showDeleteLog) return <DeleteLog onBack={()=>setShowDeleteLog(false)} deletedCases={deletedCases}/>;
 
   // ── สถิติเคสแต่ละสถานะ ──
   const statusStats = [
@@ -109,6 +111,11 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📊 Dashboard</div>
         <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:10 }}>
           <span style={{ fontSize:12,color:"#94a3b8" }}>เคสทั้งหมด {cases.length} รายการ</span>
+          <button onClick={()=>setShowDeleteLog(true)}
+            style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",borderRadius:8,
+              padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            🗑 ประวัติลบเคส {deletedCases.length>0&&`(${deletedCases.length})`}
+          </button>
           <button onClick={()=>setShowReport(true)}
             style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
               padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -295,44 +302,60 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
           </div>
         </div>
 
-        {/* ประวัติการลบเคส */}
-        {deletedCases.length > 0 && (
-          <div style={{ marginBottom:20 }}>
-            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:10 }}>
-              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>🗑 ประวัติการลบเคส</div>
-              <span style={{ background:"#fee2e2",color:"#ef4444",borderRadius:20,
-                padding:"1px 8px",fontSize:11,fontWeight:700 }}>{deletedCases.length}</span>
-            </div>
-            <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,overflow:"hidden" }}>
-              {deletedCases.slice(0,20).map((d,i)=>(
-                <div key={d.id} style={{ display:"flex",gap:12,alignItems:"flex-start",
-                  padding:"10px 14px",borderBottom: i<deletedCases.length-1?"1px solid #f1f5f9":"none",
-                  background:i%2===0?"#fff":"#f8fafc" }}>
-                  <div style={{ width:32,height:32,borderRadius:"50%",background:"#fee2e2",
-                    display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14 }}>
-                    👤
-                  </div>
-                  <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2 }}>
-                      <span style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{d.deletedBy}</span>
-                      <span style={{ fontSize:11,color:"#94a3b8",flexShrink:0,marginLeft:8 }}>
-                        {d.deletedAt ? new Date(d.deletedAt).toLocaleString("th-TH",{
-                          day:"2-digit",month:"2-digit",year:"numeric",
-                          hour:"2-digit",minute:"2-digit"
-                        }) : ""}
-                      </span>
-                    </div>
-                    <div style={{ fontSize:12,color:"#64748b" }}>
-                      ลบเคส <span style={{ color:"#0f172a",fontWeight:500 }}>"{d.caseTitle}"</span>
-                    </div>
-                    <div style={{ fontSize:11,color:"#94a3b8",marginTop:2 }}>โครงการ: {d.projectName}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+
+
+      </div>
+    </div>
+  );
+}
+
+function DeleteLog({ onBack, deletedCases }) {
+  return (
+    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
+      <div style={{ background:"#fff",borderBottom:"1px solid #e2e8f0",padding:"14px 20px",
+        display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
+        <button onClick={onBack} style={{ background:"#f1f5f9",border:"none",borderRadius:8,
+          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#475569",fontWeight:600 }}>
+          ← กลับ
+        </button>
+        <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>🗑 ประวัติการลบเคส</div>
+        <span style={{ background:"#fee2e2",color:"#ef4444",borderRadius:20,
+          padding:"2px 10px",fontSize:12,fontWeight:700,marginLeft:4 }}>{deletedCases.length} รายการ</span>
+      </div>
+      <div style={{ padding:"20px",maxWidth:900,margin:"0 auto" }}>
+        {deletedCases.length===0 ? (
+          <div style={{ textAlign:"center",color:"#cbd5e1",padding:"48px 0",fontSize:14 }}>ยังไม่มีประวัติการลบเคส</div>
+        ) : (
+          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,overflow:"hidden" }}>
+            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed" }}>
+              <thead>
+                <tr style={{ background:"#f8fafc" }}>
+                  <th style={{ padding:"8px 14px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>ผู้ลบ</th>
+                  <th style={{ padding:"8px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"35%" }}>ชื่อเคส</th>
+                  <th style={{ padding:"8px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"25%" }}>โครงการ</th>
+                  <th style={{ padding:"8px 10px",textAlign:"right",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>วันเวลา</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deletedCases.map((d,i)=>(
+                  <tr key={d.id} style={{ background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #f1f5f9" }}>
+                    <td style={{ padding:"8px 14px",fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{d.deletedBy}</td>
+                    <td style={{ padding:"8px 10px",color:"#475569",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{d.caseTitle}</td>
+                    <td style={{ padding:"8px 10px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+                      <span style={{ fontSize:11,color:"#64748b" }}>◆ {d.projectName}</span>
+                    </td>
+                    <td style={{ padding:"8px 10px",textAlign:"right",color:"#94a3b8",whiteSpace:"nowrap" }}>
+                      {d.deletedAt ? new Date(d.deletedAt).toLocaleString("th-TH",{
+                        day:"2-digit",month:"2-digit",year:"numeric",
+                        hour:"2-digit",minute:"2-digit"
+                      }) : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-
       </div>
     </div>
   );
