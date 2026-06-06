@@ -125,6 +125,26 @@ export default function Dashboard({ onBack, cases, projects, users }) {
         {/* Column ซ้าย */}
         <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
 
+        {/* KPI 2×2 */}
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+          {[
+            { icon:"📋", label:"เคสเดือนนี้",  value:casesThisMonth, unit:"รายการ", color:"#6366f1", bg:"#eef2ff", border:"#c7d2fe", sub:null },
+            { icon:"✅", label:"อัตราปิดงาน",  value:closeRate,       unit:"%",      color:"#10b981", bg:"#ecfdf5", border:"#a7f3d0", sub:`${doneCases.length}/${cases.length} เคส` },
+            { icon:"⏱️", label:"เฉลี่ยปิดงาน", value:avgDays!==null?avgDays:"—", unit:avgDays!==null?"วัน":"", color:"#f59e0b", bg:"#fffbeb", border:"#fde68a", sub:avgDays!==null?`${closedWithDates.length} เคส`:"ยังไม่มีข้อมูล" },
+            { icon:"🔥", label:"ค้างนานสุด",   value:pendingCases.length>0?longestPending:"—", unit:pendingCases.length>0?"วัน":"", color:longestPending>=7?"#ef4444":"#64748b", bg:longestPending>=7?"#fff5f5":"#f8fafc", border:longestPending>=7?"#fecaca":"#e2e8f0", sub:`${pendingCases.length} งานค้าง` },
+          ].map(k=>(
+            <div key={k.label} style={{ background:k.bg,border:`1px solid ${k.border}`,borderRadius:12,padding:"12px 14px" }}>
+              <div style={{ fontSize:16,marginBottom:4 }}>{k.icon}</div>
+              <div style={{ fontSize:10,color:"#94a3b8",fontWeight:600,letterSpacing:.3,marginBottom:2 }}>{k.label.toUpperCase()}</div>
+              <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
+                <span style={{ fontSize:22,fontWeight:800,color:k.color,lineHeight:1 }}>{k.value}</span>
+                {k.unit&&<span style={{ fontSize:11,color:k.color,fontWeight:600 }}>{k.unit}</span>}
+              </div>
+              {k.sub&&<div style={{ fontSize:10,color:"#94a3b8",marginTop:2 }}>{k.sub}</div>}
+            </div>
+          ))}
+        </div>
+
         {/* Bar Chart สถิติเคส */}
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,
           padding:"16px 20px" }}>
@@ -158,26 +178,6 @@ export default function Dashboard({ onBack, cases, projects, users }) {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* KPI 2×2 */}
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
-          {[
-            { icon:"📋", label:"เคสเดือนนี้",  value:casesThisMonth, unit:"รายการ", color:"#6366f1", bg:"#eef2ff", border:"#c7d2fe", sub:null },
-            { icon:"✅", label:"อัตราปิดงาน",  value:closeRate,       unit:"%",      color:"#10b981", bg:"#ecfdf5", border:"#a7f3d0", sub:`${doneCases.length}/${cases.length} เคส` },
-            { icon:"⏱️", label:"เฉลี่ยปิดงาน", value:avgDays!==null?avgDays:"—", unit:avgDays!==null?"วัน":"", color:"#f59e0b", bg:"#fffbeb", border:"#fde68a", sub:avgDays!==null?`${closedWithDates.length} เคส`:"ยังไม่มีข้อมูล" },
-            { icon:"🔥", label:"ค้างนานสุด",   value:pendingCases.length>0?longestPending:"—", unit:pendingCases.length>0?"วัน":"", color:longestPending>=7?"#ef4444":"#64748b", bg:longestPending>=7?"#fff5f5":"#f8fafc", border:longestPending>=7?"#fecaca":"#e2e8f0", sub:`${pendingCases.length} งานค้าง` },
-          ].map(k=>(
-            <div key={k.label} style={{ background:k.bg,border:`1px solid ${k.border}`,borderRadius:12,padding:"12px 14px" }}>
-              <div style={{ fontSize:16,marginBottom:4 }}>{k.icon}</div>
-              <div style={{ fontSize:10,color:"#94a3b8",fontWeight:600,letterSpacing:.3,marginBottom:2 }}>{k.label.toUpperCase()}</div>
-              <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
-                <span style={{ fontSize:22,fontWeight:800,color:k.color,lineHeight:1 }}>{k.value}</span>
-                {k.unit&&<span style={{ fontSize:11,color:k.color,fontWeight:600 }}>{k.unit}</span>}
-              </div>
-              {k.sub&&<div style={{ fontSize:10,color:"#94a3b8",marginTop:2 }}>{k.sub}</div>}
-            </div>
-          ))}
         </div>
 
         </div>{/* end column ซ้าย */}
