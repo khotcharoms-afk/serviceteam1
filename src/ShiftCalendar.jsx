@@ -55,9 +55,17 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
     shiftMap[dk].sort((a, b) => {
       if (a.isOff && !b.isOff) return 1;
       if (!a.isOff && b.isOff) return -1;
-      const ta = shiftTypes.find(t => t.id === a.shiftTypeId)?.startTime || "99";
-      const tb = shiftTypes.find(t => t.id === b.shiftTypeId)?.startTime || "99";
-      return ta.localeCompare(tb);
+      const typeA = shiftTypes.find(t => t.id === a.shiftTypeId);
+      const typeB = shiftTypes.find(t => t.id === b.shiftTypeId);
+      const startA = typeA?.startTime || "99";
+      const startB = typeB?.startTime || "99";
+      if (startA !== startB) return startA.localeCompare(startB);
+      // startTime เท่ากัน → เรียงตาม endTime (00:xx ถือว่าดึกกว่า 23:xx)
+      const endA = typeA?.endTime || "99";
+      const endB = typeB?.endTime || "99";
+      const normA = endA < "06" ? "z" + endA : endA;
+      const normB = endB < "06" ? "z" + endB : endB;
+      return normA.localeCompare(normB);
     });
   });
 
