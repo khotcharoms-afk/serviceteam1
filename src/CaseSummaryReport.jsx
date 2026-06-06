@@ -54,38 +54,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
   const holdCases    = filtered.filter(c => c.status === "hold");
   const pendingCases = filtered.filter(c => c.status !== "done");
 
-  // KPI
-  const now = new Date();
-  const _toMs = ts => {
-    if (!ts) return null;
-    if (ts?.toDate) return ts.toDate().getTime();
-    if (ts?.seconds) return ts.seconds * 1000;
-    if (typeof ts === "string") { const d = new Date(ts); return isNaN(d) ? null : d.getTime(); }
-    const n = Number(ts); return isNaN(n) ? null : n;
-  };
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const casesThisMonth = cases.filter(c => {
-    const ms = _toMs(c.createdAt) ?? Number(c.id);
-    return ms >= startOfMonth.getTime();
-  }).length;
-  const allDone = cases.filter(c=>c.status==="done");
-  const closeRate = cases.length>0 ? Math.round((allDone.length/cases.length)*100) : 0;
-  // เฉลี่ยปิดงาน: ใช้ id เป็น fallback สำหรับเคสเก่าที่ไม่มี createdAt
-  const closedWithDates = allDone.filter(c => (_toMs(c.createdAt) ?? Number(c.id)) && _toMs(c.updatedAt));
-  const avgDays = closedWithDates.length>0
-    ? Math.round(closedWithDates.reduce((sum,c)=>{
-        const cr = _toMs(c.createdAt) ?? Number(c.id);
-        const up = _toMs(c.updatedAt);
-        return sum + (up - cr) / (1000*60*60*24);
-      },0) / closedWithDates.length)
-    : null;
-  const allPending = cases.filter(c=>c.status!=="done");
-  const longestPending = allPending.reduce((max,c)=>{
-    const ms = _toMs(c.updatedAt) ?? _toMs(c.createdAt) ?? Number(c.id) ?? null;
-    if (!ms || isNaN(ms)) return max;
-    const days = Math.floor((now.getTime() - ms) / (1000*60*60*24));
-    return days > 0 && days > max ? days : max;
-  }, 0);
+  // (KPI section removed — not shown in report)
 
   // สถิติต่อโครงการ (เฉพาะที่มีเคส)
   const projPool = selectedProj==="all" ? projects : projects.filter(p=>p.id===selectedProj);
@@ -190,24 +159,18 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           <div style={{ fontSize:13,color:"#64748b" }}>วันที่พิมพ์: {fmtDate(new Date().toISOString().slice(0,10))}</div>
         </div>
 
-        {/* สรุป + KPI — แถวเดียว 8 ช่อง */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14 }}>
+        {/* สรุปตัวเลข 4 ช่อง */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14 }}>
           {[
-            { label:"เคสทั้งหมด",   val:newCases.length,    color:"#2563eb", bg:"#fff",     border:`#2563eb30`, topBorder:"#2563eb", icon:null },
-            { label:"เสร็จสิ้น",    val:doneCases.length,   color:"#10b981", bg:"#fff",     border:`#10b98130`, topBorder:"#10b981", icon:null },
-            { label:"ยังไม่เสร็จ",  val:pendingCases.length,color:"#f59e0b", bg:"#fff",     border:`#f59e0b30`, topBorder:"#f59e0b", icon:null },
-            { label:"ติดปัญหา/รอ", val:holdCases.length,   color:"#ef4444", bg:"#fff",     border:`#ef444430`, topBorder:"#ef4444", icon:null },
-            { label:"เดือนนี้",     val:casesThisMonth,     color:"#6366f1", bg:"#eef2ff",  border:"#c7d2fe",   topBorder:null,      icon:"📋" },
-            { label:"ปิดงาน",       val:`${closeRate}%`,    color:"#10b981", bg:"#ecfdf5",  border:"#a7f3d0",   topBorder:null,      icon:"✅" },
-            { label:"เฉลี่ย",       val:avgDays!==null?`${avgDays}วัน`:"—", color:"#f59e0b", bg:"#fffbeb", border:"#fde68a", topBorder:null, icon:"⏱️" },
-            { label:"ค้างนาน",      val:allPending.length>0?`${longestPending}วัน`:"—", color:longestPending>=7?"#ef4444":"#64748b", bg:longestPending>=7?"#fff5f5":"#f8fafc", border:longestPending>=7?"#fecaca":"#e2e8f0", topBorder:null, icon:"🔥" },
+            { label:"เคสทั้งหมด",   val:newCases.length,    color:"#1d4ed8", bg:"#eff6ff", border:"#bfdbfe", top:"#3b82f6" },
+            { label:"เสร็จสิ้น",    val:doneCases.length,   color:"#065f46", bg:"#f0fdf4", border:"#bbf7d0", top:"#10b981" },
+            { label:"ยังไม่เสร็จ",  val:pendingCases.length,color:"#92400e", bg:"#fffbeb", border:"#fde68a", top:"#f59e0b" },
+            { label:"ติดปัญหา/รอ", val:holdCases.length,   color:"#991b1b", bg:"#fff5f5", border:"#fecaca", top:"#ef4444" },
           ].map(s=>(
-            <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.border}`,
-              borderRadius:7, padding:"7px 8px",
-              borderTop: s.topBorder ? `2px solid ${s.topBorder}` : `1px solid ${s.border}` }}>
-              {s.icon && <div style={{ fontSize:12,marginBottom:1 }}>{s.icon}</div>}
-              <div style={{ fontSize:13,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:9,color:"#94a3b8",marginTop:2,fontWeight:600 }}>{s.label}</div>
+            <div key={s.label} style={{ background:s.bg,border:`0.5px solid ${s.border}`,
+              borderRadius:8,padding:"8px 10px",borderTop:`2px solid ${s.top}` }}>
+              <div style={{ fontSize:18,fontWeight:500,color:s.color,lineHeight:1 }}>{s.val}</div>
+              <div style={{ fontSize:10,marginTop:3,fontWeight:500,color:s.color,opacity:.7 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -295,53 +258,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           )}
         </ReportSection>
 
-        {/* เคสที่เสร็จแล้ว */}
-        <ReportSection title="✅ เคสที่เสร็จสิ้นแล้ว" count={doneCases.length}>
-          {doneCases.length===0 ? <Empty text="ไม่มีเคสที่เสร็จในช่วงนี้"/> : (
-            <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-              {doneCases.map(c=>{
-                const proj = projects.find(p=>p.id===c.projectId);
-                const techs = c.techs?.length ? c.techs : (c.tech ? [c.tech] : ["-"]);
-                return (
-                  <div key={c.id} style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",
-                    borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:12 }}>
-                    <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{c.title}</div>
-                      <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-                        {proj && <span style={{ color:proj.color,fontWeight:600 }}>◆ {proj.name} </span>}
-                        · {techs.join(", ")} · {fmtDate(c.date)}
-                      </div>
-                      {c.note && <div style={{ fontSize:11,color:"#16a34a",marginTop:4,lineHeight:1.5 }}>📝 {c.note}</div>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ReportSection>
 
-        {/* เคสที่ติดปัญหา */}
-        <ReportSection title="⚠️ เคสที่ติดปัญหา / รอดำเนินการ" count={holdCases.length}>
-          {holdCases.length===0 ? <Empty text="ไม่มีเคสติดปัญหาในช่วงนี้ 🎉"/> : (
-            <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-              {holdCases.map(c=>{
-                const proj = projects.find(p=>p.id===c.projectId);
-                const techs = c.techs?.length ? c.techs : (c.tech ? [c.tech] : ["-"]);
-                return (
-                  <div key={c.id} style={{ background:"#fff5f5",border:"1px solid #fecaca",
-                    borderRadius:10,padding:"10px 14px" }}>
-                    <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{c.title}</div>
-                    <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-                      {proj && <span style={{ color:proj.color,fontWeight:600 }}>◆ {proj.name} </span>}
-                      · {techs.join(", ")} · {fmtDate(c.date)}
-                    </div>
-                    {c.note && <div style={{ fontSize:11,color:"#ef4444",marginTop:4,lineHeight:1.5 }}>📝 {c.note}</div>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ReportSection>
 
       </div>
     </div>
