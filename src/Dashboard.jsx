@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { daysLeft, fmtDate } from "./utils.js";
+import CaseSummaryReport from "./CaseSummaryReport.jsx";
 
 export default function Dashboard({ onBack, cases, projects, users }) {
+  const [showReport, setShowReport] = useState(false);
+  if(showReport) return <CaseSummaryReport onBack={()=>setShowReport(false)} cases={cases} projects={projects}/>;
 
   // ── สถิติเคสแต่ละสถานะ ──
   const statusStats = [
@@ -71,7 +75,14 @@ export default function Dashboard({ onBack, cases, projects, users }) {
           ← กลับ
         </button>
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📊 Dashboard</div>
-        <div style={{ marginLeft:"auto",fontSize:12,color:"#94a3b8" }}>เคสทั้งหมด {cases.length} รายการ</div>
+        <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:10 }}>
+          <span style={{ fontSize:12,color:"#94a3b8" }}>เคสทั้งหมด {cases.length} รายการ</span>
+          <button onClick={()=>setShowReport(true)}
+            style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
+              padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            📄 สรุปเคส
+          </button>
+        </div>
       </div>
 
       <div style={{ padding:"20px 20px 48px",maxWidth:1200,margin:"0 auto" }}>
