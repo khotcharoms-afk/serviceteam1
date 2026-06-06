@@ -149,7 +149,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
       </div>
 
       {/* Report Content */}
-      <div className="print-page" style={{ padding:"24px 20px 48px",maxWidth:1200,margin:"0 auto" }}>
+      <div className="print-page" style={{ padding:"24px 20px 16px",maxWidth:1200,margin:"0 auto" }}>
 
         {/* หัวรายงาน */}
         <div style={{ marginBottom:24,paddingBottom:16,borderBottom:"2px solid #e2e8f0" }}>
