@@ -54,28 +54,36 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
 
   // KPI
   const now = new Date();
+  const _toMs = ts => {
+    if (!ts) return null;
+    if (ts?.toDate) return ts.toDate().getTime();
+    if (ts?.seconds) return ts.seconds * 1000;
+    if (typeof ts === "string") { const d = new Date(ts); return isNaN(d) ? null : d.getTime(); }
+    const n = Number(ts); return isNaN(n) ? null : n;
+  };
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const casesThisMonth = cases.filter(c => {
-    const d = new Date(c.createdAt?.seconds ? c.createdAt.seconds*1000 : c.createdAt);
-    return d >= startOfMonth;
+    const ms = _toMs(c.createdAt) ?? Number(c.id);
+    return ms >= startOfMonth.getTime();
   }).length;
   const allDone = cases.filter(c=>c.status==="done");
   const closeRate = cases.length>0 ? Math.round((allDone.length/cases.length)*100) : 0;
-  const closedWithDates = allDone.filter(c=>c.createdAt&&c.updatedAt);
+  // เฉลี่ยปิดงาน: ใช้ id เป็น fallback สำหรับเคสเก่าที่ไม่มี createdAt
+  const closedWithDates = allDone.filter(c => (_toMs(c.createdAt) ?? Number(c.id)) && _toMs(c.updatedAt));
   const avgDays = closedWithDates.length>0
     ? Math.round(closedWithDates.reduce((sum,c)=>{
-        const cr = new Date(c.createdAt?.seconds?c.createdAt.seconds*1000:c.createdAt);
-        const up = new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
-        return sum+(up-cr)/(1000*60*60*24);
-      },0)/closedWithDates.length)
+        const cr = _toMs(c.createdAt) ?? Number(c.id);
+        const up = _toMs(c.updatedAt);
+        return sum + (up - cr) / (1000*60*60*24);
+      },0) / closedWithDates.length)
     : null;
   const allPending = cases.filter(c=>c.status!=="done");
   const longestPending = allPending.reduce((max,c)=>{
-    if(!c.updatedAt) return max;
-    const d = new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
-    const days = Math.floor((now-d)/(1000*60*60*24));
-    return days>max?days:max;
-  },0);
+    const ms = _toMs(c.updatedAt) ?? _toMs(c.createdAt) ?? Number(c.id) ?? null;
+    if (!ms || isNaN(ms)) return max;
+    const days = Math.floor((now.getTime() - ms) / (1000*60*60*24));
+    return days > 0 && days > max ? days : max;
+  }, 0);
 
   // สถิติต่อโครงการ (เฉพาะที่มีเคส)
   const projStats = projects.map(p=>{
