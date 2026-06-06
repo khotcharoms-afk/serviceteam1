@@ -126,7 +126,11 @@ export default function App({ currentUser, onSignOut }) {
     if(filterTech!=="all" && c.tech!==filterTech) return false;
     const q=search.toLowerCase();
     return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
-  }).sort((a,b)=>Number(b.id)-Number(a.id));
+  }).sort((a,b)=>{
+    const ta = b.updatedAt||b.id;
+    const tb = a.updatedAt||a.id;
+    return ta.localeCompare(tb);
+  });
   const totalPages = Math.max(1, Math.ceil(visibleCases.length / PAGE_SIZE));
   const pagedCases = visibleCases.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
 
@@ -153,6 +157,7 @@ export default function App({ currentUser, onSignOut }) {
       warrantyEnd: proj?.warrantyEnd||null,
       leaseEnd:    proj?.leaseEnd||null,
       site: caseForm.site==="__other__" ? "" : caseForm.site,
+      updatedAt: new Date().toISOString(),
     };
     const ok = await commitWrite(
       setDoc(doc(db,"cases",editCase||Date.now().toString()), payload),
@@ -186,7 +191,7 @@ export default function App({ currentUser, onSignOut }) {
   async function saveUpdate(updated){
     if(saving) return;
     setSaving(true);
-    const ok = await commitWrite(setDoc(doc(db,"cases",updated.id), updated), "อัปเดตความคืบหน้าแล้ว");
+    const ok = await commitWrite(setDoc(doc(db,"cases",updated.id), {...updated, updatedAt: new Date().toISOString()}), "อัปเดตความคืบหน้าแล้ว");
     if(ok) setUpdateCase(null);
     setSaving(false);
   }
@@ -194,7 +199,7 @@ export default function App({ currentUser, onSignOut }) {
     if(saving) return;
     setSaving(true);
     const batch = writeBatch(db);
-    batch.set(doc(db,"cases",updated.id), updated);
+    batch.set(doc(db,"cases",updated.id), {...updated, updatedAt: new Date().toISOString()});
     const log = updated.handoverLog||[];
     const latest = log[log.length-1];
     let toUser = null;
