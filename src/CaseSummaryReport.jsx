@@ -68,7 +68,11 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
   }).filter(p=>p.total>0);
 
   function printReport() {
+    const style = document.createElement("style");
+    style.innerHTML = `@media print { body { zoom: 0.75; } }`;
+    document.head.appendChild(style);
     window.print();
+    document.head.removeChild(style);
   }
 
   return (
@@ -78,12 +82,11 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
         *{box-sizing:border-box}
         @media print {
           .no-print { display:none !important; }
-          body { background:#fff !important; }
-          .print-page { padding:12px 16px !important; background:#fff !important; }
+          body { background:#fff !important; margin:0 !important; }
+          .print-page { padding:10px 14px !important; background:#fff !important; max-width:100% !important; }
           .print-break { page-break-before: always; }
-          .summary-cards > div { padding:5px 7px !important; }
-          .summary-cards > div > div:first-child { font-size:14px !important; }
-          .summary-cards > div > div:last-child { font-size:9px !important; }
+          @page { size: A4; margin: 10mm 12mm; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
 
