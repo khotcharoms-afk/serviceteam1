@@ -34,7 +34,7 @@ function dateKey(year, month, day) {
   return `${year}-${m}-${d}`;
 }
 
-export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, onSaveShiftTypes }) {
+export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[] }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
