@@ -191,7 +191,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
         </div>
 
         {/* สรุป + KPI — แถวเดียว 8 ช่อง */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(8,1fr)",gap:6,marginBottom:14 }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14 }}>
           {[
             { label:"เคสทั้งหมด",   val:newCases.length,    color:"#2563eb", bg:"#fff",     border:`#2563eb30`, topBorder:"#2563eb", icon:null },
             { label:"เสร็จสิ้น",    val:doneCases.length,   color:"#10b981", bg:"#fff",     border:`#10b98130`, topBorder:"#10b981", icon:null },
@@ -203,11 +203,11 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
             { label:"ค้างนาน",      val:allPending.length>0?`${longestPending}วัน`:"—", color:longestPending>=7?"#ef4444":"#64748b", bg:longestPending>=7?"#fff5f5":"#f8fafc", border:longestPending>=7?"#fecaca":"#e2e8f0", topBorder:null, icon:"🔥" },
           ].map(s=>(
             <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.border}`,
-              borderRadius:7, padding:"7px 8px",
+              borderRadius:6, padding:"5px 7px",
               borderTop: s.topBorder ? `2px solid ${s.topBorder}` : `1px solid ${s.border}` }}>
-              {s.icon && <div style={{ fontSize:12,marginBottom:1 }}>{s.icon}</div>}
-              <div style={{ fontSize:13,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:9,color:"#94a3b8",marginTop:2,fontWeight:600 }}>{s.label}</div>
+              {s.icon && <div style={{ fontSize:10,marginBottom:1 }}>{s.icon}</div>}
+              <div style={{ fontSize:11,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
+              <div style={{ fontSize:8,color:"#94a3b8",marginTop:2,fontWeight:600 }}>{s.label}</div>
             </div>
           ))}
         </div>
