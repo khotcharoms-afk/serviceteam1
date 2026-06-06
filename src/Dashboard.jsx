@@ -59,20 +59,27 @@ export default function Dashboard({ onBack, cases, projects, users }) {
   }).length;
   const doneCases = cases.filter(c=>c.status==="done");
   const closeRate = cases.length>0?Math.round((doneCases.length/cases.length)*100):0;
-  const closedWithDates = doneCases.filter(c=>c.createdAt&&c.updatedAt);
+  const closedWithDates = doneCases.filter(c=>_toMs(c.createdAt)&&_toMs(c.updatedAt));
   const avgDays = closedWithDates.length>0
     ? Math.round(closedWithDates.reduce((sum,c)=>{
-        const cr=new Date(c.createdAt?.seconds?c.createdAt.seconds*1000:c.createdAt);
-        const up=new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
+        const cr = _toMs(c.createdAt);
+        const up = _toMs(c.updatedAt);
         return sum+(up-cr)/(1000*60*60*24);
       },0)/closedWithDates.length)
     : null;
+  const _toMs = ts => {
+    if (!ts) return null;
+    if (ts?.toDate) return ts.toDate().getTime();
+    if (ts?.seconds) return ts.seconds * 1000;
+    const n = Number(ts);
+    return isNaN(n) ? null : n;
+  };
   const longestPending = pendingCases.reduce((max,c)=>{
-    if(!c.updatedAt) return max;
-    const d=new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
-    const days=Math.floor((_now-d)/(1000*60*60*24));
-    return days>max?days:max;
-  },0);
+    const ms = _toMs(c.updatedAt) ?? _toMs(c.createdAt);
+    if (!ms) return max;
+    const days = Math.floor((_now.getTime() - ms) / (1000*60*60*24));
+    return days > max ? days : max;
+  }, 0);
 
   // ── สถิติต่อโครงการ ──
   const projStats = projects.map(p=>{
