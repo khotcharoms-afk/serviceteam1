@@ -76,14 +76,15 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
   }
 
   return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
+    <div className="print-outer" style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
         *{box-sizing:border-box}
         @media print {
           .no-print { display:none !important; }
           body { background:#fff !important; margin:0 !important; }
-          .print-page { padding:10px 14px !important; background:#fff !important; max-width:100% !important; }
+          .print-outer { min-height:unset !important; height:auto !important; background:#fff !important; }
+          .print-page { padding:10px 14px 0 !important; background:#fff !important; max-width:100% !important; }
           .print-break { page-break-before: always; }
           @page { size: A4; margin: 10mm 12mm; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
