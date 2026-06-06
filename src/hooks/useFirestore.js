@@ -16,7 +16,16 @@ export function useFirestore() {
       setLoading(false);
     }, errHandler);
     const u2 = onSnapshot(collection(db,"cases"), snap => {
-      setCases(snap.docs.map(d => ({ id:d.id, ...d.data() })));
+      const docs = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      const sample = docs.filter(c=>c.status!=="done").slice(0,2);
+      console.log("🔍 cases updatedAt sample:", sample.map(c=>({
+        title: c.title,
+        updatedAt: c.updatedAt,
+        updatedAt_type: typeof c.updatedAt,
+        createdAt: c.createdAt,
+        createdAt_type: typeof c.createdAt,
+      })));
+      setCases(docs);
     }, errHandler);
     const u3 = onSnapshot(collection(db,"users"), snap => {
       setUsers(snap.docs.map(d => ({ id:d.id, ...d.data() })));
