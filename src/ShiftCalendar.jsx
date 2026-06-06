@@ -34,7 +34,7 @@ function dateKey(year, month, day) {
   return `${year}-${m}-${d}`;
 }
 
-export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[] }) {
+export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, onSaveShiftTypes }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -88,8 +88,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
           {isAdmin && (
             <button onClick={()=>setShowScheduleManager(true)}
-              style={{ background:"#fefce8",border:"1px solid #fde68a",borderRadius:8,
-                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#854d0e" }}>
+              style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
+                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#475569" }}>
               📋 วันหยุดทีม
             </button>
           )}
@@ -103,7 +103,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         </div>
       </div>
 
-      <div style={{ padding:"20px",maxWidth:1200,margin:"0 auto" }}>
+      <div style={{ padding:"20px",maxWidth:1100,margin:"0 auto" }}>
 
         {/* Month nav */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16 }}>
@@ -137,8 +137,10 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           </div>
         )}
 
-        {/* Calendar + วันหยุด side by side */}
+        {/* Calendar + ตารางวันหยุด */}
         <div style={{ display:"flex",gap:14,alignItems:"flex-start" }}>
+
+        {/* Calendar */}
         <div style={{ flex:1,minWidth:0 }}>
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,overflow:"hidden" }}>
           <table style={{ width:"100%",borderCollapse:"collapse",tableLayout:"fixed" }}>
@@ -206,9 +208,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           </div>
         )}
         </div>
-        </div>
 
-        {/* ตารางวันหยุด — ขวา */}
+        {/* ตารางวันหยุด */}
         <div style={{ width:160,flexShrink:0 }}>
           <div style={{ background:"#1E3A5F",padding:"8px 12px",borderRadius:"12px 12px 0 0",textAlign:"center" }}>
             <span style={{ fontSize:12,fontWeight:700,color:"#fff" }}>ตารางวันหยุด</span>
@@ -225,7 +226,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                 {approvedUsers.map((u,i)=>{
                   const sch = userSchedules.find(s=>s.userName===u.name);
                   const offDays = (sch?.offDays||[]).sort();
-                  const dayLabel = offDays.length>0 ? offDays.map(d=>DAY_NAMES[d]).join("–") : "–";
+                  const dayLabel = offDays.length>0 ? offDays.map(d=>DAY_NAMES[d]).join("-") : "-";
                   return (
                     <tr key={u.id} style={{ background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #f1f5f9" }}>
                       <td style={{ padding:"6px 10px",fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{u.name.split(" ")[0]}</td>
@@ -238,7 +239,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           </div>
         </div>
 
-        </div>{/* end flex row */}
+        </div>{/* end flex */}
       </div>
 
       {/* Edit Day Modal */}
@@ -252,7 +253,6 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         />
       )}
 
-      {/* Schedule Manager Modal */}
       {showScheduleManager && (
         <ScheduleManager
           users={approvedUsers}
@@ -268,6 +268,87 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           onClose={() => setShowTypeManager(false)}
         />
       )}
+    </div>
+  );
+}
+
+// ── Modal จัดการวันหยุดประจำ ──
+function ScheduleManager({ users, userSchedules, onClose }) {
+  const [saving, setSaving] = useState(false);
+  const [schedules, setSchedules] = useState(
+    users.map(u => {
+      const existing = userSchedules.find(s=>s.userName===u.name);
+      return { userName: u.name, offDays: existing?.offDays||[] };
+    })
+  );
+  function toggleDay(userIdx, day) {
+    setSchedules(prev => prev.map((s,i) => {
+      if (i !== userIdx) return s;
+      const has = s.offDays.includes(day);
+      return { ...s, offDays: has ? s.offDays.filter(d=>d!==day) : [...s.offDays, day] };
+    }));
+  }
+  async function save() {
+    setSaving(true);
+    try {
+      for (const sch of schedules) {
+        const docId = sch.userName.replace(/ /g,"_");
+        await setDoc(doc(db,"userSchedules",docId), {
+          userName: sch.userName, offDays: sch.offDays,
+        });
+      }
+      onClose();
+    } catch(e) { console.error(e); }
+    setSaving(false);
+  }
+  const DAY_SHORT = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:520,
+        boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"80vh",overflowY:"auto" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
+          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📋 กำหนดวันหยุดประจำ</div>
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+            cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
+        </div>
+        <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:18 }}>
+          <thead>
+            <tr style={{ background:"#f8fafc" }}>
+              <th style={{ padding:"7px 10px",textAlign:"left",fontSize:11,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>ชื่อ</th>
+              {DAY_SHORT.map(d=>(
+                <th key={d} style={{ padding:"7px 6px",textAlign:"center",fontSize:11,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>{d}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {schedules.map((sch,i)=>(
+              <tr key={sch.userName} style={{ borderBottom:"1px solid #f1f5f9",background:i%2===0?"#fff":"#f8fafc" }}>
+                <td style={{ padding:"7px 10px",fontWeight:600,color:"#0f172a" }}>{sch.userName.split(" ")[0]}</td>
+                {[0,1,2,3,4,5,6].map(d=>(
+                  <td key={d} style={{ padding:"6px",textAlign:"center" }}>
+                    <input type="checkbox" checked={sch.offDays.includes(d)}
+                      onChange={()=>toggleDay(i,d)}
+                      style={{ width:16,height:16,accentColor:"#ef4444",cursor:"pointer" }}/>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ display:"flex",gap:10 }}>
+          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
+            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+          <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
+            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>
+            {saving?"กำลังบันทึก…":"บันทึก"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -355,91 +436,6 @@ function EditDayModal({ date, entries, users, shiftTypes, onClose }) {
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
             {saving ? "กำลังบันทึก…" : "บันทึก"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Modal จัดการวันหยุดประจำ ──
-function ScheduleManager({ users, userSchedules, onClose }) {
-  const [saving, setSaving] = useState(false);
-  const [schedules, setSchedules] = useState(
-    users.map(u => {
-      const existing = userSchedules.find(s=>s.userName===u.name);
-      return { userName: u.name, offDays: existing?.offDays||[] };
-    })
-  );
-
-  function toggleDay(userIdx, day) {
-    setSchedules(prev => prev.map((s,i) => {
-      if (i !== userIdx) return s;
-      const has = s.offDays.includes(day);
-      return { ...s, offDays: has ? s.offDays.filter(d=>d!==day) : [...s.offDays, day] };
-    }));
-  }
-
-  async function save() {
-    setSaving(true);
-    try {
-      for (const sch of schedules) {
-        const docId = sch.userName.replace(/\s/g,"_");
-        await setDoc(doc(db,"userSchedules",docId), {
-          userName: sch.userName, offDays: sch.offDays,
-        });
-      }
-      onClose();
-    } catch(e) { console.error(e); }
-    setSaving(false);
-  }
-
-  const DAY_SHORT = ["อา","จ","อ","พ","พฤ","ศ","ส"];
-
-  return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-      onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:520,
-        boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"80vh",overflowY:"auto" }}
-        onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📋 กำหนดวันหยุดประจำ</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
-            cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
-        </div>
-        <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:18 }}>
-          <thead>
-            <tr style={{ background:"#f8fafc" }}>
-              <th style={{ padding:"7px 10px",textAlign:"left",fontSize:11,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>ชื่อ</th>
-              {DAY_SHORT.map(d=>(
-                <th key={d} style={{ padding:"7px 6px",textAlign:"center",fontSize:11,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>{d}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {schedules.map((sch,i)=>(
-              <tr key={sch.userName} style={{ borderBottom:"1px solid #f1f5f9",background:i%2===0?"#fff":"#f8fafc" }}>
-                <td style={{ padding:"7px 10px",fontWeight:600,color:"#0f172a" }}>{sch.userName.split(" ")[0]}</td>
-                {[0,1,2,3,4,5,6].map(d=>(
-                  <td key={d} style={{ padding:"6px",textAlign:"center" }}>
-                    <input type="checkbox" checked={sch.offDays.includes(d)}
-                      onChange={()=>toggleDay(i,d)}
-                      style={{ width:16,height:16,accentColor:"#ef4444",cursor:"pointer" }}/>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{ display:"flex",gap:10 }}>
-          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
-            cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
-          <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
-            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
-            cursor:"pointer",fontFamily:"inherit" }}>
-            {saving?"กำลังบันทึก…":"บันทึก"}
           </button>
         </div>
       </div>
