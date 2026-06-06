@@ -50,27 +50,27 @@ export default function Dashboard({ onBack, cases, projects, users }) {
     return d !== null && d < 0;
   });
 
-  // ── KPI Cards ──
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const casesThisMonth = cases.filter(c => {
-    const d = new Date(c.createdAt?.seconds ? c.createdAt.seconds*1000 : c.createdAt);
-    return d >= startOfMonth;
+  // ── KPI ──
+  const _now = new Date();
+  const _startOfMonth = new Date(_now.getFullYear(), _now.getMonth(), 1);
+  const casesThisMonth = cases.filter(c=>{
+    const d = new Date(c.createdAt?.seconds?c.createdAt.seconds*1000:c.createdAt);
+    return d>=_startOfMonth;
   }).length;
   const doneCases = cases.filter(c=>c.status==="done");
-  const closeRate = cases.length>0 ? Math.round((doneCases.length/cases.length)*100) : 0;
+  const closeRate = cases.length>0?Math.round((doneCases.length/cases.length)*100):0;
   const closedWithDates = doneCases.filter(c=>c.createdAt&&c.updatedAt);
   const avgDays = closedWithDates.length>0
     ? Math.round(closedWithDates.reduce((sum,c)=>{
-        const cr = new Date(c.createdAt?.seconds?c.createdAt.seconds*1000:c.createdAt);
-        const up = new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
+        const cr=new Date(c.createdAt?.seconds?c.createdAt.seconds*1000:c.createdAt);
+        const up=new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
         return sum+(up-cr)/(1000*60*60*24);
       },0)/closedWithDates.length)
     : null;
   const longestPending = pendingCases.reduce((max,c)=>{
     if(!c.updatedAt) return max;
-    const d = new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
-    const days = Math.floor((now-d)/(1000*60*60*24));
+    const d=new Date(c.updatedAt?.seconds?c.updatedAt.seconds*1000:c.updatedAt);
+    const days=Math.floor((_now-d)/(1000*60*60*24));
     return days>max?days:max;
   },0);
 
@@ -114,7 +114,7 @@ export default function Dashboard({ onBack, cases, projects, users }) {
         {/* 2-column layout — desktop only */}
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(320px, 1fr))",gap:16,marginBottom:20,alignItems:"start" }}>
 
-        {/* Column ซ้าย: Bar Chart + KPI Cards */}
+        {/* Column ซ้าย */}
         <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
 
         {/* Bar Chart สถิติเคส */}
@@ -152,7 +152,7 @@ export default function Dashboard({ onBack, cases, projects, users }) {
           </div>
         </div>
 
-        {/* KPI Cards 2x2 */}
+        {/* KPI 2×2 */}
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
           {[
             { icon:"📋", label:"เคสเดือนนี้",  value:casesThisMonth, unit:"รายการ", color:"#6366f1", bg:"#eef2ff", border:"#c7d2fe", sub:null },
@@ -230,30 +230,62 @@ export default function Dashboard({ onBack, cases, projects, users }) {
           </Section>
         )}
 
-        {/* สถิติต่อโครงการ */}
-        <Section title="◆ สถิติต่อโครงการ" count={projects.length}>
-          {projStats.map(p=>(
-            <div key={p.id} style={{ background:"#fff",border:`1px solid ${p.color}30`,
-              borderRadius:10,padding:"12px 14px",marginBottom:8,
-              borderLeft:`4px solid ${p.color}` }}>
-              <div style={{ fontSize:14,fontWeight:700,color:"#0f172a",marginBottom:8 }}>{p.name}</div>
-              <div style={{ display:"flex",gap:12,flexWrap:"wrap" }}>
-                {[
-                  {l:"ทั้งหมด",  v:p.total,      c:"#64748b"},
-                  {l:"เปิดเคส",  v:p.open,       c:"#f59e0b"},
-                  {l:"กำลังทำ",  v:p.inprogress, c:"#3b82f6"},
-                  {l:"เสร็จ",    v:p.done,       c:"#10b981"},
-                  {l:"รอ",       v:p.hold,       c:"#ef4444"},
-                ].map(x=>(
-                  <div key={x.l} style={{ textAlign:"center",minWidth:40 }}>
-                    <div style={{ fontSize:18,fontWeight:800,color:x.c,lineHeight:1 }}>{x.v}</div>
-                    <div style={{ fontSize:10,color:"#94a3b8",marginTop:2 }}>{x.l}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </Section>
+        {/* สถิติต่อโครงการ — compact table */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:10 }}>
+            <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>◆ สถิติต่อโครงการ</div>
+            <span style={{ background:"#f1f5f9",color:"#64748b",borderRadius:20,
+              padding:"1px 8px",fontSize:11,fontWeight:700 }}>{projects.length}</span>
+          </div>
+          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,overflow:"hidden" }}>
+            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed" }}>
+              <thead>
+                <tr style={{ background:"#f8fafc" }}>
+                  <th style={{ padding:"7px 14px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,width:"40%",borderBottom:"1px solid #e2e8f0" }}>โครงการ</th>
+                  {[
+                    {l:"ทั้งหมด",c:"#64748b"},
+                    {l:"เปิดเคส",c:"#f59e0b"},
+                    {l:"กำลังทำ",c:"#3b82f6"},
+                    {l:"เสร็จ",  c:"#10b981"},
+                    {l:"รอ",     c:"#ef4444"},
+                  ].map(h=>(
+                    <th key={h.l} style={{ padding:"7px 8px",textAlign:"center",fontSize:10,
+                      color:h.c,fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>{h.l}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {projStats.map((p,i)=>{
+                  const isEmpty = p.total===0;
+                  return (
+                    <tr key={p.id} style={{ background:i%2===0?"#fff":"#f8fafc",
+                      borderBottom:"1px solid #f1f5f9",opacity:isEmpty?0.45:1 }}>
+                      <td style={{ padding:"8px 14px" }}>
+                        <span style={{ display:"inline-flex",alignItems:"center",gap:6 }}>
+                          <span style={{ width:8,height:8,borderRadius:2,
+                            background:p.color,flexShrink:0 }}/>
+                          <span style={{ fontWeight:600,color:"#0f172a",
+                            fontSize:12,overflow:"hidden",textOverflow:"ellipsis",
+                            whiteSpace:"nowrap" }}>{p.name}</span>
+                        </span>
+                      </td>
+                      {[
+                        {v:p.total,c:"#64748b"},
+                        {v:p.open,c:"#f59e0b"},
+                        {v:p.inprogress,c:"#3b82f6"},
+                        {v:p.done,c:"#10b981"},
+                        {v:p.hold,c:"#ef4444"},
+                      ].map((x,j)=>(
+                        <td key={j} style={{ padding:"8px",textAlign:"center",
+                          fontWeight:700,color:x.v>0?x.c:"#cbd5e1",fontSize:13 }}>{x.v}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
     </div>
