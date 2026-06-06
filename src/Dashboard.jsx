@@ -52,6 +52,13 @@ export default function Dashboard({ onBack, cases, projects, users }) {
 
   // ── KPI ──
   const _now = new Date();
+  const _toMs = ts => {
+    if (!ts) return null;
+    if (ts?.toDate) return ts.toDate().getTime();
+    if (ts?.seconds) return ts.seconds * 1000;
+    const n = Number(ts);
+    return isNaN(n) ? null : n;
+  };
   const _startOfMonth = new Date(_now.getFullYear(), _now.getMonth(), 1);
   const casesThisMonth = cases.filter(c=>{
     const d = new Date(c.createdAt?.seconds?c.createdAt.seconds*1000:c.createdAt);
@@ -67,13 +74,6 @@ export default function Dashboard({ onBack, cases, projects, users }) {
         return sum+(up-cr)/(1000*60*60*24);
       },0)/closedWithDates.length)
     : null;
-  const _toMs = ts => {
-    if (!ts) return null;
-    if (ts?.toDate) return ts.toDate().getTime();
-    if (ts?.seconds) return ts.seconds * 1000;
-    const n = Number(ts);
-    return isNaN(n) ? null : n;
-  };
   const longestPending = pendingCases.reduce((max,c)=>{
     const ms = _toMs(c.updatedAt) ?? _toMs(c.createdAt);
     if (!ms) return max;
