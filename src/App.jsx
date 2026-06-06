@@ -11,6 +11,7 @@ import { useFirestore } from "./hooks/useFirestore.js";
 import CaseModal from "./components/CaseModal.jsx";
 import ProjectModal from "./components/ProjectModal.jsx";
 import DetailModal from "./components/DetailModal.jsx";
+import Dashboard from "./Dashboard.jsx";
 
 export default function App({ currentUser, onSignOut }) {
   const { projects, cases, users, notifications, loading } = useFirestore();
@@ -23,6 +24,7 @@ export default function App({ currentUser, onSignOut }) {
   const [search,setSearch]         = useState("");
   const [menuOpen,setMenuOpen]     = useState(false);
   const [adminPage,setAdminPage]   = useState(false);
+  const [dashboardPage,setDashboardPage] = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
 
@@ -266,6 +268,7 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
+  if(dashboardPage) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users}/>;
 
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
@@ -316,6 +319,8 @@ export default function App({ currentUser, onSignOut }) {
             <button onClick={()=>setAdminPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
               color:"#7c3aed",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>👥</button>
           )}
+          <button onClick={()=>setDashboardPage(true)} style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",
+            color:"#16a34a",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📊</button>
           <div style={{ position:"relative" }}>
             <button onClick={e=>{ e.stopPropagation(); setNotifOpen(v=>!v); }}
               style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
@@ -371,6 +376,8 @@ export default function App({ currentUser, onSignOut }) {
             </div>
             <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
               onClick={()=>{ setView("overview"); setMenuOpen(false); setFilterStat("all"); }}/>
+            <DrawerItem active={false} color="#16a34a" icon="📊" label="Dashboard" count={""}
+              onClick={()=>{ setDashboardPage(true); setMenuOpen(false); }}/>
             <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
             {projects.map(p=>(
               <div key={p.id} style={{ display:"flex",alignItems:"center",gap:0 }}>
