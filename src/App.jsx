@@ -643,6 +643,13 @@ export default function App({ currentUser, onSignOut }) {
       )}
 
       <Modal open={!!delCase} onClose={()=>setDelCase(null)} title="ลบเคส?">
+        {delCase&&(()=>{ const c=cases.find(x=>x.id===delCase); return c&&(
+          <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:10,
+            padding:"10px 14px",marginBottom:14 }}>
+            <div style={{ fontSize:11,color:"#94a3b8",marginBottom:3 }}>เคสที่จะลบ</div>
+            <div style={{ fontSize:14,fontWeight:700,color:"#b91c1c" }}>"{c.title}"</div>
+          </div>
+        ); })()}
         <p style={{ color:"#64748b",fontSize:14,marginBottom:20 }}>เคสนี้จะถูกลบถาวร ยืนยันหรือไม่?</p>
         <div style={{ display:"flex",gap:10 }}>
           <GhostBtn onClick={()=>setDelCase(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
