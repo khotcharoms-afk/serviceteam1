@@ -10,7 +10,7 @@ export default function Dashboard({ onBack, cases, projects, users }) {
     { label:"รอดำเนินการ",    color:"#ef4444", bg:"#fee2e2", val: cases.filter(c=>c.status==="hold").length },
   ];
 
-  // ── งานค้าง (status ไม่ใช่ done) ──
+  // ── งานค้างอยู่กับใคร (status ไม่ใช่ done) ──
   const pendingCases = cases.filter(c=>c.status!=="done");
   const byTech = {};
   pendingCases.forEach(c=>{
@@ -74,11 +74,14 @@ export default function Dashboard({ onBack, cases, projects, users }) {
         <div style={{ marginLeft:"auto",fontSize:12,color:"#94a3b8" }}>เคสทั้งหมด {cases.length} รายการ</div>
       </div>
 
-      <div style={{ padding:"20px 16px 48px",maxWidth:720,margin:"0 auto" }}>
+      <div style={{ padding:"20px 20px 48px",maxWidth:1200,margin:"0 auto" }}>
+
+        {/* 2-column layout */}
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20,alignItems:"start" }}>
 
         {/* Bar Chart สถิติเคส */}
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,
-          padding:"16px 20px",marginBottom:20 }}>
+          padding:"16px 20px" }}>
           <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:16 }}>สถิติเคสแต่ละสถานะ</div>
           {(()=>{
             const max = Math.max(...statusStats.map(s=>s.val), 1);
@@ -111,8 +114,9 @@ export default function Dashboard({ onBack, cases, projects, users }) {
           </div>
         </div>
 
-        {/* งานค้าง */}
-        <Section title="👤 งานค้าง" count={pendingCases.length}>
+        {/* งานค้างอยู่กับใคร — column ขวา */}
+        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"16px 20px" }}>
+        <Section title="👤 งานค้างอยู่กับใคร" count={pendingCases.length}>
           {techList.length===0 ? (
             <Empty text="ไม่มีงานค้าง 🎉"/>
           ) : techList.map(([name, cs])=>(
@@ -139,6 +143,8 @@ export default function Dashboard({ onBack, cases, projects, users }) {
             </div>
           ))}
         </Section>
+        </div>
+        </div>{/* end 2-column grid */}
 
         {/* ประกันใกล้หมด */}
         {(warrantyExpiring.length>0||warrantyExpired.length>0) && (
