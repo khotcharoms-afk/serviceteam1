@@ -34,16 +34,20 @@ function dateKey(year, month, day) {
   return `${year}-${m}-${d}`;
 }
 
-export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[] }) {
+export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[], shiftMembers=[] }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [editDay, setEditDay] = useState(null); // date string "YYYY-MM-DD"
   const [showTypeManager, setShowTypeManager] = useState(false);
+  const [showMemberManager, setShowMemberManager] = useState(false);
   const [showScheduleManager, setShowScheduleManager] = useState(false);
 
   const isAdmin = currentUser?.role === "admin";
-  const approvedUsers = users.filter(u => u.role !== "pending");
+  const memberNames = shiftMembers.map(m=>m.userName);
+  const approvedUsers = memberNames.length > 0
+    ? users.filter(u => memberNames.includes(u.name))
+    : users.filter(u => u.role !== "pending");
 
   // สร้าง map: dateKey -> [{ userName, shiftTypeId, isOff }] เรียงตาม startTime
   const shiftMap = {};
@@ -103,6 +107,13 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         </button>
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📅 ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
+          {isAdmin && (
+            <button onClick={()=>setShowMemberManager(true)}
+              style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
+                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#475569" }}>
+              👥 สมาชิกทีม
+            </button>
+          )}
           {isAdmin && (
             <button onClick={()=>setShowScheduleManager(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
@@ -270,6 +281,14 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         />
       )}
 
+      {showMemberManager && (
+        <MemberManager
+          users={users.filter(u=>u.role!=="pending")}
+          shiftMembers={shiftMembers}
+          onClose={()=>setShowMemberManager(false)}
+        />
+      )}
+
       {showScheduleManager && (
         <ScheduleManager
           users={approvedUsers}
@@ -285,6 +304,76 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           onClose={() => setShowTypeManager(false)}
         />
       )}
+    </div>
+  );
+}
+
+// ── Modal เลือกสมาชิกทีม ──
+function MemberManager({ users, shiftMembers, onClose }) {
+  const [saving, setSaving] = useState(false);
+  const memberNames = shiftMembers.map(m=>m.userName);
+  const [selected, setSelected] = useState(
+    users.map(u => memberNames.includes(u.name) || shiftMembers.length===0)
+  );
+
+  function toggle(i) {
+    setSelected(prev => prev.map((v,j) => j===i ? !v : v));
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      const { collection, getDocs, deleteDoc, setDoc, doc } = await import("firebase/firestore");
+      const { db } = await import("./firebase");
+      const snap = await getDocs(collection(db,"shiftMembers"));
+      for (const d of snap.docs) await deleteDoc(d.ref);
+      for (let i=0; i<users.length; i++) {
+        if (selected[i]) {
+          await setDoc(doc(db,"shiftMembers",users[i].name.replace(/ /g,"_")), {
+            userName: users[i].name
+          });
+        }
+      }
+      onClose();
+    } catch(e) { console.error(e); }
+    setSaving(false);
+  }
+
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:380,
+        boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
+          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>👥 สมาชิกทีม CS</div>
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+            cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
+        </div>
+        <div style={{ display:"flex",flexDirection:"column",gap:8,marginBottom:18 }}>
+          {users.map((u,i)=>(
+            <label key={u.id} style={{ display:"flex",alignItems:"center",gap:10,
+              padding:"8px 12px",background:selected[i]?"#eff6ff":"#f8fafc",
+              borderRadius:8,border:`1px solid ${selected[i]?"#bfdbfe":"#e2e8f0"}`,cursor:"pointer" }}>
+              <input type="checkbox" checked={selected[i]} onChange={()=>toggle(i)}
+                style={{ width:16,height:16,accentColor:"#2563eb",cursor:"pointer" }}/>
+              <span style={{ fontSize:13,fontWeight:selected[i]?600:400,color:"#0f172a" }}>{u.name}</span>
+              <span style={{ fontSize:11,color:"#94a3b8",marginLeft:"auto" }}>{u.role}</span>
+            </label>
+          ))}
+        </div>
+        <div style={{ display:"flex",gap:10 }}>
+          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
+            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+          <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
+            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>
+            {saving?"กำลังบันทึก…":"บันทึก"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
