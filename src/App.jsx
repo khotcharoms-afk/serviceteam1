@@ -15,7 +15,7 @@ import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
 
 export default function App({ currentUser, onSignOut }) {
-  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, loading } = useFirestore();
+  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, loading } = useFirestore();
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
@@ -297,7 +297,7 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
-  if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts}/>;
+  if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
   return (
