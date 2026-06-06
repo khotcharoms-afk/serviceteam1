@@ -44,9 +44,10 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const [showScheduleManager, setShowScheduleManager] = useState(false);
 
   const isAdmin = currentUser?.role === "admin";
-  const memberNames = shiftMembers.map(m=>m.userName);
+  const sortedMembers = [...shiftMembers].sort((a,b)=>(a.order||0)-(b.order||0));
+  const memberNames = sortedMembers.map(m=>m.userName);
   const approvedUsers = memberNames.length > 0
-    ? users.filter(u => memberNames.includes(u.name))
+    ? memberNames.map(n=>users.find(u=>u.name===n)).filter(Boolean)
     : users.filter(u => u.role !== "pending");
 
   // สร้าง map: dateKey -> [{ userName, shiftTypeId, isOff }] เรียงตาม startTime
@@ -311,13 +312,26 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 // ── Modal เลือกสมาชิกทีม ──
 function MemberManager({ users, shiftMembers, onClose }) {
   const [saving, setSaving] = useState(false);
-  const memberNames = shiftMembers.map(m=>m.userName);
-  const [selected, setSelected] = useState(
-    users.map(u => memberNames.includes(u.name) || shiftMembers.length===0)
-  );
+
+  // เริ่มต้นจาก shiftMembers ที่มี order แล้วเติม user ที่ยังไม่ได้เลือก
+  const initList = () => {
+    const sorted = [...shiftMembers].sort((a,b)=>(a.order||0)-(b.order||0));
+    const inList = sorted.map(m=>({ name:m.userName, selected:true }));
+    const notIn = users.filter(u=>!sorted.find(m=>m.userName===u.name))
+      .map(u=>({ name:u.name, selected: shiftMembers.length===0 }));
+    return [...inList, ...notIn];
+  };
+  const [list, setList] = useState(initList);
 
   function toggle(i) {
-    setSelected(prev => prev.map((v,j) => j===i ? !v : v));
+    setList(prev => prev.map((v,j) => j===i ? {...v, selected:!v.selected} : v));
+  }
+  function moveUp(i) {
+    if (i===0) return;
+    setList(prev => { const n=[...prev]; [n[i-1],n[i]]=[n[i],n[i-1]]; return n; });
+  }
+  function moveDown(i) {
+    setList(prev => { if(i>=prev.length-1) return prev; const n=[...prev]; [n[i],n[i+1]]=[n[i+1],n[i]]; return n; });
   }
 
   async function save() {
@@ -327,10 +341,11 @@ function MemberManager({ users, shiftMembers, onClose }) {
       const { db } = await import("./firebase");
       const snap = await getDocs(collection(db,"shiftMembers"));
       for (const d of snap.docs) await deleteDoc(d.ref);
-      for (let i=0; i<users.length; i++) {
-        if (selected[i]) {
-          await setDoc(doc(db,"shiftMembers",users[i].name.replace(/ /g,"_")), {
-            userName: users[i].name
+      let order = 0;
+      for (const item of list) {
+        if (item.selected) {
+          await setDoc(doc(db,"shiftMembers",item.name.replace(/ /g,"_")), {
+            userName: item.name, order: order++
           });
         }
       }
@@ -346,21 +361,34 @@ function MemberManager({ users, shiftMembers, onClose }) {
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:380,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
           <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>👥 สมาชิกทีม CS</div>
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
-        <div style={{ display:"flex",flexDirection:"column",gap:8,marginBottom:18 }}>
-          {users.map((u,i)=>(
-            <label key={u.id} style={{ display:"flex",alignItems:"center",gap:10,
-              padding:"8px 12px",background:selected[i]?"#eff6ff":"#f8fafc",
-              borderRadius:8,border:`1px solid ${selected[i]?"#bfdbfe":"#e2e8f0"}`,cursor:"pointer" }}>
-              <input type="checkbox" checked={selected[i]} onChange={()=>toggle(i)}
-                style={{ width:16,height:16,accentColor:"#2563eb",cursor:"pointer" }}/>
-              <span style={{ fontSize:13,fontWeight:selected[i]?600:400,color:"#0f172a" }}>{u.name}</span>
-              <span style={{ fontSize:11,color:"#94a3b8",marginLeft:"auto" }}>{u.role}</span>
-            </label>
+        <div style={{ fontSize:11,color:"#94a3b8",marginBottom:14 }}>เลือก ✓ แล้วกด ↑↓ เรียงลำดับ</div>
+        <div style={{ display:"flex",flexDirection:"column",gap:6,marginBottom:18 }}>
+          {list.map((item,i)=>(
+            <div key={item.name} style={{ display:"flex",alignItems:"center",gap:8,
+              padding:"7px 10px",background:item.selected?"#eff6ff":"#f8fafc",
+              borderRadius:8,border:`1px solid ${item.selected?"#bfdbfe":"#e2e8f0"}` }}>
+              <input type="checkbox" checked={item.selected} onChange={()=>toggle(i)}
+                style={{ width:16,height:16,accentColor:"#2563eb",cursor:"pointer",flexShrink:0 }}/>
+              <span style={{ flex:1,fontSize:13,fontWeight:item.selected?600:400,color:"#0f172a" }}>{item.name}</span>
+              {item.selected && (
+                <div style={{ display:"flex",gap:4,flexShrink:0 }}>
+                  <button onClick={()=>moveUp(i)} disabled={i===0||!list[i-1]?.selected}
+                    style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                      width:26,height:26,cursor:"pointer",fontSize:13,
+                      opacity:(i===0||!list[i-1]?.selected)?0.3:1 }}>↑</button>
+                  <button onClick={()=>moveDown(i)}
+                    disabled={i>=list.length-1||!list[i+1]?.selected}
+                    style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                      width:26,height:26,cursor:"pointer",fontSize:13,
+                      opacity:(i>=list.length-1||!list[i+1]?.selected)?0.3:1 }}>↓</button>
+                </div>
+              )}
+            </div>
           ))}
         </div>
         <div style={{ display:"flex",gap:10 }}>
