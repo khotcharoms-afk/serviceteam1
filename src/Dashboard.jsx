@@ -10,7 +10,7 @@ export default function Dashboard({ onBack, cases, projects, users }) {
     { label:"รอดำเนินการ",    color:"#ef4444", bg:"#fee2e2", val: cases.filter(c=>c.status==="hold").length },
   ];
 
-  // ── งานค้างอยู่กับใคร (status ไม่ใช่ done) ──
+  // ── งานค้าง (status ไม่ใช่ done) ──
   const pendingCases = cases.filter(c=>c.status!=="done");
   const byTech = {};
   pendingCases.forEach(c=>{
@@ -76,20 +76,43 @@ export default function Dashboard({ onBack, cases, projects, users }) {
 
       <div style={{ padding:"20px 16px 48px",maxWidth:720,margin:"0 auto" }}>
 
-        {/* สถิติรวม */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20 }}>
-          {statusStats.map(s=>(
-            <div key={s.label} style={{ background:"#fff",border:`1.5px solid ${s.color}30`,
-              borderRadius:12,padding:"14px 10px",textAlign:"center",
-              borderTop:`3px solid ${s.color}` }}>
-              <div style={{ fontSize:26,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:10,color:"#94a3b8",marginTop:4,fontWeight:600,lineHeight:1.3 }}>{s.label}</div>
-            </div>
-          ))}
+        {/* Bar Chart สถิติเคส */}
+        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,
+          padding:"16px 20px",marginBottom:20 }}>
+          <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:16 }}>สถิติเคสแต่ละสถานะ</div>
+          {(()=>{
+            const max = Math.max(...statusStats.map(s=>s.val), 1);
+            return statusStats.map(s=>(
+              <div key={s.label} style={{ marginBottom:12 }}>
+                <div style={{ display:"flex",justifyContent:"space-between",marginBottom:4 }}>
+                  <span style={{ fontSize:13,color:"#475569",fontWeight:500 }}>{s.label}</span>
+                  <span style={{ fontSize:13,fontWeight:700,color:s.color }}>{s.val}</span>
+                </div>
+                <div style={{ background:"#f1f5f9",borderRadius:99,height:10,overflow:"hidden" }}>
+                  <div style={{
+                    width:`${(s.val/max)*100}%`,
+                    minWidth: s.val>0?"8px":"0",
+                    background:s.color,
+                    height:"100%",
+                    borderRadius:99,
+                    transition:"width .4s ease"
+                  }}/>
+                </div>
+              </div>
+            ));
+          })()}
+          <div style={{ display:"flex",gap:12,marginTop:16,paddingTop:12,borderTop:"1px solid #f1f5f9",flexWrap:"wrap" }}>
+            {statusStats.map(s=>(
+              <div key={s.label} style={{ display:"flex",alignItems:"center",gap:5 }}>
+                <div style={{ width:10,height:10,borderRadius:3,background:s.color,flexShrink:0 }}/>
+                <span style={{ fontSize:11,color:"#64748b" }}>{s.label} ({s.val})</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* งานค้างอยู่กับใคร */}
-        <Section title="👤 งานค้างอยู่กับใคร" count={pendingCases.length}>
+        {/* งานค้าง */}
+        <Section title="👤 งานค้าง" count={pendingCases.length}>
           {techList.length===0 ? (
             <Empty text="ไม่มีงานค้าง 🎉"/>
           ) : techList.map(([name, cs])=>(
