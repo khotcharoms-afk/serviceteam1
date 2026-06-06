@@ -11,6 +11,7 @@ export function useFirestore() {
   const [shifts, setShifts] = useState([]);
   const [shiftTypes, setShiftTypes] = useState([]);
   const [userSchedules, setUserSchedules] = useState([]);
+  const [shiftMembers, setShiftMembers] = useState([]);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
@@ -52,8 +53,11 @@ export function useFirestore() {
     const u8 = onSnapshot(collection(db,"userSchedules"), snap => {
       setUserSchedules(snap.docs.map(d=>({id:d.id,...d.data()})));
     }, errHandler);
-    return () => { u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); };
+    const u9 = onSnapshot(collection(db,"shiftMembers"), snap => {
+      setShiftMembers(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }, errHandler);
+    return () => { u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); u9(); };
   }, []);
 
-  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, loading };
+  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading };
 }
