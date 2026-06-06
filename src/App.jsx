@@ -259,6 +259,7 @@ export default function App({ currentUser, onSignOut }) {
     total:scopeCases.length,
     open:scopeCases.filter(c=>c.status==="open").length,
     done:scopeCases.filter(c=>c.status==="done").length,
+    hold:scopeCases.filter(c=>c.status==="hold").length,
     expiringSoon:scopeCases.filter(c=>{ const d=daysLeft(c.warrantyEnd); return d!==null&&d>=0&&d<=90; }).length,
   };
 
@@ -438,12 +439,13 @@ export default function App({ currentUser, onSignOut }) {
             <span style={{ fontSize:13,fontWeight:700,color:activeProj?.color||"#0f172a" }}>{activeProj?.name}</span>
           </div>
         )}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:16 }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16 }}>
           {[
-            {label:"ทั้งหมด",  val:stats.total,        color:"#2563eb", key:"all"},
-            {label:"เปิดเคส",  val:stats.open,         color:"#f59e0b", key:"open"},
-            {label:"เสร็จ",    val:stats.done,         color:"#10b981", key:"done"},
-            {label:"ใกล้หมด", val:stats.expiringSoon, color:"#f59e0b", key:"__exp"},
+            {label:"ทั้งหมด",      val:stats.total,        color:"#2563eb", key:"all"},
+            {label:"เปิดเคส",      val:stats.open,         color:"#f59e0b", key:"open"},
+            {label:"เสร็จ",        val:stats.done,         color:"#10b981", key:"done"},
+            {label:"รอดำเนินการ",  val:stats.hold,         color:"#ef4444", key:"hold"},
+            {label:"ใกล้หมด",     val:stats.expiringSoon, color:"#f59e0b", key:"__exp"},
           ].map(s=>(
             <div key={s.key} onClick={()=>!s.key.startsWith("__")&&setFilterStat(filterStat===s.key?"all":s.key)}
               style={{ background:filterStat===s.key?s.color+"12":"#fff",
