@@ -10,6 +10,7 @@ export function useFirestore() {
   const [deletedCases, setDeletedCases] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [shiftTypes, setShiftTypes] = useState([]);
+  const [userSchedules, setUserSchedules] = useState([]);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
@@ -48,8 +49,11 @@ export function useFirestore() {
       setShiftTypes(snap.docs.map(d=>({id:d.id,...d.data()}))
         .sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||"")));
     }, errHandler);
-    return () => { u1(); u2(); u3(); u4(); u5(); u6(); u7(); };
+    const u8 = onSnapshot(collection(db,"userSchedules"), snap => {
+      setUserSchedules(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }, errHandler);
+    return () => { u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); };
   }, []);
 
-  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, loading };
+  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, loading };
 }
