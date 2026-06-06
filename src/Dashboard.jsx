@@ -310,6 +310,11 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
 }
 
 function DeleteLog({ onBack, deletedCases }) {
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(deletedCases.length / PAGE_SIZE));
+  const paged = deletedCases.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <div style={{ background:"#fff",borderBottom:"1px solid #e2e8f0",padding:"14px 20px",
@@ -326,35 +331,50 @@ function DeleteLog({ onBack, deletedCases }) {
         {deletedCases.length===0 ? (
           <div style={{ textAlign:"center",color:"#cbd5e1",padding:"48px 0",fontSize:14 }}>ยังไม่มีประวัติการลบเคส</div>
         ) : (
-          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,overflow:"hidden" }}>
-            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed" }}>
-              <thead>
-                <tr style={{ background:"#f8fafc" }}>
-                  <th style={{ padding:"8px 14px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>ผู้ลบ</th>
-                  <th style={{ padding:"8px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"35%" }}>ชื่อเคส</th>
-                  <th style={{ padding:"8px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"25%" }}>โครงการ</th>
-                  <th style={{ padding:"8px 10px",textAlign:"right",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>วันเวลา</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deletedCases.map((d,i)=>(
-                  <tr key={d.id} style={{ background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #f1f5f9" }}>
-                    <td style={{ padding:"8px 14px",fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{d.deletedBy}</td>
-                    <td style={{ padding:"8px 10px",color:"#475569",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{d.caseTitle}</td>
-                    <td style={{ padding:"8px 10px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                      <span style={{ fontSize:11,color:"#64748b" }}>◆ {d.projectName}</span>
-                    </td>
-                    <td style={{ padding:"8px 10px",textAlign:"right",color:"#94a3b8",whiteSpace:"nowrap" }}>
-                      {d.deletedAt ? new Date(d.deletedAt).toLocaleString("th-TH",{
-                        day:"2-digit",month:"2-digit",year:"numeric",
-                        hour:"2-digit",minute:"2-digit"
-                      }) : ""}
-                    </td>
+          <>
+            <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,overflow:"hidden",marginBottom:16 }}>
+              <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed" }}>
+                <thead>
+                  <tr style={{ background:"#f8fafc" }}>
+                    <th style={{ padding:"8px 14px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>ผู้ลบ</th>
+                    <th style={{ padding:"8px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"35%" }}>ชื่อเคส</th>
+                    <th style={{ padding:"8px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"25%" }}>โครงการ</th>
+                    <th style={{ padding:"8px 10px",textAlign:"right",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>วันเวลา</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paged.map((d,i)=>(
+                    <tr key={d.id} style={{ background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #f1f5f9" }}>
+                      <td style={{ padding:"8px 14px",fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{d.deletedBy}</td>
+                      <td style={{ padding:"8px 10px",color:"#475569",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{d.caseTitle}</td>
+                      <td style={{ padding:"8px 10px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+                        <span style={{ fontSize:11,color:"#64748b" }}>◆ {d.projectName}</span>
+                      </td>
+                      <td style={{ padding:"8px 10px",textAlign:"right",color:"#94a3b8",whiteSpace:"nowrap" }}>
+                        {d.deletedAt ? new Date(d.deletedAt).toLocaleString("th-TH",{
+                          day:"2-digit",month:"2-digit",year:"numeric",
+                          hour:"2-digit",minute:"2-digit"
+                        }) : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {totalPages > 1 && (
+              <div style={{ display:"flex",justifyContent:"center",alignItems:"center",gap:8 }}>
+                <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+                  style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
+                    padding:"6px 14px",fontSize:12,fontWeight:600,cursor:page===1?"default":"pointer",
+                    color:page===1?"#cbd5e1":"#475569",fontFamily:"inherit" }}>← ก่อนหน้า</button>
+                <span style={{ fontSize:13,color:"#64748b" }}>หน้า {page} / {totalPages}</span>
+                <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                  style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
+                    padding:"6px 14px",fontSize:12,fontWeight:600,cursor:page===totalPages?"default":"pointer",
+                    color:page===totalPages?"#cbd5e1":"#475569",fontFamily:"inherit" }}>ถัดไป →</button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
