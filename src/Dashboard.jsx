@@ -2,7 +2,7 @@ import { useState } from "react";
 import { daysLeft, fmtDate } from "./utils.js";
 import CaseSummaryReport from "./CaseSummaryReport.jsx";
 
-export default function Dashboard({ onBack, cases, projects, users }) {
+export default function Dashboard({ onBack, cases, projects, users, deletedCases=[] }) {
   const [showReport, setShowReport] = useState(false);
   if(showReport) return <CaseSummaryReport onBack={()=>setShowReport(false)} cases={cases} projects={projects}/>;
 
@@ -294,6 +294,44 @@ export default function Dashboard({ onBack, cases, projects, users }) {
             </table>
           </div>
         </div>
+
+        {/* ประวัติการลบเคส */}
+        {deletedCases.length > 0 && (
+          <div style={{ marginBottom:20 }}>
+            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:10 }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>🗑 ประวัติการลบเคส</div>
+              <span style={{ background:"#fee2e2",color:"#ef4444",borderRadius:20,
+                padding:"1px 8px",fontSize:11,fontWeight:700 }}>{deletedCases.length}</span>
+            </div>
+            <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,overflow:"hidden" }}>
+              {deletedCases.slice(0,20).map((d,i)=>(
+                <div key={d.id} style={{ display:"flex",gap:12,alignItems:"flex-start",
+                  padding:"10px 14px",borderBottom: i<deletedCases.length-1?"1px solid #f1f5f9":"none",
+                  background:i%2===0?"#fff":"#f8fafc" }}>
+                  <div style={{ width:32,height:32,borderRadius:"50%",background:"#fee2e2",
+                    display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14 }}>
+                    👤
+                  </div>
+                  <div style={{ flex:1,minWidth:0 }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2 }}>
+                      <span style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{d.deletedBy}</span>
+                      <span style={{ fontSize:11,color:"#94a3b8",flexShrink:0,marginLeft:8 }}>
+                        {d.deletedAt ? new Date(d.deletedAt).toLocaleString("th-TH",{
+                          day:"2-digit",month:"2-digit",year:"numeric",
+                          hour:"2-digit",minute:"2-digit"
+                        }) : ""}
+                      </span>
+                    </div>
+                    <div style={{ fontSize:12,color:"#64748b" }}>
+                      ลบเคส <span style={{ color:"#0f172a",fontWeight:500 }}>"{d.caseTitle}"</span>
+                    </div>
+                    <div style={{ fontSize:11,color:"#94a3b8",marginTop:2 }}>โครงการ: {d.projectName}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
