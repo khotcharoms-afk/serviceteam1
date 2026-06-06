@@ -190,40 +190,24 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           <div style={{ fontSize:13,color:"#64748b" }}>วันที่พิมพ์: {fmtDate(new Date().toISOString().slice(0,10))}</div>
         </div>
 
-        {/* สรุปตัวเลข */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12 }}>
+        {/* สรุป + KPI — แถวเดียว 8 ช่อง */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(8,1fr)",gap:6,marginBottom:14 }}>
           {[
-            { label:"เคสทั้งหมด",   val:newCases.length,    color:"#2563eb" },
-            { label:"เสร็จสิ้น",    val:doneCases.length,   color:"#10b981" },
-            { label:"ยังไม่เสร็จ",  val:pendingCases.length,color:"#f59e0b" },
-            { label:"ติดปัญหา/รอ", val:holdCases.length,   color:"#ef4444" },
+            { label:"เคสทั้งหมด",   val:newCases.length,    color:"#2563eb", bg:"#fff",     border:`#2563eb30`, topBorder:"#2563eb", icon:null },
+            { label:"เสร็จสิ้น",    val:doneCases.length,   color:"#10b981", bg:"#fff",     border:`#10b98130`, topBorder:"#10b981", icon:null },
+            { label:"ยังไม่เสร็จ",  val:pendingCases.length,color:"#f59e0b", bg:"#fff",     border:`#f59e0b30`, topBorder:"#f59e0b", icon:null },
+            { label:"ติดปัญหา/รอ", val:holdCases.length,   color:"#ef4444", bg:"#fff",     border:`#ef444430`, topBorder:"#ef4444", icon:null },
+            { label:"เดือนนี้",     val:casesThisMonth,     color:"#6366f1", bg:"#eef2ff",  border:"#c7d2fe",   topBorder:null,      icon:"📋" },
+            { label:"ปิดงาน",       val:`${closeRate}%`,    color:"#10b981", bg:"#ecfdf5",  border:"#a7f3d0",   topBorder:null,      icon:"✅" },
+            { label:"เฉลี่ย",       val:avgDays!==null?`${avgDays}วัน`:"—", color:"#f59e0b", bg:"#fffbeb", border:"#fde68a", topBorder:null, icon:"⏱️" },
+            { label:"ค้างนาน",      val:allPending.length>0?`${longestPending}วัน`:"—", color:longestPending>=7?"#ef4444":"#64748b", bg:longestPending>=7?"#fff5f5":"#f8fafc", border:longestPending>=7?"#fecaca":"#e2e8f0", topBorder:null, icon:"🔥" },
           ].map(s=>(
-            <div key={s.label} style={{ background:"#fff",border:`1px solid ${s.color}30`,
-              borderRadius:8,padding:"8px 12px",borderTop:`2px solid ${s.color}` }}>
-              <div style={{ fontSize:20,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:10,color:"#94a3b8",marginTop:3,fontWeight:600 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* KPI Cards */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:16 }}>
-          {[
-            { icon:"📋", label:"เคสเดือนนี้",  value:casesThisMonth, unit:"รายการ", color:"#6366f1", bg:"#eef2ff", border:"#c7d2fe", sub:null },
-            { icon:"✅", label:"อัตราปิดงาน",  value:closeRate,       unit:"%",      color:"#10b981", bg:"#ecfdf5", border:"#a7f3d0", sub:`${allDone.length}/${cases.length} เคส` },
-            { icon:"⏱️", label:"เฉลี่ยปิดงาน", value:avgDays!==null?avgDays:"—", unit:avgDays!==null?"วัน":"", color:"#f59e0b", bg:"#fffbeb", border:"#fde68a", sub:avgDays!==null?`${closedWithDates.length} เคส`:"ยังไม่มีข้อมูล" },
-            { icon:"🔥", label:"ค้างนานสุด",   value:allPending.length>0?longestPending:"—", unit:allPending.length>0?"วัน":"", color:longestPending>=7?"#ef4444":"#64748b", bg:longestPending>=7?"#fff5f5":"#f8fafc", border:longestPending>=7?"#fecaca":"#e2e8f0", sub:`${allPending.length} งานค้าง` },
-          ].map(k=>(
-            <div key={k.label} style={{ background:k.bg,border:`1px solid ${k.border}`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:8 }}>
-              <div style={{ fontSize:16,flexShrink:0 }}>{k.icon}</div>
-              <div style={{ minWidth:0 }}>
-                <div style={{ fontSize:9,color:"#94a3b8",fontWeight:600,letterSpacing:.3 }}>{k.label.toUpperCase()}</div>
-                <div style={{ display:"flex",alignItems:"baseline",gap:2 }}>
-                  <span style={{ fontSize:16,fontWeight:800,color:k.color,lineHeight:1 }}>{k.value}</span>
-                  {k.unit&&<span style={{ fontSize:10,color:k.color,fontWeight:600 }}>{k.unit}</span>}
-                </div>
-                {k.sub&&<div style={{ fontSize:9,color:"#94a3b8" }}>{k.sub}</div>}
-              </div>
+            <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.border}`,
+              borderRadius:7, padding:"7px 8px",
+              borderTop: s.topBorder ? `2px solid ${s.topBorder}` : `1px solid ${s.border}` }}>
+              {s.icon && <div style={{ fontSize:12,marginBottom:1 }}>{s.icon}</div>}
+              <div style={{ fontSize:13,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
+              <div style={{ fontSize:9,color:"#94a3b8",marginTop:2,fontWeight:600 }}>{s.label}</div>
             </div>
           ))}
         </div>
