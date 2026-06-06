@@ -87,8 +87,8 @@ export default function Dashboard({ onBack, cases, projects, users }) {
 
       <div style={{ padding:"20px 20px 48px",maxWidth:1200,margin:"0 auto" }}>
 
-        {/* 2-column layout */}
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20,alignItems:"start" }}>
+        {/* 2-column layout — desktop only */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(320px, 1fr))",gap:16,marginBottom:20,alignItems:"start" }}>
 
         {/* Bar Chart สถิติเคส */}
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,
