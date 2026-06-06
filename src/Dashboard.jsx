@@ -94,6 +94,17 @@ export default function Dashboard({ onBack, cases, projects, users }) {
     };
   });
 
+  // DEBUG — ลบออกหลังดู console แล้ว
+  console.log("🔍 pending sample:", pendingCases.slice(0,2).map(c=>({
+    title: c.title,
+    status: c.status,
+    updatedAt: c.updatedAt,
+    createdAt: c.createdAt,
+    updatedAt_type: typeof c.updatedAt,
+    has_seconds: c.updatedAt?.seconds,
+    has_toDate: typeof c.updatedAt?.toDate,
+  })));
+
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
