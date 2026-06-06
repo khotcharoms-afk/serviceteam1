@@ -36,14 +36,16 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
   const [mode, setMode] = useState("month");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [selectedProj, setSelectedProj] = useState("all");
 
   const { from, to, label } = getRange(mode, customFrom, customTo);
 
-  // filter เคสในช่วงเวลา
+  // filter เคสในช่วงเวลา + โครงการ
   const filtered = cases.filter(c => {
     if (!c.date) return false;
     if (from && c.date < from) return false;
     if (to   && c.date > to)   return false;
+    if (selectedProj !== "all" && c.projectId !== selectedProj) return false;
     return true;
   }).sort((a,b) => a.date.localeCompare(b.date));
 
@@ -86,7 +88,8 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
   }, 0);
 
   // สถิติต่อโครงการ (เฉพาะที่มีเคส)
-  const projStats = projects.map(p=>{
+  const projPool = selectedProj==="all" ? projects : projects.filter(p=>p.id===selectedProj);
+  const projStats = projPool.map(p=>{
     const pc = cases.filter(c=>c.projectId===p.id);
     return { ...p, total:pc.length,
       open:pc.filter(c=>c.status==="open").length,
@@ -146,6 +149,16 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
               {b.l}
             </button>
           ))}
+          <select value={selectedProj} onChange={e=>setSelectedProj(e.target.value)}
+            style={{ border:"1.5px solid #e2e8f0",borderRadius:8,padding:"6px 12px",
+              fontSize:12,fontFamily:"inherit",outline:"none",cursor:"pointer",
+              color:"#475569",fontWeight:600,background:"#fff" }}>
+            <option value="all">ทุกโครงการ</option>
+            {projects.map(p=>(
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+
           {mode==="custom" && (
             <>
               <input type="date" value={customFrom} onChange={e=>setCustomFrom(e.target.value)}
@@ -169,6 +182,11 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
             รายงานสรุปเคส — บริษัท เมทเธียร์ จำกัด
           </div>
           <div style={{ fontSize:13,color:"#64748b" }}>ช่วงเวลา: {label}</div>
+          {selectedProj!=="all" && (
+            <div style={{ fontSize:13,color:"#64748b" }}>
+              โครงการ: {projects.find(p=>p.id===selectedProj)?.name||""}
+            </div>
+          )}
           <div style={{ fontSize:13,color:"#64748b" }}>วันที่พิมพ์: {fmtDate(new Date().toISOString().slice(0,10))}</div>
         </div>
 
