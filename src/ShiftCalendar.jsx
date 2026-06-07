@@ -84,7 +84,7 @@ function dateKey(year, month, day) {
   return `${year}-${m}-${d}`;
 }
 
-export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[], shiftMembers=[] }) {
+export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[], shiftMembers=[], refreshSchedules, refreshShiftTypes, refreshShiftMembers }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -491,6 +491,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           users={users.filter(u=>u.role!=="pending")}
           shiftMembers={shiftMembers}
           onClose={()=>setShowMemberManager(false)}
+          onSaved={refreshShiftMembers}
         />
       )}
 
@@ -501,6 +502,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           initYear={year}
           initMonth={month}
           onClose={()=>setShowScheduleManager(false)}
+          onSaved={refreshSchedules}
         />
       )}
 
@@ -509,6 +511,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         <ShiftTypeManager
           shiftTypes={shiftTypes}
           onClose={() => setShowTypeManager(false)}
+          onSaved={refreshShiftTypes}
         />
       )}
     </div>
@@ -625,13 +628,19 @@ function MemberManager({ users, shiftMembers, onClose }) {
             {saving?"กำลังบันทึก…":`บันทึก ${MONTH_TH[selMonth]} ${selYear+543}`}
           </button>
         </div>
+        <button onClick={()=>setSchedules(s=>s.map(x=>({...x,offDays:[]})))}
+          style={{ width:"100%",marginTop:8,background:"#fff5f5",border:"1px solid #fecaca",
+            color:"#ef4444",borderRadius:10,padding:"9px",fontSize:13,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>
+          🗑 เคลียร์วันหยุดทั้งหมด
+        </button>
       </div>
     </div>
   );
 }
 
 // ── Modal จัดการวันหยุดประจำ ──
-function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth }) {
+function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, onSaved }) {
   const now = new Date();
   const [selYear, setSelYear] = useState(initYear||now.getFullYear());
   const [selMonth, setSelMonth] = useState(initMonth!==undefined?initMonth:now.getMonth());
@@ -684,6 +693,7 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth })
           userName: sch.userName, offDays: sch.offDays, monthKey,
         });
       }
+      if (onSaved) onSaved();
       onClose();
     } catch(e) { console.error(e); }
     setSaving(false);
