@@ -430,6 +430,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           year={year} month={month}
           users={approvedUsers}
           shiftTypes={shiftTypes}
+          userSchedules={userSchedules}
           daysInMonth={getDaysInMonth(year, month)}
           onClose={()=>setShowBulkEdit(false)}
         />
@@ -795,7 +796,7 @@ function SettingsMenu({ onClose, onMembers, onSchedule, onTypes }) {
 }
 
 // ── Modal ลงกะหลายวัน ──
-function BulkEditModal({ year, month, users, shiftTypes, daysInMonth, onClose }) {
+function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysInMonth, onClose }) {
   const [saving, setSaving] = useState(false);
   const [dateFrom, setDateFrom] = useState(1);
   const [dateTo, setDateTo] = useState(daysInMonth);
@@ -812,8 +813,13 @@ function BulkEditModal({ year, month, users, shiftTypes, daysInMonth, onClose })
         const m = String(month + 1).padStart(2, "0");
         const dd = String(d).padStart(2, "0");
         const date = `${year}-${m}-${dd}`;
+        const dayOfWeek = new Date(year, month, d).getDay(); // 0=อา 1=จ ... 6=ส
         for (const row of rows) {
           if (row.shiftTypeId === "__none") continue;
+          // เช็ควันหยุดประจำ
+          const sch = userSchedules.find(s => s.userName === row.userName);
+          const offDays = sch?.offDays || [];
+          if (offDays.includes(dayOfWeek)) continue; // ข้ามวันหยุด
           const docId = `${date}_${row.userName.replace(/ /g, "_")}`;
           if (row.shiftTypeId === "__off") {
             await setDoc(doc(db,"shifts",docId), { date, userName:row.userName, isOff:true, shiftTypeId:null });
@@ -883,6 +889,16 @@ function BulkEditModal({ year, month, users, shiftTypes, daysInMonth, onClose })
             <div key={row.userName} style={{ display:"flex",alignItems:"center",gap:10 }}>
               <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",width:140,flexShrink:0 }}>
                 👤 {row.userName}
+                {(()=>{
+                  const DAY_TH = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+                  const sch = userSchedules.find(s=>s.userName===row.userName);
+                  const offDays = sch?.offDays||[];
+                  return offDays.length>0 && (
+                    <div style={{ fontSize:10,color:"#ef4444",fontWeight:400 }}>
+                      หยุด {offDays.sort().map(d=>DAY_TH[d]).join("–")}
+                    </div>
+                  );
+                })()}
               </div>
               <select value={row.shiftTypeId}
                 onChange={e=>setRows(r=>r.map((x,j)=>j===i?{...x,shiftTypeId:e.target.value}:x))}
