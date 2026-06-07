@@ -97,6 +97,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
   const isAdmin = currentUser?.role === "admin";
   const canEditShift = isAdmin || currentUser?.canEditShift === true;
+  const isMobile = window.innerWidth < 640;
   const sortedMembers = [...shiftMembers].sort((a,b)=>(a.order||0)-(b.order||0));
   const memberNames = sortedMembers.map(m=>m.userName);
   const approvedUsers = memberNames.length > 0
@@ -258,12 +259,12 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                             const typeIdx = shiftTypes.findIndex(t => t.id === e.shiftTypeId);
                             const c = getColorForType(typeIdx >= 0 ? typeIdx : 0);
                             const type = shiftTypes.find(t => t.id === e.shiftTypeId);
-                            const firstName = e.userName.split(" ")[0];
+                            const displayName = isMobile ? e.userName.charAt(0) : e.userName.split(" ")[0];
                             return (
                               <div key={ei} style={{ background:c.bg,borderRadius:3,
                                 padding:"1px 4px",fontSize:10,color:c.text,
                                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                                {firstName} · {type ? `${type.startTime}–${type.endTime}` : ""}
+                                {displayName} · {type ? `${type.startTime}–${type.endTime}` : ""}
                               </div>
                             );
                           })}
