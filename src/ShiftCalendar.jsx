@@ -150,6 +150,101 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const weeks = [];
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
 
+  function exportCalendarPDF() {
+    const monthLabel = MONTH_NAMES[month] + " " + (year + 543);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const daysInMonth = getDaysInMonth(year, month);
+    const cells = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+    const weeks = [];
+    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+    const colorMap = {};
+    shiftTypes.forEach((t, i) => {
+      const c = getColorForType(i);
+      colorMap[t.id] = c;
+    });
+
+    const dayNames = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+
+    const weeksHTML = weeks.map(week => {
+      const cells = week.map(day => {
+        if (!day) return `<td style="border:0.5px solid #f1f5f9;background:#fafafa;height:80px;vertical-align:top;padding:4px"></td>`;
+        const dk = dateKey(year, month, day);
+        const buddhistKey = thaiDateKey(year, month, day);
+        const holiday = THAI_HOLIDAYS[buddhistKey];
+        const entries = (shiftMap[dk] || []).filter(e => !e.isOff);
+        const isToday = dk === todayKey;
+        const bg = isToday ? "#eff6ff" : holiday ? "#fff5f5" : "#fff";
+        const border = isToday ? "2px solid #2563eb" : "0.5px solid #f1f5f9";
+        const dayColor = isToday ? "#1d4ed8" : holiday ? "#ef4444" : "#475569";
+
+        const pills = entries.map(e => {
+          const type = shiftTypes.find(t => t.id === e.shiftTypeId);
+          const ci = shiftTypes.findIndex(t => t.id === e.shiftTypeId);
+          const c = getColorForType(ci >= 0 ? ci : 0);
+          const name = e.userName.split(" ")[0];
+          return `<div style="background:${c.bg};border-radius:3px;padding:1px 4px;font-size:9px;color:${c.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${name} · ${type ? type.startTime + "–" + type.endTime : ""}</div>`;
+        }).join("");
+
+        return `<td style="border:${border};height:80px;vertical-align:top;padding:4px;background:${bg};border-radius:${isToday?"4px":"0"}">
+          <div style="font-size:10px;font-weight:${isToday?"700":"500"};color:${dayColor};margin-bottom:2px">${day}${holiday ? ` <span style="font-size:8px;color:#ef4444">${holiday}</span>` : ""}</div>
+          ${pills}
+        </td>`;
+      }).join("");
+      return `<tr>${cells}</tr>`;
+    }).join("");
+
+    // Legend
+    const legendHTML = shiftTypes.map((t, i) => {
+      const c = getColorForType(i);
+      return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:${c.text};margin-right:12px">
+        <span style="width:10px;height:10px;border-radius:2px;background:${c.bg};display:inline-block"></span>
+        ${t.name} (${t.startTime}–${t.endTime})
+      </span>`;
+    }).join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<title>ตารางกะ ${monthLabel}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body { font-family:'Noto Sans Thai',sans-serif; padding:10mm; background:#fff; }
+  @page { size:A4 landscape; margin:0; }
+  @media print { .no-print { display:none !important; } body { padding:8mm; } }
+  table { width:100%; border-collapse:collapse; }
+</style>
+</head>
+<body>
+<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#f8fafc;padding:8px 14px;display:flex;gap:10px;border-bottom:1px solid #e2e8f0;z-index:99">
+  <button onclick="window.close()" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:inherit">← ปิด</button>
+  <button onclick="window.print()" style="background:#16a34a;border:none;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit;color:#fff;margin-left:auto">🖨 พิมพ์ / Export PDF</button>
+</div>
+<div style="margin-top:36px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div style="font-size:16pt;font-weight:700;color:#1E3A5F">ตารางกะ — ${monthLabel}</div>
+    <div style="font-size:9px;color:#94a3b8">บริษัท เมทเธียร์ จำกัด · ServiceLog</div>
+  </div>
+  <div style="margin-bottom:10px">${legendHTML}</div>
+  <table>
+    <thead>
+      <tr>${dayNames.map(d => `<th style="padding:6px 4px;text-align:center;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid #e2e8f0;background:#f8fafc">${d}</th>`).join("")}</tr>
+    </thead>
+    <tbody>${weeksHTML}</tbody>
+  </table>
+</div>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); }
+  }
+
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <style>{`.shift-layout { display:flex; gap:14px; align-items:flex-start; } @media(max-width:600px){ .shift-layout { flex-direction:column; } .shift-holiday-table { width:100% !important; } }`}</style>
@@ -164,6 +259,11 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📅 ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
 
+          <button onClick={exportCalendarPDF}
+            style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:8,
+              padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#16a34a" }}>
+            📄 Export PDF
+          </button>
           {isAdmin && (
             <button onClick={()=>setShowSettings(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
