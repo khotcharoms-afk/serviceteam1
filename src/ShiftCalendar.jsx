@@ -238,9 +238,11 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                     const holiday = THAI_HOLIDAYS[holidayKey];
                     return (
                       <td key={di} onClick={() => setViewDay(dk)}
-                        style={{ border:"0.5px solid #f1f5f9",height:90,verticalAlign:"top",
-                          padding:4,cursor:"pointer",
+                        style={{ border:isToday?"2px solid #2563eb":"0.5px solid #f1f5f9",
+                          height:90,verticalAlign:"top",
+                          padding:isToday?3:4,cursor:"pointer",
                           background:isToday?"#eff6ff":holiday?"#fff5f5":"#fff",
+                          borderRadius:isToday?6:0,
                           transition:"background .15s" }}>
                         <div style={{ display:"flex",alignItems:"center",gap:3,marginBottom:2,padding:"1px 3px" }}>
                           <span style={{ fontSize:11,fontWeight:isToday?700:500,
