@@ -13,7 +13,15 @@ export default function DetailModal({
   const days = daysLeft(detailCase.warrantyEnd);
 
   return (
-    <Modal open={!!detailCase} onClose={onClose} title="รายละเอียดเคส">
+    <Modal open={!!detailCase} onClose={onClose} title="รายละเอียดเคส"
+      headerRight={
+        <button onClick={()=>setShowWorkOrder(true)}
+          style={{ background:"#fdf4ff",border:"1px solid #e9d5ff",color:"#6B21A8",
+            borderRadius:8,padding:"5px 12px",cursor:"pointer",fontFamily:"inherit",
+            fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:4 }}>
+          🖨 ใบงาน
+        </button>
+      }>
       <span style={{ background:proj?.color+"15",color:proj?.color,borderRadius:20,
         padding:"3px 12px",fontSize:12,fontWeight:700,display:"inline-block",marginBottom:12 }}>
         {proj?.name}
@@ -127,12 +135,7 @@ export default function DetailModal({
             borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
           📤 ส่งต่องาน
         </button>
-        <button onClick={()=>setShowWorkOrder(true)}
-          style={{ background:"#fdf4ff",border:"1px solid #e9d5ff",color:"#6B21A8",
-            borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
-          🖨 ใบงาน
-        </button>
-        <button onClick={onDelete}
+<button onClick={onDelete}
           style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
             borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
           ลบ
