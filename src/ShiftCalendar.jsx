@@ -401,8 +401,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
         {/* ตารางวันหยุด */}
         <div className="shift-holiday-table" style={{ width:160,flexShrink:0 }}>
-          <div style={{ background:"#1E3A5F",padding:"8px 12px",borderRadius:"12px 12px 0 0",textAlign:"center" }}>
-            <span style={{ fontSize:12,fontWeight:700,color:"#fff" }}>ตารางวันหยุด</span>
+          <div style={{ background:"#1E3A5F",padding:"8px 12px",borderRadius:"12px 12px 0 0" }}>
+            <div style={{ fontSize:12,fontWeight:700,color:"#fff",textAlign:"center" }}>ตารางวันหยุด</div>
+            <div style={{ fontSize:10,color:"#93C5FD",textAlign:"center",marginTop:2 }}>{MONTH_NAMES[month].slice(0,3)}. {year+543}</div>
           </div>
           <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:"0 0 12px 12px",overflow:"hidden" }}>
             <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
@@ -414,7 +415,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
               </thead>
               <tbody>
                 {approvedUsers.map((u,i)=>{
-                  const sch = userSchedules.find(s=>s.userName===u.name);
+                  const monthKey = `${year}-${String(month+1).padStart(2,"0")}`;
+                  const sch = userSchedules.find(s=>s.userName===u.name && s.monthKey===monthKey)
+                    || userSchedules.find(s=>s.userName===u.name && !s.monthKey); // fallback legacy
                   const offDays = (sch?.offDays||[]).sort();
                   const dayLabel = offDays.length>0 ? offDays.map(d=>DAY_NAMES[d]).join("-") : "-";
                   return (
@@ -495,6 +498,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         <ScheduleManager
           users={approvedUsers}
           userSchedules={userSchedules}
+          initYear={year}
+          initMonth={month}
           onClose={()=>setShowScheduleManager(false)}
         />
       )}
@@ -617,7 +622,7 @@ function MemberManager({ users, shiftMembers, onClose }) {
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
-            {saving?"กำลังบันทึก…":"บันทึก"}
+            {saving?"กำลังบันทึก…":`บันทึก ${MONTH_TH[selMonth]} ${selYear+543}`}
           </button>
         </div>
       </div>
@@ -626,14 +631,43 @@ function MemberManager({ users, shiftMembers, onClose }) {
 }
 
 // ── Modal จัดการวันหยุดประจำ ──
-function ScheduleManager({ users, userSchedules, onClose }) {
+function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth }) {
+  const now = new Date();
+  const [selYear, setSelYear] = useState(initYear||now.getFullYear());
+  const [selMonth, setSelMonth] = useState(initMonth!==undefined?initMonth:now.getMonth());
   const [saving, setSaving] = useState(false);
+
+  const monthKey = `${selYear}-${String(selMonth+1).padStart(2,"0")}`;
+
   const [schedules, setSchedules] = useState(
     users.map(u => {
-      const existing = userSchedules.find(s=>s.userName===u.name);
+      const existing = userSchedules.find(s=>s.userName===u.name && s.monthKey===monthKey)
+        || userSchedules.find(s=>s.userName===u.name && !s.monthKey);
       return { userName: u.name, offDays: existing?.offDays||[] };
     })
   );
+
+  // reload when month changes
+  function loadMonth(y, m) {
+    const mk = `${y}-${String(m+1).padStart(2,"0")}`;
+    setSchedules(users.map(u => {
+      const existing = userSchedules.find(s=>s.userName===u.name && s.monthKey===mk)
+        || userSchedules.find(s=>s.userName===u.name && !s.monthKey);
+      return { userName: u.name, offDays: existing?.offDays||[] };
+    }));
+  }
+
+  function prevMonth() {
+    const y = selMonth===0?selYear-1:selYear;
+    const m = selMonth===0?11:selMonth-1;
+    setSelYear(y); setSelMonth(m); loadMonth(y,m);
+  }
+  function nextMonth() {
+    const y = selMonth===11?selYear+1:selYear;
+    const m = selMonth===11?0:selMonth+1;
+    setSelYear(y); setSelMonth(m); loadMonth(y,m);
+  }
+
   function toggleDay(userIdx, day) {
     setSchedules(prev => prev.map((s,i) => {
       if (i !== userIdx) return s;
@@ -645,9 +679,9 @@ function ScheduleManager({ users, userSchedules, onClose }) {
     setSaving(true);
     try {
       for (const sch of schedules) {
-        const docId = sch.userName.replace(/ /g,"_");
+        const docId = `${sch.userName.replace(/ /g,"_")}_${monthKey}`;
         await setDoc(doc(db,"userSchedules",docId), {
-          userName: sch.userName, offDays: sch.offDays,
+          userName: sch.userName, offDays: sch.offDays, monthKey,
         });
       }
       onClose();
@@ -655,6 +689,8 @@ function ScheduleManager({ users, userSchedules, onClose }) {
     setSaving(false);
   }
   const DAY_SHORT = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+  const MONTH_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  const MONTH_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
@@ -662,10 +698,24 @@ function ScheduleManager({ users, userSchedules, onClose }) {
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:520,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"80vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
           <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📋 กำหนดวันหยุดประจำ</div>
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
+        </div>
+        <div style={{ display:"flex",alignItems:"center",gap:8,background:"#f8fafc",
+          borderRadius:8,padding:"8px 12px",marginBottom:14 }}>
+          <button onClick={prevMonth} style={{ background:"#fff",border:"0.5px solid #e2e8f0",
+            borderRadius:6,padding:"3px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
+            ← {MONTH_SHORT[selMonth===0?11:selMonth-1]}
+          </button>
+          <span style={{ flex:1,textAlign:"center",fontSize:13,fontWeight:600,color:"#1E3A5F" }}>
+            {MONTH_TH[selMonth]} {selYear+543}
+          </span>
+          <button onClick={nextMonth} style={{ background:"#fff",border:"0.5px solid #e2e8f0",
+            borderRadius:6,padding:"3px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
+            {MONTH_SHORT[selMonth===11?0:selMonth+1]} →
+          </button>
         </div>
         <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:18 }}>
           <thead>
@@ -955,8 +1005,10 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
         const dayOfWeek = new Date(year, month, d).getDay(); // 0=อา 1=จ ... 6=ส
         for (const row of rows) {
           if (row.shiftTypeId === "__none") continue;
-          // เช็ควันหยุดประจำ
-          const sch = userSchedules.find(s => s.userName === row.userName);
+          // เช็ควันหยุดประจำ (รายเดือนก่อน fallback legacy)
+          const monthKey = `${year}-${String(month+1).padStart(2,"0")}`;
+          const sch = userSchedules.find(s=>s.userName===row.userName && s.monthKey===monthKey)
+            || userSchedules.find(s=>s.userName===row.userName && !s.monthKey);
           const offDays = sch?.offDays || [];
           if (offDays.includes(dayOfWeek)) continue; // ข้ามวันหยุด
           const docId = `${date}_${row.userName.replace(/ /g, "_")}`;
