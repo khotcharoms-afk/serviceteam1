@@ -29,16 +29,7 @@ function buildWorkOrderHTML(c, proj) {
         ? Array(3 - updateLog.length).fill('<tr><td colspan="4" style="padding:10px 8px;border:0.5px solid #e2e8f0"> </td></tr>').join('')
         : '');
 
-  const handoverRows = handoverLog.length === 0
-    ? `<tr><td colspan="3" style="padding:8px;border:0.5px solid #e2e8f0;color:#94a3b8;text-align:center">—</td></tr>`
-    : handoverLog.map((h, i) => `
-      <tr style="background:${i%2===0?'#fff':'#f8fafc'}">
-        <td style="padding:4px 8px;border:0.5px solid #e2e8f0;color:#64748b">${h.date||''} ${h.time||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e2e8f0;color:#0f172a">${h.from||''} → ${h.to||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e2e8f0;color:#0f172a">${h.note||'—'}</td>
-      </tr>`).join('') + (handoverLog.length < 2
-        ? Array(2 - handoverLog.length).fill('<tr><td colspan="3" style="padding:10px 8px;border:0.5px solid #e2e8f0"> </td></tr>').join('')
-        : '');
+
 
   return `<!DOCTYPE html>
 <html lang="th">
@@ -125,18 +116,7 @@ function buildWorkOrderHTML(c, proj) {
     <tbody>${updateRows}</tbody>
   </table>
 
-  <!-- Handover Log -->
-  <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">ประวัติการส่งต่องาน</div>
-  <table style="font-size:9pt;margin-bottom:18px">
-    <thead>
-      <tr style="background:${PURPLE}">
-        <th style="padding:4px 8px;color:#fff;font-weight:600;text-align:left;border:0.5px solid ${PURPLE};width:20%">วันที่/เวลา</th>
-        <th style="padding:4px 8px;color:#fff;font-weight:600;text-align:left;border:0.5px solid ${PURPLE};width:28%">จาก → ถึง</th>
-        <th style="padding:4px 8px;color:#fff;font-weight:600;text-align:left;border:0.5px solid ${PURPLE}">หมายเหตุ</th>
-      </tr>
-    </thead>
-    <tbody>${handoverRows}</tbody>
-  </table>
+
 
   <!-- อะไหล่/วัสดุ -->
   <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">รายการอะไหล่/วัสดุที่ใช้</div>
