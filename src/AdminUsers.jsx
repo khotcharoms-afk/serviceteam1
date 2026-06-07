@@ -29,6 +29,10 @@ export default function AdminUsers({ onBack }) {
     await deleteDoc(doc(db,"users",uid));
   }
 
+  async function toggleShift(uid, current) {
+    await updateDoc(doc(db,"users",uid), { canEditShift: !current });
+  }
+
   const pending = users.filter(u=>u.role==="pending");
   const active  = users.filter(u=>u.role!=="pending");
 
@@ -60,7 +64,7 @@ export default function AdminUsers({ onBack }) {
                 padding:"1px 8px",fontSize:11,fontWeight:700 }}>{pending.length}</span>
             </div>
             {pending.map(u=>(
-              <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser}/>
+              <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onToggleShift={toggleShift}/>
             ))}
           </div>
         )}
@@ -71,7 +75,7 @@ export default function AdminUsers({ onBack }) {
             textTransform:"uppercase",marginBottom:12 }}>ผู้ใช้ทั้งหมด ({active.length})</div>
           {loading && <div style={{ textAlign:"center",color:"#94a3b8",padding:32 }}>กำลังโหลด...</div>}
           {active.map(u=>(
-            <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser}/>
+            <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onToggleShift={toggleShift}/>
           ))}
           {!loading && active.length===0 && (
             <div style={{ textAlign:"center",color:"#cbd5e1",padding:32,fontSize:14 }}>ยังไม่มีผู้ใช้</div>
@@ -82,37 +86,59 @@ export default function AdminUsers({ onBack }) {
   );
 }
 
-function UserCard({ user, onRole, onRemove }) {
+function UserCard({ user, onRole, onRemove, onToggleShift }) {
   const roleOpt = ROLE_OPTS.find(r=>r.value===user.role)||ROLE_OPTS[2];
   return (
     <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
-      padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:12 }}>
-      {/* Avatar */}
-      <div style={{ width:40,height:40,borderRadius:"50%",flexShrink:0,
-        background:`hsl(${user.name?.charCodeAt(0)*7%360},60%,70%)`,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        fontSize:16,fontWeight:700,color:"#fff" }}>
-        {user.name?.charAt(0)||"?"}
+      padding:"14px 16px",marginBottom:10 }}>
+      <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+        {/* Avatar */}
+        <div style={{ width:40,height:40,borderRadius:"50%",flexShrink:0,
+          background:`hsl(${user.name?.charCodeAt(0)*7%360},60%,70%)`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:16,fontWeight:700,color:"#fff" }}>
+          {user.name?.charAt(0)||"?"}
+        </div>
+        {/* Info */}
+        <div style={{ flex:1,minWidth:0 }}>
+          <div style={{ fontSize:14,fontWeight:700,color:"#0f172a" }}>{user.name||"ไม่ระบุชื่อ"}</div>
+          <div style={{ fontSize:12,color:"#94a3b8",marginTop:1,
+            overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{user.email}</div>
+        </div>
+        {/* Role selector */}
+        <select value={user.role} onChange={e=>onRole(user.id,e.target.value)}
+          style={{ background:roleOpt.bg,border:`1px solid ${roleOpt.color}30`,
+            color:roleOpt.color,borderRadius:8,padding:"5px 10px",fontSize:12,
+            fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none" }}>
+          {ROLE_OPTS.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
+        </select>
+        {/* Remove */}
+        <button onClick={()=>onRemove(user.id)}
+          style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+            borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>
+          ✕
+        </button>
       </div>
-      {/* Info */}
-      <div style={{ flex:1,minWidth:0 }}>
-        <div style={{ fontSize:14,fontWeight:700,color:"#0f172a" }}>{user.name||"ไม่ระบุชื่อ"}</div>
-        <div style={{ fontSize:12,color:"#94a3b8",marginTop:1,
-          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{user.email}</div>
-      </div>
-      {/* Role selector */}
-      <select value={user.role} onChange={e=>onRole(user.id,e.target.value)}
-        style={{ background:roleOpt.bg,border:`1px solid ${roleOpt.color}30`,
-          color:roleOpt.color,borderRadius:8,padding:"5px 10px",fontSize:12,
-          fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none" }}>
-        {ROLE_OPTS.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
-      </select>
-      {/* Remove */}
-      <button onClick={()=>onRemove(user.id)}
-        style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-          borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>
-        ✕
-      </button>
+      {/* canEditShift toggle — แสดงเฉพาะ user ปกติ */}
+      {user.role === "user" && (
+        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #f1f5f9",
+          display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+          <div>
+            <span style={{ fontSize:12,fontWeight:600,color:"#475569" }}>📅 สิทธิ์ลงตารางกะ</span>
+            <span style={{ fontSize:11,color:"#94a3b8",marginLeft:8 }}>
+              {user.canEditShift ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+            </span>
+          </div>
+          <button onClick={()=>onToggleShift(user.id, !!user.canEditShift)}
+            style={{ background:user.canEditShift?"#2563eb":"#f1f5f9",
+              border:`1px solid ${user.canEditShift?"#2563eb":"#e2e8f0"}`,
+              color:user.canEditShift?"#fff":"#64748b",
+              borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
+              cursor:"pointer",fontFamily:"inherit" }}>
+            {user.canEditShift ? "เปิด ✓" : "ปิด"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
