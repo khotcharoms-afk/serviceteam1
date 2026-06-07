@@ -150,6 +150,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
+      <style>{`.shift-layout { display:flex; gap:14px; align-items:flex-start; } @media(max-width:600px){ .shift-layout { flex-direction:column; } .shift-holiday-table { width:100% !important; } }`}</style>
 
       {/* Header */}
       <div style={{ background:"#fff",borderBottom:"1px solid #e2e8f0",padding:"14px 20px",
@@ -205,7 +206,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         )}
 
         {/* Calendar + ตารางวันหยุด */}
-        <div style={{ display:"flex",gap:14,alignItems:"flex-start" }}>
+        <div className="shift-layout">
 
         {/* Calendar */}
         <div style={{ flex:1,minWidth:0 }}>
@@ -277,7 +278,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         </div>
 
         {/* ตารางวันหยุด */}
-        <div style={{ width:160,flexShrink:0 }}>
+        <div className="shift-holiday-table" style={{ width:160,flexShrink:0 }}>
           <div style={{ background:"#1E3A5F",padding:"8px 12px",borderRadius:"12px 12px 0 0",textAlign:"center" }}>
             <span style={{ fontSize:12,fontWeight:700,color:"#fff" }}>ตารางวันหยุด</span>
           </div>
