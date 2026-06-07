@@ -25,6 +25,7 @@ export default function App({ currentUser, onSignOut }) {
   const [filterTech,setFilterTech] = useState("all");
   const [search,setSearch]         = useState("");
   const [menuOpen,setMenuOpen]     = useState(false);
+  const isMobile = window.innerWidth < 640;
   const [adminPage,setAdminPage]   = useState(false);
   const [dashboardPage,setDashboardPage] = useState(false);
   const [shiftPage,setShiftPage] = useState(false);
@@ -374,6 +375,18 @@ export default function App({ currentUser, onSignOut }) {
           </div>
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+          {!isMobile && currentUser?.role==="admin" && (
+            <button onClick={()=>setAdminPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
+              color:"#7c3aed",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>👥</button>
+          )}
+          {!isMobile && currentUser?.role==="admin" && (
+            <button onClick={()=>setDashboardPage(true)} style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",
+              color:"#16a34a",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📊</button>
+          )}
+          {!isMobile && (
+            <button onClick={()=>setShiftPage(true)} style={{ background:"#fefce8",border:"1px solid #fde68a",
+              color:"#854d0e",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📅</button>
+          )}
           <div style={{ position:"relative" }}>
             <button onClick={e=>{ e.stopPropagation(); setNotifOpen(v=>!v); }}
               style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,
@@ -392,6 +405,11 @@ export default function App({ currentUser, onSignOut }) {
             borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             + เคสใหม่
           </button>
+          {!isMobile && (
+            <button onClick={onSignOut} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
+              color:"#64748b",borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
+              title="ออกจากระบบ">🚪</button>
+          )}
         </div>
       </header>
 
