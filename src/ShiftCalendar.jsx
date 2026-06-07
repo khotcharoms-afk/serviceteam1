@@ -533,11 +533,11 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
-        {entries.length===0 ? (
+        {(()=>{ const activeEntries = entries.filter(e=>!e.isOff); return activeEntries.length===0 ? (
           <div style={{ textAlign:"center",color:"#cbd5e1",padding:"24px 0",fontSize:13 }}>ยังไม่มีกะในวันนี้</div>
         ) : (
           <div style={{ display:"flex",flexDirection:"column",gap:8,marginBottom:16 }}>
-            {entries.map((e,i)=>{
+            {activeEntries.map((e,i)=>{
               const type = shiftTypes.find(t=>t.id===e.shiftTypeId);
               const COLORS = [
                 {bg:"#dbeafe",text:"#1e40af"},{bg:"#d1fae5",text:"#065f46"},
@@ -559,7 +559,7 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
               );
             })}
           </div>
-        )}
+        ); })()}
         {isAdmin && (
           <button onClick={onEdit} style={{ width:"100%",background:"#2563eb",border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
