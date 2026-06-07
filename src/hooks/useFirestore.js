@@ -61,5 +61,24 @@ export function useFirestore() {
     return () => { u1(); u2(); u3(); u4(); u6(); };
   }, []);
 
-  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading };
+  function refreshSchedules() {
+    getDocs(collection(db,"userSchedules")).then(snap => {
+      setUserSchedules(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }).catch(e => console.error(e));
+  }
+
+  function refreshShiftTypes() {
+    getDocs(collection(db,"shiftTypes")).then(snap => {
+      setShiftTypes(snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||"")));
+    }).catch(e => console.error(e));
+  }
+
+  function refreshShiftMembers() {
+    getDocs(collection(db,"shiftMembers")).then(snap => {
+      setShiftMembers(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }).catch(e => console.error(e));
+  }
+
+  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshSchedules, refreshShiftTypes, refreshShiftMembers };
 }
