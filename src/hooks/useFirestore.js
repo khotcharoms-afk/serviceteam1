@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, getDocs } from "firebase/firestore";
 
 export function useFirestore() {
   const [projects, setProjects] = useState([]);
@@ -16,6 +16,8 @@ export function useFirestore() {
 
   useEffect(() => {
     const errHandler = (e) => { console.error("Firestore listener error:", e); setLoading(false); };
+
+    // ── Realtime listeners ──
     const u1 = onSnapshot(collection(db,"projects"), snap => {
       setProjects(snap.docs.map(d => ({ id:d.id, ...d.data() })));
       setLoading(false);
@@ -27,36 +29,36 @@ export function useFirestore() {
       setUsers(snap.docs.map(d => ({ id:d.id, ...d.data() })));
     }, errHandler);
     const uid = auth.currentUser?.uid;
-    const notifQuery = query(
-      collection(db,"notifications"),
-      where("toUid","==",uid)
-    );
-    const u4 = onSnapshot(notifQuery, snap => {
+    const u4 = onSnapshot(query(collection(db,"notifications"),where("toUid","==",uid)), snap => {
       const all = snap.docs.map(d => ({ id:d.id, ...d.data() }))
         .sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
       setNotifs(all);
     }, errHandler);
-    const u5 = onSnapshot(
-      collection(db,"deletedCases"),
-      snap => {
-        const all = snap.docs.map(d=>({id:d.id,...d.data()}))
-          .sort((a,b)=>(b.deletedAt||"").localeCompare(a.deletedAt||""));
-        setDeletedCases(all);
-      }, errHandler);
     const u6 = onSnapshot(collection(db,"shifts"), snap => {
       setShifts(snap.docs.map(d=>({id:d.id,...d.data()})));
     }, errHandler);
-    const u7 = onSnapshot(collection(db,"shiftTypes"), snap => {
+
+    // ── One-time reads (ข้อมูลที่เปลี่ยนนานๆ ครั้ง) ──
+    getDocs(collection(db,"deletedCases")).then(snap => {
+      const all = snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.deletedAt||"").localeCompare(a.deletedAt||""));
+      setDeletedCases(all);
+    }).catch(errHandler);
+
+    getDocs(collection(db,"shiftTypes")).then(snap => {
       setShiftTypes(snap.docs.map(d=>({id:d.id,...d.data()}))
         .sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||"")));
-    }, errHandler);
-    const u8 = onSnapshot(collection(db,"userSchedules"), snap => {
+    }).catch(errHandler);
+
+    getDocs(collection(db,"userSchedules")).then(snap => {
       setUserSchedules(snap.docs.map(d=>({id:d.id,...d.data()})));
-    }, errHandler);
-    const u9 = onSnapshot(collection(db,"shiftMembers"), snap => {
+    }).catch(errHandler);
+
+    getDocs(collection(db,"shiftMembers")).then(snap => {
       setShiftMembers(snap.docs.map(d=>({id:d.id,...d.data()})));
-    }, errHandler);
-    return () => { u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); u9(); };
+    }).catch(errHandler);
+
+    return () => { u1(); u2(); u3(); u4(); u6(); };
   }, []);
 
   return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading };
