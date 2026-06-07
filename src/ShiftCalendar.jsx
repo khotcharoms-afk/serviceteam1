@@ -758,9 +758,15 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
-            {saving?"กำลังบันทึก…":"บันทึก"}
+            {saving?"กำลังบันทึก…":`บันทึก ${MONTH_TH[selMonth]} ${selYear+543}`}
           </button>
         </div>
+        <button onClick={()=>setSchedules(s=>s.map(x=>({...x,offDays:[]})))}
+          style={{ width:"100%",marginTop:8,background:"#fff5f5",border:"1px solid #fecaca",
+            color:"#ef4444",borderRadius:10,padding:"9px",fontSize:13,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>
+          🗑 เคลียร์วันหยุดทั้งหมด
+        </button>
       </div>
     </div>
   );
