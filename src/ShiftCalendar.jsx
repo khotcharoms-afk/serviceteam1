@@ -268,14 +268,14 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
               padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#16a34a" }}>
             📄 Export PDF
           </button>
-          {canEditShift && (
+          {canEditShift && !isMobile && (
             <button onClick={()=>setShowBulkEdit(true)}
               style={{ background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,
                 padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#2563eb" }}>
               📆 ลงกะหลายวัน
             </button>
           )}
-          {canEditShift && (
+          {canEditShift && !isMobile && (
             <button onClick={()=>setShowClearShift(true)}
               style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:8,
                 padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#ef4444" }}>
@@ -482,6 +482,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
       {showSettings && (
         <SettingsMenu
           onClose={()=>setShowSettings(false)}
+          onBulk={canEditShift ? ()=>{ setShowSettings(false); setShowBulkEdit(true); } : null}
+          onClear={canEditShift ? ()=>{ setShowSettings(false); setShowClearShift(true); } : null}
           onMembers={()=>{ setShowSettings(false); setShowMemberManager(true); }}
           onSchedule={()=>{ setShowSettings(false); setShowScheduleManager(true); }}
           onTypes={()=>{ setShowSettings(false); setShowTypeManager(true); }}
@@ -844,8 +846,11 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
 }
 
 // ── Settings Menu ──
-function SettingsMenu({ onClose, onMembers, onSchedule, onTypes }) {
+function SettingsMenu({ onClose, onMembers, onSchedule, onTypes, onBulk, onClear }) {
+  const isMobile = window.innerWidth < 640;
   const items = [
+    ...(isMobile && onBulk ? [{ icon:"📆", label:"ลงกะหลายวัน", desc:"ลงกะหลายคนพร้อมกัน", action:onBulk }] : []),
+    ...(isMobile && onClear ? [{ icon:"🗑", label:"เคลียร์กะ", desc:"ลบกะในช่วงวันที่เลือก", action:onClear }] : []),
     { icon:"👥", label:"สมาชิกทีม CS", desc:"เลือกและเรียงลำดับสมาชิก", action:onMembers },
     { icon:"📋", label:"วันหยุดประจำ", desc:"กำหนดวันหยุดของแต่ละคน", action:onSchedule },
     { icon:"⚙", label:"จัดการกะ", desc:"เพิ่ม/ลบประเภทกะและเวลา", action:onTypes },
