@@ -3,6 +3,56 @@ import { db } from "./firebase";
 import { doc, setDoc, deleteDoc, collection, addDoc } from "firebase/firestore";
 
 const DAY_NAMES = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+
+// วันหยุดนักขัตฤกษ์ไทย 2568-2570
+const THAI_HOLIDAYS = {
+  "2568-01-01": "วันขึ้นปีใหม่",
+  "2568-02-12": "วันมาฆบูชา",
+  "2568-04-06": "วันจักรี",
+  "2568-04-13": "วันสงกรานต์",
+  "2568-04-14": "วันสงกรานต์",
+  "2568-04-15": "วันสงกรานต์",
+  "2568-05-01": "วันแรงงาน",
+  "2568-05-05": "วันฉัตรมงคล",
+  "2568-05-12": "วันวิสาขบูชา",
+  "2568-06-03": "วันเฉลิมพระชนมพรรษา ร.10",
+  "2568-07-10": "วันอาสาฬหบูชา",
+  "2568-07-11": "วันเข้าพรรษา",
+  "2568-07-28": "วันเฉลิมพระชนมพรรษา ร.10",
+  "2568-08-12": "วันแม่แห่งชาติ",
+  "2568-10-13": "วันนวมินทรมหาราช",
+  "2568-10-23": "วันปิยมหาราช",
+  "2568-12-05": "วันพ่อแห่งชาติ",
+  "2568-12-10": "วันรัฐธรรมนูญ",
+  "2568-12-31": "วันสิ้นปี",
+  "2569-01-01": "วันขึ้นปีใหม่",
+  "2569-03-03": "วันมาฆบูชา",
+  "2569-04-06": "วันจักรี",
+  "2569-04-13": "วันสงกรานต์",
+  "2569-04-14": "วันสงกรานต์",
+  "2569-04-15": "วันสงกรานต์",
+  "2569-05-01": "วันแรงงาน",
+  "2569-05-05": "วันฉัตรมงคล",
+  "2569-05-31": "วันวิสาขบูชา",
+  "2569-06-03": "วันเฉลิมพระชนมพรรษา ร.10",
+  "2569-06-29": "วันอาสาฬหบูชา",
+  "2569-06-30": "วันเข้าพรรษา",
+  "2569-07-28": "วันเฉลิมพระชนมพรรษา ร.10",
+  "2569-08-12": "วันแม่แห่งชาติ",
+  "2569-10-13": "วันนวมินทรมหาราช",
+  "2569-10-23": "วันปิยมหาราช",
+  "2569-12-05": "วันพ่อแห่งชาติ",
+  "2569-12-10": "วันรัฐธรรมนูญ",
+  "2569-12-31": "วันสิ้นปี",
+  "2570-01-01": "วันขึ้นปีใหม่",
+};
+
+function thaiDateKey(year, month, day) {
+  const buddhistYear = year + 543;
+  const m = String(month + 1).padStart(2, "0");
+  const d = String(day).padStart(2, "0");
+  return `${buddhistYear}-${m}-${d}`;
+}
 const MONTH_NAMES = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
   "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 
@@ -181,14 +231,22 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                     const dk = dateKey(year, month, day);
                     const dayEntries = shiftMap[dk] || [];
                     const isToday = dk === todayKey;
+                    const holidayKey = thaiDateKey(year, month, day);
+                    const holiday = THAI_HOLIDAYS[holidayKey];
                     return (
                       <td key={di} onClick={() => setViewDay(dk)}
                         style={{ border:"0.5px solid #f1f5f9",height:90,verticalAlign:"top",
                           padding:4,cursor:"pointer",
-                          background:isToday?"#eff6ff":"#fff",
+                          background:isToday?"#eff6ff":holiday?"#fff5f5":"#fff",
                           transition:"background .15s" }}>
-                        <div style={{ fontSize:11,fontWeight:isToday?700:500,
-                          color:isToday?"#1d4ed8":"#475569",marginBottom:3,padding:"1px 3px" }}>{day}</div>
+                        <div style={{ display:"flex",alignItems:"center",gap:3,marginBottom:2,padding:"1px 3px" }}>
+                          <span style={{ fontSize:11,fontWeight:isToday?700:500,
+                            color:isToday?"#1d4ed8":holiday?"#ef4444":"#475569" }}>{day}</span>
+                          {holiday && <span style={{ fontSize:8,color:"#ef4444",fontWeight:600,
+                            overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1 }}>
+                            {holiday}
+                          </span>}
+                        </div>
                         <div style={{ display:"flex",flexDirection:"column",gap:2 }}>
                           {dayEntries.map((e, ei) => {
                             if (e.isOff) return null;
@@ -514,6 +572,8 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
     parseInt(date.split("-")[0]),
   ];
   const label = `${d} ${["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."][m]} ${y+543}`;
+  const buddhistKey = `${y+543}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  const holiday = THAI_HOLIDAYS[buddhistKey];
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
@@ -522,11 +582,17 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:400,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:holiday?8:16 }}>
           <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📅 {label}</div>
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
+        {holiday && (
+          <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:8,
+            padding:"5px 10px",marginBottom:12,fontSize:12,color:"#ef4444",fontWeight:600 }}>
+            🎌 {holiday}
+          </div>
+        )}
         {(()=>{ const activeEntries = entries.filter(e=>!e.isOff); return activeEntries.length===0 ? (
           <div style={{ textAlign:"center",color:"#cbd5e1",padding:"24px 0",fontSize:13 }}>ยังไม่มีกะในวันนี้</div>
         ) : (
