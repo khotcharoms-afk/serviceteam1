@@ -275,7 +275,98 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           )}
         </div>
 
+        {/* สรุปรายทีม */}
+        {(() => {
+          const allNames = [...new Set(filtered.flatMap(c => c.techs?.length ? c.techs : c.tech ? [c.tech] : []))].filter(Boolean);
+          if (allNames.length === 0) return null;
+          const teamStats = allNames.map(name => {
+            const tc = filtered.filter(c => (c.techs?.length ? c.techs : c.tech ? [c.tech] : []).includes(name));
+            return { name, total:tc.length, done:tc.filter(c=>c.status==="done").length, hold:tc.filter(c=>c.status==="hold").length, pending:tc.filter(c=>c.status!=="done").length };
+          }).sort((a,b)=>b.total-a.total);
+          return (
+            <div style={{ marginBottom:24 }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:8,paddingBottom:6,borderBottom:"1px solid #e2e8f0" }}>👤 สรุปรายทีม</div>
+              <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
+                <thead>
+                  <tr style={{ background:"#f8fafc" }}>
+                    {["ชื่อ","เคสทั้งหมด","เสร็จแล้ว","อัตราปิดงาน","ค้างอยู่"].map((h,i)=>(
+                      <th key={h} style={{ padding:"6px 10px",textAlign:i===0?"left":"center",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",letterSpacing:.3 }}>{h.toUpperCase()}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamStats.map((t,i)=>(
+                    <tr key={t.name} style={{ background:i%2===0?"#fff":"#f8fafc" }}>
+                      <td style={{ padding:"6px 10px",borderBottom:"1px solid #f1f5f9",fontWeight:600,color:"#0f172a" }}>{t.name}</td>
+                      <td style={{ padding:"6px 10px",borderBottom:"1px solid #f1f5f9",textAlign:"center",fontWeight:700,color:"#64748b" }}>{t.total}</td>
+                      <td style={{ padding:"6px 10px",borderBottom:"1px solid #f1f5f9",textAlign:"center",fontWeight:700,color:"#10b981" }}>{t.done}</td>
+                      <td style={{ padding:"6px 10px",borderBottom:"1px solid #f1f5f9",textAlign:"center" }}>
+                        <span style={{ background:"#f0fdf4",color:"#065f46",borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700 }}>
+                          {t.total>0?Math.round(t.done/t.total*100):0}%
+                        </span>
+                      </td>
+                      <td style={{ padding:"6px 10px",borderBottom:"1px solid #f1f5f9",textAlign:"center",fontWeight:700,color:t.pending>0?"#ef4444":"#94a3b8" }}>{t.pending}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
 
+        {/* กราฟเคสรายเดือน */}
+        {(() => {
+          const months = [];
+          for (let m=1; m<=12; m++) {
+            const mk = `${new Date().getFullYear()}-${String(m).padStart(2,"0")}`;
+            const count = filtered.filter(c=>c.date&&c.date.startsWith(mk)).length;
+            months.push({ m, label:`${m}`, count });
+          }
+          const max = Math.max(...months.map(m=>m.count), 1);
+          if (months.every(m=>m.count===0)) return null;
+          const MONTH_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+          return (
+            <div style={{ marginBottom:24 }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:12,paddingBottom:6,borderBottom:"1px solid #e2e8f0" }}>📊 เคสรายเดือน</div>
+              <div style={{ display:"flex",alignItems:"flex-end",gap:4,height:100,padding:"0 4px" }}>
+                {months.map(m=>(
+                  <div key={m.m} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
+                    {m.count>0 && <span style={{ fontSize:9,fontWeight:700,color:"#2563eb" }}>{m.count}</span>}
+                    <div style={{ width:"100%",background:m.count>0?"#2563eb":"#e2e8f0",borderRadius:"3px 3px 0 0",
+                      height:`${Math.round((m.count/max)*80)+4}px`,minHeight:4,transition:"height .2s" }}/>
+                    <span style={{ fontSize:8,color:"#94a3b8",fontWeight:500 }}>{MONTH_SHORT[m.m-1]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ประเภทงานที่เยอะสุด */}
+        {(() => {
+          const typeMap = {};
+          filtered.forEach(c=>{ if(c.type){ typeMap[c.type]=(typeMap[c.type]||0)+1; } });
+          const types = Object.entries(typeMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+          if (types.length===0) return null;
+          const maxT = types[0][1];
+          return (
+            <div style={{ marginBottom:24 }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:10,paddingBottom:6,borderBottom:"1px solid #e2e8f0" }}>🔧 ประเภทงานที่พบบ่อย</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+                {types.map(([type,count])=>(
+                  <div key={type} style={{ display:"flex",alignItems:"center",gap:8 }}>
+                    <div style={{ width:110,fontSize:11,color:"#475569",fontWeight:500,flexShrink:0,textAlign:"right" }}>{type}</div>
+                    <div style={{ flex:1,background:"#f1f5f9",borderRadius:4,height:16,overflow:"hidden" }}>
+                      <div style={{ width:`${Math.round(count/maxT*100)}%`,height:"100%",background:"#6366f1",borderRadius:4 }}/>
+                    </div>
+                    <div style={{ width:28,fontSize:11,fontWeight:700,color:"#6366f1",textAlign:"right" }}>{count}</div>
+                    <div style={{ width:32,fontSize:10,color:"#94a3b8" }}>{filtered.length>0?Math.round(count/filtered.length*100):0}%</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </div>
