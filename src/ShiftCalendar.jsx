@@ -313,38 +313,34 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 function MemberManager({ users, shiftMembers, onClose }) {
   const [saving, setSaving] = useState(false);
 
-  // เริ่มต้นจาก shiftMembers ที่มี order แล้วเติม user ที่ยังไม่ได้เลือก
-  const initList = () => {
+  const initSelected = () => {
     const sorted = [...shiftMembers].sort((a,b)=>(a.order||0)-(b.order||0));
-    const inList = sorted.map(m=>({ name:m.userName, selected:true }));
-    const notIn = users.filter(u=>!sorted.find(m=>m.userName===u.name))
-      .map(u=>({ name:u.name, selected: shiftMembers.length===0 }));
-    return [...inList, ...notIn];
+    if (sorted.length > 0) return sorted.map(m=>m.userName);
+    return users.map(u=>u.name);
   };
-  const [list, setList] = useState(initList);
+  const initUnselected = () => {
+    const sorted = [...shiftMembers].sort((a,b)=>(a.order||0)-(b.order||0));
+    if (sorted.length > 0) return users.filter(u=>!sorted.find(m=>m.userName===u.name)).map(u=>u.name);
+    return [];
+  };
 
-  function toggle(i) {
-    setList(prev => prev.map((v,j) => j===i ? {...v, selected:!v.selected} : v));
+  const [selected, setSelected] = useState(initSelected);
+  const [unselected, setUnselected] = useState(initUnselected);
+
+  function remove(name) {
+    setSelected(p=>p.filter(n=>n!==name));
+    setUnselected(p=>[...p, name]);
+  }
+  function add(name) {
+    setUnselected(p=>p.filter(n=>n!==name));
+    setSelected(p=>[...p, name]);
   }
   function moveUp(i) {
-    setList(prev => {
-      const n = [...prev];
-      let j = i - 1;
-      while (j >= 0 && !n[j].selected) j--;
-      if (j < 0) return prev;
-      [n[j], n[i]] = [n[i], n[j]];
-      return n;
-    });
+    if (i===0) return;
+    setSelected(p=>{ const n=[...p]; [n[i-1],n[i]]=[n[i],n[i-1]]; return n; });
   }
   function moveDown(i) {
-    setList(prev => {
-      const n = [...prev];
-      let j = i + 1;
-      while (j < n.length && !n[j].selected) j++;
-      if (j >= n.length) return prev;
-      [n[i], n[j]] = [n[j], n[i]];
-      return n;
-    });
+    setSelected(p=>{ if(i>=p.length-1) return p; const n=[...p]; [n[i],n[i+1]]=[n[i+1],n[i]]; return n; });
   }
 
   async function save() {
@@ -354,13 +350,10 @@ function MemberManager({ users, shiftMembers, onClose }) {
       const { db } = await import("./firebase");
       const snap = await getDocs(collection(db,"shiftMembers"));
       for (const d of snap.docs) await deleteDoc(d.ref);
-      let order = 0;
-      for (const item of list) {
-        if (item.selected) {
-          await setDoc(doc(db,"shiftMembers",item.name.replace(/ /g,"_")), {
-            userName: item.name, order: order++
-          });
-        }
+      for (let i=0; i<selected.length; i++) {
+        await setDoc(doc(db,"shiftMembers",selected[i].replace(/ /g,"_")), {
+          userName: selected[i], order: i
+        });
       }
       onClose();
     } catch(e) { console.error(e); }
@@ -379,36 +372,44 @@ function MemberManager({ users, shiftMembers, onClose }) {
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
-        <div style={{ fontSize:11,color:"#94a3b8",marginBottom:14 }}>เลือก ✓ แล้วกด ↑↓ เรียงลำดับ</div>
-        <div style={{ display:"flex",flexDirection:"column",gap:6,marginBottom:18 }}>
-          {list.map((item,i)=>(
-            <div key={item.name} style={{ display:"flex",alignItems:"center",gap:8,
-              padding:"7px 10px",background:item.selected?"#eff6ff":"#f8fafc",
-              borderRadius:8,border:`1px solid ${item.selected?"#bfdbfe":"#e2e8f0"}` }}>
-              <input type="checkbox" checked={item.selected} onChange={()=>toggle(i)}
-                style={{ width:16,height:16,accentColor:"#2563eb",cursor:"pointer",flexShrink:0 }}/>
-              <span style={{ flex:1,fontSize:13,fontWeight:item.selected?600:400,color:"#0f172a" }}>{item.name}</span>
-              {item.selected && (
-                <div style={{ display:"flex",gap:4,flexShrink:0 }}>
-                  {(()=>{
-                    const prevSel = list.slice(0,i).filter(x=>x.selected).length > 0;
-                    const nextSel = list.slice(i+1).some(x=>x.selected);
-                    return (<>
-                      <button onClick={()=>moveUp(i)} disabled={!prevSel}
-                        style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
-                          width:26,height:26,cursor:"pointer",fontSize:13,
-                          opacity:prevSel?1:0.3 }}>↑</button>
-                      <button onClick={()=>moveDown(i)} disabled={!nextSel}
-                        style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
-                          width:26,height:26,cursor:"pointer",fontSize:13,
-                          opacity:nextSel?1:0.3 }}>↓</button>
-                    </>);
-                  })()}
-                </div>
-              )}
+        <div style={{ fontSize:11,color:"#94a3b8",marginBottom:10 }}>กด ↑↓ เรียงลำดับ · กด ✕ เอาออก</div>
+        <div style={{ display:"flex",flexDirection:"column",gap:5,marginBottom:10 }}>
+          {selected.map((name,i)=>(
+            <div key={name} style={{ display:"flex",alignItems:"center",gap:8,
+              padding:"7px 10px",background:"#eff6ff",
+              borderRadius:8,border:"1px solid #bfdbfe" }}>
+              <span style={{ flex:1,fontSize:13,fontWeight:600,color:"#0f172a" }}>{name}</span>
+              <div style={{ display:"flex",gap:4,flexShrink:0 }}>
+                <button onClick={()=>moveUp(i)} disabled={i===0}
+                  style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                    width:26,height:26,cursor:"pointer",fontSize:13,opacity:i===0?0.3:1 }}>↑</button>
+                <button onClick={()=>moveDown(i)} disabled={i===selected.length-1}
+                  style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                    width:26,height:26,cursor:"pointer",fontSize:13,opacity:i===selected.length-1?0.3:1 }}>↓</button>
+                <button onClick={()=>remove(name)}
+                  style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:6,
+                    width:26,height:26,cursor:"pointer",fontSize:13,color:"#ef4444" }}>✕</button>
+              </div>
             </div>
           ))}
         </div>
+        {unselected.length > 0 && (
+          <div style={{ borderTop:"1px dashed #e2e8f0",paddingTop:8,marginBottom:14 }}>
+            <div style={{ fontSize:10,color:"#94a3b8",marginBottom:6 }}>กด + เพื่อเพิ่ม</div>
+            <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+              {unselected.map(name=>(
+                <div key={name} style={{ display:"flex",alignItems:"center",gap:8,
+                  padding:"7px 10px",background:"#f8fafc",
+                  borderRadius:8,border:"1px solid #e2e8f0" }}>
+                  <span style={{ flex:1,fontSize:13,color:"#64748b" }}>{name}</span>
+                  <button onClick={()=>add(name)}
+                    style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:6,
+                      width:26,height:26,cursor:"pointer",fontSize:14,color:"#16a34a" }}>+</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
             color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
