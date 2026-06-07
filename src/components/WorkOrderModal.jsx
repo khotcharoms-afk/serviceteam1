@@ -138,6 +138,29 @@ function buildWorkOrderHTML(c, proj) {
     <tbody>${handoverRows}</tbody>
   </table>
 
+  <!-- อะไหล่/วัสดุ -->
+  <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">รายการอะไหล่/วัสดุที่ใช้</div>
+  <table style="font-size:9pt;margin-bottom:14px">
+    <thead>
+      <tr style="background:${PURPLE}">
+        <th style="padding:4px 8px;color:#fff;font-weight:600;text-align:left;border:0.5px solid ${PURPLE}">รายการ</th>
+        <th style="padding:4px 8px;color:#fff;font-weight:600;text-align:center;border:0.5px solid ${PURPLE};width:15%">จำนวน</th>
+        <th style="padding:4px 8px;color:#fff;font-weight:600;text-align:left;border:0.5px solid ${PURPLE};width:15%">หน่วย</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td></tr>
+      <tr style="background:#f8fafc"><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td></tr>
+      <tr><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td></tr>
+    </tbody>
+  </table>
+
+  <!-- สรุปผลการดำเนินงาน -->
+  <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">สรุปผลการดำเนินงาน</div>
+  <div style="border:0.5px solid #e2e8f0;border-radius:6px;padding:10px;margin-bottom:14px;min-height:48px">
+    <div style="font-size:8pt;color:#cbd5e1">งานที่ทำ / ปัญหาที่พบ / วิธีแก้ไข</div>
+  </div>
+
   <!-- Signature -->
   <div style="position:absolute;bottom:14mm;left:14mm;right:14mm;display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div style="border:1.5px solid ${ORANGE};border-radius:6px;padding:10px 12px">
