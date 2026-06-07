@@ -156,9 +156,9 @@ function buildWorkOrderHTML(c, proj) {
   </table>
 
   <!-- สรุปผลการดำเนินงาน -->
-  <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">สรุปผลการดำเนินงาน</div>
-  <div style="border:0.5px solid #e2e8f0;border-radius:6px;padding:10px;margin-bottom:14px;min-height:48px">
-    <div style="font-size:8pt;color:#cbd5e1">งานที่ทำ / ปัญหาที่พบ / วิธีแก้ไข</div>
+  <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:8px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">สรุปผลการดำเนินงาน</div>
+  <div style="margin-bottom:14px">
+    ${Array(6).fill('<div style="border-bottom:1px dashed #cbd5e1;margin-bottom:10px;height:10px"> </div>').join('')}
   </div>
 
   <!-- Signature -->
