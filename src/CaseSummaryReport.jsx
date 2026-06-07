@@ -26,6 +26,12 @@ function getRange(mode, customFrom, customTo) {
     const to = now.toISOString().slice(0,10);
     return { from, to, label: `เดือน ${m}/${y}` };
   }
+  if (mode === "year") {
+    const y = now.getFullYear();
+    const from = `${y}-01-01`;
+    const to = now.toISOString().slice(0,10);
+    return { from, to, label: `ปี ${y+543}` };
+  }
   if (mode === "custom") {
     return { from: customFrom, to: customTo, label: customFrom && customTo ? `${fmtDate(customFrom)} – ${fmtDate(customTo)}` : "กำหนดเอง" };
   }
@@ -115,6 +121,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
             { v:"today", l:"วันนี้" },
             { v:"week",  l:"7 วันล่าสุด" },
             { v:"month", l:"เดือนนี้" },
+            { v:"year",  l:"ปีนี้" },
             { v:"custom",l:"กำหนดเอง" },
           ].map(b=>(
             <button key={b.v} onClick={()=>setMode(b.v)}
