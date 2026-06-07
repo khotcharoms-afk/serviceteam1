@@ -231,9 +231,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
     <div style="font-size:9px;color:#94a3b8">บริษัท เมทเธียร์ จำกัด · ServiceLog</div>
   </div>
   <div style="margin-bottom:10px">${legendHTML}</div>
-  <table>
+  <table style="table-layout:fixed">
     <thead>
-      <tr>${dayNames.map(d => `<th style="padding:6px 4px;text-align:center;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid #e2e8f0;background:#f8fafc">${d}</th>`).join("")}</tr>
+      <tr>${dayNames.map(d => `<th style="padding:6px 4px;text-align:center;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid #e2e8f0;background:#f8fafc;width:14.28%">${d}</th>`).join("")}</tr>
     </thead>
     <tbody>${weeksHTML}</tbody>
   </table>
