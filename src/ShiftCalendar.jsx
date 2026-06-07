@@ -59,11 +59,11 @@ const MONTH_NAMES = ["มกราคม","กุมภาพันธ์","ม�
 // สีแต่ละกะ (bg, text)
 const SHIFT_COLORS = [
   { bg:"#dbeafe", text:"#1e40af" },
-  { bg:"#d1fae5", text:"#065f46" },
-  { bg:"#fde68a", text:"#78350f" },
-  { bg:"#fecaca", text:"#7f1d1d" },
-  { bg:"#e9d5ff", text:"#4c1d95" },
-  { bg:"#fed7aa", text:"#7c2d12" },
+  { bg:"#dcfce7", text:"#166534" },
+  { bg:"#fef9c3", text:"#854d0e" },
+  { bg:"#ffedd5", text:"#9a3412" },
+  { bg:"#ede9fe", text:"#4c1d95" },
+  { bg:"#fce7f3", text:"#9d174d" },
 ];
 
 function getColorForType(idx) {
