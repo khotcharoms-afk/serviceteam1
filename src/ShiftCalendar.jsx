@@ -88,6 +88,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [localSchedules, setLocalSchedules] = useState(null);
   const [editDay, setEditDay] = useState(null);
   const [viewDay, setViewDay] = useState(null); // popup ดูกะ (ทุกคน)
   const [showBulkEdit, setShowBulkEdit] = useState(false);
@@ -105,6 +106,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const approvedUsers = memberNames.length > 0
     ? memberNames.map(n=>users.find(u=>u.name===n)).filter(Boolean)
     : users.filter(u => u.role !== "pending");
+  const effectiveSchedules = localSchedules !== null ? localSchedules : userSchedules;
 
   // สร้าง map: dateKey -> [{ userName, shiftTypeId, isOff }] เรียงตาม startTime
   const shiftMap = {};
@@ -416,8 +418,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
               <tbody>
                 {approvedUsers.map((u,i)=>{
                   const monthKey = `${year}-${String(month+1).padStart(2,"0")}`;
-                  const sch = userSchedules.find(s=>s.userName===u.name && s.monthKey===monthKey)
-                    || userSchedules.find(s=>s.userName===u.name && !s.monthKey); // fallback legacy
+                  const sch = effectiveSchedules.find(s=>s.userName===u.name && s.monthKey===monthKey)
+                    || effectiveSchedules.find(s=>s.userName===u.name && !s.monthKey); // fallback legacy
                   const offDays = (sch?.offDays||[]).sort();
                   const dayLabel = offDays.length>0 ? offDays.map(d=>DAY_NAMES[d]).join("-") : "-";
                   return (
@@ -450,7 +452,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           year={year} month={month}
           users={approvedUsers}
           shiftTypes={shiftTypes}
-          userSchedules={userSchedules}
+          userSchedules={effectiveSchedules}
           daysInMonth={getDaysInMonth(year, month)}
           onClose={()=>setShowBulkEdit(false)}
         />
@@ -502,7 +504,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           initYear={year}
           initMonth={month}
           onClose={()=>setShowScheduleManager(false)}
-          onSaved={refreshSchedules}
+          onSaved={(saved)=>{ setLocalSchedules(prev=>{ const base=prev||userSchedules; return [...base.filter(s=>!saved.find(n=>n.id===s.id)),...saved]; }); refreshSchedules(); }}
         />
       )}
 
@@ -693,7 +695,8 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
           userName: sch.userName, offDays: sch.offDays, monthKey,
         });
       }
-      if (onSaved) onSaved();
+      const saved = schedules.map((sch,i)=>({ id:`${sch.userName.replace(/ /g,"_")}_${monthKey}`, userName:sch.userName, offDays:sch.offDays, monthKey }));
+      if (onSaved) onSaved(saved);
       onClose();
     } catch(e) { console.error(e); }
     setSaving(false);
