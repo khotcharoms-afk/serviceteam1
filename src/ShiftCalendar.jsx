@@ -171,7 +171,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
     const weeksHTML = weeks.map(week => {
       const cells = week.map(day => {
-        if (!day) return `<td style="border:0.5px solid #f1f5f9;background:#fafafa;height:80px;vertical-align:top;padding:4px"></td>`;
+        if (!day) return `<td style="border:0.5px solid #f1f5f9;background:#fafafa;height:60px;vertical-align:top;padding:3px"></td>`;
         const dk = dateKey(year, month, day);
         const buddhistKey = thaiDateKey(year, month, day);
         const holiday = THAI_HOLIDAYS[buddhistKey];
@@ -185,12 +185,12 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           const type = shiftTypes.find(t => t.id === e.shiftTypeId);
           const ci = shiftTypes.findIndex(t => t.id === e.shiftTypeId);
           const c = getColorForType(ci >= 0 ? ci : 0);
-          const name = e.userName.split(" ")[0];
-          return `<div style="background:${c.bg};border-radius:3px;padding:1px 4px;font-size:9px;color:${c.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${name} · ${type ? type.startTime + "–" + type.endTime : ""}</div>`;
+          const name = e.userName.charAt(0);
+          return `<div style="background:${c.bg};border-radius:2px;padding:1px 3px;font-size:7px;color:${c.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:1px">${name} · ${type ? type.startTime + "–" + type.endTime : ""}</div>`;
         }).join("");
 
-        return `<td style="border:${border};height:80px;vertical-align:top;padding:4px;background:${bg};border-radius:${isToday?"4px":"0"}">
-          <div style="font-size:10px;font-weight:${isToday?"700":"500"};color:${dayColor};margin-bottom:2px">${day}${holiday ? ` <span style="font-size:8px;color:#ef4444">${holiday}</span>` : ""}</div>
+        return `<td style="border:${border};height:60px;vertical-align:top;padding:3px;background:${bg};border-radius:${isToday?"4px":"0"}">
+          <div style="font-size:8px;font-weight:${isToday?"700":"500"};color:${dayColor};margin-bottom:1px">${day}${holiday ? ` <span style="font-size:7px;color:#ef4444"> ${holiday.substring(0,6)}</span>` : ""}</div>
           ${pills}
         </td>`;
       }).join("");
@@ -216,7 +216,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   * { box-sizing:border-box; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   body { font-family:'Noto Sans Thai',sans-serif; padding:10mm; background:#fff; }
   @page { size:A4 landscape; margin:0; }
-  @media print { .no-print { display:none !important; } body { padding:8mm; } }
+  @media print { .no-print { display:none !important; } body { padding:5mm; } * { font-size:90%; } }
   table { width:100%; border-collapse:collapse; }
 </style>
 </head>
