@@ -231,50 +231,6 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           </div>
         )}
 
-        {/* เคสที่เข้ามาในช่วงนี้ */}
-        <div style={{ marginBottom:16 }}>
-          <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,
-            paddingBottom:6,borderBottom:"1px solid #e2e8f0" }}>
-            <div style={{ fontSize:12,fontWeight:700,color:"#0f172a" }}>📋 เคสทั้งหมดในช่วงนี้</div>
-            <span style={{ background:"#f1f5f9",color:"#64748b",borderRadius:20,
-              padding:"1px 7px",fontSize:10,fontWeight:700 }}>{newCases.length}</span>
-          </div>
-          {newCases.length===0 ? <Empty/> : (
-            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:11,tableLayout:"fixed" }}>
-              <thead>
-                <tr style={{ background:"#f8fafc" }}>
-                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"12%" }}>วันที่</th>
-                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"30%" }}>ชื่องาน</th>
-                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"20%" }}>โครงการ</th>
-                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"26%" }}>ผู้ดำเนินการ</th>
-                  <th style={{ padding:"5px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0",width:"12%" }}>สถานะ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newCases.map((c,i)=>{
-                  const proj = projects.find(p=>p.id===c.projectId);
-                  const techs = c.techs?.length ? c.techs : (c.tech ? [c.tech] : ["-"]);
-                  const s = STATUS_LABEL[c.status]||STATUS_LABEL.open;
-                  return (
-                    <tr key={c.id} style={{ background:i%2===0?"#fff":"#f8fafc" }}>
-                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",color:"#64748b",whiteSpace:"nowrap",fontSize:10 }}>{fmtDate(c.date)}</td>
-                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",color:"#0f172a",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{c.title}</td>
-                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                        {proj && <span style={{ color:proj.color,fontWeight:600,fontSize:10 }}>◆ {proj.name}</span>}
-                      </td>
-                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9",color:"#475569",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{techs.join(", ")}</td>
-                      <td style={{ padding:"5px 8px",borderBottom:"1px solid #f1f5f9" }}>
-                        <span style={{ background:s.color+"15",color:s.color,borderRadius:20,
-                          padding:"1px 6px",fontSize:9,fontWeight:600 }}>{s.label}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-
         {/* สรุปรายทีม */}
         {(() => {
           const allNames = [...new Set(filtered.flatMap(c => c.techs?.length ? c.techs : c.tech ? [c.tech] : []))].filter(Boolean);
@@ -373,22 +329,3 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
   );
 }
 
-function ReportSection({ title, count, children }) {
-  return (
-    <div style={{ marginBottom:24 }}>
-      <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12,
-        paddingBottom:8,borderBottom:"1px solid #e2e8f0" }}>
-        <div style={{ fontSize:14,fontWeight:700,color:"#0f172a" }}>{title}</div>
-        <span style={{ background:"#f1f5f9",color:"#64748b",borderRadius:20,
-          padding:"1px 8px",fontSize:11,fontWeight:700 }}>{count}</span>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Empty({ text="ไม่มีข้อมูลในช่วงนี้" }) {
-  return (
-    <div style={{ textAlign:"center",color:"#cbd5e1",padding:"20px 0",fontSize:13 }}>{text}</div>
-  );
-}
