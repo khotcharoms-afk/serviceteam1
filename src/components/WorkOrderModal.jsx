@@ -49,7 +49,7 @@ function buildWorkOrderHTML(c, proj) {
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  body { font-family:'Noto Sans Thai',sans-serif; background:#fff; padding:14mm 14mm; font-size:11pt; color:#0f172a; }
+  body { font-family:'Noto Sans Thai',sans-serif; background:#fff; padding:14mm 14mm 60mm 14mm; font-size:11pt; color:#0f172a; min-height:297mm; position:relative; }
   @page { size:A4; margin:0; }
   @media print { body { padding:10mm 12mm; } .no-print { display:none !important; } }
   table { width:100%; border-collapse:collapse; }
@@ -139,7 +139,7 @@ function buildWorkOrderHTML(c, proj) {
   </table>
 
   <!-- Signature -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div style="position:absolute;bottom:14mm;left:14mm;right:14mm;display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div style="border:1.5px solid ${ORANGE};border-radius:6px;padding:10px 12px">
       <div style="font-size:10pt;color:#7C2D12;font-weight:600;margin-bottom:36px">ผู้ดำเนินการ / Technician</div>
       <div style="border-top:0.5px solid #e2e8f0;padding-top:6px;font-size:9pt;color:#94a3b8">ลายเซ็น / วันที่</div>
