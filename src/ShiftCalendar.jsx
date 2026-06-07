@@ -191,13 +191,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                           color:isToday?"#1d4ed8":"#475569",marginBottom:3,padding:"1px 3px" }}>{day}</div>
                         <div style={{ display:"flex",flexDirection:"column",gap:2 }}>
                           {dayEntries.map((e, ei) => {
-                            if (e.isOff) return (
-                              <div key={ei} style={{ background:"#f1f5f9",borderRadius:3,
-                                padding:"1px 4px",fontSize:10,color:"#94a3b8",
-                                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                                {e.userName.split(" ")[0]} · หยุด
-                              </div>
-                            );
+                            if (e.isOff) return null;
                             const typeIdx = shiftTypes.findIndex(t => t.id === e.shiftTypeId);
                             const c = getColorForType(typeIdx >= 0 ? typeIdx : 0);
                             const type = shiftTypes.find(t => t.id === e.shiftTypeId);
