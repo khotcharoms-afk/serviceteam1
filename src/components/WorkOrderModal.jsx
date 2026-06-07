@@ -149,16 +149,16 @@ function buildWorkOrderHTML(c, proj) {
       </tr>
     </thead>
     <tbody>
-      <tr><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td></tr>
-      <tr style="background:#f8fafc"><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td></tr>
-      <tr><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td><td style="padding:8px;border:0.5px solid #e2e8f0"> </td></tr>
+      <tr><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td></tr>
+      <tr style="background:#f8fafc"><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td></tr>
+      <tr><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td></tr>
     </tbody>
   </table>
 
   <!-- สรุปผลการดำเนินงาน -->
   <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:8px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">สรุปผลการดำเนินงาน</div>
   <div style="margin-bottom:14px">
-    ${Array(6).fill('<div style="border-bottom:1px dashed #cbd5e1;margin-bottom:10px;height:10px"> </div>').join('')}
+    ${Array(6).fill('<div style="border-bottom:1px dashed #cbd5e1;margin-bottom:18px;height:18px"> </div>').join('')}
   </div>
 
   <!-- Signature -->
