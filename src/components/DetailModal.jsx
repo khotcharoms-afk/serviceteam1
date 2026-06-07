@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Modal, GhostBtn, WarrantyPill, LeasePill, StatusPill } from "../UI.jsx";
 import { fmtDate, daysLeft } from "../utils.js";
+import WorkOrderModal from "./WorkOrderModal.jsx";
 
 export default function DetailModal({
   detailCase, onClose, projects,
   onEdit, onUpdate, onHandover, onDelete
 }) {
+  const [showWorkOrder, setShowWorkOrder] = useState(false);
   if (!detailCase) return null;
   const proj = projects.find(p => p.id === detailCase.projectId);
   const days = daysLeft(detailCase.warrantyEnd);
@@ -124,12 +127,24 @@ export default function DetailModal({
             borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
           📤 ส่งต่องาน
         </button>
+        <button onClick={()=>setShowWorkOrder(true)}
+          style={{ background:"#fdf4ff",border:"1px solid #e9d5ff",color:"#6B21A8",
+            borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
+          🖨 ใบงาน
+        </button>
         <button onClick={onDelete}
           style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
             borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
           ลบ
         </button>
       </div>
+      {showWorkOrder && (
+        <WorkOrderModal
+          c={detailCase}
+          proj={proj}
+          onClose={()=>setShowWorkOrder(false)}
+        />
+      )}
     </Modal>
   );
 }
