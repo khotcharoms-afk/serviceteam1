@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { db } from "./firebase";
-import { doc, setDoc, deleteDoc, collection, addDoc } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, collection, addDoc, getDocs } from "firebase/firestore";
 
 const DAY_NAMES = ["อา","จ","อ","พ","พฤ","ศ","ส"];
 
@@ -162,6 +162,10 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         </button>
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📅 ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
+          <button onClick={()=>window.location.reload()}
+            style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
+              padding:"7px 10px",fontSize:14,cursor:"pointer",color:"#475569" }}
+            title="รีเฟรชตารางกะ">🔄</button>
           {isAdmin && (
             <button onClick={()=>setShowSettings(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
@@ -406,8 +410,7 @@ function MemberManager({ users, shiftMembers, onClose }) {
   async function save() {
     setSaving(true);
     try {
-      const { collection, getDocs, deleteDoc, setDoc, doc } = await import("firebase/firestore");
-      const { db } = await import("./firebase");
+      const { getDocs } = await import("firebase/firestore");
       const snap = await getDocs(collection(db,"shiftMembers"));
       for (const d of snap.docs) await deleteDoc(d.ref);
       for (let i=0; i<selected.length; i++) {
