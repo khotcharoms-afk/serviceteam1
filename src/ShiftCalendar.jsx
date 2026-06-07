@@ -625,7 +625,7 @@ function MemberManager({ users, shiftMembers, onClose }) {
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
-            {saving?"กำลังบันทึก…":`บันทึก ${MONTH_TH[selMonth]} ${selYear+543}`}
+            {saving?"กำลังบันทึก…":"บันทึก"}
           </button>
         </div>
         <button onClick={()=>setSchedules(s=>s.map(x=>({...x,offDays:[]})))}
