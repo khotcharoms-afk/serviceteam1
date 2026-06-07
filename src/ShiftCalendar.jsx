@@ -280,7 +280,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
               🗑 เคลียร์กะ
             </button>
           )}
-          {isAdmin && (
+          {canEditShift && (
             <button onClick={()=>setShowSettings(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
                 padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#475569" }}>
