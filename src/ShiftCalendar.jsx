@@ -96,6 +96,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const [showScheduleManager, setShowScheduleManager] = useState(false);
 
   const isAdmin = currentUser?.role === "admin";
+  const canEditShift = isAdmin || currentUser?.canEditShift === true;
   const sortedMembers = [...shiftMembers].sort((a,b)=>(a.order||0)-(b.order||0));
   const memberNames = sortedMembers.map(m=>m.userName);
   const approvedUsers = memberNames.length > 0
@@ -316,7 +317,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           date={viewDay}
           entries={shiftMap[viewDay] || []}
           shiftTypes={shiftTypes}
-          isAdmin={isAdmin}
+          isAdmin={canEditShift}
           onEdit={()=>{ setEditDay(viewDay); setViewDay(null); }}
           onClose={() => setViewDay(null)}
         />
