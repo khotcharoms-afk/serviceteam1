@@ -89,7 +89,6 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [editDay, setEditDay] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [viewDay, setViewDay] = useState(null); // popup ดูกะ (ทุกคน)
   const [showSettings, setShowSettings] = useState(false);
   const [showTypeManager, setShowTypeManager] = useState(false);
@@ -105,8 +104,6 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
     : users.filter(u => u.role !== "pending");
 
   // สร้าง map: dateKey -> [{ userName, shiftTypeId, isOff }] เรียงตาม startTime
-  // eslint-disable-next-line no-unused-vars
-  const _ = refreshKey; // force recalc on refresh
   const shiftMap = {};
   shifts.forEach(s => {
     if (!shiftMap[s.date]) shiftMap[s.date] = [];
@@ -165,10 +162,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         </button>
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📅 ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
-          <button onClick={()=>setRefreshKey(k=>k+1)}
-            style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
-              padding:"7px 10px",fontSize:14,cursor:"pointer",color:"#475569" }}
-            title="รีเฟรชตารางกะ">🔄</button>
+
           {isAdmin && (
             <button onClick={()=>setShowSettings(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
