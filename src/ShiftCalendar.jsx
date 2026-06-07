@@ -38,7 +38,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [editDay, setEditDay] = useState(null); // date string "YYYY-MM-DD"
+  const [editDay, setEditDay] = useState(null);
+  const [viewDay, setViewDay] = useState(null); // popup ดูกะ (ทุกคน)
+  const [showSettings, setShowSettings] = useState(false);
   const [showTypeManager, setShowTypeManager] = useState(false);
   const [showMemberManager, setShowMemberManager] = useState(false);
   const [showScheduleManager, setShowScheduleManager] = useState(false);
@@ -109,24 +111,10 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📅 ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
           {isAdmin && (
-            <button onClick={()=>setShowMemberManager(true)}
+            <button onClick={()=>setShowSettings(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
                 padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#475569" }}>
-              👥 สมาชิกทีม
-            </button>
-          )}
-          {isAdmin && (
-            <button onClick={()=>setShowScheduleManager(true)}
-              style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
-                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#475569" }}>
-              📋 วันหยุดทีม
-            </button>
-          )}
-          {isAdmin && (
-            <button onClick={()=>setShowTypeManager(true)}
-              style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
-                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#475569" }}>
-              ⚙ จัดการกะ
+              ⚙ ตั้งค่า
             </button>
           )}
         </div>
@@ -194,9 +182,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                     const dayEntries = shiftMap[dk] || [];
                     const isToday = dk === todayKey;
                     return (
-                      <td key={di} onClick={() => isAdmin && setEditDay(dk)}
+                      <td key={di} onClick={() => setViewDay(dk)}
                         style={{ border:"0.5px solid #f1f5f9",height:90,verticalAlign:"top",
-                          padding:4,cursor:isAdmin?"pointer":"default",
+                          padding:4,cursor:"pointer",
                           background:isToday?"#eff6ff":"#fff",
                           transition:"background .15s" }}>
                         <div style={{ fontSize:11,fontWeight:isToday?700:500,
@@ -231,11 +219,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
             </tbody>
           </table>
         </div>
-        {isAdmin && (
-          <div style={{ textAlign:"center",marginTop:8,fontSize:12,color:"#94a3b8" }}>
-            กดที่วันเพื่อจัดกะ
-          </div>
-        )}
+        <div style={{ textAlign:"center",marginTop:8,fontSize:12,color:"#94a3b8" }}>
+          กดที่วันเพื่อดูกะ
+        </div>
         </div>
 
         {/* ตารางวันหยุด */}
@@ -272,6 +258,17 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
       </div>
 
       {/* Edit Day Modal */}
+      {viewDay && (
+        <ViewDayModal
+          date={viewDay}
+          entries={shiftMap[viewDay] || []}
+          shiftTypes={shiftTypes}
+          isAdmin={isAdmin}
+          onEdit={()=>{ setEditDay(viewDay); setViewDay(null); }}
+          onClose={() => setViewDay(null)}
+        />
+      )}
+
       {editDay && (
         <EditDayModal
           date={editDay}
@@ -279,6 +276,15 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           users={approvedUsers}
           shiftTypes={shiftTypes}
           onClose={() => setEditDay(null)}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsMenu
+          onClose={()=>setShowSettings(false)}
+          onMembers={()=>{ setShowSettings(false); setShowMemberManager(true); }}
+          onSchedule={()=>{ setShowSettings(false); setShowScheduleManager(true); }}
+          onTypes={()=>{ setShowSettings(false); setShowTypeManager(true); }}
         />
       )}
 
@@ -500,6 +506,104 @@ function ScheduleManager({ users, userSchedules, onClose }) {
             cursor:"pointer",fontFamily:"inherit" }}>
             {saving?"กำลังบันทึก…":"บันทึก"}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal ดูกะในวันนั้น (ทุกคน) ──
+function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
+  const [d, m, y] = [
+    parseInt(date.split("-")[2]),
+    parseInt(date.split("-")[1]) - 1,
+    parseInt(date.split("-")[0]),
+  ];
+  const label = `${d} ${["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."][m]} ${y+543}`;
+
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:400,
+        boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📅 {label}</div>
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+            cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
+        </div>
+        {entries.length===0 ? (
+          <div style={{ textAlign:"center",color:"#cbd5e1",padding:"24px 0",fontSize:13 }}>ยังไม่มีกะในวันนี้</div>
+        ) : (
+          <div style={{ display:"flex",flexDirection:"column",gap:8,marginBottom:16 }}>
+            {entries.map((e,i)=>{
+              const type = shiftTypes.find(t=>t.id===e.shiftTypeId);
+              const COLORS = [
+                {bg:"#dbeafe",text:"#1e40af"},{bg:"#d1fae5",text:"#065f46"},
+                {bg:"#fde68a",text:"#78350f"},{bg:"#fecaca",text:"#7f1d1d"},
+                {bg:"#e9d5ff",text:"#4c1d95"},{bg:"#fed7aa",text:"#7c2d12"},
+              ];
+              const ci = shiftTypes.findIndex(t=>t.id===e.shiftTypeId) % COLORS.length;
+              const c = e.isOff ? {bg:"#f1f5f9",text:"#94a3b8"} : COLORS[Math.max(0,ci)];
+              return (
+                <div key={i} style={{ display:"flex",alignItems:"center",gap:10,
+                  padding:"10px 12px",background:c.bg,borderRadius:10 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13,fontWeight:700,color:c.text }}>{e.userName}</div>
+                    <div style={{ fontSize:12,color:c.text,opacity:.8 }}>
+                      {e.isOff ? "หยุด" : type ? `${type.name} · ${type.startTime}–${type.endTime}` : ""}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {isAdmin && (
+          <button onClick={onEdit} style={{ width:"100%",background:"#2563eb",border:"none",
+            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>
+            ✎ แก้ไขกะวันนี้
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Settings Menu ──
+function SettingsMenu({ onClose, onMembers, onSchedule, onTypes }) {
+  const items = [
+    { icon:"👥", label:"สมาชิกทีม CS", desc:"เลือกและเรียงลำดับสมาชิก", action:onMembers },
+    { icon:"📋", label:"วันหยุดประจำ", desc:"กำหนดวันหยุดของแต่ละคน", action:onSchedule },
+    { icon:"⚙", label:"จัดการกะ", desc:"เพิ่ม/ลบประเภทกะและเวลา", action:onTypes },
+  ];
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:340,
+        boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
+          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>⚙ ตั้งค่าตารางกะ</div>
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+            cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
+        </div>
+        <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+          {items.map(item=>(
+            <button key={item.label} onClick={item.action}
+              style={{ display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
+                background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
+                cursor:"pointer",fontFamily:"inherit",textAlign:"left",width:"100%" }}>
+              <span style={{ fontSize:20 }}>{item.icon}</span>
+              <div>
+                <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{item.label}</div>
+                <div style={{ fontSize:11,color:"#94a3b8",marginTop:1 }}>{item.desc}</div>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </div>
