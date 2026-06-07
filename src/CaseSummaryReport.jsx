@@ -59,7 +59,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
   // สถิติต่อโครงการ (เฉพาะที่มีเคส)
   const projPool = selectedProj==="all" ? projects : projects.filter(p=>p.id===selectedProj);
   const projStats = projPool.map(p=>{
-    const pc = cases.filter(c=>c.projectId===p.id);
+    const pc = filtered.filter(c=>c.projectId===p.id);
     return { ...p, total:pc.length,
       open:pc.filter(c=>c.status==="open").length,
       inprogress:pc.filter(c=>c.status==="inprogress").length,
