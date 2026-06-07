@@ -260,11 +260,12 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                             const c = getColorForType(typeIdx >= 0 ? typeIdx : 0);
                             const type = shiftTypes.find(t => t.id === e.shiftTypeId);
                             const displayName = isMobile ? e.userName.charAt(0) : e.userName.split(" ")[0];
+                            const timeLabel = isMobile ? "" : ` · ${type ? `${type.startTime}–${type.endTime}` : ""}`;
                             return (
                               <div key={ei} style={{ background:c.bg,borderRadius:3,
                                 padding:"1px 4px",fontSize:10,color:c.text,
                                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                                {displayName} · {type ? `${type.startTime}–${type.endTime}` : ""}
+                                {displayName}{timeLabel}
                               </div>
                             );
                           })}
