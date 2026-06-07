@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { db, auth, registerPushSubscription } from "./firebase";
 import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc } from "firebase/firestore";
 import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS } from "./utils.js";
+import * as XLSX from "xlsx";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
 import HandoverModal from "./HandoverModal.jsx";
@@ -120,6 +121,34 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   const activeProj = projects.find(p=>p.id===view)||null;
+  // ── Export Excel ──
+  function exportToExcel() {
+    const STATUS_LABEL = { open:"เปิด", done:"ปิด", hold:"รอดำเนินการ", pending:"รอ" };
+    const rows = visibleCases.map(c => {
+      const proj = projects.find(p=>p.id===c.projectId);
+      return {
+        "เลขเคส/ID":   c.caseNo||c.id,
+        "ชื่อเรื่อง":   c.title||"",
+        "ลูกค้า/Site": c.site||"",
+        "Project":     proj?.name||"",
+        "ประเภท":      c.type||"",
+        "สถานะ":       STATUS_LABEL[c.status]||c.status||"",
+        "ผู้ดำเนินการ": (c.techs?.length?c.techs.join(", "):c.tech)||"",
+        "วันที่เปิด":   c.date||"",
+        "วันที่อัปเดต": c.updatedAt?c.updatedAt.slice(0,10):"",
+        "หมายเหตุ":    c.note||"",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const colWidths = [14,30,20,16,14,14,20,12,12,30];
+    ws["!cols"] = colWidths.map(w=>({wch:w}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "เคส");
+    const now = new Date();
+    const fname = `ServiceLog_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}.xlsx`;
+    XLSX.writeFile(wb, fname);
+  }
+
   const visibleCases = cases.filter(c=>{
     if(view!=="overview"&&c.projectId!==view) return false;
     if(filterStat==="__exp"){
@@ -568,8 +597,18 @@ export default function App({ currentUser, onSignOut }) {
             </div>
           </div>
         )}
-        <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>
-          เคส ({visibleCases.length})
+        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10 }}>
+          <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase" }}>
+            เคส ({visibleCases.length})
+          </div>
+          {visibleCases.length>0&&(
+            <button onClick={exportToExcel}
+              style={{ background:"#f0fdf4",border:"1.5px solid #86efac",color:"#16a34a",
+                borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:700,
+                cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5 }}>
+              📥 Export Excel
+            </button>
+          )}
         </div>
         {visibleCases.length===0 ? (
           <div style={{ background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"48px 20px",textAlign:"center",color:"#cbd5e1" }}>
