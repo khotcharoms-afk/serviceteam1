@@ -123,7 +123,7 @@ export default function DetailModal({
         </div>
       )}
 
-      <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
         <GhostBtn onClick={onEdit}>✎ แก้ไข</GhostBtn>
         <button onClick={onUpdate}
           style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
@@ -135,7 +135,7 @@ export default function DetailModal({
             borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
           📤 ส่งต่องาน
         </button>
-<button onClick={onDelete}
+        <button onClick={onDelete}
           style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
             borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
           ลบ
