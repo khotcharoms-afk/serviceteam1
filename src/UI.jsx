@@ -78,7 +78,7 @@ export function GhostBtn({ onClick, children, full, style = {} }) {
 }
 
 // ── Modal wrapper ─────────────────────────────────────────────
-export function Modal({ open, onClose, title, children }) {
+export function Modal({ open, onClose, title, headerRight, children }) {
   if (!open) return null;
   return (
     <div style={{ position:"fixed",inset:0,zIndex:300,background:"rgba(15,23,42,.5)",
@@ -90,10 +90,13 @@ export function Modal({ open, onClose, title, children }) {
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>{title}</h2>
-          <button onClick={onClose}
-            style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
-              fontSize:14,width:30,height:30,borderRadius:8,display:"flex",
-              alignItems:"center",justifyContent:"center" }}>✕</button>
+          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            {headerRight}
+            <button onClick={onClose}
+              style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+                fontSize:14,width:30,height:30,borderRadius:8,display:"flex",
+                alignItems:"center",justifyContent:"center" }}>✕</button>
+          </div>
         </div>
         {children}
       </div>
