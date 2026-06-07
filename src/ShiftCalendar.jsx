@@ -91,6 +91,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const [editDay, setEditDay] = useState(null);
   const [viewDay, setViewDay] = useState(null); // popup ดูกะ (ทุกคน)
   const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [showClearShift, setShowClearShift] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showTypeManager, setShowTypeManager] = useState(false);
   const [showMemberManager, setShowMemberManager] = useState(false);
@@ -272,6 +273,13 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
               📆 ลงกะหลายวัน
             </button>
           )}
+          {canEditShift && (
+            <button onClick={()=>setShowClearShift(true)}
+              style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:8,
+                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#ef4444" }}>
+              🗑 เคลียร์กะ
+            </button>
+          )}
           {isAdmin && (
             <button onClick={()=>setShowSettings(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
@@ -425,6 +433,15 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
       </div>
 
       {/* Edit Day Modal */}
+      {showClearShift && (
+        <ClearShiftModal
+          year={year} month={month}
+          users={approvedUsers}
+          daysInMonth={getDaysInMonth(year, month)}
+          onClose={()=>setShowClearShift(false)}
+        />
+      )}
+
       {showBulkEdit && (
         <BulkEditModal
           year={year} month={month}
@@ -789,6 +806,128 @@ function SettingsMenu({ onClose, onMembers, onSchedule, onTypes }) {
               </div>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal เคลียร์กะ ──
+function ClearShiftModal({ year, month, users, daysInMonth, onClose }) {
+  const [saving, setSaving] = useState(false);
+  const [dateFrom, setDateFrom] = useState(1);
+  const [dateTo, setDateTo] = useState(daysInMonth);
+  const [selectedUsers, setSelectedUsers] = useState(users.map(u => u.name));
+  const MONTH_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+
+  function toggleUser(name) {
+    setSelectedUsers(prev =>
+      prev.includes(name) ? prev.filter(n=>n!==name) : [...prev, name]
+    );
+  }
+
+  async function clear() {
+    if (dateFrom > dateTo || selectedUsers.length === 0) return;
+    if (!confirm(`ยืนยันเคลียร์กะวันที่ ${dateFrom}–${dateTo} ${MONTH_TH[month]} ของ ${selectedUsers.length} คน?`)) return;
+    setSaving(true);
+    try {
+      const { getDocs, collection, query, where, deleteDoc } = await import("firebase/firestore");
+      for (let d = dateFrom; d <= dateTo; d++) {
+        const m = String(month + 1).padStart(2, "0");
+        const dd = String(d).padStart(2, "0");
+        const date = `${year}-${m}-${dd}`;
+        for (const name of selectedUsers) {
+          const docId = `${date}_${name.replace(/ /g, "_")}`;
+          try { await deleteDoc(doc(db,"shifts",docId)); } catch(e) {}
+        }
+      }
+      onClose();
+    } catch(e) { console.error(e); }
+    setSaving(false);
+  }
+
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:420,
+        boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"85vh",overflowY:"auto" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>🗑 เคลียร์กะ</div>
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+            cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
+        </div>
+
+        {/* Date range */}
+        <div style={{ background:"#f8fafc",borderRadius:10,padding:"12px 14px",marginBottom:14 }}>
+          <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>
+            ช่วงวันที่ — {MONTH_TH[month]} {year+543}
+          </div>
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>จากวันที่</div>
+              <select value={dateFrom} onChange={e=>setDateFrom(Number(e.target.value))}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                  fontSize:13,fontFamily:"inherit",outline:"none" }}>
+                {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ fontSize:16,color:"#94a3b8",paddingTop:18 }}>→</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>ถึงวันที่</div>
+              <select value={dateTo} onChange={e=>setDateTo(Number(e.target.value))}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                  fontSize:13,fontFamily:"inherit",outline:"none" }}>
+                {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div style={{ fontSize:11,color:"#64748b",marginTop:6 }}>
+            จะเคลียร์ {Math.max(0,dateTo-dateFrom+1)} วัน ({dateFrom}–{dateTo} {MONTH_TH[month]})
+          </div>
+        </div>
+
+        {/* User selection */}
+        <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>
+          เลือกคนที่จะเคลียร์กะ
+          <button onClick={()=>setSelectedUsers(users.map(u=>u.name))}
+            style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",
+              fontSize:11,marginLeft:8,fontFamily:"inherit" }}>เลือกทั้งหมด</button>
+          <button onClick={()=>setSelectedUsers([])}
+            style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",
+              fontSize:11,marginLeft:4,fontFamily:"inherit" }}>ล้าง</button>
+        </div>
+        <div style={{ display:"flex",flexDirection:"column",gap:6,marginBottom:16 }}>
+          {users.map(u=>(
+            <label key={u.name} style={{ display:"flex",alignItems:"center",gap:10,
+              padding:"8px 12px",background:selectedUsers.includes(u.name)?"#fff5f5":"#f8fafc",
+              borderRadius:8,border:`1px solid ${selectedUsers.includes(u.name)?"#fecaca":"#e2e8f0"}`,
+              cursor:"pointer" }}>
+              <input type="checkbox" checked={selectedUsers.includes(u.name)}
+                onChange={()=>toggleUser(u.name)}
+                style={{ width:16,height:16,accentColor:"#ef4444",cursor:"pointer" }}/>
+              <span style={{ fontSize:13,fontWeight:selectedUsers.includes(u.name)?600:400,
+                color:"#0f172a" }}>{u.name}</span>
+            </label>
+          ))}
+        </div>
+
+        <div style={{ display:"flex",gap:10 }}>
+          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
+            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+          <button onClick={clear}
+            disabled={saving||dateFrom>dateTo||selectedUsers.length===0}
+            style={{ flex:2,background:"#ef4444",border:"none",color:"#fff",borderRadius:10,
+              padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+              opacity:(saving||dateFrom>dateTo||selectedUsers.length===0)?0.5:1 }}>
+            {saving?"กำลังเคลียร์…":`เคลียร์กะ ${Math.max(0,dateTo-dateFrom+1)} วัน`}
+          </button>
         </div>
       </div>
     </div>
