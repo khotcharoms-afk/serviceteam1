@@ -618,7 +618,7 @@ function MemberManager({ users, shiftMembers, onClose }) {
             </div>
           </div>
         )}
-        <div style={{ display:"flex",gap:10,marginBottom:8 }}>
+        <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
             color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
@@ -629,10 +629,10 @@ function MemberManager({ users, shiftMembers, onClose }) {
           </button>
         </div>
         <button onClick={()=>setSchedules(s=>s.map(x=>({...x,offDays:[]})))}
-          style={{ width:"100%",background:"#fff5f5",border:"1px solid #fecaca",
+          style={{ width:"100%",marginTop:8,background:"#fff5f5",border:"1px solid #fecaca",
             color:"#ef4444",borderRadius:10,padding:"9px",fontSize:13,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
-          🗑 เคลียร์วันหยุดเดือนนี้
+          🗑 เคลียร์วันหยุดทั้งหมด
         </button>
       </div>
     </div>
@@ -645,7 +645,6 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
   const [selYear, setSelYear] = useState(initYear||now.getFullYear());
   const [selMonth, setSelMonth] = useState(initMonth!==undefined?initMonth:now.getMonth());
   const [saving, setSaving] = useState(false);
-
 
   const monthKey = `${selYear}-${String(selMonth+1).padStart(2,"0")}`;
 
@@ -702,8 +701,6 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
   const DAY_SHORT = ["อา","จ","อ","พ","พฤ","ศ","ส"];
   const MONTH_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
   const MONTH_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-
-
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
@@ -764,7 +761,12 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
             {saving?"กำลังบันทึก…":`บันทึก ${MONTH_TH[selMonth]} ${selYear+543}`}
           </button>
         </div>
-
+        <button onClick={()=>setSchedules(s=>s.map(x=>({...x,offDays:[]})))}
+          style={{ width:"100%",marginTop:8,background:"#fff5f5",border:"1px solid #fecaca",
+            color:"#ef4444",borderRadius:10,padding:"9px",fontSize:13,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>
+          🗑 เคลียร์วันหยุดทั้งหมด
+        </button>
       </div>
     </div>
   );
