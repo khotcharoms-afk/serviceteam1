@@ -90,6 +90,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const [month, setMonth] = useState(now.getMonth());
   const [editDay, setEditDay] = useState(null);
   const [viewDay, setViewDay] = useState(null); // popup ดูกะ (ทุกคน)
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showTypeManager, setShowTypeManager] = useState(false);
   const [showMemberManager, setShowMemberManager] = useState(false);
@@ -264,6 +265,13 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
               padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#16a34a" }}>
             📄 Export PDF
           </button>
+          {canEditShift && (
+            <button onClick={()=>setShowBulkEdit(true)}
+              style={{ background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,
+                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#2563eb" }}>
+              📆 ลงกะหลายวัน
+            </button>
+          )}
           {isAdmin && (
             <button onClick={()=>setShowSettings(true)}
               style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
@@ -417,6 +425,16 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
       </div>
 
       {/* Edit Day Modal */}
+      {showBulkEdit && (
+        <BulkEditModal
+          year={year} month={month}
+          users={approvedUsers}
+          shiftTypes={shiftTypes}
+          daysInMonth={getDaysInMonth(year, month)}
+          onClose={()=>setShowBulkEdit(false)}
+        />
+      )}
+
       {viewDay && (
         <ViewDayModal
           date={viewDay}
@@ -770,6 +788,131 @@ function SettingsMenu({ onClose, onMembers, onSchedule, onTypes }) {
               </div>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal ลงกะหลายวัน ──
+function BulkEditModal({ year, month, users, shiftTypes, daysInMonth, onClose }) {
+  const [saving, setSaving] = useState(false);
+  const [dateFrom, setDateFrom] = useState(1);
+  const [dateTo, setDateTo] = useState(daysInMonth);
+  const [rows, setRows] = useState(
+    users.map(u => ({ userName: u.name, shiftTypeId: "__none" }))
+  );
+  const MONTH_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+
+  async function save() {
+    if (dateFrom > dateTo) return;
+    setSaving(true);
+    try {
+      for (let d = dateFrom; d <= dateTo; d++) {
+        const m = String(month + 1).padStart(2, "0");
+        const dd = String(d).padStart(2, "0");
+        const date = `${year}-${m}-${dd}`;
+        for (const row of rows) {
+          if (row.shiftTypeId === "__none") continue;
+          const docId = `${date}_${row.userName.replace(/ /g, "_")}`;
+          if (row.shiftTypeId === "__off") {
+            await setDoc(doc(db,"shifts",docId), { date, userName:row.userName, isOff:true, shiftTypeId:null });
+          } else {
+            await setDoc(doc(db,"shifts",docId), { date, userName:row.userName, isOff:false, shiftTypeId:row.shiftTypeId });
+          }
+        }
+      }
+      onClose();
+    } catch(e) { console.error(e); }
+    setSaving(false);
+  }
+
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:480,
+        boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"85vh",overflowY:"auto" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📆 ลงกะหลายวัน</div>
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+            cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
+        </div>
+
+        {/* Date range */}
+        <div style={{ background:"#f8fafc",borderRadius:10,padding:"12px 14px",marginBottom:16 }}>
+          <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>
+            ช่วงวันที่ — {MONTH_TH[month]} {year+543}
+          </div>
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>จากวันที่</div>
+              <select value={dateFrom} onChange={e=>setDateFrom(Number(e.target.value))}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                  fontSize:13,fontFamily:"inherit",outline:"none" }}>
+                {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ fontSize:16,color:"#94a3b8",paddingTop:18 }}>→</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>ถึงวันที่</div>
+              <select value={dateTo} onChange={e=>setDateTo(Number(e.target.value))}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                  fontSize:13,fontFamily:"inherit",outline:"none" }}>
+                {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {dateFrom > dateTo && (
+            <div style={{ fontSize:11,color:"#ef4444",marginTop:6 }}>⚠ วันเริ่มต้องน้อยกว่าหรือเท่ากับวันสิ้นสุด</div>
+          )}
+          <div style={{ fontSize:11,color:"#64748b",marginTop:6 }}>
+            จะลงกะ {Math.max(0, dateTo-dateFrom+1)} วัน ({dateFrom}–{dateTo} {MONTH_TH[month]})
+          </div>
+        </div>
+
+        {/* Per-user shift selection */}
+        <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>กะของแต่ละคน</div>
+        <div style={{ display:"flex",flexDirection:"column",gap:10,marginBottom:18 }}>
+          {rows.map((row,i) => (
+            <div key={row.userName} style={{ display:"flex",alignItems:"center",gap:10 }}>
+              <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",width:140,flexShrink:0 }}>
+                👤 {row.userName}
+              </div>
+              <select value={row.shiftTypeId}
+                onChange={e=>setRows(r=>r.map((x,j)=>j===i?{...x,shiftTypeId:e.target.value}:x))}
+                style={{ flex:1,border:"1px solid #e2e8f0",borderRadius:8,padding:"7px 10px",
+                  fontSize:13,fontFamily:"inherit",outline:"none",cursor:"pointer" }}>
+                <option value="__none">— ไม่เปลี่ยน —</option>
+                <option value="__off">หยุด</option>
+                {shiftTypes.map(t=>(
+                  <option key={t.id} value={t.id}>{t.name} ({t.startTime}–{t.endTime})</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background:"#fefce8",border:"1px solid #fde68a",borderRadius:8,
+          padding:"8px 12px",marginBottom:16,fontSize:12,color:"#854d0e" }}>
+          💡 เลือก "— ไม่เปลี่ยน —" หมายถึงข้ามคนนั้นไป ไม่แตะข้อมูลเดิม
+        </div>
+
+        <div style={{ display:"flex",gap:10 }}>
+          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
+            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+          <button onClick={save} disabled={saving||dateFrom>dateTo}
+            style={{ flex:2,background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
+              padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+              opacity:(saving||dateFrom>dateTo)?0.5:1 }}>
+            {saving?`กำลังบันทึก…`:`บันทึก ${Math.max(0,dateTo-dateFrom+1)} วัน`}
+          </button>
         </div>
       </div>
     </div>
