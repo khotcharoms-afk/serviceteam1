@@ -175,7 +175,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
     const weeksHTML = weeks.map(week => {
       const cells = week.map(day => {
-        if (!day) return `<td style="border:0.5px solid #f1f5f9;background:#fafafa;height:60px;vertical-align:top;padding:3px"></td>`;
+        if (!day) return `<td style="border:none;background:#fff;height:60px;vertical-align:top;padding:3px"></td>`;
         const dk = dateKey(year, month, day);
         const buddhistKey = thaiDateKey(year, month, day);
         const holiday = THAI_HOLIDAYS[buddhistKey];
@@ -189,8 +189,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           const type = shiftTypes.find(t => t.id === e.shiftTypeId);
           const ci = shiftTypes.findIndex(t => t.id === e.shiftTypeId);
           const c = getColorForType(ci >= 0 ? ci : 0);
-          const name = e.userName.split(" ")[0];
-          return `<div style="background:${c.bg};border-radius:2px;padding:1px 3px;font-size:7px;color:${c.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:1px">${name}</div>`;
+          const name = e.userName.length > 9 ? e.userName.substring(0,8)+"…" : e.userName;
+          return `<div style="background:${c.bg};border-radius:2px;padding:1px 3px;font-size:8px;color:${c.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:1px">${name}</div>`;
         }).join("");
 
         return `<td style="border:${border};height:60px;vertical-align:top;padding:3px;background:${bg};border-radius:${isToday?"4px":"0"}">
