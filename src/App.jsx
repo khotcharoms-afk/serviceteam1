@@ -249,6 +249,14 @@ export default function App({ currentUser, onSignOut }) {
     if(ok) setUpdateCase(null);
     setSaving(false);
   }
+  async function saveChecklist(updated){
+    if(saving) return;
+    setSaving(true);
+    const ok = await commitWrite(setDoc(doc(db,"cases",updated.id), {...updated, updatedAt: new Date().toISOString()}), "บันทึก Checklist แล้ว");
+    if(ok) setDetailCase(updated);
+    setSaving(false);
+  }
+
   async function saveHandover(updated){
     if(saving) return;
     setSaving(true);
@@ -682,7 +690,8 @@ export default function App({ currentUser, onSignOut }) {
         onEdit={()=>{ openEditCase(detailCase); setDetailCase(null); }}
         onUpdate={()=>{ setUpdateCase(detailCase); setDetailCase(null); }}
         onHandover={()=>{ setHandoverCase(detailCase); setDetailCase(null); }}
-        onDelete={()=>{ setDelCase(detailCase.id); setDetailCase(null); }}/>
+        onDelete={()=>{ setDelCase(detailCase.id); setDetailCase(null); }}
+        onChecklist={saveChecklist}/>
 
       <ProjectModal open={projModal} onClose={()=>setProjModal(false)}
         editProjId={editProjId}
