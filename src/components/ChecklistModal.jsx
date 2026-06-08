@@ -7,8 +7,8 @@ const SMARTPOLE_TEMPLATE = {
       title: "อุปกรณ์ IT",
       items: [
         "PC หรือ Laptop",
-        "อุปกรณ์ชาร์จ Laptop / อแดปเตอร์",
         "สาย LAN",
+        "Network Switch",
       ],
     },
     {
@@ -24,6 +24,8 @@ const SMARTPOLE_TEMPLATE = {
         "Voltage Tester / Pen Tester",
         "ผ้าไมโครไฟเบอร์ (เช็ดเซนเซอร์/เลนส์)",
         "ไฟฉาย",
+        "Cable Tie / สายรัด",
+        "เทปพันสาย",
       ],
     },
     {
@@ -39,8 +41,6 @@ const SMARTPOLE_TEMPLATE = {
       title: "อะไหล่ / Spare Parts",
       items: [
         "สาย LAN (ม้วน)",
-        "Cable Tie / สายรัด",
-        "เทปพันสาย",
         "ฟิวส์สำรอง",
         "แบตเตอรี่สำรอง (UPS)",
         "Camera Module",
@@ -61,8 +61,8 @@ const ROBOT_TEMPLATE = {
       title: "อุปกรณ์ IT",
       items: [
         "PC หรือ Laptop",
-        "อุปกรณ์ชาร์จ Laptop / อแดปเตอร์",
         "สาย LAN",
+        "Network Switch",
       ],
     },
     {
@@ -76,6 +76,8 @@ const ROBOT_TEMPLATE = {
         "คีมตัดหนีบ",
         "แปรงทำความสะอาดท่อ/รู",
         "ผ้าไมโครไฟเบอร์ (เช็ดเซนเซอร์/เลนส์)",
+        "Cable Tie / สายรัด",
+        "เทปพันสาย",
       ],
     },
     {
@@ -86,8 +88,6 @@ const ROBOT_TEMPLATE = {
         "ไส้กรอง Filter (สำรอง)",
         "เซนเซอร์ตรวจจับน้ำเสีย (สำรอง)",
         "สาย LAN (ม้วน)",
-        "Cable Tie / สายรัด",
-        "เทปพันสาย",
         "ฟิวส์สำรอง",
       ],
     },
