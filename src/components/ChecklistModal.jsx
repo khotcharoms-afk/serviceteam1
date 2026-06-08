@@ -1,7 +1,4 @@
-
 import { useState } from "react";
-import { Modal } from "../UI.jsx";
-
 // ─── Templates ───────────────────────────────────────────────
 const SMARTPOLE_TEMPLATE = {
   name: "SmartPole",
@@ -137,6 +134,8 @@ function initChecked(template) {
   return checked;
 }
 
+import { Modal } from "../UI.jsx";
+
 // ─── Component ───────────────────────────────────────────────
 export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
   if (!c) return null;
@@ -172,7 +171,23 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
   }
 
   return (
-    <Modal open={!!c} onClose={onClose} title={`📋 Checklist — ${template.name}`}>
+    <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:560,
+        maxHeight:"92vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",
+        padding:"24px 24px 28px" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>
+            📋 Checklist — {template.name}
+          </h2>
+          <button onClick={onClose}
+            style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+              fontSize:14,width:30,height:30,borderRadius:8,display:"flex",
+              alignItems:"center",justifyContent:"center" }}>✕</button>
+        </div>
+        <div>
 
       {/* Progress bar */}
       <div style={{ marginBottom: 16 }}>
@@ -263,6 +278,8 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
           {saving ? "กำลังบันทึก..." : "💾 บันทึก Checklist"}
         </button>
       </div>
-    </Modal>
+        </div>
+      </div>
+    </div>
   );
 }
