@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Modal, GhostBtn, WarrantyPill, LeasePill, StatusPill } from "../UI.jsx";
 import { fmtDate, daysLeft } from "../utils.js";
 import WorkOrderModal from "./WorkOrderModal.jsx";
+import ChecklistModal from "./ChecklistModal.jsx";
 
 export default function DetailModal({
   detailCase, onClose, projects,
-  onEdit, onUpdate, onHandover, onDelete
+  onEdit, onUpdate, onHandover, onDelete, onChecklist
 }) {
   const [showWorkOrder, setShowWorkOrder] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
   if (!detailCase) return null;
   const proj = projects.find(p => p.id === detailCase.projectId);
   const days = daysLeft(detailCase.warrantyEnd);
@@ -22,10 +24,20 @@ export default function DetailModal({
           🖨 ใบงาน
         </button>
       }>
-      <span style={{ background:proj?.color+"15",color:proj?.color,borderRadius:20,
-        padding:"3px 12px",fontSize:12,fontWeight:700,display:"inline-block",marginBottom:12 }}>
-        {proj?.name}
-      </span>
+      <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12,flexWrap:"wrap" }}>
+        <span style={{ background:proj?.color+"15",color:proj?.color,borderRadius:20,
+          padding:"3px 12px",fontSize:12,fontWeight:700 }}>
+          {proj?.name}
+        </span>
+        {detailCase.checklist && (
+          <span style={{ background: detailCase.checklist.confirmed?"#f0fdf4":"#fff7ed",
+            color: detailCase.checklist.confirmed?"#16a34a":"#f97316",
+            border:`1px solid ${detailCase.checklist.confirmed?"#bbf7d0":"#fed7aa"}`,
+            borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700 }}>
+            {detailCase.checklist.confirmed ? "✅ พร้อมแล้ว" : "📋 กรอกแล้ว (ยังไม่ยืนยัน)"}
+          </span>
+        )}
+      </div>
       <div style={{ fontSize:17,fontWeight:800,color:"#0f172a",marginBottom:16,lineHeight:1.4 }}>
         {detailCase.title}
       </div>
@@ -125,6 +137,13 @@ export default function DetailModal({
 
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
         <GhostBtn onClick={onEdit}>✎ แก้ไข</GhostBtn>
+        <button onClick={()=>setShowChecklist(true)}
+          style={{ background: detailCase.checklist?.confirmed?"#f0fdf4":detailCase.checklist?"#fff7ed":"#f8fafc",
+            border:`1px solid ${detailCase.checklist?.confirmed?"#bbf7d0":detailCase.checklist?"#fed7aa":"#e2e8f0"}`,
+            color: detailCase.checklist?.confirmed?"#16a34a":detailCase.checklist?"#f97316":"#64748b",
+            borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
+          {detailCase.checklist?.confirmed?"✅ Checklist":detailCase.checklist?"📋 Checklist*":"📋 Checklist"}
+        </button>
         <button onClick={onUpdate}
           style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
             borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
@@ -141,6 +160,14 @@ export default function DetailModal({
           ลบ
         </button>
       </div>
+      {showChecklist && (
+        <ChecklistModal
+          c={detailCase}
+          proj={proj}
+          onClose={()=>setShowChecklist(false)}
+          onSave={(updated)=>{ onChecklist(updated); setShowChecklist(false); }}
+        />
+      )}
       {showWorkOrder && (
         <WorkOrderModal
           c={detailCase}
