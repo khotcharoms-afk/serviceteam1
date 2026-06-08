@@ -8,7 +8,6 @@ const SMARTPOLE_TEMPLATE = {
       items: [
         "PC หรือ Laptop",
         "สาย LAN",
-        "Network Switch",
       ],
     },
     {
@@ -49,6 +48,7 @@ const SMARTPOLE_TEMPLATE = {
         "SIM Card / Router Module",
         "Gasket / ซีลกันน้ำ",
         "IoT Node สำรอง",
+        "Network Switch (สำรอง)",
       ],
     },
   ],
@@ -62,7 +62,6 @@ const ROBOT_TEMPLATE = {
       items: [
         "PC หรือ Laptop",
         "สาย LAN",
-        "Network Switch",
       ],
     },
     {
