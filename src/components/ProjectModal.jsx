@@ -4,6 +4,7 @@ import { IS, COLOR_OPTS, fmtDate, daysLeft } from "../utils.js";
 
 export default function ProjectModal({
   open, onClose, editProjId,
+  newProjCode, setNewProjCode,
   newProjName, setNewProjName,
   newProjColor, setNewProjColor,
   newProjWarranty, setNewProjWarranty,
@@ -22,6 +23,10 @@ export default function ProjectModal({
 
   return (
     <Modal open={open} onClose={onClose} title={editProjId ? "แก้ไขโครงการ" : "เพิ่มโครงการใหม่"}>
+      <Field label="เลขโครงการ">
+        <input style={IS()} value={newProjCode} placeholder="เช่น PJ-MT26000054"
+          onChange={e => setNewProjCode(e.target.value)}/>
+      </Field>
       <Field label="ชื่อโครงการ *">
         <input style={IS()} value={newProjName} placeholder="ชื่อโครงการ"
           onChange={e => setNewProjName(e.target.value)}/>
