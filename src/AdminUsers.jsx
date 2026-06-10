@@ -33,6 +33,12 @@ export default function AdminUsers({ onBack }) {
     await updateDoc(doc(db,"users",uid), { canEditShift: !current });
   }
 
+  async function saveDailyRate(uid, rate) {
+    const val = parseFloat(rate);
+    if (isNaN(val) || val < 0) return;
+    await updateDoc(doc(db,"users",uid), { dailyRate: val });
+  }
+
   const pending = users.filter(u=>u.role==="pending");
   const active  = users.filter(u=>u.role!=="pending");
 
@@ -75,7 +81,7 @@ export default function AdminUsers({ onBack }) {
             textTransform:"uppercase",marginBottom:12 }}>ผู้ใช้ทั้งหมด ({active.length})</div>
           {loading && <div style={{ textAlign:"center",color:"#94a3b8",padding:32 }}>กำลังโหลด...</div>}
           {active.map(u=>(
-            <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onToggleShift={toggleShift}/>
+            <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onToggleShift={toggleShift} onSaveDailyRate={saveDailyRate}/>
           ))}
           {!loading && active.length===0 && (
             <div style={{ textAlign:"center",color:"#cbd5e1",padding:32,fontSize:14 }}>ยังไม่มีผู้ใช้</div>
@@ -86,7 +92,8 @@ export default function AdminUsers({ onBack }) {
   );
 }
 
-function UserCard({ user, onRole, onRemove, onToggleShift }) {
+function UserCard({ user, onRole, onRemove, onToggleShift, onSaveDailyRate }) {
+  const [rateInput, setRateInput] = useState(user.dailyRate?.toString()||"");
   const roleOpt = ROLE_OPTS.find(r=>r.value===user.role)||ROLE_OPTS[2];
   return (
     <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
@@ -121,22 +128,40 @@ function UserCard({ user, onRole, onRemove, onToggleShift }) {
       </div>
       {/* canEditShift toggle — แสดงเฉพาะ user ปกติ */}
       {user.role === "user" && (
-        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #f1f5f9",
-          display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-          <div>
-            <span style={{ fontSize:12,fontWeight:600,color:"#475569" }}>📅 สิทธิ์ลงตารางกะ</span>
-            <span style={{ fontSize:11,color:"#94a3b8",marginLeft:8 }}>
-              {user.canEditShift ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-            </span>
+        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #f1f5f9" }}>
+          <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8 }}>
+            <div>
+              <span style={{ fontSize:12,fontWeight:600,color:"#475569" }}>📅 สิทธิ์ลงตารางกะ</span>
+              <span style={{ fontSize:11,color:"#94a3b8",marginLeft:8 }}>
+                {user.canEditShift ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+              </span>
+            </div>
+            <button onClick={()=>onToggleShift(user.id, !!user.canEditShift)}
+              style={{ background:user.canEditShift?"#2563eb":"#f1f5f9",
+                border:`1px solid ${user.canEditShift?"#2563eb":"#e2e8f0"}`,
+                color:user.canEditShift?"#fff":"#64748b",
+                borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
+                cursor:"pointer",fontFamily:"inherit" }}>
+              {user.canEditShift ? "เปิด ✓" : "ปิด"}
+            </button>
           </div>
-          <button onClick={()=>onToggleShift(user.id, !!user.canEditShift)}
-            style={{ background:user.canEditShift?"#2563eb":"#f1f5f9",
-              border:`1px solid ${user.canEditShift?"#2563eb":"#e2e8f0"}`,
-              color:user.canEditShift?"#fff":"#64748b",
-              borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
-              cursor:"pointer",fontFamily:"inherit" }}>
-            {user.canEditShift ? "เปิด ✓" : "ปิด"}
-          </button>
+          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            <span style={{ fontSize:12,fontWeight:600,color:"#475569",flexShrink:0 }}>💰 ค่าแรง/วัน</span>
+            <input type="number" min="0" value={rateInput}
+              onChange={e=>setRateInput(e.target.value)}
+              placeholder="บาท"
+              style={{ flex:1,border:"1px solid #e2e8f0",borderRadius:8,padding:"4px 10px",
+                fontSize:13,fontFamily:"inherit",outline:"none" }}/>
+            <button onClick={()=>onSaveDailyRate(user.id, rateInput)}
+              style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
+                borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
+                cursor:"pointer",fontFamily:"inherit",flexShrink:0 }}>
+              บันทึก
+            </button>
+            {user.dailyRate && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600,flexShrink:0 }}>
+              ✓ {user.dailyRate.toLocaleString()} บาท
+            </span>}
+          </div>
         </div>
       )}
     </div>
