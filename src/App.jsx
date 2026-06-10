@@ -263,6 +263,17 @@ export default function App({ currentUser, onSignOut }) {
     setSaving(false);
   }
 
+  async function saveOnsite(data) {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const { addDoc, collection } = await import("firebase/firestore");
+      await addDoc(collection(db,"onsiteLog"), data);
+      alert("บันทึก Onsite แล้ว ✓");
+    } catch(e) { console.error(e); }
+    setSaving(false);
+  }
+
   async function saveHandover(updated){
     if(saving) return;
     setSaving(true);
@@ -749,12 +760,14 @@ export default function App({ currentUser, onSignOut }) {
         saving={saving} onSubmit={submitCase}/>
 
       <DetailModal detailCase={detailCase} onClose={()=>setDetailCase(null)}
+        users={users}
         projects={projects}
         onEdit={()=>{ openEditCase(detailCase); setDetailCase(null); }}
         onUpdate={()=>{ setUpdateCase(detailCase); setDetailCase(null); }}
         onHandover={()=>{ setHandoverCase(detailCase); setDetailCase(null); }}
         onDelete={()=>{ setDelCase(detailCase.id); setDetailCase(null); }}
-        onChecklist={saveChecklist}/>
+        onChecklist={saveChecklist}
+        onOnsite={saveOnsite}/>
 
       {importModal && (
         <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
