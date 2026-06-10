@@ -267,9 +267,29 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     try {
-      await addDoc(collection(db,"onsiteLog"), data);
-      setToast({ msg:"📍 บันทึก Onsite แล้ว", type:"ok" });
-    } catch(e) { console.error(e); }
+      if (data.caseId) {
+        await setDoc(doc(db,"cases",data.caseId), {
+          onsiteScope:  data.scope,
+          onsiteDetail: data.detail,
+          onsiteDate:   data.date,
+          km:           data.km,
+          travelCost:   data.travelCost,
+          shippingCost: data.shippingCost,
+          partsCost:    data.partsCost,
+          laborCost:    data.laborCost,
+          totalCost:    data.totalCost,
+          updatedAt:    new Date().toISOString(),
+        }, { merge: true });
+        setDetailCase(prev => prev ? { ...prev,
+          onsiteScope: data.scope, onsiteDetail: data.detail, onsiteDate: data.date,
+          km: data.km, travelCost: data.travelCost, shippingCost: data.shippingCost,
+          partsCost: data.partsCost, laborCost: data.laborCost, totalCost: data.totalCost,
+        } : prev);
+      } else {
+        await addDoc(collection(db,"onsiteLog"), data);
+      }
+      showToast("📍 บันทึก Onsite แล้ว", "success");
+    } catch(e) { console.error(e); showToast("บันทึกไม่สำเร็จ ลองใหม่"); }
     setSaving(false);
   }
 
@@ -399,7 +419,7 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
-  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser}/>;
+  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} cases={cases} onSaveOnsite={saveOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
