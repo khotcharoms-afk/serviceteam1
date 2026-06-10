@@ -3,13 +3,15 @@ import { Modal, GhostBtn, WarrantyPill, LeasePill, StatusPill } from "../UI.jsx"
 import { fmtDate, daysLeft } from "../utils.js";
 import WorkOrderModal from "./WorkOrderModal.jsx";
 import ChecklistModal from "./ChecklistModal.jsx";
+import OnsiteModal from "./OnsiteModal.jsx";
 
 export default function DetailModal({
-  detailCase, onClose, projects,
-  onEdit, onUpdate, onHandover, onDelete, onChecklist
+  detailCase, onClose, projects, users,
+  onEdit, onUpdate, onHandover, onDelete, onChecklist, onOnsite
 }) {
   const [showWorkOrder, setShowWorkOrder] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
+  const [showOnsite, setShowOnsite] = useState(false);
   if (!detailCase) return null;
   const proj = projects.find(p => p.id === detailCase.projectId);
   const days = daysLeft(detailCase.warrantyEnd);
@@ -141,25 +143,40 @@ export default function DetailModal({
           style={{ background: detailCase.checklist?.confirmed?"#f0fdf4":detailCase.checklist?"#fff7ed":"#f8fafc",
             border:`1px solid ${detailCase.checklist?.confirmed?"#bbf7d0":detailCase.checklist?"#fed7aa":"#e2e8f0"}`,
             color: detailCase.checklist?.confirmed?"#16a34a":detailCase.checklist?"#f97316":"#64748b",
-            borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
+            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           {detailCase.checklist?.confirmed?"✅ Checklist":detailCase.checklist?"📋 Checklist*":"📋 Checklist"}
         </button>
         <button onClick={onUpdate}
           style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
-            borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
+            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           📝 อัปเดต
         </button>
         <button onClick={onHandover}
           style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
-            borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
+            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           📤 ส่งต่องาน
+        </button>
+        <button onClick={()=>setShowOnsite(true)}
+          style={{ background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",
+            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
+          📍 Onsite
         </button>
         <button onClick={onDelete}
           style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-            borderRadius:10,padding:"12px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600 }}>
+            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           ลบ
         </button>
       </div>
+      {showOnsite && (
+        <OnsiteModal
+          detailCase={detailCase}
+          proj={proj}
+          users={users}
+          onClose={()=>setShowOnsite(false)}
+          onSave={(data)=>{ onOnsite(data); setShowOnsite(false); }}
+          saving={false}
+        />
+      )}
       {showChecklist && (
         <ChecklistModal
           c={detailCase}
