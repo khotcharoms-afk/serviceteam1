@@ -267,11 +267,7 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     try {
-      const ref = await addDoc(collection(db,"onsiteLog"), data);
-      if (data.caseId) {
-        await setDoc(doc(db,"cases",data.caseId), { onsiteId: ref.id }, { merge:true });
-        setDetailCase(prev => prev ? { ...prev, onsiteId: ref.id } : prev);
-      }
+      await addDoc(collection(db,"onsiteLog"), data);
       setToast({ msg:"📍 บันทึก Onsite แล้ว", type:"ok" });
     } catch(e) { console.error(e); }
     setSaving(false);
