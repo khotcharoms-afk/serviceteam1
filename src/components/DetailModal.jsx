@@ -3,7 +3,7 @@ import { Modal, GhostBtn, WarrantyPill, LeasePill, StatusPill } from "../UI.jsx"
 import { fmtDate, daysLeft } from "../utils.js";
 import WorkOrderModal from "./WorkOrderModal.jsx";
 import ChecklistModal from "./ChecklistModal.jsx";
-import OnsiteModal from "./OnsiteModal.jsx";
+import OnsiteModal from "../OnsiteModal.jsx";
 
 export default function DetailModal({
   detailCase, onClose, projects, users,
