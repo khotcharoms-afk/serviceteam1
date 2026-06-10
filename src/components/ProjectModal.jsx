@@ -13,6 +13,27 @@ export default function ProjectModal({
   saving, onSubmit
 }) {
   const [newSiteInput, setNewSiteInput] = useState("");
+  const [editSiteIndex, setEditSiteIndex] = useState(null);
+  const [editSiteName, setEditSiteName] = useState("");
+  const [editSiteRef, setEditSiteRef] = useState("");
+  const [editSiteTravel, setEditSiteTravel] = useState("");
+
+  function startEditSite(i, s) {
+    setEditSiteIndex(i);
+    setEditSiteName(typeof s==="object" ? s.name : s);
+    setEditSiteRef(typeof s==="object" ? s.refCode||"" : "");
+    setEditSiteTravel(typeof s==="object" ? s.travelRate?.toString()||"" : "");
+  }
+
+  function saveEditSite(i) {
+    if (!editSiteName.trim()) return;
+    setNewProjSites(p => p.map((s,j) => j===i ? {
+      name: editSiteName.trim(),
+      refCode: editSiteRef.trim(),
+      travelRate: parseFloat(editSiteTravel)||0,
+    } : s));
+    setEditSiteIndex(null);
+  }
   const [newSiteRef, setNewSiteRef] = useState("");
   const [newSiteTravel, setNewSiteTravel] = useState("");
 
@@ -106,12 +127,35 @@ export default function ProjectModal({
             const name = typeof s==="object" ? s.name : s;
             const ref  = typeof s==="object" ? s.refCode||"" : "";
             const travel = typeof s==="object" ? s.travelRate||0 : 0;
+            if (editSiteIndex === i) {
+              return (
+                <div key={i} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
+                  borderRadius:8,padding:"8px 10px",display:"flex",flexDirection:"column",gap:6 }}>
+                  <div style={{ display:"grid",gridTemplateColumns:"1fr 90px 80px",gap:6 }}>
+                    <input style={{ border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit",outline:"none" }}
+                      value={editSiteName} onChange={e=>setEditSiteName(e.target.value)} placeholder="ชื่อไซต์"/>
+                    <input style={{ border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit",outline:"none" }}
+                      value={editSiteRef} onChange={e=>setEditSiteRef(e.target.value)} placeholder="Ref Code"/>
+                    <input type="number" style={{ border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit",outline:"none" }}
+                      value={editSiteTravel} onChange={e=>setEditSiteTravel(e.target.value)} placeholder="ค่าเดิน" min="0"/>
+                  </div>
+                  <div style={{ display:"flex",gap:6,justifyContent:"flex-end" }}>
+                    <button type="button" onClick={()=>setEditSiteIndex(null)}
+                      style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",color:"#64748b",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+                    <button type="button" onClick={()=>saveEditSite(i)}
+                      style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:6,padding:"4px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>บันทึก</button>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={i} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
                 borderRadius:8,padding:"6px 10px",display:"flex",alignItems:"center",gap:8 }}>
                 <span style={{ fontSize:13,fontWeight:600,color:"#0f172a",flex:1 }}>📍 {name}</span>
                 {ref && <span style={{ fontSize:11,color:"#64748b",background:"#f1f5f9",borderRadius:4,padding:"1px 6px" }}>{ref}</span>}
                 {travel>0 && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600 }}>{travel.toLocaleString()} บ.</span>}
+                <button type="button" onClick={()=>startEditSite(i,s)}
+                  style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,padding:"0 4px" }}>✏️</button>
                 <button type="button" onClick={() => setNewProjSites(p => p.filter((_,j) => j!==i))}
                   style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:14,padding:0 }}>×</button>
               </div>
