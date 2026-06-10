@@ -1,12 +1,5 @@
 import { useState } from "react";
 
-function calcTravel(km) {
-  const k = parseFloat(km) || 0;
-  if (k <= 0) return 0;
-  const rate = k > 20 ? 8 : k > 10 ? 7 : 6;
-  return Math.max(200, Math.round(k * rate));
-}
-
 // Mode A: standalone (จาก Drawer) — รับ projects, users, currentUser
 // Mode B: from case (จาก DetailModal) — รับ detailCase, proj, users
 export default function OnsiteModal({ onClose, onSave, saving, projects, users, currentUser, detailCase, proj: projFromCase }) {
@@ -35,7 +28,8 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
   const selSite = siteIndex !== "" ? sites[parseInt(siteIndex)] :
     sites.find(s => s.name === detailCase?.site) || null;
 
-  const travelCost = km ? calcTravel(km) : (selSite?.travelRate || 0);
+  const rate = selSite?.travelRate || 0;
+  const travelCost = rate > 0 ? Math.round((parseFloat(km) || 0) * rate * 2) : 0;
   const laborCost = techs.reduce((sum, name) => {
     const u = (users||[]).find(u => u.name === name);
     return sum + (u?.onsiteRate || 0);
@@ -185,10 +179,10 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             <div>
               <label style={labelStyle}>ระยะทาง (กม.)</label>
               <input type="number" min="0" value={km} onChange={e => setKm(e.target.value)}
-                placeholder={selSite?.travelRate ? `ค่าเดินทาง ${selSite.travelRate} บ.` : "0"}
+                placeholder={rate ? `เรท ${rate} บ./กม.` : "0"}
                 style={inputStyle}/>
-              {km && <div style={{ fontSize:11,color:"#f97316",marginTop:3,fontWeight:600 }}>
-                = {travelCost.toLocaleString()} บาท
+              {km && rate > 0 && <div style={{ fontSize:11,color:"#f97316",marginTop:3,fontWeight:600 }}>
+                {parseFloat(km)||0} กม. × {rate} × 2 = {travelCost.toLocaleString()} บาท
               </div>}
             </div>
             <div>
