@@ -126,42 +126,45 @@ function UserCard({ user, onRole, onRemove, onToggleShift, onSaveDailyRate }) {
           ✕
         </button>
       </div>
-      {/* canEditShift toggle — แสดงเฉพาะ user (ไม่ใช่ admin/pending) */}
+      {/* canEditShift toggle — เฉพาะ user */}
       {user.role === "user" && (
-        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #f1f5f9" }}>
-          <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8 }}>
-            <div>
-              <span style={{ fontSize:12,fontWeight:600,color:"#475569" }}>📅 สิทธิ์ลงตารางกะ</span>
-              <span style={{ fontSize:11,color:"#94a3b8",marginLeft:8 }}>
-                {user.canEditShift ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-              </span>
-            </div>
-            <button onClick={()=>onToggleShift(user.id, !!user.canEditShift)}
-              style={{ background:user.canEditShift?"#2563eb":"#f1f5f9",
-                border:`1px solid ${user.canEditShift?"#2563eb":"#e2e8f0"}`,
-                color:user.canEditShift?"#fff":"#64748b",
-                borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
-                cursor:"pointer",fontFamily:"inherit" }}>
-              {user.canEditShift ? "เปิด ✓" : "ปิด"}
-            </button>
+        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #f1f5f9",
+          display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+          <div>
+            <span style={{ fontSize:12,fontWeight:600,color:"#475569" }}>📅 สิทธิ์ลงตารางกะ</span>
+            <span style={{ fontSize:11,color:"#94a3b8",marginLeft:8 }}>
+              {user.canEditShift ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+            </span>
           </div>
-          <div style={{ display:"flex",alignItems:"center",gap:8,marginTop: user.role==="user" ? 8 : 0 }}>
-            <span style={{ fontSize:12,fontWeight:600,color:"#475569",flexShrink:0 }}>💰 ค่าแรง Onsite (ต่อครั้ง)</span>
-            <input type="number" min="0" value={rateInput}
-              onChange={e=>setRateInput(e.target.value)}
-              placeholder="บาท"
-              style={{ flex:1,border:"1px solid #e2e8f0",borderRadius:8,padding:"4px 10px",
-                fontSize:13,fontFamily:"inherit",outline:"none" }}/>
-            <button onClick={()=>onSaveDailyRate(user.id, rateInput)}
-              style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
-                borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
-                cursor:"pointer",fontFamily:"inherit",flexShrink:0 }}>
-              บันทึก
-            </button>
-            {user.onsiteRate && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600,flexShrink:0 }}>
-              ✓ {user.onsiteRate.toLocaleString()} บาท
-            </span>}
-          </div>
+          <button onClick={()=>onToggleShift(user.id, !!user.canEditShift)}
+            style={{ background:user.canEditShift?"#2563eb":"#f1f5f9",
+              border:`1px solid ${user.canEditShift?"#2563eb":"#e2e8f0"}`,
+              color:user.canEditShift?"#fff":"#64748b",
+              borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
+              cursor:"pointer",fontFamily:"inherit" }}>
+            {user.canEditShift ? "เปิด ✓" : "ปิด"}
+          </button>
+        </div>
+      )}
+      {/* ค่าแรง Onsite — Admin และ User */}
+      {user.role !== "pending" && (
+        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #f1f5f9",
+          display:"flex",alignItems:"center",gap:8 }}>
+          <span style={{ fontSize:12,fontWeight:600,color:"#475569",flexShrink:0 }}>💰 ค่าแรง Onsite (ต่อครั้ง)</span>
+          <input type="number" min="0" value={rateInput}
+            onChange={e=>setRateInput(e.target.value)}
+            placeholder="บาท"
+            style={{ flex:1,border:"1px solid #e2e8f0",borderRadius:8,padding:"4px 10px",
+              fontSize:13,fontFamily:"inherit",outline:"none" }}/>
+          <button onClick={()=>onSaveDailyRate(user.id, rateInput)}
+            style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
+              borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:600,
+              cursor:"pointer",fontFamily:"inherit",flexShrink:0 }}>
+            บันทึก
+          </button>
+          {user.onsiteRate && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600,flexShrink:0 }}>
+            ✓ {user.onsiteRate.toLocaleString()} บาท
+          </span>}
         </div>
       )}
     </div>
