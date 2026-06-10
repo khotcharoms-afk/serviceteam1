@@ -196,18 +196,6 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
                 <>
                   <input type="number" min="0" value={km} onChange={e => setKm(e.target.value)}
                     placeholder="ระยะทาง (กม.)" style={inputStyle}/>
-                  <button type="button" onClick={() => {
-                    if (!navigator.geolocation) return;
-                    navigator.geolocation.getCurrentPosition(pos => {
-                      const lat = pos.coords.latitude;
-                      const lng = pos.coords.longitude;
-                      window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, "_blank");
-                    }, () => alert("ไม่สามารถดึง GPS ได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง"));
-                  }} style={{ marginTop:6,width:"100%",background:"#f1f5f9",border:"1px solid #e2e8f0",
-                    color:"#475569",borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:"inherit",
-                    cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4 }}>
-                    📍 เปิด Maps ตำแหน่งปัจจุบัน
-                  </button>
                   {km && <div style={{ fontSize:11,color:"#f97316",marginTop:3,fontWeight:600 }}>
                     = {travelCost.toLocaleString()} บาท
                   </div>}
