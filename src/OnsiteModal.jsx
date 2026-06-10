@@ -1,5 +1,12 @@
 import { useState } from "react";
 
+function calcTravel(km) {
+  const k = parseFloat(km) || 0;
+  if (k <= 0) return 0;
+  const rate = k > 20 ? 8 : k > 10 ? 7 : 6;
+  return Math.max(200, Math.round(k * rate));
+}
+
 // Mode A: standalone (จาก Drawer) — รับ projects, users, currentUser
 // Mode B: from case (จาก DetailModal) — รับ detailCase, proj, users
 export default function OnsiteModal({ onClose, onSave, saving, projects, users, currentUser, detailCase, proj: projFromCase }) {
@@ -28,8 +35,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
   const selSite = siteIndex !== "" ? sites[parseInt(siteIndex)] :
     sites.find(s => s.name === detailCase?.site) || null;
 
-  const rate = selSite?.travelRate || 0;
-  const travelCost = rate > 0 ? Math.round((parseFloat(km) || 0) * rate * 2) : 0;
+  const travelCost = km ? calcTravel(km) : (selSite?.travelRate || 0);
   const laborCost = techs.reduce((sum, name) => {
     const u = (users||[]).find(u => u.name === name);
     return sum + (u?.onsiteRate || 0);
@@ -177,13 +183,36 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
           <div style={{ fontSize:12,fontWeight:700,color:"#0f172a",marginBottom:12 }}>💰 ค่าใช้จ่าย</div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
             <div>
-              <label style={labelStyle}>ระยะทาง (กม.)</label>
-              <input type="number" min="0" value={km} onChange={e => setKm(e.target.value)}
-                placeholder={rate ? `เรท ${rate} บ./กม.` : "0"}
-                style={inputStyle}/>
-              {km && rate > 0 && <div style={{ fontSize:11,color:"#f97316",marginTop:3,fontWeight:600 }}>
-                {parseFloat(km)||0} กม. × {rate} × 2 = {travelCost.toLocaleString()} บาท
-              </div>}
+              <label style={labelStyle}>ค่าเดินทาง</label>
+              {(selSite?.travelRate || 0) > 0 ? (
+                <div style={{ padding:"8px 12px",background:"#fff7ed",border:"1px solid #fed7aa",
+                  borderRadius:8,fontSize:13,color:"#f97316",fontWeight:700,display:"flex",
+                  alignItems:"center",justifyContent:"space-between" }}>
+                  <span>{travelCost.toLocaleString()} บาท</span>
+                  <span style={{ fontSize:10,background:"#fff",border:"1px solid #fed7aa",
+                    color:"#f97316",borderRadius:4,padding:"1px 6px" }}>อัตโนมัติ</span>
+                </div>
+              ) : (
+                <>
+                  <input type="number" min="0" value={km} onChange={e => setKm(e.target.value)}
+                    placeholder="ระยะทาง (กม.)" style={inputStyle}/>
+                  <button type="button" onClick={() => {
+                    if (!navigator.geolocation) return;
+                    navigator.geolocation.getCurrentPosition(pos => {
+                      const lat = pos.coords.latitude;
+                      const lng = pos.coords.longitude;
+                      window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, "_blank");
+                    }, () => alert("ไม่สามารถดึง GPS ได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง"));
+                  }} style={{ marginTop:6,width:"100%",background:"#f1f5f9",border:"1px solid #e2e8f0",
+                    color:"#475569",borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:"inherit",
+                    cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4 }}>
+                    📍 เปิด Maps ตำแหน่งปัจจุบัน
+                  </button>
+                  {km && <div style={{ fontSize:11,color:"#f97316",marginTop:3,fontWeight:600 }}>
+                    = {travelCost.toLocaleString()} บาท
+                  </div>}
+                </>
+              )}
             </div>
             <div>
               <label style={labelStyle}>ค่าขนส่ง (บาท)</label>
