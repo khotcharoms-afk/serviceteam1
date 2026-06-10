@@ -42,6 +42,7 @@ export default function App({ currentUser, onSignOut }) {
   const [editProjId,setEditProjId]     = useState(null);
   const [delProj,setDelProj]           = useState(null);
   const [caseForm,setCaseForm]         = useState(emptyCase);
+  const [newProjCode,setNewProjCode]   = useState("");
   const [newProjName,setNewProjName]   = useState("");
   const [newProjColor,setNewProjColor] = useState(COLOR_OPTS[0]);
   const [newProjWarranty,setNewProjWarranty] = useState("");
@@ -290,8 +291,8 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   // ── Project actions ──
-  function openAddProj(){ setEditProjId(null); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites(p.sites||[]); setProjModal(true); }
+  function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites(p.sites||[]); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name||saving) return;
     setSaving(true);
@@ -299,14 +300,15 @@ export default function App({ currentUser, onSignOut }) {
     const warrantyEnd = newProjWarranty||null;
     const leaseEnd    = newProjLease||null;
     const batch = writeBatch(db);
-    batch.set(doc(db,"projects",pid),{ name, color:newProjColor, warrantyEnd, leaseEnd, sites:newProjSites });
+    const code = newProjCode.trim();
+    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, sites:newProjSites });
     if(editProjId){
       cases.filter(c=>c.projectId===editProjId).forEach(c=>{
         batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd },{ merge:true });
       });
     }
     const ok = await commitWrite(batch.commit(), editProjId?"บันทึกโครงการแล้ว":"สร้างโครงการแล้ว");
-    if(ok){ setNewProjName(""); setEditProjId(null); setProjModal(false); }
+    if(ok){ setNewProjCode(""); setNewProjName(""); setEditProjId(null); setProjModal(false); }
     setSaving(false);
   }
   async function removeProj(pid){
@@ -694,6 +696,7 @@ export default function App({ currentUser, onSignOut }) {
         onChecklist={saveChecklist}/>
 
       <ProjectModal open={projModal} onClose={()=>setProjModal(false)}
+        newProjCode={newProjCode} setNewProjCode={setNewProjCode}
         editProjId={editProjId}
         newProjName={newProjName} setNewProjName={setNewProjName}
         newProjColor={newProjColor} setNewProjColor={setNewProjColor}
