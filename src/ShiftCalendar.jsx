@@ -84,7 +84,7 @@ function dateKey(year, month, day) {
   return `${year}-${m}-${d}`;
 }
 
-export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[], shiftMembers=[], refreshSchedules, refreshShiftTypes, refreshShiftMembers }) {
+export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, shifts, userSchedules=[], shiftMembers=[], refreshSchedules, refreshShiftTypes, refreshShiftMembers, refreshShifts }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -443,7 +443,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           year={year} month={month}
           users={approvedUsers}
           daysInMonth={getDaysInMonth(year, month)}
-          onClose={()=>setShowClearShift(false)}
+          onClose={()=>{ setShowClearShift(false); if(refreshShifts) refreshShifts(); }}
         />
       )}
 
@@ -454,7 +454,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           shiftTypes={shiftTypes}
           userSchedules={effectiveSchedules}
           daysInMonth={getDaysInMonth(year, month)}
-          onClose={()=>setShowBulkEdit(false)}
+          onClose={()=>{ setShowBulkEdit(false); if(refreshShifts) refreshShifts(); }}
         />
       )}
 
@@ -475,7 +475,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           entries={shiftMap[editDay] || []}
           users={approvedUsers}
           shiftTypes={shiftTypes}
-          onClose={() => setEditDay(null)}
+          onClose={()=>{ setEditDay(null); if(refreshShifts) refreshShifts(); }}
         />
       )}
 
