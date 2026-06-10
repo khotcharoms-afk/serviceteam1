@@ -267,9 +267,12 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     try {
-      const { addDoc, collection } = await import("firebase/firestore");
-      await addDoc(collection(db,"onsiteLog"), data);
-      alert("บันทึก Onsite แล้ว ✓");
+      const ref = await addDoc(collection(db,"onsiteLog"), data);
+      if (data.caseId) {
+        await setDoc(doc(db,"cases",data.caseId), { onsiteId: ref.id }, { merge:true });
+        setDetailCase(prev => prev ? { ...prev, onsiteId: ref.id } : prev);
+      }
+      setToast({ msg:"📍 บันทึก Onsite แล้ว", type:"ok" });
     } catch(e) { console.error(e); }
     setSaving(false);
   }
