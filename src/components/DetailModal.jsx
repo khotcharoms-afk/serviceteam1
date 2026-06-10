@@ -157,9 +157,13 @@ export default function DetailModal({
           📤 ส่งต่องาน
         </button>
         <button onClick={()=>setShowOnsite(true)}
-          style={{ background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",
-            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
-          📍 Onsite
+          disabled={!!detailCase.onsiteId}
+          style={{ background: detailCase.onsiteId?"#f0fdf4":"#fff7ed",
+            border:`1px solid ${detailCase.onsiteId?"#bbf7d0":"#fed7aa"}`,
+            color: detailCase.onsiteId?"#16a34a":"#ea580c",
+            borderRadius:10,padding:"12px",cursor: detailCase.onsiteId?"default":"pointer",
+            fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
+          {detailCase.onsiteId ? "✅ Onsite แล้ว" : "📍 Onsite"}
         </button>
         <button onClick={onDelete}
           style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
