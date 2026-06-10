@@ -13,11 +13,17 @@ export default function ProjectModal({
   saving, onSubmit
 }) {
   const [newSiteInput, setNewSiteInput] = useState("");
+  const [newSiteRef, setNewSiteRef] = useState("");
+  const [newSiteTravel, setNewSiteTravel] = useState("");
 
   function addSite() {
     if (newSiteInput.trim()) {
-      setNewProjSites(s => [...s, newSiteInput.trim()]);
-      setNewSiteInput("");
+      setNewProjSites(s => [...s, {
+        name: newSiteInput.trim(),
+        refCode: newSiteRef.trim(),
+        travelRate: parseFloat(newSiteTravel)||0,
+      }]);
+      setNewSiteInput(""); setNewSiteRef(""); setNewSiteTravel("");
     }
   }
 
@@ -82,25 +88,35 @@ export default function ProjectModal({
         </div>}
       </Field>
       <Field label="ไซต์ย่อย">
-        <div style={{ display:"flex",gap:8,marginBottom:8 }}>
-          <input style={IS({ flex:1 })} value={newSiteInput} placeholder="ชื่อไซต์ เช่น อาคาร A, สาขานนทบุรี"
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 90px 80px auto",gap:6,marginBottom:6,alignItems:"center" }}>
+          <input style={IS()} value={newSiteInput} placeholder="ชื่อไซต์"
             onChange={e => setNewSiteInput(e.target.value)}
             onKeyDown={e => { if (e.key==="Enter") { e.preventDefault(); addSite(); }}}/>
+          <input style={IS()} value={newSiteRef} placeholder="Ref Code"
+            onChange={e => setNewSiteRef(e.target.value)}/>
+          <input type="number" style={IS()} value={newSiteTravel} placeholder="ค่าเดิน"
+            onChange={e => setNewSiteTravel(e.target.value)} min="0"/>
           <button type="button" onClick={addSite}
             style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
-              padding:"0 16px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,whiteSpace:"nowrap" }}>+ เพิ่ม</button>
+              padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>+</button>
         </div>
-        <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
-          {newProjSites.map((s,i) => (
-            <span key={i} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
-              color:"#2563eb",borderRadius:20,padding:"3px 10px",fontSize:12,
-              fontWeight:600,display:"inline-flex",alignItems:"center",gap:6 }}>
-              📍 {s}
-              <button type="button" onClick={() => setNewProjSites(p => p.filter((_,j) => j!==i))}
-                style={{ background:"none",border:"none",color:"#93c5fd",cursor:"pointer",
-                  fontSize:13,padding:0,lineHeight:1 }}>×</button>
-            </span>
-          ))}
+        <div style={{ fontSize:10,color:"#94a3b8",marginBottom:8 }}>ชื่อไซต์ · Ref Code · ค่าเดินทาง (บาท)</div>
+        <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
+          {newProjSites.map((s,i) => {
+            const name = typeof s==="object" ? s.name : s;
+            const ref  = typeof s==="object" ? s.refCode||"" : "";
+            const travel = typeof s==="object" ? s.travelRate||0 : 0;
+            return (
+              <div key={i} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
+                borderRadius:8,padding:"6px 10px",display:"flex",alignItems:"center",gap:8 }}>
+                <span style={{ fontSize:13,fontWeight:600,color:"#0f172a",flex:1 }}>📍 {name}</span>
+                {ref && <span style={{ fontSize:11,color:"#64748b",background:"#f1f5f9",borderRadius:4,padding:"1px 6px" }}>{ref}</span>}
+                {travel>0 && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600 }}>{travel.toLocaleString()} บ.</span>}
+                <button type="button" onClick={() => setNewProjSites(p => p.filter((_,j) => j!==i))}
+                  style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:14,padding:0 }}>×</button>
+              </div>
+            );
+          })}
           {newProjSites.length===0 && <span style={{ fontSize:12,color:"#cbd5e1" }}>ยังไม่มีไซต์</span>}
         </div>
       </Field>
