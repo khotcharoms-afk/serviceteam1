@@ -158,8 +158,8 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
         <div style={{ marginBottom:14 }}>
           <label style={labelStyle}>ขอบเขตงาน</label>
           <select value={scope} onChange={e => setScope(e.target.value)} style={inputStyle}>
-            {["Maintenance","Installation","Inspection","Troubleshooting","Other"].map(s => (
-              <option key={s} value={s}>{s}</option>
+            {[{v:"Maintenance",l:"บำรุงรักษา (Maintenance)"},{v:"Installation",l:"ติดตั้ง (Installation)"},{v:"Inspection",l:"ตรวจสอบ (Inspection)"},{v:"Troubleshooting",l:"แก้ไขปัญหา (Troubleshooting)"},{v:"Other",l:"อื่นๆ (Other)"}].map(s => (
+              <option key={s.v} value={s.v}>{s.l}</option>
             ))}
           </select>
         </div>
