@@ -109,13 +109,13 @@ export default function ProjectModal({
         </div>}
       </Field>
       <Field label="ไซต์ย่อย">
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 90px 80px auto",gap:6,marginBottom:6,alignItems:"center" }}>
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 90px 90px auto",gap:6,marginBottom:6,alignItems:"center" }}>
           <input style={IS()} value={newSiteInput} placeholder="ชื่อไซต์"
             onChange={e => setNewSiteInput(e.target.value)}
             onKeyDown={e => { if (e.key==="Enter") { e.preventDefault(); addSite(); }}}/>
           <input style={IS()} value={newSiteRef} placeholder="Ref Code"
             onChange={e => setNewSiteRef(e.target.value)}/>
-          <input type="number" style={IS()} value={newSiteTravel} placeholder="ค่าเดิน"
+          <input type="number" style={IS()} value={newSiteTravel} placeholder="ค่าเดิน(บ.)"
             onChange={e => setNewSiteTravel(e.target.value)} min="0"/>
           <button type="button" onClick={addSite}
             style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
@@ -137,7 +137,7 @@ export default function ProjectModal({
                     <input style={{ border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit",outline:"none" }}
                       value={editSiteRef} onChange={e=>setEditSiteRef(e.target.value)} placeholder="Ref Code"/>
                     <input type="number" style={{ border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit",outline:"none" }}
-                      value={editSiteTravel} onChange={e=>setEditSiteTravel(e.target.value)} placeholder="ค่าเดิน" min="0"/>
+                      value={editSiteTravel} onChange={e=>setEditSiteTravel(e.target.value)} placeholder="ค่าเดิน(บ.)" min="0"/>
                   </div>
                   <div style={{ display:"flex",gap:6,justifyContent:"flex-end" }}>
                     <button type="button" onClick={()=>setEditSiteIndex(null)}
