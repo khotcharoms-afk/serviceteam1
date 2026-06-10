@@ -355,7 +355,7 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites(p.sites||[]); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name||saving) return;
     setSaving(true);
