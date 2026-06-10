@@ -4,7 +4,7 @@ import { useState } from "react";
 function calcTravel(km) {
   const k = parseFloat(km) || 0;
   if (k <= 0) return 0;
-  const rate = k > 20 ? 8 : 6;
+  const rate = k > 20 ? 8 : k > 10 ? 7 : 6;
   return Math.max(200, Math.round(k * rate));
 }
 
