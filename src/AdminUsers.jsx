@@ -36,7 +36,7 @@ export default function AdminUsers({ onBack }) {
   async function saveDailyRate(uid, rate) {
     const val = parseFloat(rate);
     if (isNaN(val) || val < 0) return;
-    await updateDoc(doc(db,"users",uid), { dailyRate: val });
+    await updateDoc(doc(db,"users",uid), { onsiteRate: val });
   }
 
   const pending = users.filter(u=>u.role==="pending");
@@ -93,7 +93,7 @@ export default function AdminUsers({ onBack }) {
 }
 
 function UserCard({ user, onRole, onRemove, onToggleShift, onSaveDailyRate }) {
-  const [rateInput, setRateInput] = useState(user.dailyRate?.toString()||"");
+  const [rateInput, setRateInput] = useState(user.onsiteRate?.toString()||"");
   const roleOpt = ROLE_OPTS.find(r=>r.value===user.role)||ROLE_OPTS[2];
   return (
     <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
@@ -126,7 +126,7 @@ function UserCard({ user, onRole, onRemove, onToggleShift, onSaveDailyRate }) {
           ✕
         </button>
       </div>
-      {/* canEditShift toggle — แสดงเฉพาะ user ปกติ */}
+      {/* canEditShift toggle — แสดงเฉพาะ user (ไม่ใช่ admin/pending) */}
       {user.role === "user" && (
         <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #f1f5f9" }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8 }}>
@@ -145,8 +145,8 @@ function UserCard({ user, onRole, onRemove, onToggleShift, onSaveDailyRate }) {
               {user.canEditShift ? "เปิด ✓" : "ปิด"}
             </button>
           </div>
-          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-            <span style={{ fontSize:12,fontWeight:600,color:"#475569",flexShrink:0 }}>💰 ค่าแรง/วัน</span>
+          <div style={{ display:"flex",alignItems:"center",gap:8,marginTop: user.role==="user" ? 8 : 0 }}>
+            <span style={{ fontSize:12,fontWeight:600,color:"#475569",flexShrink:0 }}>💰 ค่าแรง Onsite (ต่อครั้ง)</span>
             <input type="number" min="0" value={rateInput}
               onChange={e=>setRateInput(e.target.value)}
               placeholder="บาท"
@@ -158,8 +158,8 @@ function UserCard({ user, onRole, onRemove, onToggleShift, onSaveDailyRate }) {
                 cursor:"pointer",fontFamily:"inherit",flexShrink:0 }}>
               บันทึก
             </button>
-            {user.dailyRate && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600,flexShrink:0 }}>
-              ✓ {user.dailyRate.toLocaleString()} บาท
+            {user.onsiteRate && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600,flexShrink:0 }}>
+              ✓ {user.onsiteRate.toLocaleString()} บาท
             </span>}
           </div>
         </div>
