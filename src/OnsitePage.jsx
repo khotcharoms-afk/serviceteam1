@@ -170,7 +170,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
               <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
                 <thead>
                   <tr style={{ background:"#f8fafc",borderBottom:"1px solid #e2e8f0" }}>
-                    {["#","วันที่","โครงการ/ไซต์","ขอบเขต","พนักงาน","รายละเอียด","ค่าเดิน","ค่าแรง","รวม",""].map(h => (
+                    {["#","วันที่","โครงการ/ไซต์","ขอบเขต","พนักงาน","รายละเอียด","ค่าเดินทาง","ค่าแรง","รวม",""].map(h => (
                       <th key={h} style={{ padding:"10px 12px",textAlign:"left",fontSize:11,
                         color:"#64748b",fontWeight:700,whiteSpace:"nowrap" }}>{h}</th>
                     ))}
