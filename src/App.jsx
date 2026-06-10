@@ -39,6 +39,9 @@ export default function App({ currentUser, onSignOut }) {
   const [handoverCase,setHandoverCase] = useState(null);
   const [updateCase,setUpdateCase]     = useState(null);
   const [projModal,setProjModal]       = useState(false);
+  const [importModal,setImportModal]   = useState(false);
+  const [importRows,setImportRows]     = useState([]);
+  const [importSelected,setImportSelected] = useState({});
   const [editProjId,setEditProjId]     = useState(null);
   const [delProj,setDelProj]           = useState(null);
   const [caseForm,setCaseForm]         = useState(emptyCase);
@@ -291,6 +294,50 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   // ── Project actions ──
+  function handleImportFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const wb = XLSX.read(evt.target.result, { type:"binary" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
+      // map columns: Project ID, Ref. Code, Project Full Name, Status
+      const mapped = rows.map((r,i) => ({
+        key: i,
+        code: String(r["Project ID"]||"").trim(),
+        name: String(r["Ref. Code"]||r["Project Full Name"]||"").trim(),
+        fullName: String(r["Project Full Name"]||"").trim(),
+        status: String(r["Status"]||"").trim(),
+      })).filter(r => r.name);
+      setImportRows(mapped);
+      const sel = {};
+      mapped.forEach(r => { sel[r.key] = true; });
+      setImportSelected(sel);
+      setImportModal(true);
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = "";
+  }
+
+  async function doImport() {
+    if (saving) return;
+    setSaving(true);
+    const toImport = importRows.filter(r => importSelected[r.key]);
+    const batch = writeBatch(db);
+    toImport.forEach((r, i) => {
+      const pid = Date.now().toString() + i;
+      const color = COLOR_OPTS[i % COLOR_OPTS.length];
+      batch.set(doc(db,"projects",pid), {
+        code: r.code, name: r.name, color,
+        warrantyEnd: null, leaseEnd: null, sites: [],
+      });
+    });
+    const ok = await commitWrite(batch.commit(), `Import ${toImport.length} โครงการแล้ว`);
+    if (ok) { setImportModal(false); setImportRows([]); setImportSelected({}); }
+    setSaving(false);
+  }
+
   function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
   function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites(p.sites||[]); setProjModal(true); }
   async function submitProj(){
@@ -480,12 +527,21 @@ export default function App({ currentUser, onSignOut }) {
                 </div>
               </div>
             ))}
-            <button onClick={()=>{ openAddProj(); setMenuOpen(false); }}
-              style={{ display:"flex",alignItems:"center",gap:7,width:"100%",background:"none",
-                border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 10px",cursor:"pointer",
-                fontFamily:"inherit",color:"#94a3b8",fontSize:13,marginTop:6 }}>
-              <span style={{ fontSize:16,lineHeight:1 }}>+</span> เพิ่มโครงการ
-            </button>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginTop:6 }}>
+              <button onClick={()=>{ openAddProj(); setMenuOpen(false); }}
+                style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
+                  border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
+                  fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
+                <span style={{ fontSize:15,lineHeight:1 }}>+</span> เพิ่มโครงการ
+              </button>
+              <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
+                border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
+                fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
+                <span style={{ fontSize:14 }}>📥</span> Import Excel
+                <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
+                  onChange={e=>{ setMenuOpen(false); handleImportFile(e); }}/>
+              </label>
+            </div>
             <div style={{ margin:"20px 0 10px",borderTop:"1px solid #f1f5f9",paddingTop:16 }}>
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
                 {[
@@ -695,6 +751,72 @@ export default function App({ currentUser, onSignOut }) {
         onDelete={()=>{ setDelCase(detailCase.id); setDetailCase(null); }}
         onChecklist={saveChecklist}/>
 
+      {importModal && (
+        <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+          onClick={()=>setImportModal(false)}>
+          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:600,
+            maxHeight:"88vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",
+            padding:"24px" }}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+              <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>
+                📥 Import โครงการ ({importRows.length} รายการ)
+              </h2>
+              <button onClick={()=>setImportModal(false)}
+                style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+                  fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
+            </div>
+            <div style={{ fontSize:12,color:"#64748b",marginBottom:12 }}>
+              เลือกโครงการที่ต้องการ import — กดเลือกทั้งหมดหรือเลือกทีละรายการ
+            </div>
+            <div style={{ display:"flex",gap:8,marginBottom:12 }}>
+              <button onClick={()=>{ const s={}; importRows.forEach(r=>s[r.key]=true); setImportSelected(s); }}
+                style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
+                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                เลือกทั้งหมด
+              </button>
+              <button onClick={()=>setImportSelected({})}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#64748b",
+                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิกทั้งหมด
+              </button>
+              <span style={{ marginLeft:"auto",fontSize:12,color:"#64748b",alignSelf:"center" }}>
+                เลือกแล้ว {Object.values(importSelected).filter(Boolean).length} รายการ
+              </span>
+            </div>
+            <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:16 }}>
+              {importRows.map(r => (
+                <label key={r.key} style={{ display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
+                  padding:"8px 10px",borderRadius:8,
+                  background:importSelected[r.key]?"#f0fdf4":"#f8fafc",
+                  border:`1px solid ${importSelected[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
+                  <input type="checkbox" checked={!!importSelected[r.key]}
+                    onChange={e=>setImportSelected(p=>({...p,[r.key]:e.target.checked}))}
+                    style={{ marginTop:2,accentColor:"#16a34a",flexShrink:0 }}/>
+                  <div>
+                    <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{r.name}</div>
+                    {r.code && <div style={{ fontSize:11,color:"#64748b" }}>{r.code}</div>}
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
+              <button onClick={()=>setImportModal(false)}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิก
+              </button>
+              <button onClick={doImport} disabled={saving||Object.values(importSelected).filter(Boolean).length===0}
+                style={{ background:"#16a34a",border:"none",color:"#fff",borderRadius:10,
+                  padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+                  opacity:saving?0.7:1 }}>
+                {saving?"กำลัง import...":` Import ${Object.values(importSelected).filter(Boolean).length} โครงการ`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <ProjectModal open={projModal} onClose={()=>setProjModal(false)}
         newProjCode={newProjCode} setNewProjCode={setNewProjCode}
         editProjId={editProjId}
