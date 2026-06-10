@@ -48,7 +48,8 @@ export default function CaseModal({
       <Field label="ไซต์ / สถานที่">
         {(()=>{
           const proj = projects.find(p => p.id === caseForm.projectId);
-          const sites = proj?.sites||[];
+          const rawSites = proj?.sites||[];
+          const sites = rawSites.map(s => typeof s === "object" ? s.name : s);
           const isPreset = sites.includes(caseForm.site);
           const showOther = caseForm.siteOther || (caseForm.site && !isPreset);
           if (sites.length === 0) {
