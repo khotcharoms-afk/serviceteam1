@@ -14,6 +14,7 @@ import ProjectModal from "./components/ProjectModal.jsx";
 import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
+import OnsitePage from "./OnsitePage.jsx";
 
 export default function App({ currentUser, onSignOut }) {
   const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
@@ -29,6 +30,7 @@ export default function App({ currentUser, onSignOut }) {
   const [adminPage,setAdminPage]   = useState(false);
   const [dashboardPage,setDashboardPage] = useState(false);
   const [shiftPage,setShiftPage] = useState(false);
+  const [onsitePage,setOnsitePage] = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
 
@@ -386,6 +388,7 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
+  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
@@ -509,6 +512,8 @@ export default function App({ currentUser, onSignOut }) {
             )}
             <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
               onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
+            <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
+              onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
             <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
             {projects.map(p=>(
               <div key={p.id} style={{ display:"flex",alignItems:"center",gap:0 }}>
