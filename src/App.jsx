@@ -17,7 +17,7 @@ import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
 
 export default function App({ currentUser, onSignOut }) {
-  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
+  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
@@ -346,7 +346,7 @@ export default function App({ currentUser, onSignOut }) {
       });
     });
     const ok = await commitWrite(batch.commit(), `Import ${toImport.length} โครงการแล้ว`);
-    if (ok) { setImportModal(false); setImportRows([]); setImportSelected({}); }
+    if (ok) { setImportModal(false); setImportRows([]); setImportSelected({}); refreshProjects(); }
     setSaving(false);
   }
 
@@ -367,7 +367,7 @@ export default function App({ currentUser, onSignOut }) {
       });
     }
     const ok = await commitWrite(batch.commit(), editProjId?"บันทึกโครงการแล้ว":"สร้างโครงการแล้ว");
-    if(ok){ setNewProjCode(""); setNewProjName(""); setEditProjId(null); setProjModal(false); }
+    if(ok){ setNewProjCode(""); setNewProjName(""); setEditProjId(null); setProjModal(false); refreshProjects(); }
     setSaving(false);
   }
   async function removeProj(pid){
@@ -375,6 +375,7 @@ export default function App({ currentUser, onSignOut }) {
     batch.delete(doc(db,"projects",pid));
     cases.filter(c=>c.projectId===pid).forEach(c=>batch.delete(doc(db,"cases",c.id)));
     const ok = await commitWrite(batch.commit(), "ลบโครงการแล้ว");
+    if(ok) refreshProjects();
     if(ok){ if(view===pid) setView("overview"); setDelProj(null); }
   }
 
@@ -399,7 +400,7 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser}/>;
-  if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers}/>;
+  if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
   return (
