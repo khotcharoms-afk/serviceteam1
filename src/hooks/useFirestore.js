@@ -18,10 +18,6 @@ export function useFirestore() {
     const errHandler = (e) => { console.error("Firestore listener error:", e); setLoading(false); };
 
     // ── Realtime listeners ──
-    const u1 = onSnapshot(collection(db,"projects"), snap => {
-      setProjects(snap.docs.map(d => ({ id:d.id, ...d.data() })));
-      setLoading(false);
-    }, errHandler);
     const u2 = onSnapshot(collection(db,"cases"), snap => {
       setCases(snap.docs.map(d => ({ id:d.id, ...d.data() })));
     }, errHandler);
@@ -34,9 +30,16 @@ export function useFirestore() {
         .sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
       setNotifs(all);
     }, errHandler);
-    const u6 = onSnapshot(collection(db,"shifts"), snap => {
+
+    // ── One-time reads ──
+    getDocs(collection(db,"projects")).then(snap => {
+      setProjects(snap.docs.map(d => ({ id:d.id, ...d.data() })));
+      setLoading(false);
+    }).catch(errHandler);
+
+    getDocs(collection(db,"shifts")).then(snap => {
       setShifts(snap.docs.map(d=>({id:d.id,...d.data()})));
-    }, errHandler);
+    }).catch(errHandler);
 
     // ── One-time reads (ข้อมูลที่เปลี่ยนนานๆ ครั้ง) ──
     getDocs(collection(db,"deletedCases")).then(snap => {
@@ -58,8 +61,20 @@ export function useFirestore() {
       setShiftMembers(snap.docs.map(d=>({id:d.id,...d.data()})));
     }).catch(errHandler);
 
-    return () => { u1(); u2(); u3(); u4(); u6(); };
+    return () => { u2(); u3(); u4(); };
   }, []);
+
+  function refreshProjects() {
+    getDocs(collection(db,"projects")).then(snap => {
+      setProjects(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }).catch(e => console.error(e));
+  }
+
+  function refreshShifts() {
+    getDocs(collection(db,"shifts")).then(snap => {
+      setShifts(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }).catch(e => console.error(e));
+  }
 
   function refreshSchedules() {
     getDocs(collection(db,"userSchedules")).then(snap => {
@@ -80,5 +95,5 @@ export function useFirestore() {
     }).catch(e => console.error(e));
   }
 
-  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshSchedules, refreshShiftTypes, refreshShiftMembers };
+  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers };
 }
