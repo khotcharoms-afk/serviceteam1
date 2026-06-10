@@ -185,7 +185,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             <div>
               <label style={labelStyle}>ระยะทาง (กม.)</label>
               <input type="number" min="0" value={km} onChange={e => setKm(e.target.value)}
-                placeholder={selSite?.travelRate ? `ค่าเดิน ${selSite.travelRate} บ.` : "0"}
+                placeholder={selSite?.travelRate ? `ค่าเดินทาง ${selSite.travelRate} บ.` : "0"}
                 style={inputStyle}/>
               {km && <div style={{ fontSize:11,color:"#f97316",marginTop:3,fontWeight:600 }}>
                 = {travelCost.toLocaleString()} บาท
