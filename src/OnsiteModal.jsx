@@ -33,7 +33,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
   // ค่าแรง: รวมทุกคนที่เลือก
   const laborCost = techs.reduce((sum, name) => {
     const u = users.find(u => u.name === name);
-    return sum + (u?.dailyRate || 0);
+    return sum + (u?.onsiteRate || 0);
   }, 0);
 
   const totalCost = travelCost + parseFloat(shipping || 0) + parseFloat(partsCost || 0) + laborCost;
@@ -162,7 +162,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
                   onChange={() => toggleTech(u.name)}
                   style={{ accentColor:"#16a34a" }}/>
                 {u.name}
-                {u.dailyRate ? <span style={{ color:"#16a34a",fontSize:11 }}>({u.dailyRate.toLocaleString()}฿)</span> : ""}
+                {u.onsiteRate ? <span style={{ color:"#16a34a",fontSize:11 }}>({u.onsiteRate.toLocaleString()}฿)</span> : ""}
               </label>
             ))}
           </div>
