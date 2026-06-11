@@ -973,7 +973,7 @@ export default function App({ currentUser, onSignOut }) {
       <UpdateLogModal open={!!updateCase} onClose={()=>setUpdateCase(null)}
         caseData={updateCase} onSave={saveUpdate} currentUser={currentUser}/>
       <HandoverModal open={!!handoverCase} onClose={()=>setHandoverCase(null)}
-        caseData={handoverCase} onSave={saveHandover} users={users}/>
+        caseData={handoverCase} onSave={saveHandover} users={users} currentUser={currentUser}/>
 
       {toast&&(
         <div style={{ position:"fixed",left:"50%",top:64,transform:"translateX(-50%)",zIndex:9999,maxWidth:"90vw",pointerEvents:"none" }}>
