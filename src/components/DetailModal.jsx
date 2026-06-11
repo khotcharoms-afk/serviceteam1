@@ -7,7 +7,7 @@ import OnsiteModal from "../OnsiteModal.jsx";
 
 export default function DetailModal({
   detailCase, onClose, projects, users,
-  onEdit, onUpdate, onHandover, onDelete, onChecklist, onOnsite
+  onEdit, onUpdate, onHandover, onDelete, onChecklist, onOnsite, saving
 }) {
   const [showWorkOrder, setShowWorkOrder] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
@@ -175,7 +175,7 @@ export default function DetailModal({
           users={users}
           onClose={()=>setShowOnsite(false)}
           onSave={(data)=>{ onOnsite({ ...data, caseId: detailCase.id }); setShowOnsite(false); }}
-          saving={false}
+          saving={saving||false}
         />
       )}
       {showChecklist && (
