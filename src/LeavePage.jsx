@@ -10,7 +10,22 @@ const STATUS_STYLE = {
   rejected: { bg:"#fff1f2", color:"#be123c", label:"ไม่อนุมัติ" },
 };
 
-function printLeave(leave, logoData) {
+function printLeave(leave, logoData, users, allRecords) {
+  // คำนวณลามาแล้ว (approved ก่อนหน้า ไม่รวมใบนี้)
+  const prevLeaves = (allRecords||[]).filter(r =>
+    r.id !== leave.id &&
+    r.createdBy === leave.createdBy &&
+    r.status === "approved"
+  );
+  const prevSum = { vacation:0, personal:0, sick:0, other:0 };
+  prevLeaves.forEach(r => {
+    if (prevSum[r.leaveType] !== undefined) prevSum[r.leaveType] += (r.days||0);
+  });
+
+  // วันลาที่ได้รับ
+  const user = (users||[]).find(u => u.id === leave.createdBy || u.name === leave.name);
+  const quota = user?.leaveQuota || {};
+
   const typeLabel = leave.leaveType==="other"
     ? (leave.otherType||"อื่นๆ")
     : LEAVE_LABEL[leave.leaveType]||leave.leaveType;
@@ -87,7 +102,7 @@ ${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoDat
   <div class="line" style="flex:3">${leave.reason||""}</div>
   <div class="label">มีกำหนด</div>
   <div class="line" style="width:50px">${leave.days||""}</div>
-  <div class="label">วัน</div>
+  <div class="label">${leave.leaveUnit==="hour"?"ชม.":"วัน"}</div>
 </div>
 
 <div class="row">
@@ -111,7 +126,14 @@ ${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoDat
     <th rowspan="2">ไม่นับวันลา<br/>ลาพิเศษ 1</th>
   </tr>
   <tr><th>ลาพักผ่อน</th><th>ลากิจ</th><th>ลาป่วย</th><th>ลาพิเศษ</th><th>อื่นๆ</th></tr>
-  <tr><td>ลามาแล้ว</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>ลามาแล้ว</td>
+    <td>${prevSum.vacation||""}</td>
+    <td>${prevSum.personal||""}</td>
+    <td>${prevSum.sick||""}</td>
+    <td></td>
+    <td>${prevSum.other||""}</td>
+    <td></td>
+  </tr>
   <tr><td>ลาครั้งนี้</td>
     <td>${leave.leaveType==="vacation"?leave.days:""}</td>
     <td>${leave.leaveType==="personal"?leave.days:""}</td>
@@ -120,7 +142,23 @@ ${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoDat
     <td>${leave.leaveType==="other"?leave.days:""}</td>
     <td></td>
   </tr>
-  <tr><td>รวม</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>รวม</td>
+    <td>${leave.leaveType==="vacation"?(prevSum.vacation+(leave.days||0)):prevSum.vacation||""}</td>
+    <td>${leave.leaveType==="personal"?(prevSum.personal+(leave.days||0)):prevSum.personal||""}</td>
+    <td>${leave.leaveType==="sick"?(prevSum.sick+(leave.days||0)):prevSum.sick||""}</td>
+    <td></td>
+    <td>${leave.leaveType==="other"?(prevSum.other+(leave.days||0)):prevSum.other||""}</td>
+    <td></td>
+  </tr>
+  ${quota.vacation||quota.personal||quota.sick ? `
+  <tr><td style="font-size:11px;color:#555">วันที่ได้รับ</td>
+    <td style="font-size:11px;color:#555">${quota.vacation||"-"}</td>
+    <td style="font-size:11px;color:#555">${quota.personal||"-"}</td>
+    <td style="font-size:11px;color:#555">${quota.sick||"-"}</td>
+    <td></td>
+    <td style="font-size:11px;color:#555">${quota.other||"-"}</td>
+    <td></td>
+  </tr>` : ""}
 </table>
 
 <script>window.onload=()=>{ window.print(); }</script>
@@ -131,7 +169,7 @@ ${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoDat
   w.document.close();
 }
 
-export default function LeavePage({ onBack, currentUser }) {
+export default function LeavePage({ onBack, currentUser, users }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -304,7 +342,7 @@ export default function LeavePage({ onBack, currentUser }) {
                     <div>
                       <div style={{ fontSize:14, fontWeight:700, color:"#0f172a" }}>{r.name}</div>
                       <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>
-                        {typeLabel} · {r.days} วัน · {r.dateFrom} ถึง {r.dateTo}
+                        {typeLabel} · {r.days} {r.leaveUnit==="hour"?"ชม.":"วัน"} · {r.dateFrom} ถึง {r.dateTo}
                       </div>
                       {r.reason && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>เหตุผล: {r.reason}</div>}
                     </div>
@@ -314,7 +352,7 @@ export default function LeavePage({ onBack, currentUser }) {
                     </span>
                   </div>
                   <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                    <button onClick={()=>printLeave(r, logoData)}
+                    <button onClick={()=>printLeave(r, logoData, users, records)}
                       style={{ background:"#f8fafc", border:"1px solid #e2e8f0", color:"#475569",
                         borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
                         fontFamily:"inherit", fontWeight:600 }}>
