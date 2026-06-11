@@ -2,7 +2,7 @@ import { useState } from "react";
 import { fmtDate } from "./utils.js";
 
 // ── Handover Modal ────────────────────────────────────────────
-function HandoverModal({ open, onClose, caseData, onSave, users }) {
+function HandoverModal({ open, onClose, caseData, onSave, users, currentUser }) {
   const [toId, setToId]   = useState("");
   const [note, setNote]   = useState("");
   if (!open || !caseData) return null;
@@ -10,7 +10,7 @@ function HandoverModal({ open, onClose, caseData, onSave, users }) {
   function submit() {
     if (!toId) return;
     const entry = {
-      from: caseData.tech||"ไม่ระบุ",
+      from: currentUser?.name||caseData.tech||"ไม่ระบุ",
       to:   toUser?.name||toId,
       note: note.trim(),
       date: new Date().toISOString().slice(0,10),
