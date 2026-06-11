@@ -171,7 +171,7 @@ export default function LeavePage({ onBack, currentUser }) {
   }
 
   // filter
-  const myRecords = isAdmin ? records : records.filter(r => r.createdBy === currentUser?.uid);
+  const myRecords = isAdmin ? records : records.filter(r => r.createdBy === (currentUser?.id || currentUser?.uid));
   const filtered = myRecords.filter(r => {
     if (filterStatus !== "all" && r.status !== filterStatus) return false;
     if (filterName !== "all" && r.name !== filterName) return false;
@@ -298,7 +298,7 @@ export default function LeavePage({ onBack, currentUser }) {
                         fontFamily:"inherit", fontWeight:600 }}>
                       🖨 Export PDF
                     </button>
-                    {isAdmin && r.status === "pending" && r.createdBy !== currentUser?.uid && (<>
+                    {isAdmin && r.status === "pending" && r.createdBy !== (currentUser?.id || currentUser?.uid) && (<>
                       <button onClick={()=>updateStatus(r.id,"approved")}
                         style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#15803d",
                           borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
