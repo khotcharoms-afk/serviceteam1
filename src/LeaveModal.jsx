@@ -42,7 +42,7 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser }) {
       name: currentUser?.name || "",
       status: "pending",
       createdAt: new Date().toISOString(),
-      createdBy: currentUser?.uid || "",
+      createdBy: currentUser?.id || currentUser?.uid || "",
     });
   }
 
