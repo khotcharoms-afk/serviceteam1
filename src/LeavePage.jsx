@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, setDoc, doc } from "firebase/firestore";
 import LeaveModal from "./LeaveModal.jsx";
 
 const LEAVE_LABEL = { vacation:"ลาพักผ่อน", personal:"ลากิจ", sick:"ลาป่วย", other:"อื่นๆ" };
@@ -169,11 +169,26 @@ export default function LeavePage({ onBack, currentUser }) {
 
   async function updateStatus(id, status) {
     try {
+      const leave = records.find(r => r.id === id);
       await updateDoc(doc(db,"leaves",id), {
         status,
         approvedBy: currentUser?.name||"",
         approvedAt: new Date().toISOString(),
       });
+      // ส่ง notification ไปหา user ที่ยื่นใบลา
+      if (leave?.createdBy) {
+        const statusText = status === "approved" ? "อนุมัติแล้ว ✅" : "ไม่อนุมัติ ❌";
+        const leaveTypeText = LEAVE_LABEL[leave.leaveType] || leave.leaveType;
+        await setDoc(doc(db,"notifications",Date.now().toString()), {
+          type: "leave",
+          toUid: leave.createdBy,
+          toName: leave.name || "",
+          fromName: currentUser?.name || "",
+          message: `ใบลา${leaveTypeText} ${leave.days} วัน (${leave.dateFrom}) — ${statusText}`,
+          createdAt: new Date().toISOString(),
+          read: false,
+        });
+      }
     } catch(e) { console.error(e); }
   }
 
