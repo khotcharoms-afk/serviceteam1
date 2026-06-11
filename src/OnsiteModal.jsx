@@ -119,7 +119,6 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
                     <input type="checkbox" checked={techs.includes(u.name)}
                       onChange={() => toggleTech(u.name)} style={{ accentColor:"#16a34a" }}/>
                     {u.name}
-                    {u.onsiteRate ? <span style={{ color:"#16a34a",fontSize:11 }}>({u.onsiteRate.toLocaleString()}฿)</span> : ""}
                   </label>
                 ))}
               </div>
@@ -162,7 +161,6 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
                     <input type="checkbox" checked={techs.includes(u.name)}
                       onChange={() => toggleTech(u.name)} style={{ accentColor:"#16a34a" }}/>
                     {u.name}
-                    {u.onsiteRate ? <span style={{ color:"#16a34a",fontSize:11 }}>({u.onsiteRate.toLocaleString()}฿)</span> : ""}
                   </label>
                 ))}
               </div>
