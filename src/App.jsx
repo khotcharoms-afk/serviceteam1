@@ -798,7 +798,8 @@ export default function App({ currentUser, onSignOut }) {
         onHandover={()=>{ setHandoverCase(detailCase); setDetailCase(null); }}
         onDelete={()=>{ setDelCase(detailCase.id); setDetailCase(null); }}
         onChecklist={saveChecklist}
-        onOnsite={saveOnsite}/>
+        onOnsite={saveOnsite}
+        saving={saving}/>
 
       {importModal && (
         <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
