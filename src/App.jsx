@@ -264,6 +264,7 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   async function saveOnsite(data) {
+    console.log("saveOnsite called, caseId=", data?.caseId, "saving=", saving);
     if (saving) return;
     setSaving(true);
     try {
