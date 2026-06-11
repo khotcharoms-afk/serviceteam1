@@ -926,7 +926,7 @@ export default function App({ currentUser, onSignOut }) {
                   <div style={{ fontSize:32,marginBottom:8 }}>🔔</div>ไม่มีการแจ้งเตือน
                 </div>
               ):notifications.map(n=>(
-                <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
+                <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
                   style={{ padding:"14px 18px",borderBottom:"1px solid #f8fafc",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
                     <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
