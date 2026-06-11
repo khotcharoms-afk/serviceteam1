@@ -602,7 +602,18 @@ export default function App({ currentUser, onSignOut }) {
             <button onClick={()=>setView("overview")} style={{ background:"none",border:"none",
               color:"#94a3b8",cursor:"pointer",fontFamily:"inherit",fontSize:13,padding:0 }}>ภาพรวม</button>
             <span style={{ color:"#cbd5e1" }}>›</span>
-            <span style={{ fontSize:13,fontWeight:700,color:activeProj?.color||"#0f172a" }}>{activeProj?.name}</span>
+            <span style={{ fontSize:13,fontWeight:700,color:activeProj?.color||"#0f172a",flex:1,
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{activeProj?.name}</span>
+            {activeProj && (<>
+              <button onClick={()=>openEditProj(activeProj)}
+                style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:7,
+                  padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",
+                  color:"#475569",fontWeight:600,whiteSpace:"nowrap" }}>✏️ แก้ไข</button>
+              <button onClick={()=>setDelProj(activeProj.id)}
+                style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:7,
+                  padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",
+                  color:"#ef4444",fontWeight:600,whiteSpace:"nowrap" }}>🗑 ลบ</button>
+            </>)}
           </div>
         )}
         <div style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16 }}>
