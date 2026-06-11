@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import LeaveModal from "./LeaveModal.jsx";
 
 const LEAVE_LABEL = { vacation:"ลาพักผ่อน", personal:"ลากิจ", sick:"ลาป่วย", other:"อื่นๆ" };
@@ -160,6 +160,13 @@ export default function LeavePage({ onBack, currentUser }) {
     setSaving(false);
   }
 
+  async function deleteLeave(id) {
+    if (!window.confirm("ลบใบลานี้?")) return;
+    try {
+      await deleteDoc(doc(db,"leaves",id));
+    } catch(e) { console.error(e); }
+  }
+
   async function updateStatus(id, status) {
     try {
       await updateDoc(doc(db,"leaves",id), {
@@ -298,6 +305,14 @@ export default function LeavePage({ onBack, currentUser }) {
                         fontFamily:"inherit", fontWeight:600 }}>
                       🖨 Export PDF
                     </button>
+                    {isAdmin && (
+                      <button onClick={()=>deleteLeave(r.id)}
+                        style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444",
+                          borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
+                          fontFamily:"inherit", fontWeight:600 }}>
+                        🗑 ลบ
+                      </button>
+                    )}
                     {isAdmin && r.status === "pending" && r.createdBy !== (currentUser?.id || currentUser?.uid) && (<>
                       <button onClick={()=>updateStatus(r.id,"approved")}
                         style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#15803d",
