@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const LEAVE_TYPES = [
-  { id:"vacation", label:"ลาพักผ่อน" },
+  { id:"vacation", label:"ลาพักร้อน" },
   { id:"personal", label:"ลากิจ" },
   { id:"sick",     label:"ลาป่วย" },
   { id:"other",    label:"อื่นๆ" },
