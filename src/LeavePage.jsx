@@ -136,8 +136,7 @@ export default function LeavePage({ onBack, currentUser }) {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [logoData, setLogoData] = useState(()=>localStorage.getItem('leave-logo')||'');
-  const [showLogoEdit, setShowLogoEdit] = useState(false);
+  const logoData = '/logo.png';
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterName, setFilterName] = useState("all");
 
@@ -151,25 +150,6 @@ export default function LeavePage({ onBack, currentUser }) {
     });
     return u;
   }, []);
-
-  function handleLogoUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const data = ev.target.result;
-      localStorage.setItem('leave-logo', data);
-      setLogoData(data);
-      setShowLogoEdit(false);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function removeLogo() {
-    localStorage.removeItem('leave-logo');
-    setLogoData('');
-    setShowLogoEdit(false);
-  }
 
   async function saveLeave(data) {
     setSaving(true);
@@ -217,54 +197,17 @@ export default function LeavePage({ onBack, currentUser }) {
 
       {/* Header */}
       <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"14px 20px",
-        display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10, position:"relative" }}
-        onClick={()=>setShowLogoEdit(false)}>
+        display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10 }}>
         <button onClick={onBack} style={{ background:"#f1f5f9", border:"none", borderRadius:8,
           padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit", color:"#475569", fontWeight:600 }}>
           ← กลับ
         </button>
         <div style={{ fontSize:16, fontWeight:800, color:"#0f172a" }}>📋 ใบลา</div>
-        <div style={{ marginLeft:"auto", display:"flex", gap:8 }}>
-          <button onClick={()=>setShowLogoEdit(v=>!v)}
-            style={{ background:"#f8fafc", border:"1px solid #e2e8f0", color:"#475569",
-              borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
-              cursor:"pointer", fontFamily:"inherit" }}>
-            🖼 {logoData ? "เปลี่ยน Logo" : "ตั้งค่า Logo"}
-          </button>
-          <button onClick={()=>setShowModal(true)}
-            style={{ background:"#2563eb", border:"none", color:"#fff", borderRadius:8,
-              padding:"7px 14px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-            + ยื่นใบลา
-          </button>
-        </div>
-        {showLogoEdit && (
-          <div style={{ position:"absolute", top:56, right:20, zIndex:20,
-            background:"#fff", border:"1px solid #e2e8f0", borderRadius:12,
-            padding:16, boxShadow:"0 8px 24px rgba(0,0,0,.12)", minWidth:260 }}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{ fontSize:13, fontWeight:700, color:"#0f172a", marginBottom:10 }}>Logo บริษัท</div>
-            {logoData && (
-              <div style={{ marginBottom:10, textAlign:"center" }}>
-                <img src={logoData} style={{ maxHeight:60, maxWidth:180, objectFit:"contain" }} alt="logo"/>
-              </div>
-            )}
-            <label style={{ display:"block", background:"#eff6ff", border:"1px dashed #93c5fd",
-              borderRadius:8, padding:"10px", textAlign:"center", cursor:"pointer",
-              fontSize:12, color:"#2563eb", fontWeight:600, marginBottom:8 }}>
-              📁 เลือกไฟล์รูป
-              <input type="file" accept="image/*" onChange={handleLogoUpload}
-                style={{ display:"none" }}/>
-            </label>
-            {logoData && (
-              <button onClick={removeLogo}
-                style={{ width:"100%", background:"#fff5f5", border:"1px solid #fecaca",
-                  color:"#ef4444", borderRadius:8, padding:"6px", fontSize:12,
-                  cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
-                🗑 ลบ Logo
-              </button>
-            )}
-          </div>
-        )}
+        <button onClick={()=>setShowModal(true)} style={{ marginLeft:"auto",
+          background:"#2563eb", border:"none", color:"#fff", borderRadius:8,
+          padding:"7px 14px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+          + ยื่นใบลา
+        </button>
       </div>
 
       <div style={{ padding:"16px 20px 48px", maxWidth:900, margin:"0 auto" }}>
