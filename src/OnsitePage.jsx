@@ -18,7 +18,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
   // แตก onsiteLog[] จากทุก case มารวมกัน พร้อมแนบข้อมูล case ไว้ด้วย
   const records = (cases || []).flatMap(c =>
     (c.onsiteLog || []).map((entry, entryIndex) => {
-      const entryTechs = entry.techs || c.techs || (c.tech ? [c.tech] : []);
+      const entryTechs = (entry.techs && entry.techs.length > 0) ? entry.techs : (c.techs || (c.tech ? [c.tech] : []));
       // คำนวณ laborCost ใหม่จาก onsiteRate ปัจจุบัน
       const laborCost = entryTechs.reduce((sum, name) => {
         const u = (users || []).find(u => u.name === name);
