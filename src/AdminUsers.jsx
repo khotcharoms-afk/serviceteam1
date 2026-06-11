@@ -236,7 +236,7 @@ function EditUserModal({ user, onClose, onSave }) {
           <label style={LB}>📋 วันลาที่ได้รับต่อปี (วัน)</label>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
             {[
-              { key:"vacation", label:"ลาพักผ่อน" },
+              { key:"vacation", label:"ลาพักร้อน" },
               { key:"personal", label:"ลากิจ" },
               { key:"sick",     label:"ลาป่วย" },
               { key:"other",    label:"อื่นๆ" },
