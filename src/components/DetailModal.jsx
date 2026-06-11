@@ -174,7 +174,7 @@ export default function DetailModal({
           proj={proj}
           users={users}
           onClose={()=>setShowOnsite(false)}
-          onSave={(data)=>{ onOnsite(data); setShowOnsite(false); }}
+          onSave={(data)=>{ onOnsite({ ...data, caseId: detailCase.id }); setShowOnsite(false); }}
           saving={false}
         />
       )}
