@@ -6,7 +6,31 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [editIndex, setEditIndex] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [editStatus, setEditStatus] = useState("");
   if (!open || !caseData) return null;
+
+  function startEdit(realIndex, u) {
+    setEditIndex(realIndex);
+    setEditText(u.text);
+    setEditStatus(u.status||"");
+  }
+
+  function saveEdit(realIndex) {
+    if (!editText.trim()) return;
+    const log = (caseData.updateLog||[]).map((u,i) =>
+      i === realIndex ? { ...u, text: editText.trim(), status: editStatus||u.status, edited: true } : u
+    );
+    onSave({ ...caseData, updateLog: log, status: editStatus||caseData.status });
+    setEditIndex(null);
+  }
+
+  function deleteEntry(realIndex) {
+    if (!window.confirm("ลบอัปเดตนี้?")) return;
+    const log = (caseData.updateLog||[]).filter((_,i) => i !== realIndex);
+    onSave({ ...caseData, updateLog: log });
+  }
 
   function submit() {
     if (!text.trim()) { setError("กรุณากรอกรายละเอียดความคืบหน้าก่อนบันทึก"); return; }
@@ -79,21 +103,61 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
               อัปเดตก่อนหน้า ({caseData.updateLog.length})
             </div>
             <div style={{ maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:6 }}>
-              {[...(caseData.updateLog||[])].reverse().map((u,i)=>(
-                <div key={i} style={{ background:"#f8fafc",borderRadius:8,padding:"10px 12px",
-                  border:"1px solid #e2e8f0" }}>
-                  <div style={{ display:"flex",justifyContent:"space-between",marginBottom:4 }}>
-                    <span style={{ fontSize:12,fontWeight:700,color:"#475569" }}>👤 {u.by}</span>
-                    <span style={{ fontSize:11,color:"#94a3b8" }}>{u.date} {u.time}</span>
-                  </div>
-                  {u.status&&u.status!==caseData.status&&(
-                    <div style={{ fontSize:11,color:"#2563eb",marginBottom:3 }}>
-                      → เปลี่ยนสถานะเป็น: {u.status}
+              {[...(caseData.updateLog||[])].map((u,i)=>({ ...u, _realIndex: i })).reverse().map((u,i)=>{
+                const isOwner = u.by === (currentUser?.name||"");
+                if (editIndex === u._realIndex) {
+                  return (
+                    <div key={i} style={{ background:"#eff6ff",borderRadius:8,padding:"10px 12px",
+                      border:"1px solid #bfdbfe" }}>
+                      <select value={editStatus} onChange={e=>setEditStatus(e.target.value)}
+                        style={{ width:"100%",border:"1px solid #bfdbfe",borderRadius:6,padding:"6px 10px",
+                          fontSize:12,fontFamily:"inherit",marginBottom:6,background:"#fff" }}>
+                        <option value="">— คงสถานะเดิม —</option>
+                        {[{value:"open",label:"เปิดเคส"},{value:"inprogress",label:"กำลังดำเนินการ"},
+                          {value:"done",label:"เสร็จสิ้น"},{value:"hold",label:"รอดำเนินการ"}]
+                          .map(s=><option key={s.value} value={s.value}>{s.label}</option>)}
+                      </select>
+                      <textarea value={editText} onChange={e=>setEditText(e.target.value)}
+                        style={{ width:"100%",border:"1px solid #bfdbfe",borderRadius:6,padding:"6px 10px",
+                          fontSize:12,fontFamily:"inherit",resize:"vertical",minHeight:60,
+                          boxSizing:"border-box",marginBottom:6 }}/>
+                      <div style={{ display:"flex",gap:6,justifyContent:"flex-end" }}>
+                        <button onClick={()=>setEditIndex(null)}
+                          style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",color:"#64748b",
+                            borderRadius:6,padding:"4px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+                        <button onClick={()=>saveEdit(u._realIndex)}
+                          style={{ background:"#2563eb",border:"none",color:"#fff",
+                            borderRadius:6,padding:"4px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>บันทึก</button>
+                      </div>
                     </div>
-                  )}
-                  <div style={{ fontSize:13,color:"#1e293b",lineHeight:1.6 }}>{u.text}</div>
-                </div>
-              ))}
+                  );
+                }
+                return (
+                  <div key={i} style={{ background:"#f8fafc",borderRadius:8,padding:"10px 12px",
+                    border:"1px solid #e2e8f0" }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",marginBottom:4,alignItems:"flex-start" }}>
+                      <span style={{ fontSize:12,fontWeight:700,color:"#475569" }}>👤 {u.by}{u.edited&&<span style={{ fontSize:10,color:"#94a3b8",marginLeft:4 }}>(แก้ไขแล้ว)</span>}</span>
+                      <div style={{ display:"flex",gap:4,alignItems:"center" }}>
+                        <span style={{ fontSize:11,color:"#94a3b8" }}>{u.date} {u.time}</span>
+                        {isOwner && (<>
+                          <button onClick={()=>startEdit(u._realIndex, u)}
+                            style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",
+                              fontSize:12,padding:"0 4px" }}>✏️</button>
+                          <button onClick={()=>deleteEntry(u._realIndex)}
+                            style={{ background:"none",border:"none",color:"#ef4444",cursor:"pointer",
+                              fontSize:12,padding:"0 4px" }}>🗑</button>
+                        </>)}
+                      </div>
+                    </div>
+                    {u.status&&(
+                      <div style={{ fontSize:11,color:"#2563eb",marginBottom:3 }}>
+                        → เปลี่ยนสถานะเป็น: {u.status}
+                      </div>
+                    )}
+                    <div style={{ fontSize:13,color:"#1e293b",lineHeight:1.6 }}>{u.text}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
