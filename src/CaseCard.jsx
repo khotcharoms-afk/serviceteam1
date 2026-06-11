@@ -52,24 +52,18 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate, onOns
           🔁 ส่งต่อแล้ว {c.handoverLog.length} ครั้ง • ปัจจุบัน: {(c.techs?.length?c.techs:[c.tech]).join(", ")}
         </div>
       )}
-      <div style={{ marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9" }}
+      <div style={{ display:"flex",gap:6,marginTop:8,paddingTop:8,borderTop:"1px solid #f1f5f9" }}
         onClick={e=>e.stopPropagation()}>
-        <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:5 }}>จัดการเคส</div>
-        <div style={{ display:"flex",gap:6,marginBottom:8 }}>
-          <button onClick={onEdit} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
-          <button onClick={onHandover} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
-            color:"#2563eb",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📤 ส่งต่อ</button>
-          <button onClick={onDel} style={{ background:"#fff5f5",border:"1px solid #fecaca",
-            color:"#ef4444",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✕ ลบ</button>
-        </div>
-        <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:5 }}>บันทึก</div>
-        <div style={{ display:"flex",gap:6 }}>
-          <button onClick={onUpdate} style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",
-            color:"#16a34a",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📝 อัปเดต</button>
-          <button onClick={onOnsite} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
-            color:"#ea580c",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📍 Onsite</button>
-        </div>
+        <button onClick={onEdit} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
+          color:"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
+        <button onClick={onUpdate} style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",
+          color:"#16a34a",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📝 อัปเดต</button>
+        <button onClick={onOnsite} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
+          color:"#ea580c",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📍 Onsite</button>
+        <button onClick={onHandover} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
+          color:"#2563eb",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📤 ส่งต่อ</button>
+        <button onClick={onDel} style={{ background:"#fff5f5",border:"1px solid #fecaca",
+          color:"#ef4444",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✕ ลบ</button>
       </div>
     </div>
   );
