@@ -36,7 +36,7 @@ function printLeave(leave, logoData) {
   .sig-row { display: flex; gap: 20px; margin-top: 16px; }
   .sig { flex: 1; text-align: center; }
   .sig-line { border-bottom: 1px solid #000; margin: 24px 16px 4px; }
-  @media print { body { padding: 15px 20px; } }
+  @media print { body { padding: 15px 20px; } @page { margin: 10mm; size: A4; } }
 </style>
 </head><body>
 ${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoData}" style="max-height:60px;max-width:180px;object-fit:contain"/></div>` : ""}
@@ -123,7 +123,7 @@ ${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoDat
   <tr><td>รวม</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 </table>
 
-<script>window.onload=()=>window.print();</script>
+<script>window.onload=()=>{ window.print(); }</script>
 </body></html>`;
 
   const w = window.open("","_blank");
