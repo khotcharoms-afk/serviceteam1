@@ -280,6 +280,7 @@ export default function App({ currentUser, onSignOut }) {
           date:         data.date,
           scope:        data.scope,
           detail:       data.detail,
+          techs:        data.techs || [],
           km:           data.km,
           travelCost:   data.travelCost,
           shippingCost: data.shippingCost,
