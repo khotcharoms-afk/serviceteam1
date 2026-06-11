@@ -64,9 +64,9 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate, onOns
         </div>
         <div style={{ display:"flex",gap:6 }}>
           <button onClick={onUpdate} style={{ flex:1,background:"#f0fdf4",border:"1px solid #bbf7d0",
-            color:"#16a34a",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📝 อัปเดต</button>
+            color:"#16a34a",borderRadius:7,padding:"4px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📝 อัปเดต</button>
           <button onClick={onOnsite} style={{ flex:1,background:"#fff7ed",border:"1px solid #fed7aa",
-            color:"#ea580c",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📍 Onsite</button>
+            color:"#ea580c",borderRadius:7,padding:"4px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📍 Onsite</button>
         </div>
       </div>
     </div>
