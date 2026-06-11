@@ -930,14 +930,16 @@ export default function App({ currentUser, onSignOut }) {
                   style={{ padding:"14px 18px",borderBottom:"1px solid #f8fafc",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
                     <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
-                      background:n.type==="handover"?"#dbeafe":"#f5f3ff",
+                      background:n.type==="handover"?"#dbeafe":n.type==="leave"?"#f0fdf4":"#f5f3ff",
                       display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>
-                      {n.type==="handover"?"📤":"👤"}
+                      {n.type==="handover"?"📤":n.type==="leave"?"📋":"👤"}
                     </div>
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ fontSize:14,fontWeight:n.read?400:700,color:"#0f172a",lineHeight:1.5 }}>
                         {n.type==="handover"
                           ? <>{n.fromName} ส่งงาน <span style={{ color:"#2563eb" }}>"{n.caseTitle}"</span> ให้คุณ</>
+                          : n.type==="leave"
+                          ? <>{n.message||`ใบลาของคุณได้รับการพิจารณาแล้ว`}</>
                           : <>มีผู้ใช้ใหม่: <span style={{ color:"#7c3aed",fontWeight:700 }}>{n.toName}</span></>}
                       </div>
                       {n.note&&<div style={{ fontSize:12,color:"#64748b",marginTop:3,background:"#f8fafc",borderRadius:6,padding:"3px 8px",display:"inline-block" }}>"{n.note}"</div>}
