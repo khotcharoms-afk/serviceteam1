@@ -4,7 +4,7 @@ import { doc, setDoc } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import OnsiteModal from "./OnsiteModal.jsx";
 
-export default function OnsitePage({ onBack, projects, users, currentUser, cases, onSaveOnsite, saving }) {
+export default function OnsitePage({ onBack, projects, users, currentUser, cases, onSaveOnsite, onDeleteOnsite, saving }) {
 
   const [showModal, setShowModal] = useState(false);
 
@@ -17,9 +17,10 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
 
   // แตก onsiteLog[] จากทุก case มารวมกัน พร้อมแนบข้อมูล case ไว้ด้วย
   const records = (cases || []).flatMap(c =>
-    (c.onsiteLog || []).map(entry => ({
+    (c.onsiteLog || []).map((entry, entryIndex) => ({
       ...entry,
-      caseId:     c.id,
+      _caseId:     c.id,
+      _entryIndex: entryIndex,
       caseTitle:  c.title || "",
       projectId:  c.projectId || "",
       site:       c.site || "",
@@ -162,7 +163,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
               <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                 <thead>
                   <tr style={{ background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
-                    {["#","วันที่","โครงการ/ไซต์","เคส","ขอบเขต","พนักงาน","ค่าเดินทาง","ค่าแรง","รวม"].map(h => (
+                    {["#","วันที่","โครงการ/ไซต์","เคส","ขอบเขต","พนักงาน","ค่าเดินทาง","ค่าแรง","รวม",""].map(h => (
                       <th key={h} style={{ padding:"10px 12px", textAlign:"left", fontSize:11,
                         color:"#64748b", fontWeight:700, whiteSpace:"nowrap" }}>{h}</th>
                     ))}
@@ -200,6 +201,13 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
                         <td style={{ padding:"10px 12px", textAlign:"right", whiteSpace:"nowrap",
                           color:"#f97316", fontWeight:700, fontSize:13 }}>
                           {(r.totalCost||0).toLocaleString()}
+                        </td>
+                        <td style={{ padding:"8px 8px" }}>
+                          <button onClick={() => onDeleteOnsite(r._caseId, r._entryIndex)}
+                            style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                              borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit" }}>
+                            🗑
+                          </button>
                         </td>
                       </tr>
                     );
