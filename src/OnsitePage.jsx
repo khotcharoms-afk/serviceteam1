@@ -17,15 +17,26 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
 
   // แตก onsiteLog[] จากทุก case มารวมกัน พร้อมแนบข้อมูล case ไว้ด้วย
   const records = (cases || []).flatMap(c =>
-    (c.onsiteLog || []).map((entry, entryIndex) => ({
-      ...entry,
-      _caseId:     c.id,
-      _entryIndex: entryIndex,
-      caseTitle:  c.title || "",
-      projectId:  c.projectId || "",
-      site:       c.site || "",
-      techs:      c.techs || (c.tech ? [c.tech] : []),
-    }))
+    (c.onsiteLog || []).map((entry, entryIndex) => {
+      const entryTechs = entry.techs || c.techs || (c.tech ? [c.tech] : []);
+      // คำนวณ laborCost ใหม่จาก onsiteRate ปัจจุบัน
+      const laborCost = entryTechs.reduce((sum, name) => {
+        const u = (users || []).find(u => u.name === name);
+        return sum + (u?.onsiteRate || 0);
+      }, 0);
+      const totalCost = (entry.travelCost||0) + (entry.shippingCost||0) + (entry.partsCost||0) + laborCost;
+      return {
+        ...entry,
+        laborCost,
+        totalCost,
+        _caseId:    c.id,
+        _entryIndex: entryIndex,
+        caseTitle:  c.title || "",
+        projectId:  c.projectId || "",
+        site:       c.site || "",
+        techs:      entryTechs,
+      };
+    })
   );
 
   // Filter
