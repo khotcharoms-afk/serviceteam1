@@ -98,18 +98,33 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
 
-        {/* ถ้ามาจากเคส แสดง info bar แทนฟอร์มเลือกโครงการ */}
+        {/* ถ้ามาจากเคส แสดง info bar + checkbox เลือกคน */}
         {isFromCase ? (
-          <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
-            padding:"10px 14px",marginBottom:14 }}>
-            <div style={{ fontSize:12,fontWeight:700,color:"#0f172a" }}>{proj?.name}</div>
-            <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-              {detailCase.site && `📍 ${detailCase.site}  ·  `}{detailCase.date}
+          <>
+            <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
+              padding:"10px 14px",marginBottom:14 }}>
+              <div style={{ fontSize:12,fontWeight:700,color:"#0f172a" }}>{proj?.name}</div>
+              <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
+                {detailCase.site && `📍 ${detailCase.site}  ·  `}{detailCase.date}
+              </div>
             </div>
-            <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-              👤 {techs.join(", ")}
+            <div style={{ marginBottom:14 }}>
+              <label style={labelStyle}>พนักงานที่ไป Onsite *</label>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
+                {approvedUsers.map(u => (
+                  <label key={u.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
+                    background: techs.includes(u.name) ? "#f0fdf4" : "#f8fafc",
+                    border:`1px solid ${techs.includes(u.name) ? "#bbf7d0" : "#e2e8f0"}`,
+                    borderRadius:8,padding:"5px 10px",fontSize:12 }}>
+                    <input type="checkbox" checked={techs.includes(u.name)}
+                      onChange={() => toggleTech(u.name)} style={{ accentColor:"#16a34a" }}/>
+                    {u.name}
+                    {u.onsiteRate ? <span style={{ color:"#16a34a",fontSize:11 }}>({u.onsiteRate.toLocaleString()}฿)</span> : ""}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           <>
             <div style={{ marginBottom:14 }}>
