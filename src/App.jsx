@@ -547,20 +547,10 @@ export default function App({ currentUser, onSignOut }) {
               onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
             <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
             {projects.map(p=>(
-              <div key={p.id} style={{ display:"flex",alignItems:"center",gap:0 }}>
-                <div style={{ flex:1 }}>
-                  <DrawerItem active={view===p.id} color={p.color} icon="◆" label={p.name}
-                    count={cases.filter(c=>c.projectId===p.id).length}
-                    onClick={()=>{ setView(p.id); setMenuOpen(false); setFilterStat("all"); }}/>
-                </div>
-                <div style={{ display:"flex",gap:2,flexShrink:0 }}>
-                  <button onClick={()=>{ openEditProj(p); setMenuOpen(false); }}
-                    style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",padding:"6px",fontSize:13 }}>✎</button>
-                  {currentUser?.role==="admin"&&(
-                    <button onClick={()=>{ setDelProj(p.id); setMenuOpen(false); }}
-                      style={{ background:"none",border:"none",color:"#fca5a5",cursor:"pointer",padding:"6px",fontSize:13 }}>✕</button>
-                  )}
-                </div>
+              <div key={p.id}>
+                <DrawerItem active={view===p.id} color={p.color} icon="◆" label={p.name}
+                  count={cases.filter(c=>c.projectId===p.id).length}
+                  onClick={()=>{ setView(p.id); setMenuOpen(false); setFilterStat("all"); }}/>
               </div>
             ))}
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginTop:6 }}>
@@ -702,9 +692,11 @@ export default function App({ currentUser, onSignOut }) {
                 return (
                   <div key={p.id} onClick={()=>setView(p.id)}
                     style={{ background:"#fff",border:`1.5px solid ${p.color}30`,borderRadius:12,
-                      padding:"14px 16px",cursor:"pointer",flexShrink:0,minWidth:160,
-                      borderLeft:`4px solid ${p.color}`,boxShadow:"0 1px 3px rgba(0,0,0,.04)" }}>
-                    <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:10,lineHeight:1.3 }}>{p.name}</div>
+                      padding:"14px 16px",cursor:"pointer",flexShrink:0,width:160,height:100,
+                      borderLeft:`4px solid ${p.color}`,boxShadow:"0 1px 3px rgba(0,0,0,.04)",
+                      display:"flex",flexDirection:"column",justifyContent:"space-between" }}>
+                    <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",lineHeight:1.3,
+                      overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical" }}>{p.name}</div>
                     <div style={{ display:"flex",gap:12 }}>
                       {[{l:"ทั้งหมด",v:pl.length,c:p.color},{l:"เสร็จ",v:pl.filter(x=>x.status==="done").length,c:"#10b981"}].map(x=>(
                         <div key={x.l}>
