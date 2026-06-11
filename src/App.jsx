@@ -302,6 +302,22 @@ export default function App({ currentUser, onSignOut }) {
     setSaving(false);
   }
 
+  async function deleteOnsite(caseId, entryIndex) {
+    if (!window.confirm("ลบรายการ Onsite นี้?")) return;
+    const existingCase = cases.find(c => c.id === caseId);
+    if (!existingCase) return;
+    const newLog = (existingCase.onsiteLog || []).filter((_, i) => i !== entryIndex);
+    const sumTotal = newLog.reduce((s, e) => s + (e.totalCost||0), 0);
+    try {
+      await setDoc(doc(db,"cases",caseId), {
+        onsiteLog: newLog,
+        totalCost: sumTotal,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+      showToast("ลบรายการ Onsite แล้ว", "success");
+    } catch(e) { console.error(e); showToast("ลบไม่สำเร็จ ลองใหม่"); }
+  }
+
   async function saveHandover(updated){
     if(saving) return;
     setSaving(true);
@@ -428,7 +444,7 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
-  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} cases={cases} onSaveOnsite={saveOnsite} saving={saving}/>;
+  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} cases={cases} onSaveOnsite={saveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
