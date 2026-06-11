@@ -1,14 +1,14 @@
 import { useState } from "react";
 
 const LEAVE_TYPES = [
-  { id:"vacation", label:"ลาพักร้อน" },
+  { id:"vacation", label:"ลาพักผ่อน" },
   { id:"personal", label:"ลากิจ" },
   { id:"sick",     label:"ลาป่วย" },
   { id:"other",    label:"อื่นๆ" },
 ];
 const DAYS_TH = ["จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์","อาทิตย์"];
 
-export default function LeaveModal({ onClose, onSave, saving, currentUser }) {
+export default function LeaveModal({ onClose, onSave, saving, currentUser, users, allLeaves }) {
   const today = new Date().toISOString().slice(0,10);
   const [leaveType, setLeaveType] = useState("vacation");
   const [otherType, setOtherType] = useState("");
@@ -48,6 +48,22 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser }) {
   function handleSave() {
     if (!reason.trim()) { setError("กรุณากรอกเหตุผลการลา"); return; }
     if (!days || isNaN(days) || parseFloat(days) <= 0) { setError("กรุณากรอกจำนวนวัน"); return; }
+
+    // เช็คโควต้า
+    const user = (users||[]).find(u => u.id === (currentUser?.id||currentUser?.uid) || u.name === currentUser?.name);
+    const quota = user?.leaveQuota || {};
+    const quotaDays = parseFloat(quota[leaveType]) || 0;
+    if (quotaDays > 0) {
+      const requestDays = leaveUnit==="hour" ? parseFloat(days)/8 : parseFloat(days);
+      const usedDays = (allLeaves||[])
+        .filter(r => r.createdBy===(currentUser?.id||currentUser?.uid) && r.leaveType===leaveType && r.status==="approved")
+        .reduce((s,r) => s+(r.days||0), 0);
+      const remaining = quotaDays - usedDays;
+      if (requestDays > remaining) {
+        setError(`วันลา${leaveType==="vacation"?"พักผ่อน":leaveType==="personal"?"กิจ":leaveType==="sick"?"ป่วย":"อื่นๆ"}คงเหลือ ${remaining.toFixed(1)} วัน (มีสิทธิ์ ${quotaDays} วัน/ปี)`);
+        return;
+      }
+    }
     setError("");
     onSave({
       leaveType, otherType, workLocation, phone,
