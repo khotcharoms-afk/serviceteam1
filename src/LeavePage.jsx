@@ -238,10 +238,11 @@ export default function LeavePage({ onBack, currentUser, users }) {
     return true;
   });
 
-  // summary
+  // summary — นับเฉพาะ approved เท่านั้น
   const names = [...new Set(records.map(r=>r.name).filter(Boolean))].sort();
+  const approvedRecords = myRecords.filter(r => r.status === "approved");
   const summary = {};
-  filtered.forEach(r => {
+  approvedRecords.forEach(r => {
     if (!summary[r.name]) summary[r.name] = { vacation:0, personal:0, sick:0, other:0 };
     summary[r.name][r.leaveType] = (summary[r.name][r.leaveType]||0) + (r.days||0);
   });
@@ -394,6 +395,8 @@ export default function LeavePage({ onBack, currentUser, users }) {
           onSave={saveLeave}
           saving={saving}
           currentUser={currentUser}
+          users={users}
+          allLeaves={records}
         />
       )}
     </div>
