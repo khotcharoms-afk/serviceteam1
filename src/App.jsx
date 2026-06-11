@@ -268,23 +268,31 @@ export default function App({ currentUser, onSignOut }) {
     setSaving(true);
     try {
       if (data.caseId) {
-        await setDoc(doc(db,"cases",data.caseId), {
-          onsiteScope:  data.scope,
-          onsiteDetail: data.detail,
-          onsiteDate:   data.date,
+        // หา case ปัจจุบันเพื่อดึง onsiteLog[] เดิม
+        const existingCase = cases.find(c => c.id === data.caseId);
+        const prevLog = existingCase?.onsiteLog || [];
+        const entry = {
+          date:         data.date,
+          scope:        data.scope,
+          detail:       data.detail,
           km:           data.km,
           travelCost:   data.travelCost,
           shippingCost: data.shippingCost,
           partsCost:    data.partsCost,
           laborCost:    data.laborCost,
           totalCost:    data.totalCost,
-          updatedAt:    new Date().toISOString(),
+          by:           data.createdBy || "",
+          createdAt:    new Date().toISOString(),
+        };
+        const newLog = [...prevLog, entry];
+        // คำนวณ totalCost รวมทุกครั้ง
+        const sumTotal = newLog.reduce((s, e) => s + (e.totalCost||0), 0);
+        await setDoc(doc(db,"cases",data.caseId), {
+          onsiteLog:  newLog,
+          totalCost:  sumTotal,
+          updatedAt:  new Date().toISOString(),
         }, { merge: true });
-        setDetailCase(prev => prev ? { ...prev,
-          onsiteScope: data.scope, onsiteDetail: data.detail, onsiteDate: data.date,
-          km: data.km, travelCost: data.travelCost, shippingCost: data.shippingCost,
-          partsCost: data.partsCost, laborCost: data.laborCost, totalCost: data.totalCost,
-        } : prev);
+        setDetailCase(prev => prev ? { ...prev, onsiteLog: newLog, totalCost: sumTotal } : prev);
       } else {
         await addDoc(collection(db,"onsiteLog"), data);
       }
