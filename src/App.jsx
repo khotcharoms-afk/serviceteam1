@@ -766,7 +766,8 @@ export default function App({ currentUser, onSignOut }) {
                   onEdit={()=>openEditCase(c)}
                   onUpdate={()=>setUpdateCase(c)}
                   onHandover={()=>setHandoverCase(c)}
-                  onDel={()=>setDelCase(c.id)}/>
+                  onDel={()=>setDelCase(c.id)}
+                  onOnsite={()=>{ setDetailCase(c); }}/>
               );
             })}
             {totalPages > 1 && (
