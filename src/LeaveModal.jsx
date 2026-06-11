@@ -51,16 +51,21 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
 
     // เช็คโควต้า
     const user = (users||[]).find(u => u.id === (currentUser?.id||currentUser?.uid) || u.name === currentUser?.name);
-    const quota = user?.leaveQuota || {};
-    const quotaDays = parseFloat(quota[leaveType]) || 0;
-    if (quotaDays > 0) {
+    const quota = user?.leaveQuota;
+    const typeLabel = leaveType==="vacation"?"พักผ่อน":leaveType==="personal"?"กิจ":leaveType==="sick"?"ป่วย":"อื่นๆ";
+    if (quota && quota[leaveType] !== undefined) {
+      const quotaDays = parseFloat(quota[leaveType]) || 0;
       const requestDays = leaveUnit==="hour" ? parseFloat(days)/8 : parseFloat(days);
       const usedDays = (allLeaves||[])
         .filter(r => r.createdBy===(currentUser?.id||currentUser?.uid) && r.leaveType===leaveType && r.status==="approved")
         .reduce((s,r) => s+(r.days||0), 0);
       const remaining = quotaDays - usedDays;
       if (requestDays > remaining) {
-        setError(`วันลา${leaveType==="vacation"?"พักผ่อน":leaveType==="personal"?"กิจ":leaveType==="sick"?"ป่วย":"อื่นๆ"}คงเหลือ ${remaining.toFixed(1)} วัน (มีสิทธิ์ ${quotaDays} วัน/ปี)`);
+        if (remaining <= 0) {
+          setError(`ไม่มีสิทธิ์ลา${typeLabel} (ได้รับ ${quotaDays} วัน/ปี, ใช้ไปแล้ว ${usedDays.toFixed(1)} วัน)`);
+        } else {
+          setError(`วันลา${typeLabel}คงเหลือ ${remaining.toFixed(1)} วัน ไม่เพียงพอ (มีสิทธิ์ ${quotaDays} วัน/ปี)`);
+        }
         return;
       }
     }
