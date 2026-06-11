@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
 import HandoverModal from "./HandoverModal.jsx";
+import OnsiteModal from "./OnsiteModal.jsx";
 import UpdateLogModal from "./UpdateLogModal.jsx";
 import AdminUsers from "./AdminUsers.jsx";
 import { useFirestore } from "./hooks/useFirestore.js";
@@ -39,6 +40,7 @@ export default function App({ currentUser, onSignOut }) {
   const [detailCase,setDetailCase]     = useState(null);
   const [delCase,setDelCase]           = useState(null);
   const [handoverCase,setHandoverCase] = useState(null);
+  const [onsiteCase,setOnsiteCase]     = useState(null);
   const [updateCase,setUpdateCase]     = useState(null);
   const [projModal,setProjModal]       = useState(false);
   const [importModal,setImportModal]   = useState(false);
@@ -767,7 +769,7 @@ export default function App({ currentUser, onSignOut }) {
                   onUpdate={()=>setUpdateCase(c)}
                   onHandover={()=>setHandoverCase(c)}
                   onDel={()=>setDelCase(c.id)}
-                  onOnsite={()=>{ setDetailCase(c); }}/>
+                  onOnsite={()=>setOnsiteCase(c)}/>
               );
             })}
             {totalPages > 1 && (
@@ -973,6 +975,17 @@ export default function App({ currentUser, onSignOut }) {
 
       <UpdateLogModal open={!!updateCase} onClose={()=>setUpdateCase(null)}
         caseData={updateCase} onSave={saveUpdate} currentUser={currentUser}/>
+      {onsiteCase && (
+        <OnsiteModal
+          detailCase={onsiteCase}
+          proj={projects.find(p => p.id === onsiteCase.projectId)}
+          users={users}
+          currentUser={currentUser}
+          onClose={()=>setOnsiteCase(null)}
+          onSave={(data)=>{ saveOnsite({ ...data, caseId: onsiteCase.id }); setOnsiteCase(null); }}
+          saving={saving}
+        />
+      )}
       <HandoverModal open={!!handoverCase} onClose={()=>setHandoverCase(null)}
         caseData={handoverCase} onSave={saveHandover} users={users} currentUser={currentUser}/>
 
