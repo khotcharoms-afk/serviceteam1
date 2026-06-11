@@ -3,7 +3,7 @@ import { db } from "./firebase";
 import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, setDoc, doc } from "firebase/firestore";
 import LeaveModal from "./LeaveModal.jsx";
 
-const LEAVE_LABEL = { vacation:"ลาพักผ่อน", personal:"ลากิจ", sick:"ลาป่วย", other:"อื่นๆ" };
+const LEAVE_LABEL = { vacation:"ลาพักร้อน", personal:"ลากิจ", sick:"ลาป่วย", other:"อื่นๆ" };
 const STATUS_STYLE = {
   pending:  { bg:"#fef9c3", color:"#854d0e", label:"รออนุมัติ" },
   approved: { bg:"#f0fdf4", color:"#15803d", label:"อนุมัติแล้ว" },
@@ -125,7 +125,7 @@ ${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoDat
     <th colspan="5">นับเป็นวันลา</th>
     <th rowspan="2">ไม่นับวันลา<br/>ลาพิเศษ 1</th>
   </tr>
-  <tr><th>ลาพักผ่อน</th><th>ลากิจ</th><th>ลาป่วย</th><th>ลาพิเศษ</th><th>อื่นๆ</th></tr>
+  <tr><th>ลาพักร้อน</th><th>ลากิจ</th><th>ลาป่วย</th><th>ลาพิเศษ</th><th>อื่นๆ</th></tr>
   <tr><td>ลามาแล้ว</td>
     <td>${prevSum.vacation||""}</td>
     <td>${prevSum.personal||""}</td>
@@ -282,7 +282,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
               <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                 <thead>
                   <tr style={{ background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
-                    {["ชื่อ","ลาพักผ่อน","ลากิจ","ลาป่วย","อื่นๆ"].map(h=>(
+                    {["ชื่อ","ลาพักร้อน","ลากิจ","ลาป่วย","อื่นๆ"].map(h=>(
                       <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:11,
                         color:"#64748b", fontWeight:700 }}>{h}</th>
                     ))}
