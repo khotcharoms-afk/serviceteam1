@@ -298,7 +298,7 @@ export default function LeavePage({ onBack, currentUser }) {
                         fontFamily:"inherit", fontWeight:600 }}>
                       🖨 Export PDF
                     </button>
-                    {isAdmin && r.status === "pending" && (<>
+                    {isAdmin && r.status === "pending" && r.createdBy !== currentUser?.uid && (<>
                       <button onClick={()=>updateStatus(r.id,"approved")}
                         style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#15803d",
                           borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
