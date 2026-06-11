@@ -22,12 +22,27 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser }) {
   const [offDays, setOffDays] = useState([]);
   const [reason, setReason] = useState("");
   const [days, setDays] = useState("");
+  const [leaveUnit, setLeaveUnit] = useState("day");
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [error, setError] = useState("");
 
+  function calcWorkDays(from, to, offList) {
+    if (!from || !to) return "";
+    const start = new Date(from), end = new Date(to);
+    if (end < start) return "";
+    const m = {"จันทร์":1,"อังคาร":2,"พุธ":3,"พฤหัส":4,"ศุกร์":5,"เสาร์":6,"อาทิตย์":0};
+    const off = new Set(offList.map(d=>m[d]));
+    let n=0, cur=new Date(start);
+    while(cur<=end){ if(!off.has(cur.getDay()))n++; cur.setDate(cur.getDate()+1); }
+    return n;
+  }
   function toggleDay(d) {
-    setOffDays(prev => prev.includes(d) ? prev.filter(x=>x!==d) : [...prev, d]);
+    setOffDays(prev => {
+      const next = prev.includes(d) ? prev.filter(x=>x!==d) : [...prev,d];
+      if(leaveUnit==="day"){ const c=calcWorkDays(dateFrom,dateTo,next); if(c!=="")setDays(String(c)); }
+      return next;
+    });
   }
 
   function handleSave() {
@@ -37,7 +52,10 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser }) {
     onSave({
       leaveType, otherType, workLocation, phone,
       manager, department, empLevel, position, empId,
-      offDays, reason, days: parseFloat(days),
+      offDays, reason,
+      days: leaveUnit==="hour" ? parseFloat(days)/8 : parseFloat(days),
+      hours: leaveUnit==="hour" ? parseFloat(days) : parseFloat(days)*8,
+      leaveUnit, displayAmount: parseFloat(days),
       dateFrom, dateTo,
       name: currentUser?.name || "",
       status: "pending",
@@ -155,21 +173,42 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser }) {
             placeholder="ระบุเหตุผลการลา"/>
         </div>
 
-        {/* จำนวนวัน + วันที่ */}
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16 }}>
-          <div>
-            <label style={LB}>จำนวนวัน *</label>
-            <input type="number" min="0.5" step="0.5" style={IS()} value={days}
-              onChange={e=>{ setDays(e.target.value); setError(""); }}/>
-          </div>
+        {/* วันที่ */}
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12 }}>
           <div>
             <label style={LB}>ตั้งแต่วันที่</label>
-            <input type="date" style={IS()} value={dateFrom} onChange={e=>setDateFrom(e.target.value)}/>
+            <input type="date" style={IS()} value={dateFrom} onChange={e=>{
+              setDateFrom(e.target.value);
+              if(leaveUnit==="day"){const c=calcWorkDays(e.target.value,dateTo,offDays);if(c!=="")setDays(String(c));}
+            }}/>
           </div>
           <div>
             <label style={LB}>ถึงวันที่</label>
-            <input type="date" style={IS()} value={dateTo} onChange={e=>setDateTo(e.target.value)}/>
+            <input type="date" style={IS()} value={dateTo} onChange={e=>{
+              setDateTo(e.target.value);
+              if(leaveUnit==="day"){const c=calcWorkDays(dateFrom,e.target.value,offDays);if(c!=="")setDays(String(c));}
+            }}/>
           </div>
+        </div>
+        {/* จำนวน + toggle วัน/ชม. */}
+        <div style={{ marginBottom:16 }}>
+          <label style={LB}>จำนวน *</label>
+          <div style={{ display:"flex",gap:6 }}>
+            <div style={{ display:"flex",border:"1px solid #e2e8f0",borderRadius:8,overflow:"hidden",flexShrink:0 }}>
+              {[{v:"day",l:"วัน"},{v:"hour",l:"ชม."}].map(u=>(
+                <button key={u.v} type="button" onClick={()=>{setLeaveUnit(u.v);setDays("");}}
+                  style={{ padding:"8px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,
+                    border:"none",background:leaveUnit===u.v?"#2563eb":"#f8fafc",
+                    color:leaveUnit===u.v?"#fff":"#64748b" }}>{u.l}</button>
+              ))}
+            </div>
+            <input type="number" min="0" step={leaveUnit==="day"?0.5:1}
+              style={IS({flex:1})} value={days}
+              placeholder={leaveUnit==="day"?"คำนวณอัตโนมัติ":"จำนวน ชม."}
+              onChange={e=>{setDays(e.target.value);setError("");}}/>
+          </div>
+          {leaveUnit==="hour"&&days&&<div style={{fontSize:11,color:"#2563eb",marginTop:4}}>= {(parseFloat(days)/8).toFixed(2)} วัน (8 ชม./วัน)</div>}
+          {leaveUnit==="day"&&days&&<div style={{fontSize:11,color:"#2563eb",marginTop:4}}>= {parseFloat(days)*8} ชม.</div>}
         </div>
 
         {error && <div style={{ color:"#ef4444",fontSize:12,marginBottom:12,fontWeight:500 }}>⚠ {error}</div>}
