@@ -104,9 +104,11 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
               padding:"10px 14px",marginBottom:14 }}>
               <div style={{ fontSize:12,fontWeight:700,color:"#0f172a" }}>{proj?.name}</div>
-              <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-                {detailCase.site && `📍 ${detailCase.site}  ·  `}{detailCase.date}
-              </div>
+              {detailCase.site && <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>📍 {detailCase.site}</div>}
+            </div>
+            <div style={{ marginBottom:14 }}>
+              <label style={labelStyle}>วันที่ Onsite</label>
+              <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={inputStyle}/>
             </div>
             <div style={{ marginBottom:14 }}>
               <label style={labelStyle}>พนักงานที่ไป Onsite *</label>
