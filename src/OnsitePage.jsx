@@ -15,18 +15,27 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
   const [dateFrom, setDateFrom]       = useState("");
   const [dateTo, setDateTo]           = useState("");
 
-  // ดึงเฉพาะเคสที่มี totalCost > 0
-  const records = (cases || []).filter(c => (c.totalCost || 0) > 0);
+  // แตก onsiteLog[] จากทุก case มารวมกัน พร้อมแนบข้อมูล case ไว้ด้วย
+  const records = (cases || []).flatMap(c =>
+    (c.onsiteLog || []).map(entry => ({
+      ...entry,
+      caseId:     c.id,
+      caseTitle:  c.title || "",
+      projectId:  c.projectId || "",
+      site:       c.site || "",
+      techs:      c.techs || (c.tech ? [c.tech] : []),
+    }))
+  );
 
-  // Filter logic
+  // Filter
   const filtered = records.filter(r => {
     if (filterProj !== "all" && r.projectId !== filterProj) return false;
     if (filterTech !== "all" && !(r.techs||[]).includes(filterTech)) return false;
-    if (filterScope !== "all" && r.onsiteScope !== filterScope) return false;
-    if (dateFrom && r.onsiteDate < dateFrom) return false;
-    if (dateTo && r.onsiteDate > dateTo) return false;
+    if (filterScope !== "all" && r.scope !== filterScope) return false;
+    if (dateFrom && r.date < dateFrom) return false;
+    if (dateTo && r.date > dateTo) return false;
     return true;
-  }).sort((a, b) => (b.onsiteDate||b.updatedAt||"").localeCompare(a.onsiteDate||a.updatedAt||""));
+  }).sort((a,b) => (b.date||"").localeCompare(a.date||""));
 
   // Summary
   const totalLabor  = filtered.reduce((s,r) => s + (r.laborCost||0), 0);
@@ -34,7 +43,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
   const totalAll    = filtered.reduce((s,r) => s + (r.totalCost||0), 0);
 
   const techNames = [...new Set(records.flatMap(r => r.techs||[]))].sort();
-  const scopes    = [...new Set(records.map(r => r.onsiteScope).filter(Boolean))].sort();
+  const scopes    = [...new Set(records.map(r => r.scope).filter(Boolean))].sort();
 
   async function handleSave(data) {
     await onSaveOnsite(data);
@@ -46,13 +55,12 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
       const proj = projects.find(p => p.id === r.projectId);
       return {
         "ลำดับ":          i+1,
-        "วันที่ Onsite":   r.onsiteDate||"",
-        "เลขเคส":         r.caseNo||r.id||"",
-        "ชื่อเคส":         r.title||"",
-        "โครงการ":        proj?.name||r.projectId||"",
+        "วันที่ Onsite":   r.date||"",
+        "ชื่อเคส":         r.caseTitle||"",
+        "โครงการ":         proj?.name||r.projectId||"",
         "ไซต์งาน":        r.site||"",
-        "ขอบเขต":         r.onsiteScope||"",
-        "รายละเอียด":     r.onsiteDetail||"",
+        "ขอบเขต":         r.scope||"",
+        "รายละเอียด":     r.detail||"",
         "พนักงาน":        (r.techs||[]).join(", "),
         "ระยะทาง (กม.)":  r.km||0,
         "ค่าเดินทาง":     r.travelCost||0,
@@ -63,7 +71,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
       };
     });
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [5,12,12,24,16,14,14,24,20,10,12,10,10,10,12].map(w=>({wch:w}));
+    ws["!cols"] = [5,12,24,16,14,14,24,20,10,12,10,10,10,12].map(w=>({wch:w}));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Onsite");
     const now = new Date();
@@ -101,9 +109,9 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
         {/* Summary cards */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:16 }}>
           {[
-            { label:"เคส Onsite", val:filtered.length, color:"#2563eb", unit:"ครั้ง" },
-            { label:"ค่าแรงรวม", val:totalLabor.toLocaleString(), color:"#16a34a", unit:"บาท" },
-            { label:"รวมทั้งสิ้น", val:totalAll.toLocaleString(), color:"#f97316", unit:"บาท" },
+            { label:"ครั้ง Onsite", val:filtered.length, color:"#2563eb", unit:"ครั้ง" },
+            { label:"ค่าแรงรวม",    val:totalLabor.toLocaleString(), color:"#16a34a", unit:"บาท" },
+            { label:"รวมทั้งสิ้น",  val:totalAll.toLocaleString(), color:"#f97316", unit:"บาท" },
           ].map(c => (
             <div key={c.label} style={{ background:"#fff", borderRadius:12, padding:"14px 16px",
               border:`1px solid ${c.color}20`, boxShadow:"0 1px 3px rgba(0,0,0,.05)" }}>
@@ -146,7 +154,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
         {/* Table */}
         {filtered.length === 0 ? (
           <div style={{ textAlign:"center", color:"#cbd5e1", padding:48, fontSize:14 }}>
-            ยังไม่มีข้อมูล Onsite (เคสที่บันทึกค่าใช้จ่ายจะแสดงที่นี่)
+            ยังไม่มีข้อมูล Onsite
           </div>
         ) : (
           <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0", overflow:"hidden" }}>
@@ -164,21 +172,21 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
                   {filtered.map((r,i) => {
                     const proj = projects.find(p => p.id === r.projectId);
                     return (
-                      <tr key={r.id} style={{ borderBottom:"1px solid #f1f5f9",
+                      <tr key={i} style={{ borderBottom:"1px solid #f1f5f9",
                         background: i%2===0 ? "#fff" : "#fafafa" }}>
                         <td style={{ padding:"10px 12px", color:"#94a3b8", fontWeight:600 }}>{i+1}</td>
-                        <td style={{ padding:"10px 12px", whiteSpace:"nowrap", color:"#475569" }}>{r.onsiteDate||"-"}</td>
+                        <td style={{ padding:"10px 12px", whiteSpace:"nowrap", color:"#475569" }}>{r.date||"-"}</td>
                         <td style={{ padding:"10px 12px" }}>
-                          <div style={{ fontWeight:600, color:"#0f172a", fontSize:12 }}>{proj?.name||r.projectId}</div>
+                          <div style={{ fontWeight:600, color:"#0f172a" }}>{proj?.name||r.projectId}</div>
                           {r.site && <div style={{ fontSize:11, color:"#64748b" }}>📍 {r.site}</div>}
                         </td>
                         <td style={{ padding:"10px 12px", maxWidth:160,
                           overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", color:"#0f172a" }}>
-                          {r.title||"-"}
+                          {r.caseTitle||"-"}
                         </td>
                         <td style={{ padding:"10px 12px", whiteSpace:"nowrap" }}>
                           <span style={{ background:"#f1f5f9", color:"#475569", borderRadius:6,
-                            padding:"2px 8px", fontSize:11, fontWeight:600 }}>{r.onsiteScope||"-"}</span>
+                            padding:"2px 8px", fontSize:11, fontWeight:600 }}>{r.scope||"-"}</span>
                         </td>
                         <td style={{ padding:"10px 12px", color:"#475569" }}>
                           {(r.techs||[]).join(", ")}
@@ -218,18 +226,6 @@ export default function OnsitePage({ onBack, projects, users, currentUser, cases
           </div>
         )}
       </div>
-
-      {/* Modal */}
-      {showModal && (
-        <OnsiteModal
-          onClose={() => setShowModal(false)}
-          onSave={handleSave}
-          saving={saving}
-          projects={projects}
-          users={users}
-          currentUser={currentUser}
-        />
-      )}
     </div>
   );
 }
