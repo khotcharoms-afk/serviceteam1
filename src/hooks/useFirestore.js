@@ -21,11 +21,11 @@ export function useFirestore() {
     const u2 = onSnapshot(collection(db,"cases"), snap => {
       setCases(snap.docs.map(d => ({ id:d.id, ...d.data() })));
     }, errHandler);
-    const u3 = onSnapshot(collection(db,"users"), snap => {
+    getDocs(collection(db,"users")).then(snap => {
       setUsers(snap.docs.map(d => ({ id:d.id, ...d.data() })));
-    }, errHandler);
+    }).catch(errHandler);
     const uid = auth.currentUser?.uid;
-    const u4 = onSnapshot(query(collection(db,"notifications"),where("toUid","==",uid)), snap => {
+    const u4 = onSnapshot(query(collection(db,"notifications"),where("toUid","==",uid),where("read","==",false)), snap => {
       const all = snap.docs.map(d => ({ id:d.id, ...d.data() }))
         .sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
       setNotifs(all);
@@ -61,8 +61,14 @@ export function useFirestore() {
       setShiftMembers(snap.docs.map(d=>({id:d.id,...d.data()})));
     }).catch(errHandler);
 
-    return () => { u2(); u3(); u4(); };
+    return () => { u2(); u4(); };
   }, []);
+
+  function refreshUsers() {
+    getDocs(collection(db,"users")).then(snap => {
+      setUsers(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }).catch(e => console.error(e));
+  }
 
   function refreshProjects() {
     getDocs(collection(db,"projects")).then(snap => {
@@ -95,5 +101,5 @@ export function useFirestore() {
     }).catch(e => console.error(e));
   }
 
-  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers };
+  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers, refreshUsers };
 }
