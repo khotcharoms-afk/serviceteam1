@@ -628,13 +628,15 @@ export default function App({ currentUser, onSignOut }) {
             <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
               onClick={()=>{ setLeavePage(true); setMenuOpen(false); }}/>
             <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
-            {projects.map(p=>(
-              <div key={p.id}>
-                <DrawerItem active={view===p.id} color={p.color} icon="◆" label={p.name}
-                  count={cases.filter(c=>c.projectId===p.id).length}
-                  onClick={()=>{ setView(p.id); setMenuOpen(false); setFilterStat("all"); }}/>
-              </div>
-            ))}
+            <div style={{ overflowY:"auto",maxHeight:320,marginRight:-8,paddingRight:8 }}>
+              {projects.map(p=>(
+                <div key={p.id}>
+                  <DrawerItem active={view===p.id} color={p.color} icon="◆" label={p.name}
+                    count={cases.filter(c=>c.projectId===p.id).length}
+                    onClick={()=>{ setView(p.id); setMenuOpen(false); setFilterStat("all"); }}/>
+                </div>
+              ))}
+            </div>
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginTop:6 }}>
               <button onClick={()=>{ openAddProj(); setMenuOpen(false); }}
                 style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
