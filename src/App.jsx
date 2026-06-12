@@ -672,17 +672,26 @@ export default function App({ currentUser, onSignOut }) {
             style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" }}/>
           <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
             {[
-              { label:"วันนี้",    fn:()=>{ const t=today(); setDateFrom(t); setDateTo(t); }},
-              { label:"7 วัน",    fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-6); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); }},
-              { label:"30 วัน",   fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-29); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); }},
-              { label:"เดือนนี้", fn:()=>{ const n=new Date(); setDateFrom(n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"); setDateTo(today()); }},
-            ].map(p=>(
-              <button key={p.label} onClick={p.fn}
-                style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",color:"#475569",
-                  borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
-                {p.label}
-              </button>
-            ))}
+              { label:"วันนี้",    fn:()=>{ const t=today(); setDateFrom(t); setDateTo(t); },
+                active:()=>{ const t=today(); return dateFrom===t&&dateTo===t; }},
+              { label:"7 วัน",    fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-6); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); },
+                active:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-6); return dateFrom===f.toISOString().slice(0,10)&&dateTo===t; }},
+              { label:"30 วัน",   fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-29); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); },
+                active:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-29); return dateFrom===f.toISOString().slice(0,10)&&dateTo===t; }},
+              { label:"เดือนนี้", fn:()=>{ const n=new Date(); setDateFrom(n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"); setDateTo(today()); },
+                active:()=>{ const n=new Date(); return dateFrom===n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"&&dateTo===today(); }},
+            ].map(p=>{
+              const isActive = p.active();
+              return (
+                <button key={p.label} onClick={p.fn}
+                  style={{ background:isActive?"#2563eb":"#f1f5f9",
+                    border:`1px solid ${isActive?"#2563eb":"#e2e8f0"}`,
+                    color:isActive?"#fff":"#475569",
+                    borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
+                  {p.label}
+                </button>
+              );
+            })}
             {(dateFrom||dateTo)&&(
               <button onClick={()=>{ setDateFrom(""); setDateTo(""); }}
                 style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
