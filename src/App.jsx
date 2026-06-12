@@ -57,6 +57,10 @@ export default function App({ currentUser, onSignOut }) {
   const [newProjWarranty,setNewProjWarranty] = useState("");
   const [newProjLease,setNewProjLease]       = useState("");
   const [newProjHirePurchase,setNewProjHirePurchase] = useState("");
+  const [newProjCustomer,setNewProjCustomer]         = useState("");
+  const [newProjContractType,setNewProjContractType] = useState("");
+  const [newProjContractStart,setNewProjContractStart] = useState("");
+  const [newProjProjectStatus,setNewProjProjectStatus] = useState("");
   const [newProjSites,setNewProjSites]       = useState([]);
 
   const [toast,setToast]   = useState(null);
@@ -365,14 +369,37 @@ export default function App({ currentUser, onSignOut }) {
       const wb = XLSX.read(evt.target.result, { type:"binary" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
-      // map columns: Project ID, Ref. Code, Project Full Name, Status
-      const mapped = rows.map((r,i) => ({
-        key: i,
-        code: String(r["Project ID"]||"").trim(),
-        name: String(r["Ref. Code"]||r["Project Full Name"]||"").trim(),
-        fullName: String(r["Project Full Name"]||"").trim(),
-        status: String(r["Status"]||"").trim(),
-      })).filter(r => r.name);
+      // map columns from PMA file
+      const fmtDate = v => {
+        if (!v) return null;
+        if (typeof v === "number") {
+          const d = new Date((v - 25569) * 86400000);
+          return d.toISOString().slice(0,10);
+        }
+        const s = String(v).trim();
+        if (s.match(/^\d{4}-\d{2}-\d{2}/)) return s.slice(0,10);
+        return null;
+      };
+      const mapped = rows.map((r,i) => {
+        // รองรับทั้งไฟล์ MA (ภาษาไทย) และไฟล์ NetSuite (ภาษาอังกฤษ)
+        const isPMA = !!r["ชื่อโครงการ"];
+        const contractRaw = String(r["ระบบขายขาด/เช่า"]||"").trim();
+        const contractType = contractRaw.includes("เช่่า")||contractRaw.includes("เช่า") ? "เช่า"
+          : contractRaw.includes("ขายขาด") ? "ขายขาด" : contractRaw||"";
+        const warrantyEnd  = fmtDate(r["วันสิ้นสุดระยะประกันของโครงการ"]);
+        const contractStart= fmtDate(r["วันเริ่มต้นระยะประกันของโครงการ"]);
+        return {
+          key: i,
+          code:          String(isPMA ? (r["เลขที่โครงการ"]||"") : (r["Project ID"]||"")).trim(),
+          name:          String(isPMA ? (r["ชื่อโครงการ"]||"") : (r["Project Full Name"]||r["Ref. Code"]||"")).trim(),
+          customer:      String(isPMA ? (r["ลูกค้า"]||"") : "").trim(),
+          contractType,
+          contractStart,
+          warrantyEnd,
+          leaseEnd:      contractType==="เช่า" ? warrantyEnd : null,
+          projectStatus: String(r["สถานะของโครงการ"]||"").trim(),
+        };
+      }).filter(r => r.name);
       setImportRows(mapped);
       const sel = {};
       mapped.forEach(r => { sel[r.key] = true; });
@@ -393,7 +420,14 @@ export default function App({ currentUser, onSignOut }) {
       const color = COLOR_OPTS[i % COLOR_OPTS.length];
       batch.set(doc(db,"projects",pid), {
         code: r.code, name: r.name, color,
-        warrantyEnd: null, leaseEnd: null, sites: [],
+        customer: r.customer||null,
+        contractType: r.contractType||null,
+        contractStart: r.contractStart||null,
+        warrantyEnd: r.warrantyEnd||null,
+        leaseEnd: r.leaseEnd||null,
+        hirePurchaseEnd: null,
+        projectStatus: r.projectStatus||null,
+        sites: [],
       });
     });
     const ok = await commitWrite(batch.commit(), `Import ${toImport.length} โครงการแล้ว`);
@@ -402,7 +436,7 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjCustomer(p.customer||""); setNewProjContractType(p.contractType||""); setNewProjContractStart(p.contractStart||""); setNewProjProjectStatus(p.projectStatus||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name||saving) return;
     setSaving(true);
@@ -410,9 +444,13 @@ export default function App({ currentUser, onSignOut }) {
     const warrantyEnd     = newProjWarranty||null;
     const leaseEnd        = newProjLease||null;
     const hirePurchaseEnd = newProjHirePurchase||null;
+    const customer      = newProjCustomer.trim()||null;
+    const contractType  = newProjContractType||null;
+    const contractStart = newProjContractStart||null;
+    const projectStatus = newProjProjectStatus||null;
     const batch = writeBatch(db);
     const code = newProjCode.trim();
-    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, sites:newProjSites });
+    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, customer, contractType, contractStart, projectStatus, sites:newProjSites });
     if(editProjId){
       cases.filter(c=>c.projectId===editProjId).forEach(c=>{
         batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd, hirePurchaseEnd },{ merge:true });
@@ -883,7 +921,15 @@ export default function App({ currentUser, onSignOut }) {
                     style={{ marginTop:2,accentColor:"#16a34a",flexShrink:0 }}/>
                   <div>
                     <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{r.name}</div>
-                    {r.code && <div style={{ fontSize:11,color:"#64748b" }}>{r.code}</div>}
+                    <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginTop:2 }}>
+                      {r.code && <span style={{ fontSize:11,color:"#64748b" }}>{r.code}</span>}
+                      {r.customer && <span style={{ fontSize:11,color:"#475569" }}>👤 {r.customer}</span>}
+                      {r.contractType && <span style={{ fontSize:11,
+                        color:r.contractType==="เช่า"?"#8b5cf6":r.contractType==="ขายขาด"?"#16a34a":"#0891b2",
+                        fontWeight:600 }}>{r.contractType}</span>}
+                      {r.warrantyEnd && <span style={{ fontSize:11,color:"#64748b" }}>🛡 {r.warrantyEnd}</span>}
+                      {r.projectStatus && <span style={{ fontSize:11,color:"#64748b" }}>{r.projectStatus}</span>}
+                    </div>
                   </div>
                 </label>
               ))}
@@ -912,6 +958,10 @@ export default function App({ currentUser, onSignOut }) {
         newProjWarranty={newProjWarranty} setNewProjWarranty={setNewProjWarranty}
         newProjLease={newProjLease} setNewProjLease={setNewProjLease}
         newProjHirePurchase={newProjHirePurchase} setNewProjHirePurchase={setNewProjHirePurchase}
+        newProjCustomer={newProjCustomer} setNewProjCustomer={setNewProjCustomer}
+        newProjContractType={newProjContractType} setNewProjContractType={setNewProjContractType}
+        newProjContractStart={newProjContractStart} setNewProjContractStart={setNewProjContractStart}
+        newProjProjectStatus={newProjProjectStatus} setNewProjProjectStatus={setNewProjProjectStatus}
         newProjSites={newProjSites} setNewProjSites={setNewProjSites}
         saving={saving} onSubmit={submitProj}/>
 
