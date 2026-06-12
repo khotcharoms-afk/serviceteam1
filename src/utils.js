@@ -18,7 +18,10 @@ export const SERVICE_TYPES = [
   "Config / Setup","อัปเกรด","เดินสาย","ทดสอบระบบ","อบรม","อื่นๆ",
 ];
 
-export const COLOR_OPTS = ["#3b82f6","#8b5cf6","#10b981","#f97316","#ec4899","#f59e0b"];
+export const COLOR_OPTS = [
+  "#3b82f6","#8b5cf6","#10b981","#f97316","#ec4899","#f59e0b",
+  "#ef4444","#06b6d4","#84cc16","#f43f5e","#a855f7","#14b8a6",
+];
 
 // ── Helpers ───────────────────────────────────────────────────
 export const today = () => new Date().toISOString().slice(0, 10);
