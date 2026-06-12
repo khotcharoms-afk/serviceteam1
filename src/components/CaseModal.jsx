@@ -7,6 +7,8 @@ export default function CaseModal({
   projects, users, currentUser, saving, onSubmit
 }) {
   const [errors, setErrors] = useState({});
+  const [projSearch, setProjSearch] = useState("");
+  const [projDropdown, setProjDropdown] = useState(false);
 
   function validate() {
     const e = {};
@@ -33,11 +35,63 @@ export default function CaseModal({
   return (
     <Modal open={open} onClose={handleClose} title={editCase ? "แก้ไขเคส" : "บันทึกเคสใหม่"}>
       <Field label="โครงการ *">
-        <select style={IS({ cursor:"pointer" })} value={caseForm.projectId}
-          onChange={e => setCaseForm(f => ({ ...f, projectId:e.target.value }))}>
-          <option value="">— เลือกโครงการ —</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        {(()=>{
+          const selProj = projects.find(p=>p.id===caseForm.projectId);
+          const filteredProjs = projects.filter(p=>
+            !projSearch || p.name?.toLowerCase().includes(projSearch.toLowerCase()) ||
+            p.code?.toLowerCase().includes(projSearch.toLowerCase())
+          );
+          return (
+            <div style={{ position:"relative" }}>
+              <div style={{ display:"flex",alignItems:"center",
+                border:`1px solid ${errors.projectId?"#ef4444":"#e2e8f0"}`,
+                borderRadius:8,background:"#f8fafc",overflow:"hidden" }}>
+                <input
+                  style={{ flex:1,border:"none",background:"transparent",padding:"9px 12px",
+                    fontSize:14,fontFamily:"inherit",outline:"none",color:"#1e293b" }}
+                  placeholder="ค้นหาโครงการ..."
+                  value={projDropdown ? projSearch : (selProj?.name||"")}
+                  onFocus={()=>{ setProjDropdown(true); setProjSearch(""); }}
+                  onChange={e=>{ setProjSearch(e.target.value); setProjDropdown(true); }}
+                />
+                {selProj && !projDropdown && (
+                  <button type="button" onClick={()=>{ setCaseForm(f=>({...f,projectId:""})); setProjSearch(""); }}
+                    style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",
+                      padding:"0 10px",fontSize:14 }}>✕</button>
+                )}
+              </div>
+              {projDropdown && (
+                <div style={{ position:"absolute",top:"100%",left:0,right:0,zIndex:100,
+                  background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
+                  boxShadow:"0 8px 24px rgba(0,0,0,.12)",maxHeight:220,overflowY:"auto",marginTop:4 }}>
+                  {filteredProjs.length===0 ? (
+                    <div style={{ padding:"12px 14px",fontSize:13,color:"#94a3b8",textAlign:"center" }}>ไม่พบโครงการ</div>
+                  ) : filteredProjs.map(p=>(
+                    <div key={p.id}
+                      onMouseDown={()=>{ setCaseForm(f=>({...f,projectId:p.id})); setProjDropdown(false); setProjSearch(""); }}
+                      style={{ padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
+                        background:caseForm.projectId===p.id?"#eff6ff":"transparent",
+                        borderBottom:"1px solid #f8fafc" }}
+                      onMouseEnter={e=>{ if(caseForm.projectId!==p.id) e.currentTarget.style.background="#f8fafc"; }}
+                      onMouseLeave={e=>{ if(caseForm.projectId!==p.id) e.currentTarget.style.background="transparent"; }}>
+                      <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                      <div style={{ flex:1,minWidth:0 }}>
+                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
+                          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
+                        {p.code&&<div style={{ fontSize:11,color:"#94a3b8" }}>{p.code}</div>}
+                      </div>
+                      {caseForm.projectId===p.id && <span style={{ color:"#2563eb",fontSize:14 }}>✓</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {projDropdown && (
+                <div style={{ position:"fixed",inset:0,zIndex:99 }}
+                  onMouseDown={()=>setProjDropdown(false)}/>
+              )}
+            </div>
+          );
+        })()}
         <Err field="projectId"/>
       </Field>
       <Field label="ชื่องาน / รายการเซอร์วิส *">
