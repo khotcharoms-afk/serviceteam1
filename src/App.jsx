@@ -56,6 +56,7 @@ export default function App({ currentUser, onSignOut }) {
   const [newProjColor,setNewProjColor] = useState(COLOR_OPTS[0]);
   const [newProjWarranty,setNewProjWarranty] = useState("");
   const [newProjLease,setNewProjLease]       = useState("");
+  const [newProjHirePurchase,setNewProjHirePurchase] = useState("");
   const [newProjSites,setNewProjSites]       = useState([]);
 
   const [toast,setToast]   = useState(null);
@@ -401,19 +402,20 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name||saving) return;
     setSaving(true);
     const pid = editProjId||Date.now().toString();
-    const warrantyEnd = newProjWarranty||null;
-    const leaseEnd    = newProjLease||null;
+    const warrantyEnd     = newProjWarranty||null;
+    const leaseEnd        = newProjLease||null;
+    const hirePurchaseEnd = newProjHirePurchase||null;
     const batch = writeBatch(db);
     const code = newProjCode.trim();
-    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, sites:newProjSites });
+    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, sites:newProjSites });
     if(editProjId){
       cases.filter(c=>c.projectId===editProjId).forEach(c=>{
-        batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd },{ merge:true });
+        batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd, hirePurchaseEnd },{ merge:true });
       });
     }
     const ok = await commitWrite(batch.commit(), editProjId?"บันทึกโครงการแล้ว":"สร้างโครงการแล้ว");
@@ -900,6 +902,7 @@ export default function App({ currentUser, onSignOut }) {
         newProjColor={newProjColor} setNewProjColor={setNewProjColor}
         newProjWarranty={newProjWarranty} setNewProjWarranty={setNewProjWarranty}
         newProjLease={newProjLease} setNewProjLease={setNewProjLease}
+        newProjHirePurchase={newProjHirePurchase} setNewProjHirePurchase={setNewProjHirePurchase}
         newProjSites={newProjSites} setNewProjSites={setNewProjSites}
         saving={saving} onSubmit={submitProj}/>
 
