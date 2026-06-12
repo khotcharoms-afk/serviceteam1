@@ -703,32 +703,29 @@ export default function App({ currentUser, onSignOut }) {
                 </div>
               ))}
             </div>
-            {currentUser?.role==="admin" && (<>
-              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginTop:6 }}>
-                <button onClick={()=>{ openAddProj(); setMenuOpen(false); }}
-                  style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
-                    border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
-                    fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
-                  <span style={{ fontSize:15,lineHeight:1 }}>+</span> เพิ่มโครงการ
-                </button>
-                <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginTop:6 }}>
+              <button onClick={()=>{ openAddProj(); setMenuOpen(false); }}
+                style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
                   border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
                   fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
-                  <span style={{ fontSize:14 }}>📥</span> Import โครงการ
-                  <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
-                    onChange={e=>{ setMenuOpen(false); handleImportFile(e); }}/>
-                </label>
-              </div>
-              <div style={{ marginTop:6 }}>
-                <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
-                  border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
-                  fontFamily:"inherit",color:"#94a3b8",fontSize:12,width:"100%" }}>
-                  <span style={{ fontSize:14 }}>📋</span> Import เคส
-                  <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
-                    onChange={e=>{ setMenuOpen(false); handleImportCaseFile(e); }}/>
-                </label>
-              </div>
-            </>)}
+                <span style={{ fontSize:15,lineHeight:1 }}>+</span> เพิ่มโครงการ
+              </button>
+              <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
+                border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
+                fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
+                <span style={{ fontSize:14 }}>📥</span> Import โครงการ
+                <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
+                  onChange={e=>{ setMenuOpen(false); handleImportFile(e); }}/>
+              </label>
+            </div>
+            <div style={{ marginTop:6 }}>
+              <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
+                border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
+                fontFamily:"inherit",color:"#94a3b8",fontSize:12,width:"100%" }}>
+                <span style={{ fontSize:14 }}>📋</span> Import เคส
+                <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
+                  onChange={e=>{ setMenuOpen(false); handleImportCaseFile(e); }}/>
+              </label>
             </div>
             <div style={{ margin:"20px 0 10px",borderTop:"1px solid #f1f5f9",paddingTop:16 }}>
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
