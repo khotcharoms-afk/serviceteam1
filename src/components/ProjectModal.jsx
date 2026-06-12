@@ -9,6 +9,7 @@ export default function ProjectModal({
   newProjColor, setNewProjColor,
   newProjWarranty, setNewProjWarranty,
   newProjLease, setNewProjLease,
+  newProjHirePurchase, setNewProjHirePurchase,
   newProjSites, setNewProjSites,
   saving, onSubmit
 }) {
@@ -106,6 +107,26 @@ export default function ProjectModal({
         </div>
         {newProjLease && <div style={{ fontSize:11,color:"#8b5cf6",marginTop:4,fontWeight:600 }}>
           📋 {fmtDate(newProjLease)} (เหลือ {daysLeft(newProjLease)} วัน)
+        </div>}
+      </Field>
+      <Field label="วันหมดสัญญาเช่าซื้อ (ถ้ามี)">
+        <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
+          <input type="date" style={IS({ flex:1,minWidth:140 })} value={newProjHirePurchase}
+            onChange={e => setNewProjHirePurchase(e.target.value)}/>
+          {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b => {
+            const d = new Date(); d.setFullYear(d.getFullYear()+b.y);
+            const v = d.toISOString().slice(0,10);
+            return <button key={b.l} type="button" onClick={() => setNewProjHirePurchase(v)}
+              style={{ background:newProjHirePurchase===v?"#0891b2":"#f1f5f9",
+                border:"1px solid #e2e8f0",color:newProjHirePurchase===v?"#fff":"#475569",
+                borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>{b.l}</button>;
+          })}
+          {newProjHirePurchase && <button type="button" onClick={() => setNewProjHirePurchase("")}
+            style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+              borderRadius:7,padding:"6px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ล้าง</button>}
+        </div>
+        {newProjHirePurchase && <div style={{ fontSize:11,color:"#0891b2",marginTop:4,fontWeight:600 }}>
+          🤝 {fmtDate(newProjHirePurchase)} (เหลือ {daysLeft(newProjHirePurchase)} วัน)
         </div>}
       </Field>
       <Field label="ไซต์ย่อย">
