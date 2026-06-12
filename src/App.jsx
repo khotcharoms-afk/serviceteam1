@@ -176,7 +176,8 @@ export default function App({ currentUser, onSignOut }) {
     if(dateTo   && c.date && c.date > dateTo)   return false;
     if(filterTech!=="all" && c.tech!==filterTech) return false;
     const q=search.toLowerCase();
-    return !q||[c.title,c.type,c.tech,c.site,c.note].some(x=>x?.toLowerCase().includes(q));
+    const proj = projects.find(p=>p.id===c.projectId);
+    return !q||[c.title,c.type,c.tech,c.site,c.note,proj?.name].some(x=>x?.toLowerCase().includes(q));
   }).sort((a,b)=>{
     if(filterStat==="__exp"){
       const da = Math.min(...[daysLeft(a.warrantyEnd),daysLeft(a.leaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
@@ -709,8 +710,43 @@ export default function App({ currentUser, onSignOut }) {
         </div>
         <div style={{ position:"relative",marginBottom:14 }}>
           <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:"#cbd5e1",fontSize:16 }}>⌕</span>
-          <input placeholder="ค้นหา..." value={search} onChange={e=>setSearch(e.target.value)}
+          <input placeholder="ค้นหาเคส หรือโครงการ..." value={search} onChange={e=>setSearch(e.target.value)}
             style={IS({ paddingLeft:36,borderRadius:10,fontSize:14 })}/>
+          {/* Dropdown ผลการค้นหาโครงการ */}
+          {search.trim().length>=1 && (() => {
+            const q = search.trim().toLowerCase();
+            const matchProjs = projects.filter(p =>
+              p.name?.toLowerCase().includes(q) || p.code?.toLowerCase().includes(q)
+            ).slice(0,6);
+            if (matchProjs.length===0) return null;
+            return (
+              <div style={{ position:"absolute",top:"100%",left:0,right:0,zIndex:50,
+                background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,
+                boxShadow:"0 8px 24px rgba(0,0,0,.12)",marginTop:4,overflow:"hidden" }}>
+                <div style={{ padding:"6px 12px",fontSize:10,color:"#94a3b8",fontWeight:700,
+                  textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #f1f5f9" }}>
+                  โครงการที่ตรงกัน
+                </div>
+                {matchProjs.map(p => (
+                  <div key={p.id} onClick={()=>{ setView(p.id); setSearch(""); setFilterStat("all"); }}
+                    style={{ padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,
+                      borderBottom:"1px solid #f8fafc" }}
+                    onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                    <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
+                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
+                      {p.code&&<div style={{ fontSize:11,color:"#94a3b8" }}>{p.code}</div>}
+                    </div>
+                    <span style={{ fontSize:11,color:"#94a3b8",flexShrink:0 }}>
+                      {cases.filter(c=>c.projectId===p.id).length} เคส
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
         <div style={{ display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center" }}>
           <span style={{ fontSize:12,color:"#94a3b8",fontWeight:600,whiteSpace:"nowrap" }}>📅 ช่วงวันที่:</span>
