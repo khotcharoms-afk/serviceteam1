@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, GhostBtn, WarrantyPill, LeasePill, StatusPill } from "../UI.jsx";
+import { Modal, GhostBtn, WarrantyPill, LeasePill, HirePurchasePill, StatusPill } from "../UI.jsx";
 import { fmtDate, daysLeft } from "../utils.js";
 import WorkOrderModal from "./WorkOrderModal.jsx";
 import ChecklistModal from "./ChecklistModal.jsx";
@@ -79,6 +79,20 @@ export default function DetailModal({
               </>
             );
           })() : <span style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มีสัญญาเช่า</span>}
+        </div>
+        <div>
+          <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>สัญญาเช่าซื้อ</div>
+          {detailCase.hirePurchaseEnd ? (()=>{
+            const hd = daysLeft(detailCase.hirePurchaseEnd);
+            return (
+              <>
+                <HirePurchasePill hirePurchaseEnd={detailCase.hirePurchaseEnd}/>
+                <div style={{ fontSize:11,color:hd!==null&&hd<0?"#ef4444":hd!==null&&hd<=90?"#f59e0b":"#94a3b8",marginTop:3,fontWeight:600 }}>
+                  {fmtDate(detailCase.hirePurchaseEnd)} {hd!==null&&(hd<0?"(หมดแล้ว)":`(เหลือ ${hd} วัน)`)}
+                </div>
+              </>
+            );
+          })() : <span style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มีสัญญาเช่าซื้อ</span>}
         </div>
         <div>
           <div style={{ fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>สถานะ</div>
