@@ -39,6 +39,23 @@ export function LeasePill({ leaseEnd }) {
   );
 }
 
+export function HirePurchasePill({ hirePurchaseEnd }) {
+  if (!hirePurchaseEnd) return null;
+  const days = daysLeft(hirePurchaseEnd);
+  const col = days < 0 ? "#ef4444" : days <= 90 ? "#f59e0b" : days <= 365 ? "#0891b2" : "#0891b2";
+  const label = days < 0 ? "หมดแล้ว" : days === 0 ? "หมดวันนี้"
+    : days <= 365 ? `เหลือ ${days} วัน`
+    : `เหลือ ${Math.floor(days/365)} ปี ${Math.floor((days%365)/30)} เดือน`;
+  return (
+    <span style={{ display:"inline-flex",alignItems:"center",gap:4,
+      background:col+"18",color:col,border:`1px solid ${col}40`,
+      borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700,whiteSpace:"nowrap" }}>
+      <span style={{ width:5,height:5,borderRadius:"50%",background:col,flexShrink:0 }}/>
+      🤝 {label}
+    </span>
+  );
+}
+
 export function StatusPill({ value }) {
   const s = STATUS_OPTS.find(x => x.value === value) || STATUS_OPTS[0];
   return (
