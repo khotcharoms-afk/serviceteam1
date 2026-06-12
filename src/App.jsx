@@ -207,13 +207,16 @@ export default function App({ currentUser, onSignOut }) {
     const proj = projects.find(p=>p.id===caseForm.projectId);
     const { siteOther, ...rest } = caseForm;
     const techs = caseForm.techs?.length ? caseForm.techs : (caseForm.tech ? [caseForm.tech] : []);
+    const now = new Date().toISOString();
     const payload = {
       ...rest, techs,
       tech: techs[0]||caseForm.tech||"",
       warrantyEnd: proj?.warrantyEnd||null,
       leaseEnd:    proj?.leaseEnd||null,
       site: caseForm.site==="__other__" ? "" : caseForm.site,
-      updatedAt: new Date().toISOString(),
+      updatedAt: now,
+      // activityAt เฉพาะตอนสร้างเคสใหม่ ไม่ใช่แก้ไข
+      ...(!editCase && { activityAt: now }),
     };
     const ok = await commitWrite(
       setDoc(doc(db,"cases",editCase||Date.now().toString()), payload),
