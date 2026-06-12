@@ -135,18 +135,39 @@ function initChecked(template) {
 
 import { Modal } from "../UI.jsx";
 
+const TEMPLATES = [
+  { key:"general",    label:"ทั่วไป",     icon:"📋", template:GENERAL_TEMPLATE },
+  { key:"smartpole",  label:"SmartPole",  icon:"🏙", template:SMARTPOLE_TEMPLATE },
+  { key:"robot",      label:"Robot",      icon:"🤖", template:ROBOT_TEMPLATE },
+];
+
+function detectTemplateKey(projName) {
+  const n = (projName||"").toLowerCase();
+  if (n.includes("smart")) return "smartpole";
+  if (n.includes("robot")||n.includes("mett")) return "robot";
+  return "general";
+}
+
 // ─── Component ───────────────────────────────────────────────
 export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
   if (!c) return null;
 
-  const template = getTemplate(proj?.name);
+  const defaultKey = c.checklist?.templateKey || detectTemplateKey(proj?.name);
+  const [templateKey, setTemplateKey] = useState(defaultKey);
+  const template = TEMPLATES.find(t=>t.key===templateKey)?.template || GENERAL_TEMPLATE;
 
   const [checked, setChecked] = useState(() => {
-    if (c.checklist?.items) return c.checklist.items;
+    if (c.checklist?.items && c.checklist?.templateKey===defaultKey) return c.checklist.items;
     return initChecked(template);
   });
   const [note, setNote] = useState(c.checklist?.note || "");
   const [confirmed, setConfirmed] = useState(c.checklist?.confirmed || false);
+
+  function switchTemplate(key) {
+    setTemplateKey(key);
+    setChecked(initChecked(TEMPLATES.find(t=>t.key===key)?.template||GENERAL_TEMPLATE));
+    setConfirmed(false);
+  }
 
   const totalItems = Object.keys(checked).length;
   const checkedCount = Object.values(checked).filter(Boolean).length;
@@ -161,6 +182,7 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
       ...c,
       checklist: {
         template: template.name,
+        templateKey,
         items: checked,
         note,
         confirmed,
@@ -185,6 +207,22 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
             style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
               fontSize:14,width:30,height:30,borderRadius:8,display:"flex",
               alignItems:"center",justifyContent:"center" }}>✕</button>
+        </div>
+        {/* เลือก Template */}
+        <div style={{ display:"flex",gap:6,marginBottom:16,background:"#f8fafc",
+          borderRadius:10,padding:6,border:"1px solid #e2e8f0" }}>
+          {TEMPLATES.map(t=>(
+            <button key={t.key} type="button" onClick={()=>switchTemplate(t.key)}
+              style={{ flex:1,padding:"7px 8px",borderRadius:8,border:"none",
+                cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:4,
+                background:templateKey===t.key?"#fff":"transparent",
+                color:templateKey===t.key?"#0f172a":"#94a3b8",
+                boxShadow:templateKey===t.key?"0 1px 3px rgba(0,0,0,.1)":"none",
+                transition:"all .15s" }}>
+              {t.icon} {t.label}
+            </button>
+          ))}
         </div>
         <div>
 
