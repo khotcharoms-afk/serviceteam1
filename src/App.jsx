@@ -47,6 +47,9 @@ export default function App({ currentUser, onSignOut }) {
   const [projModal,setProjModal]       = useState(false);
   const [importModal,setImportModal]   = useState(false);
   const [importRows,setImportRows]     = useState([]);
+  const [importCaseModal,setImportCaseModal] = useState(false);
+  const [importCaseRows,setImportCaseRows]   = useState([]);
+  const [importCaseSel,setImportCaseSel]     = useState({});
   const [importSelected,setImportSelected] = useState({});
   const [editProjId,setEditProjId]     = useState(null);
   const [delProj,setDelProj]           = useState(null);
@@ -420,6 +423,68 @@ export default function App({ currentUser, onSignOut }) {
     e.target.value = "";
   }
 
+  function handleImportCaseFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const wb = XLSX.read(evt.target.result, { type:"binary" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
+      const statusMap = { "ปิด":"done","รอดำเนินการ":"hold","กำลังดำเนินการ":"inprogress","เปิดเคส":"open","เสร็จสิ้น":"done" };
+      const mapped = rows.map((r,i) => ({
+        key: i,
+        id: String(r["เลขเคส/ID"]||"").trim() || Date.now().toString()+i,
+        title: String(r["ชื่อเรื่อง"]||"").trim(),
+        site: String(r["ลูกค้า/Site"]||"").trim(),
+        projectName: String(r["Project"]||"").trim(),
+        type: String(r["ประเภท"]||"อื่นๆ").trim(),
+        status: statusMap[String(r["สถานะ"]||"").trim()] || "open",
+        techs: String(r["ผู้ดำเนินการ"]||"").split(",").map(x=>x.trim()).filter(Boolean),
+        date: String(r["วันที่เปิด"]||"").slice(0,10) || today(),
+        note: String(r["หมายเหตุ"]||"").trim(),
+      })).filter(r => r.title);
+      setImportCaseRows(mapped);
+      const sel = {};
+      mapped.forEach(r => { sel[r.key] = true; });
+      setImportCaseSel(sel);
+      setImportCaseModal(true);
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = "";
+  }
+
+  async function doImportCases() {
+    if (saving) return;
+    setSaving(true);
+    const toImport = importCaseRows.filter(r => importCaseSel[r.key]);
+    const batch = writeBatch(db);
+    toImport.forEach(r => {
+      const proj = projects.find(p => p.name?.toLowerCase().includes(r.projectName?.toLowerCase()) || r.projectName?.toLowerCase().includes(p.name?.toLowerCase()));
+      const now = new Date().toISOString();
+      batch.set(doc(db,"cases",r.id), {
+        title: r.title,
+        site: r.site,
+        projectId: proj?.id || "",
+        type: r.type,
+        status: r.status,
+        techs: r.techs,
+        tech: r.techs[0]||"",
+        date: r.date,
+        note: r.note,
+        warrantyEnd: proj?.warrantyEnd||null,
+        leaseEnd: proj?.leaseEnd||null,
+        handoverLog: [],
+        updateLog: [],
+        updatedAt: now,
+        activityAt: now,
+      });
+    });
+    const ok = await commitWrite(batch.commit(), `Import ${toImport.length} เคสแล้ว`);
+    if (ok) { setImportCaseModal(false); setImportCaseRows([]); setImportCaseSel({}); }
+    setSaving(false);
+  }
+
   async function doImport() {
     if (saving) return;
     setSaving(true);
@@ -648,9 +713,18 @@ export default function App({ currentUser, onSignOut }) {
               <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
                 border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
                 fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
-                <span style={{ fontSize:14 }}>📥</span> Import Excel
+                <span style={{ fontSize:14 }}>📥</span> Import โครงการ
                 <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
                   onChange={e=>{ setMenuOpen(false); handleImportFile(e); }}/>
+              </label>
+            </div>
+            <div style={{ marginTop:6 }}>
+              <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
+                border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
+                fontFamily:"inherit",color:"#94a3b8",fontSize:12,width:"100%" }}>
+                <span style={{ fontSize:14 }}>📋</span> Import เคส
+                <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
+                  onChange={e=>{ setMenuOpen(false); handleImportCaseFile(e); }}/>
               </label>
             </div>
             <div style={{ margin:"20px 0 10px",borderTop:"1px solid #f1f5f9",paddingTop:16 }}>
@@ -922,6 +996,82 @@ export default function App({ currentUser, onSignOut }) {
         onChecklist={saveChecklist}
         onOnsite={saveOnsite}
         saving={saving}/>
+
+      {importCaseModal && (
+        <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+          onClick={()=>setImportCaseModal(false)}>
+          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:600,
+            maxHeight:"88vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:24 }}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+              <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>
+                📋 Import เคส ({importCaseRows.length} รายการ)
+              </h2>
+              <button onClick={()=>setImportCaseModal(false)}
+                style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+                  fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
+            </div>
+            <div style={{ fontSize:12,color:"#64748b",marginBottom:12 }}>
+              เลือกเคสที่ต้องการ import — โครงการจะจับคู่อัตโนมัติจากชื่อ
+            </div>
+            <div style={{ display:"flex",gap:8,marginBottom:12 }}>
+              <button onClick={()=>{ const s={}; importCaseRows.forEach(r=>s[r.key]=true); setImportCaseSel(s); }}
+                style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
+                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                เลือกทั้งหมด
+              </button>
+              <button onClick={()=>setImportCaseSel({})}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#64748b",
+                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิกทั้งหมด
+              </button>
+              <span style={{ marginLeft:"auto",fontSize:12,color:"#64748b",alignSelf:"center" }}>
+                เลือกแล้ว {Object.values(importCaseSel).filter(Boolean).length} รายการ
+              </span>
+            </div>
+            <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:16 }}>
+              {importCaseRows.map(r => {
+                const proj = projects.find(p => p.name?.toLowerCase().includes(r.projectName?.toLowerCase()) || r.projectName?.toLowerCase().includes(p.name?.toLowerCase()));
+                return (
+                  <label key={r.key} style={{ display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
+                    padding:"8px 10px",borderRadius:8,
+                    background:importCaseSel[r.key]?"#f0fdf4":"#f8fafc",
+                    border:`1px solid ${importCaseSel[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
+                    <input type="checkbox" checked={!!importCaseSel[r.key]}
+                      onChange={e=>setImportCaseSel(p=>({...p,[r.key]:e.target.checked}))}
+                      style={{ marginTop:2,accentColor:"#16a34a",flexShrink:0 }}/>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
+                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{r.title}</div>
+                      <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginTop:2 }}>
+                        {r.site&&<span style={{ fontSize:11,color:"#64748b" }}>📍 {r.site}</span>}
+                        {proj ? <span style={{ fontSize:11,color:proj.color||"#2563eb",fontWeight:600 }}>◆ {proj.name}</span>
+                          : <span style={{ fontSize:11,color:"#f59e0b" }}>⚠ ไม่พบโครงการ: {r.projectName}</span>}
+                        <span style={{ fontSize:11,color:"#64748b" }}>{r.date}</span>
+                        <span style={{ fontSize:11,color:"#64748b" }}>{r.type}</span>
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
+              <button onClick={()=>setImportCaseModal(false)}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิก
+              </button>
+              <button onClick={doImportCases} disabled={saving||Object.values(importCaseSel).filter(Boolean).length===0}
+                style={{ background:"#16a34a",border:"none",color:"#fff",borderRadius:10,
+                  padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+                  opacity:saving?0.7:1 }}>
+                {saving?"กำลัง import...":`Import ${Object.values(importCaseSel).filter(Boolean).length} เคส`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {importModal && (
         <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
