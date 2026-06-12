@@ -10,6 +10,10 @@ export default function ProjectModal({
   newProjWarranty, setNewProjWarranty,
   newProjLease, setNewProjLease,
   newProjHirePurchase, setNewProjHirePurchase,
+  newProjCustomer, setNewProjCustomer,
+  newProjContractType, setNewProjContractType,
+  newProjContractStart, setNewProjContractStart,
+  newProjProjectStatus, setNewProjProjectStatus,
   newProjSites, setNewProjSites,
   saving, onSubmit
 }) {
@@ -127,6 +131,35 @@ export default function ProjectModal({
         </div>
         {newProjHirePurchase && <div style={{ fontSize:11,color:"#0891b2",marginTop:4,fontWeight:600 }}>
           🤝 {fmtDate(newProjHirePurchase)} (เหลือ {daysLeft(newProjHirePurchase)} วัน)
+        </div>}
+      </Field>
+      <Field label="ลูกค้า">
+        <input style={IS()} value={newProjCustomer} placeholder="ชื่อลูกค้า"
+          onChange={e => setNewProjCustomer(e.target.value)}/>
+      </Field>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+        <Field label="ประเภทสัญญา">
+          <select style={IS()} value={newProjContractType} onChange={e=>setNewProjContractType(e.target.value)}>
+            <option value="">— เลือก —</option>
+            <option value="เช่า">เช่า</option>
+            <option value="ขายขาด">ขายขาด</option>
+            <option value="เช่าซื้อ">เช่าซื้อ</option>
+          </select>
+        </Field>
+        <Field label="สถานะโครงการ">
+          <select style={IS()} value={newProjProjectStatus} onChange={e=>setNewProjProjectStatus(e.target.value)}>
+            <option value="">— เลือก —</option>
+            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+            <option value="รับมอบแล้ว">รับมอบแล้ว</option>
+            <option value="ปิดโครงการ">ปิดโครงการ</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="วันเริ่มสัญญา">
+        <input type="date" style={IS()} value={newProjContractStart}
+          onChange={e => setNewProjContractStart(e.target.value)}/>
+        {newProjContractStart && <div style={{ fontSize:11,color:"#64748b",marginTop:4,fontWeight:600 }}>
+          📅 {fmtDate(newProjContractStart)}
         </div>}
       </Field>
       <Field label="ไซต์ย่อย">
