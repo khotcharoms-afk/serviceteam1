@@ -368,7 +368,13 @@ export default function App({ currentUser, onSignOut }) {
     reader.onload = (evt) => {
       const wb = XLSX.read(evt.target.result, { type:"binary" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
+      // ลองอ่านแบบปกติก่อน ถ้าไม่เจอชื่อโครงการ ให้ข้าม header แถวแรก
+      let rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
+      const hasThai = rows.length>0 && rows[0]["ชื่อโครงการ"]!==undefined;
+      const hasSkipHeader = rows.length>0 && rows[0]["ลำดับที่"]==="ลำดับที่";
+      if (!hasThai || hasSkipHeader) {
+        rows = XLSX.utils.sheet_to_json(ws, { defval:"", range:1 });
+      }
       // map columns from PMA file
       const fmtDate = v => {
         if (!v) return null;
