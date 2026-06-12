@@ -1,5 +1,5 @@
 import { daysLeft, fmtDate } from "./utils.js";
-import { WarrantyPill, LeasePill, HirePurchasePill, StatusPill } from "./UI.jsx";
+import { WarrantyPill, LeasePill, StatusPill } from "./UI.jsx";
 
 function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate, onOnsite }) {
   const days = daysLeft(c.warrantyEnd);
@@ -30,7 +30,6 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate, onOns
         {c.date && <span style={{ fontSize:11,color:"#64748b" }}>📅 {fmtDate(c.date)}</span>}
         <WarrantyPill warrantyEnd={c.warrantyEnd}/>
         {c.leaseEnd && <LeasePill leaseEnd={c.leaseEnd}/>}
-        {c.hirePurchaseEnd && <HirePurchasePill hirePurchaseEnd={c.hirePurchaseEnd}/>}
       </div>
       {days!==null&&days>=0&&days<=90 && (
         <div style={{ marginTop:6,fontSize:11,color:"#f59e0b",fontWeight:600 }}>⚠ ประกันเหลือ {days} วัน</div>
@@ -38,11 +37,6 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate, onOns
       {days!==null&&days<0 && (
         <div style={{ marginTop:6,fontSize:11,color:"#ef4444",fontWeight:600 }}>⚠ ประกันหมดแล้ว</div>
       )}
-      {(()=>{ const hd=daysLeft(c.hirePurchaseEnd); return hd!==null&&hd<0?(
-        <div style={{ marginTop:4,fontSize:11,color:"#ef4444",fontWeight:600 }}>⚠ สัญญาเช่าซื้อหมดแล้ว</div>
-      ):hd!==null&&hd<=90?(
-        <div style={{ marginTop:4,fontSize:11,color:"#0891b2",fontWeight:600 }}>⚠ สัญญาเช่าซื้อเหลือ {hd} วัน</div>
-      ):null; })()}
       {c.leaseEnd&&(()=>{ const d=daysLeft(c.leaseEnd); return d!==null&&d<0?(
         <div style={{ marginTop:4,fontSize:11,color:"#ef4444",fontWeight:600 }}>⚠ สัญญาเช่าหมดแล้ว</div>
       ):d!==null&&d<=90?(
