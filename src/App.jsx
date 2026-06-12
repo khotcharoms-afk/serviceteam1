@@ -171,9 +171,9 @@ export default function App({ currentUser, onSignOut }) {
   const visibleCases = cases.filter(c=>{
     if(view!=="overview"&&c.projectId!==view) return false;
     if(filterStat==="__exp"){
-      const wd=daysLeft(c.warrantyEnd), ld=daysLeft(c.leaseEnd);
-      const wExp=(wd!==null&&wd>=0&&wd<=90), lExp=(ld!==null&&ld>=0&&ld<=90);
-      if(!wExp&&!lExp) return false;
+      const wd=daysLeft(c.warrantyEnd), ld=daysLeft(c.leaseEnd), hd=daysLeft(c.hirePurchaseEnd);
+      const wExp=(wd!==null&&wd>=0&&wd<=90), lExp=(ld!==null&&ld>=0&&ld<=90), hExp=(hd!==null&&hd>=0&&hd<=90);
+      if(!wExp&&!lExp&&!hExp) return false;
     } else if(filterStat!=="all"&&c.status!==filterStat) return false;
     if(dateFrom && c.date && c.date < dateFrom) return false;
     if(dateTo   && c.date && c.date > dateTo)   return false;
@@ -183,8 +183,8 @@ export default function App({ currentUser, onSignOut }) {
     return !q||[c.title,c.type,c.tech,c.site,c.note,proj?.name].some(x=>x?.toLowerCase().includes(q));
   }).sort((a,b)=>{
     if(filterStat==="__exp"){
-      const da = Math.min(...[daysLeft(a.warrantyEnd),daysLeft(a.leaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
-      const db = Math.min(...[daysLeft(b.warrantyEnd),daysLeft(b.leaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
+      const da = Math.min(...[daysLeft(a.warrantyEnd),daysLeft(a.leaseEnd),daysLeft(a.hirePurchaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
+      const db = Math.min(...[daysLeft(b.warrantyEnd),daysLeft(b.leaseEnd),daysLeft(b.hirePurchaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
       return da - db;
     }
     const ta = b.activityAt||b.updatedAt||b.id;
@@ -550,7 +550,7 @@ export default function App({ currentUser, onSignOut }) {
     open:scopeCases.filter(c=>c.status==="open").length,
     done:scopeCases.filter(c=>c.status==="done").length,
     hold:scopeCases.filter(c=>c.status==="hold").length,
-    expiringSoon:scopeCases.filter(c=>{ const d=daysLeft(c.warrantyEnd); return d!==null&&d>=0&&d<=90; }).length,
+    expiringSoon:scopeCases.filter(c=>{ const wd=daysLeft(c.warrantyEnd),ld=daysLeft(c.leaseEnd),hd=daysLeft(c.hirePurchaseEnd); return (wd!==null&&wd>=0&&wd<=90)||(ld!==null&&ld>=0&&ld<=90)||(hd!==null&&hd>=0&&hd<=90); }).length,
   };
 
   if(loading) return (
@@ -734,7 +734,7 @@ export default function App({ currentUser, onSignOut }) {
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
                 {[
                   {label:"เคสทั้งหมด",val:cases.length,color:"#2563eb"},
-                  {label:"ใกล้หมดประกัน",val:cases.filter(c=>{ const d=daysLeft(c.warrantyEnd); return d!==null&&d>=0&&d<=90; }).length,color:"#f59e0b"},
+                  {label:"ใกล้หมดสัญญา",val:cases.filter(c=>{ const wd=daysLeft(c.warrantyEnd),ld=daysLeft(c.leaseEnd),hd=daysLeft(c.hirePurchaseEnd); return (wd!==null&&wd>=0&&wd<=90)||(ld!==null&&ld>=0&&ld<=90)||(hd!==null&&hd>=0&&hd<=90); }).length,color:"#f59e0b"},
                 ].map(x=>(
                   <div key={x.label} style={{ background:"#f8fafc",borderRadius:10,padding:"10px 12px",border:`1px solid ${x.color}20` }}>
                     <div style={{ fontSize:22,fontWeight:800,color:x.color }}>{x.val}</div>
