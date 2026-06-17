@@ -7,33 +7,28 @@ function calcTravel(km) {
   return Math.max(200, Math.round(k * rate));
 }
 
-// Mode A: standalone (จาก Drawer) — รับ projects, users, currentUser
-// Mode B: from case (จาก DetailModal) — รับ detailCase, proj, users
-export default function OnsiteModal({ onClose, onSave, saving, projects, users, currentUser, detailCase, proj: projFromCase }) {
+export default function OnsiteModal({ onClose, onSave, saving, projects, users, currentUser, editRecord }) {
 
-  const isFromCase = !!detailCase;
   const today = new Date().toISOString().slice(0, 10);
+  const isEdit = !!editRecord;
 
-  // ถ้ามาจากเคส ดึงข้อมูลจากเคสเลย
-  const [date, setDate]         = useState(detailCase?.date || today);
-  const [projId, setProjId]     = useState(detailCase?.projectId || "");
+  const [date, setDate]         = useState(editRecord?.date || today);
+  const [projId, setProjId]     = useState(editRecord?.projectId || "");
   const [siteIndex, setSiteIndex] = useState("");
-  const [scope, setScope]       = useState("Maintenance");
-  const [detail, setDetail]     = useState("");
-  const [robotSerial, setRobotSerial] = useState("");
+  const [scope, setScope]       = useState(editRecord?.scope || "Maintenance");
+  const [detail, setDetail]     = useState(editRecord?.detail || "");
+  const [robotSerial, setRobotSerial] = useState(editRecord?.robotSerial || "");
   const [techs, setTechs]       = useState(
-    detailCase?.techs?.length ? detailCase.techs :
-    detailCase?.tech ? [detailCase.tech] :
-    [currentUser?.name || ""]
+    editRecord?.techs?.length ? editRecord.techs : [currentUser?.name || ""]
   );
-  const [km, setKm]             = useState("");
-  const [shipping, setShipping] = useState("0");
-  const [partsCost, setPartsCost] = useState("0");
+  const [km, setKm]             = useState(editRecord?.km ? String(editRecord.km) : "");
+  const [shipping, setShipping] = useState(editRecord?.shippingCost ? String(editRecord.shippingCost) : "0");
+  const [partsCost, setPartsCost] = useState(editRecord?.partsCost ? String(editRecord.partsCost) : "0");
 
-  const proj = isFromCase ? projFromCase : (projects||[]).find(p => p.id === projId);
+  const proj = (projects||[]).find(p => p.id === projId);
   const sites = (proj?.sites || []).map(s => typeof s === "object" ? s : { name: s, refCode: "", travelRate: 0 });
   const selSite = siteIndex !== "" ? sites[parseInt(siteIndex)] :
-    sites.find(s => s.name === detailCase?.site) || null;
+    sites.find(s => s.name === editRecord?.site) || null;
 
   const travelCost = km ? calcTravel(km) : (selSite?.travelRate || 0);
   const laborCost = techs.reduce((sum, name) => {
@@ -48,15 +43,14 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
   }
 
   function handleSave() {
-    if (!projId && !isFromCase) return;
+    if (!projId) return;
     if (techs.length === 0) return;
+    const isAdmin = currentUser?.role === "admin";
     onSave({
       date,
       projectId: proj?.id || projId || "",
       projectName: proj?.name || "",
-      caseId: detailCase?.id || null,
-      caseTitle: detailCase?.title || "",
-      site: selSite?.name || detailCase?.site || "",
+      site: selSite?.name || editRecord?.site || "",
       refCode: selSite?.refCode || "",
       scope,
       detail,
@@ -68,9 +62,11 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
       partsCost: parseFloat(partsCost) || 0,
       laborCost,
       totalCost,
-      createdAt: new Date().toISOString(),
-      createdBy: currentUser?.name || "",
-    });
+      // admin บันทึกเอง → อนุมัติทันที, user → รออนุมัติ
+      // ถ้าแก้ไข record เดิม → กลับเป็น pending (ยกเว้น admin)
+      status: isAdmin ? "approved" : "pending",
+      ...(isAdmin && { approvedBy: currentUser?.name || "", approvedAt: new Date().toISOString() }),
+    }, editRecord?.id || null);
   }
 
   const inputStyle = {
@@ -93,82 +89,62 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
         onClick={e => e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>📍 บันทึก Onsite</h2>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>
+            📍 {isEdit ? "แก้ไข Onsite" : "บันทึก Onsite"}
+          </h2>
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
 
-        {/* ถ้ามาจากเคส แสดง info bar + checkbox เลือกคน */}
-        {isFromCase ? (
-          <>
-            <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
-              padding:"10px 14px",marginBottom:14 }}>
-              <div style={{ fontSize:12,fontWeight:700,color:"#0f172a" }}>{proj?.name}</div>
-              {detailCase.site && <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>📍 {detailCase.site}</div>}
-            </div>
-            <div style={{ marginBottom:14 }}>
-              <label style={labelStyle}>วันที่ Onsite</label>
-              <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={inputStyle}/>
-            </div>
-            <div style={{ marginBottom:14 }}>
-              <label style={labelStyle}>พนักงานที่ไป Onsite *</label>
-              <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
-                {approvedUsers.map(u => (
-                  <label key={u.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
-                    background: techs.includes(u.name) ? "#f0fdf4" : "#f8fafc",
-                    border:`1px solid ${techs.includes(u.name) ? "#bbf7d0" : "#e2e8f0"}`,
-                    borderRadius:8,padding:"5px 10px",fontSize:12 }}>
-                    <input type="checkbox" checked={techs.includes(u.name)}
-                      onChange={() => toggleTech(u.name)} style={{ accentColor:"#16a34a" }}/>
-                    {u.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ marginBottom:14 }}>
-              <label style={labelStyle}>วันที่</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle}/>
-            </div>
-            <div style={{ marginBottom:14 }}>
-              <label style={labelStyle}>โครงการ *</label>
-              <select value={projId} onChange={e => { setProjId(e.target.value); setSiteIndex(""); }} style={inputStyle}>
-                <option value="">— เลือกโครงการ —</option>
-                {(projects||[]).filter(p => p.id).map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-            {sites.length > 0 && (
-              <div style={{ marginBottom:14 }}>
-                <label style={labelStyle}>ไซต์งาน</label>
-                <select value={siteIndex} onChange={e => setSiteIndex(e.target.value)} style={inputStyle}>
-                  <option value="">— เลือกไซต์ —</option>
-                  {sites.map((s, i) => (
-                    <option key={i} value={i}>{s.name}{s.refCode ? ` (${s.refCode})` : ""}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div style={{ marginBottom:14 }}>
-              <label style={labelStyle}>พนักงาน *</label>
-              <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
-                {approvedUsers.map(u => (
-                  <label key={u.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
-                    background: techs.includes(u.name) ? "#f0fdf4" : "#f8fafc",
-                    border:`1px solid ${techs.includes(u.name) ? "#bbf7d0" : "#e2e8f0"}`,
-                    borderRadius:8,padding:"5px 10px",fontSize:12 }}>
-                    <input type="checkbox" checked={techs.includes(u.name)}
-                      onChange={() => toggleTech(u.name)} style={{ accentColor:"#16a34a" }}/>
-                    {u.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </>
+        {currentUser?.role !== "admin" && (
+          <div style={{ background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,
+            padding:"10px 14px",marginBottom:14,fontSize:12,color:"#92400e" }}>
+            ℹ️ รายการนี้จะส่งให้ admin อนุมัติก่อนนับเข้ารายงาน
+          </div>
         )}
+
+        <div style={{ marginBottom:14 }}>
+          <label style={labelStyle}>วันที่</label>
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle}/>
+        </div>
+
+        <div style={{ marginBottom:14 }}>
+          <label style={labelStyle}>โครงการ *</label>
+          <select value={projId} onChange={e => { setProjId(e.target.value); setSiteIndex(""); }} style={inputStyle}>
+            <option value="">— เลือกโครงการ —</option>
+            {(projects||[]).filter(p => p.id).map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {sites.length > 0 && (
+          <div style={{ marginBottom:14 }}>
+            <label style={labelStyle}>ไซต์งาน</label>
+            <select value={siteIndex} onChange={e => setSiteIndex(e.target.value)} style={inputStyle}>
+              <option value="">— เลือกไซต์ —</option>
+              {sites.map((s, i) => (
+                <option key={i} value={i}>{s.name}{s.refCode ? ` (${s.refCode})` : ""}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div style={{ marginBottom:14 }}>
+          <label style={labelStyle}>พนักงาน *</label>
+          <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
+            {approvedUsers.map(u => (
+              <label key={u.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
+                background: techs.includes(u.name) ? "#f0fdf4" : "#f8fafc",
+                border:`1px solid ${techs.includes(u.name) ? "#bbf7d0" : "#e2e8f0"}`,
+                borderRadius:8,padding:"5px 10px",fontSize:12 }}>
+                <input type="checkbox" checked={techs.includes(u.name)}
+                  onChange={() => toggleTech(u.name)} style={{ accentColor:"#16a34a" }}/>
+                {u.name}
+              </label>
+            ))}
+          </div>
+        </div>
 
         <div style={{ marginBottom:14 }}>
           <label style={labelStyle}>ขอบเขตงาน</label>
@@ -248,11 +224,11 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
               borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>
-          <button onClick={handleSave} disabled={saving || (!projId && !isFromCase) || techs.length === 0}
+          <button onClick={handleSave} disabled={saving || !projId || techs.length === 0}
             style={{ background:"#f97316",border:"none",color:"#fff",borderRadius:10,
               padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity: saving ? 0.7 : 1 }}>
-            {saving ? "กำลังบันทึก..." : "💾 บันทึก Onsite"}
+            {saving ? "กำลังบันทึก..." : (isEdit ? "💾 บันทึกการแก้ไข" : "💾 บันทึก Onsite")}
           </button>
         </div>
       </div>
