@@ -2,7 +2,7 @@ import { useState } from "react";
 import { daysLeft, fmtDate } from "./utils.js";
 import CaseSummaryReport from "./CaseSummaryReport.jsx";
 
-export default function Dashboard({ onBack, cases, projects, users, deletedCases=[] }) {
+export default function Dashboard({ onBack, cases, projects, users, deletedCases=[], onsiteRecords=[] }) {
   const [showReport, setShowReport] = useState(false);
   const [showDeleteLog, setShowDeleteLog] = useState(false);
   if(showReport) return <CaseSummaryReport onBack={()=>setShowReport(false)} cases={cases} projects={projects}/>;
@@ -83,6 +83,40 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
     const days = Math.floor((_now.getTime() - ms) / (1000*60*60*24));
     return days > 0 && days > max ? days : max;
   }, 0);
+
+  // ── สถิติ Onsite (เฉพาะ approved) ──
+  const approvedOnsite = (onsiteRecords||[]).filter(r => r.status === "approved").map(r => {
+    const laborCost = (r.techs||[]).reduce((sum,name)=>{
+      const u = (users||[]).find(u=>u.name===name);
+      return sum + (u?.onsiteRate||0);
+    },0);
+    return { ...r, laborCost, totalCost:(r.travelCost||0)+(r.shippingCost||0)+(r.partsCost||0)+laborCost };
+  });
+  // รายเดือน (6 เดือนล่าสุด)
+  const onsiteMonthly = {};
+  approvedOnsite.forEach(r => {
+    const m = (r.date||"").slice(0,7); // YYYY-MM
+    if (!m) return;
+    if (!onsiteMonthly[m]) onsiteMonthly[m] = { count:0, total:0 };
+    onsiteMonthly[m].count += 1;
+    onsiteMonthly[m].total += (r.totalCost||0);
+  });
+  const onsiteMonths = Object.keys(onsiteMonthly).sort().slice(-6);
+  const maxMonthTotal = Math.max(...onsiteMonths.map(m=>onsiteMonthly[m].total), 1);
+  // รายโครงการ (top 5)
+  const onsiteByProj = {};
+  approvedOnsite.forEach(r => {
+    const key = r.projectId||"unknown";
+    if (!onsiteByProj[key]) onsiteByProj[key] = { count:0, total:0, name:r.projectName||"" };
+    onsiteByProj[key].count += 1;
+    onsiteByProj[key].total += (r.totalCost||0);
+  });
+  const onsiteProjTop = Object.entries(onsiteByProj).sort((a,b)=>b[1].total-a[1].total).slice(0,5);
+  const onsiteTotalAll = approvedOnsite.reduce((s,r)=>s+(r.totalCost||0),0);
+  const _nowMonth = new Date().toISOString().slice(0,7);
+  const onsiteThisMonth = onsiteMonthly[_nowMonth]?.total || 0;
+  const MONTH_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  const fmtMonth = m => { const [y,mo]=m.split("-"); return `${MONTH_TH[parseInt(mo)-1]} ${(parseInt(y)+543)%100}`; };
 
   // ── สถิติต่อโครงการ ──
   const projStats = projects.map(p=>{
@@ -243,6 +277,83 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
               <ExpiryRow key={c.id} c={c} projects={projects} days={daysLeft(c.leaseEnd)} type="lease"/>
             ))}
           </Section>
+        )}
+
+        {/* ─── Onsite Cost ─── */}
+        {approvedOnsite.length>0 && (
+          <div style={{ marginBottom:20 }}>
+            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:10 }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>📍 ค่าใช้จ่าย Onsite</div>
+              <span style={{ background:"#fff7ed",color:"#ea580c",borderRadius:20,
+                padding:"1px 8px",fontSize:11,fontWeight:700 }}>{approvedOnsite.length} ครั้ง</span>
+            </div>
+
+            {/* KPI cards */}
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14 }}>
+              <div style={{ background:"#fff",border:"1px solid #fed7aa",borderRadius:12,padding:"14px 16px" }}>
+                <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>เดือนนี้</div>
+                <div style={{ fontSize:20,fontWeight:800,color:"#ea580c" }}>{onsiteThisMonth.toLocaleString()}</div>
+                <div style={{ fontSize:10,color:"#94a3b8" }}>บาท</div>
+              </div>
+              <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px 16px" }}>
+                <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>รวมทั้งหมด</div>
+                <div style={{ fontSize:20,fontWeight:800,color:"#f97316" }}>{onsiteTotalAll.toLocaleString()}</div>
+                <div style={{ fontSize:10,color:"#94a3b8" }}>บาท</div>
+              </div>
+              <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px 16px" }}>
+                <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>เฉลี่ย/ครั้ง</div>
+                <div style={{ fontSize:20,fontWeight:800,color:"#16a34a" }}>{approvedOnsite.length>0?Math.round(onsiteTotalAll/approvedOnsite.length).toLocaleString():0}</div>
+                <div style={{ fontSize:10,color:"#94a3b8" }}>บาท</div>
+              </div>
+            </div>
+
+            {/* กราฟรายเดือน */}
+            <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"16px 20px",marginBottom:14 }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:16 }}>ค่าใช้จ่ายรายเดือน</div>
+              <div style={{ display:"flex",alignItems:"flex-end",gap:10,height:140,paddingTop:10 }}>
+                {onsiteMonths.map(m=>{
+                  const d = onsiteMonthly[m];
+                  const h = Math.round((d.total/maxMonthTotal)*100);
+                  return (
+                    <div key={m} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,height:"100%" }}>
+                      <div style={{ flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",width:"100%",alignItems:"center" }}>
+                        <div style={{ fontSize:10,color:"#ea580c",fontWeight:700,marginBottom:4 }}>{(d.total/1000).toFixed(1)}k</div>
+                        <div style={{ width:"70%",maxWidth:40,background:"linear-gradient(180deg,#fb923c,#f97316)",
+                          borderRadius:"6px 6px 0 0",height:`${h}%`,minHeight:4,transition:"height .3s" }}/>
+                      </div>
+                      <div style={{ fontSize:10,color:"#64748b",fontWeight:600,whiteSpace:"nowrap" }}>{fmtMonth(m)}</div>
+                      <div style={{ fontSize:9,color:"#cbd5e1" }}>{d.count} ครั้ง</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Top 5 โครงการ */}
+            <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"16px 20px" }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:12 }}>โครงการที่มีค่าใช้จ่ายสูงสุด</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+                {onsiteProjTop.map(([pid,d])=>{
+                  const proj = projects.find(p=>p.id===pid);
+                  const pct = onsiteTotalAll>0?Math.round((d.total/onsiteTotalAll)*100):0;
+                  return (
+                    <div key={pid}>
+                      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
+                        <span style={{ display:"flex",alignItems:"center",gap:6,minWidth:0,flex:1 }}>
+                          <span style={{ width:8,height:8,borderRadius:2,background:proj?.color||"#94a3b8",flexShrink:0 }}/>
+                          <span style={{ fontSize:12,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{proj?.name||d.name||pid}</span>
+                        </span>
+                        <span style={{ fontSize:12,fontWeight:700,color:"#f97316",marginLeft:8,flexShrink:0 }}>{d.total.toLocaleString()} บ.</span>
+                      </div>
+                      <div style={{ background:"#f1f5f9",borderRadius:99,height:6,overflow:"hidden" }}>
+                        <div style={{ height:"100%",borderRadius:99,background:"#f97316",width:`${pct}%` }}/>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* สถิติต่อโครงการ — compact table */}
