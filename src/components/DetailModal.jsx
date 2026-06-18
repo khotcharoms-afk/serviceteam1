@@ -3,15 +3,13 @@ import { Modal, GhostBtn, WarrantyPill, LeasePill, HirePurchasePill, StatusPill 
 import { fmtDate, daysLeft } from "../utils.js";
 import WorkOrderModal from "./WorkOrderModal.jsx";
 import ChecklistModal from "./ChecklistModal.jsx";
-import OnsiteModal from "../OnsiteModal.jsx";
 
 export default function DetailModal({
   detailCase, onClose, projects, users,
-  onEdit, onUpdate, onHandover, onDelete, onChecklist, onOnsite, saving
+  onEdit, onUpdate, onHandover, onDelete, onChecklist, saving
 }) {
   const [showWorkOrder, setShowWorkOrder] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
-  const [showOnsite, setShowOnsite] = useState(false);
   if (!detailCase) return null;
   const proj = projects.find(p => p.id === detailCase.projectId);
   const days = daysLeft(detailCase.warrantyEnd);
@@ -170,28 +168,12 @@ export default function DetailModal({
             borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           📤 ส่งต่องาน
         </button>
-        <button onClick={()=>setShowOnsite(true)}
-          style={{ background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",
-            borderRadius:10,padding:"12px",cursor:"pointer",
-            fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
-          📍 Onsite
-        </button>
         <button onClick={onDelete}
           style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
             borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           ลบ
         </button>
       </div>
-      {showOnsite && (
-        <OnsiteModal
-          detailCase={detailCase}
-          proj={proj}
-          users={users}
-          onClose={()=>setShowOnsite(false)}
-          onSave={(data)=>{ onOnsite({ ...data, caseId: detailCase.id }); setShowOnsite(false); }}
-          saving={saving||false}
-        />
-      )}
       {showChecklist && (
         <ChecklistModal
           c={detailCase}
