@@ -6,7 +6,6 @@ import * as XLSX from "xlsx";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
 import HandoverModal from "./HandoverModal.jsx";
-import OnsiteModal from "./OnsiteModal.jsx";
 import LeavePage from "./LeavePage.jsx";
 import UpdateLogModal from "./UpdateLogModal.jsx";
 import AdminUsers from "./AdminUsers.jsx";
@@ -19,7 +18,7 @@ import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
 
 export default function App({ currentUser, onSignOut }) {
-  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
+  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
@@ -42,7 +41,6 @@ export default function App({ currentUser, onSignOut }) {
   const [detailCase,setDetailCase]     = useState(null);
   const [delCase,setDelCase]           = useState(null);
   const [handoverCase,setHandoverCase] = useState(null);
-  const [onsiteCase,setOnsiteCase]     = useState(null);
   const [updateCase,setUpdateCase]     = useState(null);
   const [projModal,setProjModal]       = useState(false);
   const [importModal,setImportModal]   = useState(false);
@@ -279,58 +277,66 @@ export default function App({ currentUser, onSignOut }) {
     setSaving(false);
   }
 
-  async function saveOnsite(data) {
-    console.log("saveOnsite called, caseId=", data?.caseId, "saving=", saving);
+  async function saveOnsite(data, recordId) {
     if (saving) return;
     setSaving(true);
     try {
-      if (data.caseId) {
-        // หา case ปัจจุบันเพื่อดึง onsiteLog[] เดิม
-        const existingCase = cases.find(c => c.id === data.caseId);
-        const prevLog = existingCase?.onsiteLog || [];
-        const entry = {
-          date:         data.date,
-          scope:        data.scope,
-          detail:       data.detail,
-          techs:        data.techs || [],
-          km:           data.km,
-          travelCost:   data.travelCost,
-          shippingCost: data.shippingCost,
-          partsCost:    data.partsCost,
-          laborCost:    data.laborCost,
-          totalCost:    data.totalCost,
-          by:           data.createdBy || "",
-          createdAt:    new Date().toISOString(),
-        };
-        const newLog = [...prevLog, entry];
-        // คำนวณ totalCost รวมทุกครั้ง
-        const sumTotal = newLog.reduce((s, e) => s + (e.totalCost||0), 0);
-        await setDoc(doc(db,"cases",data.caseId), {
-          onsiteLog:  newLog,
-          totalCost:  sumTotal,
-          updatedAt:  new Date().toISOString(),
-        }, { merge: true });
-        setDetailCase(prev => prev ? { ...prev, onsiteLog: newLog, totalCost: sumTotal } : prev);
-      } else {
-        await addDoc(collection(db,"onsiteLog"), data);
+      const isAdmin = currentUser?.role === "admin";
+      const id = recordId || Date.now().toString();
+      const payload = {
+        ...data,
+        createdBy: data.createdBy || currentUser?.name || "",
+        createdByUid: currentUser?.id || "",
+        updatedAt: new Date().toISOString(),
+      };
+      if (!recordId) payload.createdAt = new Date().toISOString();
+      await setDoc(doc(db,"onsiteRecords",id), payload, { merge: true });
+
+      // แจ้ง admin ถ้าเป็น user บันทึก (สถานะ pending)
+      if (!isAdmin && payload.status === "pending") {
+        const admins = users.filter(u => u.role === "admin");
+        const batch = writeBatch(db);
+        admins.forEach(a => {
+          batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)), {
+            type:"onsite", toUid:a.id, toName:a.name,
+            fromName:currentUser?.name||"", onsiteId:id,
+            message:`ขอ Onsite: ${data.projectName||""} (${(data.totalCost||0).toLocaleString()} บ.)`,
+            createdAt:new Date().toISOString(), read:false,
+          });
+        });
+        await batch.commit();
       }
-      showToast("📍 บันทึก Onsite แล้ว", "success");
+      showToast(recordId ? "📍 แก้ไข Onsite แล้ว" : "📍 บันทึก Onsite แล้ว", "success");
     } catch(e) { console.error(e); showToast("บันทึกไม่สำเร็จ ลองใหม่"); }
     setSaving(false);
   }
 
-  async function deleteOnsite(caseId, entryIndex) {
-    if (!window.confirm("ลบรายการ Onsite นี้?")) return;
-    const existingCase = cases.find(c => c.id === caseId);
-    if (!existingCase) return;
-    const newLog = (existingCase.onsiteLog || []).filter((_, i) => i !== entryIndex);
-    const sumTotal = newLog.reduce((s, e) => s + (e.totalCost||0), 0);
+  async function approveOnsite(recordId, status) {
     try {
-      await setDoc(doc(db,"cases",caseId), {
-        onsiteLog: newLog,
-        totalCost: sumTotal,
-        updatedAt: new Date().toISOString(),
+      const rec = onsiteRecords.find(r => r.id === recordId);
+      await setDoc(doc(db,"onsiteRecords",recordId), {
+        status,
+        approvedBy: currentUser?.name || "",
+        approvedAt: new Date().toISOString(),
       }, { merge: true });
+      // แจ้งเจ้าของกลับ
+      if (rec?.createdByUid) {
+        const statusText = status==="approved" ? "อนุมัติแล้ว ✅" : status==="rejected" ? "ไม่อนุมัติ ❌" : "คืนเป็นรออนุมัติ";
+        await setDoc(doc(db,"notifications",Date.now().toString()), {
+          type:"onsite", toUid:rec.createdByUid, toName:rec.createdBy||"",
+          fromName:currentUser?.name||"", onsiteId:recordId,
+          message:`Onsite ${rec.projectName||""} — ${statusText}`,
+          createdAt:new Date().toISOString(), read:false,
+        });
+      }
+      showToast(status==="approved"?"อนุมัติแล้ว":status==="rejected"?"ไม่อนุมัติแล้ว":"คืนสถานะแล้ว", "success");
+    } catch(e) { console.error(e); showToast("ดำเนินการไม่สำเร็จ"); }
+  }
+
+  async function deleteOnsite(recordId) {
+    if (!window.confirm("ลบรายการ Onsite นี้?")) return;
+    try {
+      await deleteDoc(doc(db,"onsiteRecords",recordId));
       showToast("ลบรายการ Onsite แล้ว", "success");
     } catch(e) { console.error(e); showToast("ลบไม่สำเร็จ ลองใหม่"); }
   }
@@ -565,7 +571,7 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   if(leavePage) return <LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/>;
-  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} cases={cases} onSaveOnsite={saveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
+  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases}/>;
 
@@ -945,7 +951,7 @@ export default function App({ currentUser, onSignOut }) {
                   onUpdate={()=>setUpdateCase(c)}
                   onHandover={()=>setHandoverCase(c)}
                   onDel={()=>setDelCase(c.id)}
-                  onOnsite={()=>setOnsiteCase(c)}/>
+                  />
               );
             })}
             {totalPages > 1 && (
@@ -994,7 +1000,6 @@ export default function App({ currentUser, onSignOut }) {
         onHandover={()=>{ setHandoverCase(detailCase); setDetailCase(null); }}
         onDelete={()=>{ setDelCase(detailCase.id); setDetailCase(null); }}
         onChecklist={saveChecklist}
-        onOnsite={saveOnsite}
         saving={saving}/>
 
       {importCaseModal && (
@@ -1186,13 +1191,13 @@ export default function App({ currentUser, onSignOut }) {
                   <div style={{ fontSize:32,marginBottom:8 }}>🔔</div>ไม่มีการแจ้งเตือน
                 </div>
               ):notifications.map(n=>(
-                <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
+                <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.type==="onsite"){ setOnsitePage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
                   style={{ padding:"14px 18px",borderBottom:"1px solid #f8fafc",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
                     <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
-                      background:n.type==="handover"?"#dbeafe":n.type==="leave"?"#f0fdf4":"#f5f3ff",
+                      background:n.type==="handover"?"#dbeafe":n.type==="leave"?"#f0fdf4":n.type==="onsite"?"#fff7ed":"#f5f3ff",
                       display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>
-                      {n.type==="handover"?"📤":n.type==="leave"?"📋":"👤"}
+                      {n.type==="handover"?"📤":n.type==="leave"?"📋":n.type==="onsite"?"📍":"👤"}
                     </div>
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ fontSize:14,fontWeight:n.read?400:700,color:"#0f172a",lineHeight:1.5 }}>
@@ -1200,6 +1205,8 @@ export default function App({ currentUser, onSignOut }) {
                           ? <>{n.fromName} ส่งงาน <span style={{ color:"#2563eb" }}>"{n.caseTitle}"</span> ให้คุณ</>
                           : n.type==="leave"
                           ? <>{n.message||`ใบลาของคุณได้รับการพิจารณาแล้ว`}</>
+                          : n.type==="onsite"
+                          ? <>{n.message||`รายการ Onsite อัปเดตแล้ว`}</>
                           : <>มีผู้ใช้ใหม่: <span style={{ color:"#7c3aed",fontWeight:700 }}>{n.toName}</span></>}
                       </div>
                       {n.note&&<div style={{ fontSize:12,color:"#64748b",marginTop:3,background:"#f8fafc",borderRadius:6,padding:"3px 8px",display:"inline-block" }}>"{n.note}"</div>}
@@ -1242,17 +1249,6 @@ export default function App({ currentUser, onSignOut }) {
 
       <UpdateLogModal open={!!updateCase} onClose={()=>setUpdateCase(null)}
         caseData={updateCase} onSave={saveUpdate} currentUser={currentUser}/>
-      {onsiteCase && (
-        <OnsiteModal
-          detailCase={onsiteCase}
-          proj={projects.find(p => p.id === onsiteCase.projectId)}
-          users={users}
-          currentUser={currentUser}
-          onClose={()=>setOnsiteCase(null)}
-          onSave={(data)=>{ saveOnsite({ ...data, caseId: onsiteCase.id }); setOnsiteCase(null); }}
-          saving={saving}
-        />
-      )}
       <HandoverModal open={!!handoverCase} onClose={()=>setHandoverCase(null)}
         caseData={handoverCase} onSave={saveHandover} users={users} currentUser={currentUser}/>
 
