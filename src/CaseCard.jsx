@@ -1,7 +1,7 @@
 import { daysLeft, fmtDate } from "./utils.js";
 import { WarrantyPill, LeasePill, StatusPill } from "./UI.jsx";
 
-function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate, onOnsite }) {
+function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate }) {
   const days = daysLeft(c.warrantyEnd);
   return (
     <div onClick={onClick} style={{
@@ -58,8 +58,6 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate, onOns
           color:"#475569",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>✎ แก้ไข</button>
         <button onClick={onUpdate} style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",
           color:"#16a34a",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📝 อัปเดต</button>
-        <button onClick={onOnsite} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
-          color:"#ea580c",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📍 Onsite</button>
         <button onClick={onHandover} style={{ background:"#eff6ff",border:"1px solid #bfdbfe",
           color:"#2563eb",borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>📤 ส่งต่อ</button>
         <button onClick={onDel} style={{ background:"#fff5f5",border:"1px solid #fecaca",
