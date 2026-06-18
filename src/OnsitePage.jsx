@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import OnsiteModal from "./OnsiteModal.jsx";
 
@@ -16,6 +16,12 @@ const STATUS_STYLE = {
 export default function OnsitePage({ onBack, projects, users, currentUser, onsiteRecords, onSaveOnsite, onApproveOnsite, onDeleteOnsite, saving }) {
 
   const [tab, setTab] = useState("list");   // list | report | export
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 640);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const [showModal, setShowModal] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
 
@@ -117,6 +123,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
   const inputStyle = {
     border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 10px",
     fontSize:12, fontFamily:"inherit", background:"#f8fafc", outline:"none",
+    flex: isMobile ? "1 1 calc(50% - 5px)" : "0 1 auto", minWidth:0,
   };
 
   return (
@@ -161,7 +168,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
         ))}
       </div>
 
-      <div style={{ padding:"16px 20px 48px", maxWidth:1100, margin:"0 auto" }}>
+      <div style={{ padding:isMobile?"12px 14px 48px":"16px 20px 48px", maxWidth:1100, margin:"0 auto" }}>
 
         {/* Filters (list + report) */}
         {tab !== "export" && (
@@ -283,7 +290,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
         {/* ─── TAB: REPORT ─── */}
         {tab === "report" && (
           <>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:16 }}>
+            <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:12, marginBottom:16 }}>
               {[
                 { label:"ครั้ง Onsite (อนุมัติ)", val:approvedRecords.length, color:"#2563eb", unit:"ครั้ง" },
                 { label:"ค่าแรงรวม",    val:totalLabor.toLocaleString(), color:"#16a34a", unit:"บาท" },
