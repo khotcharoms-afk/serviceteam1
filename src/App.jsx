@@ -775,6 +775,37 @@ export default function App({ currentUser, onSignOut }) {
             </>)}
           </div>
         )}
+        {view==="overview" && (()=>{
+          // แจ้งเตือนสัญญาใกล้หมด (≤30 วัน) — คำนวณจาก cases ที่โหลดมาแล้ว ไม่เพิ่ม reads
+          const warn = [];
+          cases.forEach(c=>{
+            const wd=daysLeft(c.warrantyEnd), ld=daysLeft(c.leaseEnd), hd=daysLeft(c.hirePurchaseEnd);
+            if(wd!==null&&wd>=0&&wd<=30) warn.push({type:"ประกัน",days:wd,title:c.title,id:c.id});
+            if(ld!==null&&ld>=0&&ld<=30) warn.push({type:"สัญญาเช่า",days:ld,title:c.title,id:c.id});
+            if(hd!==null&&hd>=0&&hd<=30) warn.push({type:"เช่าซื้อ",days:hd,title:c.title,id:c.id});
+          });
+          if(warn.length===0) return null;
+          warn.sort((a,b)=>a.days-b.days);
+          const soonest = warn[0];
+          return (
+            <div onClick={()=>setFilterStat("__exp")}
+              style={{ background:"#fffbeb",border:"1px solid #fde68a",borderRadius:12,
+                padding:"12px 16px",marginBottom:14,cursor:"pointer",display:"flex",
+                alignItems:"center",gap:12 }}>
+              <div style={{ fontSize:24,flexShrink:0 }}>⚠️</div>
+              <div style={{ flex:1,minWidth:0 }}>
+                <div style={{ fontSize:13,fontWeight:700,color:"#92400e" }}>
+                  มี {warn.length} รายการใกล้หมดภายใน 30 วัน
+                </div>
+                <div style={{ fontSize:12,color:"#b45309",marginTop:2,overflow:"hidden",
+                  textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+                  เร็วที่สุด: {soonest.type} "{soonest.title}" เหลือ {soonest.days} วัน
+                </div>
+              </div>
+              <span style={{ fontSize:12,color:"#92400e",fontWeight:600,flexShrink:0 }}>ดูทั้งหมด →</span>
+            </div>
+          );
+        })()}
         <div style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16 }}>
           {[
             {label:"ทั้งหมด",      val:stats.total,        color:"#2563eb", key:"all"},
