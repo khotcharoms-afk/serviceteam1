@@ -30,6 +30,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
   const [filterStatus, setFilterStatus] = useState("all");
   const [dateFrom, setDateFrom]       = useState("");
   const [dateTo, setDateTo]           = useState("");
+  const [machineSearch, setMachineSearch] = useState("");
 
   const isAdmin = currentUser?.role === "admin";
 
@@ -60,6 +61,24 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
   const totalAll    = approvedRecords.reduce((s,r) => s + (r.totalCost||0), 0);
 
   const techNames = [...new Set(records.flatMap(r => r.techs||[]))].sort();
+
+  // จัดกลุ่มตาม serial เครื่อง
+  const byMachine = {};
+  records.filter(r => r.robotSerial && r.robotSerial.trim()).forEach(r => {
+    const sn = r.robotSerial.trim();
+    if (!byMachine[sn]) byMachine[sn] = { serial:sn, records:[], totalCost:0, projectName:r.projectName||"", projectId:r.projectId||"" };
+    byMachine[sn].records.push(r);
+    if (r.status === "approved") byMachine[sn].totalCost += (r.totalCost||0);
+  });
+  const machineList = Object.values(byMachine).map(m => ({
+    ...m,
+    records: m.records.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")),
+    lastDate: m.records.reduce((max,r)=>(r.date||"")>max?(r.date||""):max, ""),
+  })).sort((a,b)=>(b.lastDate||"").localeCompare(a.lastDate||""));
+  const filteredMachines = machineList.filter(m =>
+    !machineSearch || m.serial.toLowerCase().includes(machineSearch.toLowerCase()) ||
+    m.projectName.toLowerCase().includes(machineSearch.toLowerCase())
+  );
 
   // สรุปรายคน (เฉพาะ approved)
   const perPerson = {};
@@ -157,6 +176,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
         {[
           { key:"list",   label:"📋 รายการ" },
           { key:"report", label:"📊 รายงาน" },
+          { key:"machine", label:"🤖 เครื่อง" },
           { key:"export", label:"📥 Export" },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
@@ -358,6 +378,84 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
                 </div>
               )}
             </div>
+          </>
+        )}
+
+        {/* ─── TAB: MACHINE ─── */}
+        {tab === "machine" && (
+          <>
+            <div style={{ background:"#fff", borderRadius:12, padding:"12px 16px",
+              border:"1px solid #e2e8f0", marginBottom:16 }}>
+              <input value={machineSearch} onChange={e=>setMachineSearch(e.target.value)}
+                placeholder="🔍 ค้นหา Serial หรือโครงการ..."
+                style={{ width:"100%", border:"1px solid #e2e8f0", borderRadius:8,
+                  padding:"8px 12px", fontSize:13, fontFamily:"inherit", background:"#f8fafc", outline:"none" }}/>
+            </div>
+            {filteredMachines.length === 0 ? (
+              <div style={{ textAlign:"center", color:"#cbd5e1", padding:48, fontSize:14 }}>
+                ยังไม่มีข้อมูลเครื่อง (ต้องระบุ Serial ตอนบันทึก Onsite)
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                {filteredMachines.map(m => {
+                  const proj = projects.find(p => p.id === m.projectId);
+                  const approvedCount = m.records.filter(r=>r.status==="approved").length;
+                  return (
+                    <div key={m.serial} style={{ background:"#fff", borderRadius:12,
+                      border:"1px solid #e2e8f0", overflow:"hidden" }}>
+                      <div style={{ background:"#f8fafc", padding:"14px 16px", borderBottom:"1px solid #e2e8f0",
+                        display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+                        <div style={{ width:40, height:40, borderRadius:10, background:"#fff7ed",
+                          border:"1px solid #fed7aa", display:"flex", alignItems:"center",
+                          justifyContent:"center", fontSize:20, flexShrink:0 }}>🤖</div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:15, fontWeight:800, color:"#0f172a" }}>{m.serial}</div>
+                          <div style={{ fontSize:12, color:"#64748b", display:"flex", alignItems:"center", gap:5 }}>
+                            <span style={{ width:8, height:8, borderRadius:"50%", background:proj?.color||"#94a3b8" }}/>
+                            {proj?.name || m.projectName || "—"}
+                          </div>
+                        </div>
+                        <div style={{ textAlign:"right" }}>
+                          <div style={{ fontSize:18, fontWeight:800, color:"#f97316" }}>{m.totalCost.toLocaleString()}</div>
+                          <div style={{ fontSize:10, color:"#94a3b8" }}>บาทรวม · {approvedCount} ครั้ง</div>
+                        </div>
+                      </div>
+                      <div style={{ padding:"12px 16px" }}>
+                        <div style={{ fontSize:10, color:"#94a3b8", fontWeight:700, textTransform:"uppercase",
+                          letterSpacing:.5, marginBottom:10 }}>ประวัติการเข้าซ่อม ({m.records.length})</div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+                          {m.records.map((r,i) => {
+                            const st = STATUS_STYLE[r.status||"pending"];
+                            const isLast = i === m.records.length-1;
+                            return (
+                              <div key={r.id} style={{ display:"flex", gap:12, position:"relative" }}>
+                                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
+                                  <div style={{ width:10, height:10, borderRadius:"50%",
+                                    background:st.color, marginTop:4, flexShrink:0, zIndex:1 }}/>
+                                  {!isLast && <div style={{ width:2, flex:1, background:"#e2e8f0", marginTop:2 }}/>}
+                                </div>
+                                <div style={{ paddingBottom:isLast?0:16, flex:1, minWidth:0 }}>
+                                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:8 }}>
+                                    <span style={{ fontSize:13, fontWeight:700, color:"#0f172a" }}>{r.date}</span>
+                                    <span style={{ fontSize:13, fontWeight:700, color:"#f97316" }}>{(r.totalCost||0).toLocaleString()} บ.</span>
+                                  </div>
+                                  <div style={{ fontSize:12, color:"#475569", marginTop:2 }}>
+                                    {SCOPE_LABEL[r.scope]||r.scope} · 👤 {(r.techs||[]).join(", ")}
+                                  </div>
+                                  {r.detail && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>{r.detail}</div>}
+                                  <span style={{ display:"inline-block", marginTop:4, background:st.bg, color:st.color,
+                                    borderRadius:20, padding:"1px 8px", fontSize:10, fontWeight:700 }}>{st.label}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
 
