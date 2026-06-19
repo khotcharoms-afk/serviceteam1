@@ -21,6 +21,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
   const [showModal, setShowModal] = useState(false);
   const [editTask, setEditTask]   = useState(null);
   const [myOnly,   setMyOnly]     = useState(false);
+  const [confirmId, setConfirmId] = useState(null);
   const [isMobile] = useState(typeof window!=="undefined" && window.innerWidth < 640);
 
   const isAdmin    = currentUser?.role === "admin";
@@ -108,7 +109,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                   <TaskCard key={t.id} task={t} col={col} projects={projects}
                     currentUser={currentUser} isAdmin={isAdmin}
                     onMove={moveTask} onEdit={openEdit}
-                    onDelete={onDeleteTask} onConvert={onConvertToCase}/>
+                    onDelete={setConfirmId} onConvert={onConvertToCase}/>
                 ))}
               </div>
             );
@@ -116,6 +117,29 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
         </div>
       </div>
 
+      {confirmId && (
+        <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(15,23,42,.5)",
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
+          <div style={{ background:"#fff",borderRadius:16,padding:24,maxWidth:320,width:"100%",
+            boxShadow:"0 20px 60px rgba(0,0,0,.2)",textAlign:"center" }}>
+            <div style={{ fontSize:32,marginBottom:12 }}>🗑</div>
+            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:8 }}>ลบงานนี้?</div>
+            <div style={{ fontSize:13,color:"#64748b",marginBottom:20 }}>ไม่สามารถกู้คืนได้</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+              <button onClick={()=>setConfirmId(null)}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิก
+              </button>
+              <button onClick={()=>{ onDeleteTask(confirmId); setConfirmId(null); }}
+                style={{ background:"#ef4444",border:"none",color:"#fff",
+                  borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ลบ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showModal && (
         <TaskModal onClose={()=>{ setShowModal(false); setEditTask(null); }}
           onSave={(data,id)=>{ onSaveTask(data,id); setShowModal(false); setEditTask(null); }}
