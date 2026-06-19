@@ -13,6 +13,7 @@ export function useFirestore() {
   const [userSchedules, setUserSchedules] = useState([]);
   const [shiftMembers, setShiftMembers] = useState([]);
   const [onsiteRecords, setOnsiteRecords] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
@@ -34,6 +35,9 @@ export function useFirestore() {
 
     const u5 = onSnapshot(collection(db,"onsiteRecords"), snap => {
       setOnsiteRecords(snap.docs.map(d => ({ id:d.id, ...d.data() })));
+    }, errHandler);
+    const u6 = onSnapshot(collection(db,"tasks"), snap => {
+      setTasks(snap.docs.map(d => ({ id:d.id, ...d.data() })));
     }, errHandler);
 
     // ── One-time reads ──
@@ -66,7 +70,7 @@ export function useFirestore() {
       setShiftMembers(snap.docs.map(d=>({id:d.id,...d.data()})));
     }).catch(errHandler);
 
-    return () => { u2(); u4(); u5(); };
+    return () => { u2(); u4(); u5(); u6(); };
   }, []);
 
   function refreshUsers() {
@@ -106,5 +110,5 @@ export function useFirestore() {
     }).catch(e => console.error(e));
   }
 
-  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers, refreshUsers };
+  return { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, tasks, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers, refreshUsers };
 }
