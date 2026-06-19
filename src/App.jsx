@@ -16,6 +16,7 @@ import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
+import TaskBoard from "./TaskBoard.jsx";
 
 export default function App({ currentUser, onSignOut }) {
   const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, tasks, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
