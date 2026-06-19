@@ -18,7 +18,7 @@ import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
 
 export default function App({ currentUser, onSignOut }) {
-  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
+  const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, tasks, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
 
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
@@ -32,6 +32,7 @@ export default function App({ currentUser, onSignOut }) {
   const [dashboardPage,setDashboardPage] = useState(false);
   const [shiftPage,setShiftPage] = useState(false);
   const [onsitePage,setOnsitePage] = useState(false);
+  const [taskPage,setTaskPage]     = useState(false);
   const [leavePage,setLeavePage]   = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
@@ -571,6 +572,35 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   if(leavePage) return <LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/>;
+  if(taskPage) return <TaskBoard onBack={()=>setTaskPage(false)}
+    projects={projects} users={users} cases={cases} currentUser={currentUser}
+    tasks={tasks} saving={saving}
+    onSaveTask={async(data,id)=>{
+      const docId = id||Date.now().toString();
+      await setDoc(doc(db,"tasks",docId),data,{merge:true});
+    }}
+    onDeleteTask={async(id)=>{
+      if(!window.confirm("ลบงานนี้?")) return;
+      await deleteDoc(doc(db,"tasks",id));
+    }}
+    onConvertToCase={async(task)=>{
+      if(!window.confirm("สร้างเคสจากงานนี้?")) return;
+      const proj = projects.find(p=>p.id===task.projectId);
+      const now = new Date().toISOString();
+      const cid = Date.now().toString();
+      await setDoc(doc(db,"cases",cid),{
+        title:task.title, projectId:task.projectId,
+        warrantyEnd:proj?.warrantyEnd||null, leaseEnd:proj?.leaseEnd||null,
+        site:task.site||"", type:task.type||"อื่นๆ",
+        techs:task.assignees||[], tech:(task.assignees||[])[0]||"",
+        status:"open", note:task.note||"", date:today(),
+        handoverLog:[], updateLog:[],
+        fromTaskId:task.id,
+        updatedAt:now, activityAt:now,
+      });
+      await setDoc(doc(db,"tasks",task.id),{caseId:cid,updatedAt:now},{merge:true});
+      showToast("📁 สร้างเคสจากงานแล้ว","success");
+    }}/>;
   if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
@@ -632,6 +662,8 @@ export default function App({ currentUser, onSignOut }) {
             <button onClick={()=>setShiftPage(true)} style={{ background:"#fefce8",border:"1px solid #fde68a",
               color:"#854d0e",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📅</button>
           )}
+          <button onClick={()=>setTaskPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
+            color:"#6B21A8",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📋</button>
           <button onClick={()=>setOnsitePage(true)} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
             color:"#ea580c",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📍</button>
           <div style={{ position:"relative" }}>
