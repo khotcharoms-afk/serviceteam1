@@ -581,8 +581,8 @@ export default function App({ currentUser, onSignOut }) {
       await setDoc(doc(db,"tasks",docId),data,{merge:true});
     }}
     onDeleteTask={async(id)=>{
-      if(!window.confirm("ลบงานนี้?")) return;
       await deleteDoc(doc(db,"tasks",id));
+      showToast("ลบงานแล้ว","success");
     }}
     onConvertToCase={async(task)=>{
       if(!window.confirm("สร้างเคสจากงานนี้?")) return;
