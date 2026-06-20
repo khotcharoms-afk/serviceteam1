@@ -5,10 +5,10 @@ import { daysLeft, fmtDate, SERVICE_TYPES, today } from "./utils.js";
 import TaskModal from "./TaskModal.jsx";
 
 const COLUMNS = [
-  { key:"todo",       label:"📥 รอรับงาน",   color:"#64748b", bg:"#f1f5f9" },
-  { key:"accepted",   label:"✋ รับแล้ว",     color:"#2563eb", bg:"#eff6ff" },
-  { key:"inprogress", label:"🔧 กำลังทำ",    color:"#f59e0b", bg:"#fffbeb" },
-  { key:"done",       label:"✅ เสร็จ",       color:"#16a34a", bg:"#f0fdf4" },
+  { key:"todo",       label:"📥 รอรับงาน",   color:"#64748b", bg:"#f8fafc", border:"#cbd5e1" },
+  { key:"accepted",   label:"✋ รับแล้ว",     color:"#1d4ed8", bg:"#eff6ff", border:"#93c5fd" },
+  { key:"inprogress", label:"🔧 กำลังทำ",    color:"#92400e", bg:"#fffbeb", border:"#fcd34d" },
+  { key:"done",       label:"✅ เสร็จ",       color:"#15803d", bg:"#f0fdf4", border:"#86efac" },
 ];
 
 const PRIORITY_STYLE = {
@@ -99,16 +99,16 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
       {/* Board */}
       <div style={{ padding:"16px",overflowX:"auto" }}>
         <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr":`repeat(${COLUMNS.length},minmax(260px,1fr))`,
-          gap:12,minWidth:isMobile?"unset":1040 }}>
+          gap:0,minWidth:isMobile?"unset":1040,borderRadius:12,overflow:"hidden",border:"0.5px solid #e2e8f0" }}>
           {COLUMNS.map(col => {
             const colTasks = byStatus[col.key]||[];
             return (
-              <div key={col.key} style={{ background:"#e2e8f0",borderRadius:12,padding:10,minHeight:200 }}>
+              <div key={col.key} style={{ background:col.bg,borderRadius:12,padding:10,minHeight:200 }}>
                 <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",
-                  padding:"4px 8px 10px" }}>
-                  <span style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>{col.label}</span>
-                  <span style={{ background:"#fff",borderRadius:20,padding:"1px 8px",
-                    fontSize:11,fontWeight:700,color:"#64748b" }}>{colTasks.length}</span>
+                  padding:"4px 8px 10px",marginBottom:2,borderBottom:`2px solid ${col.border}` }}>
+                  <span style={{ fontSize:12,fontWeight:700,color:col.color }}>{col.label}</span>
+                  <span style={{ background:"rgba(0,0,0,.06)",borderRadius:20,padding:"1px 8px",
+                    fontSize:11,fontWeight:700,color:col.color }}>{colTasks.length}</span>
                 </div>
                 {colTasks.map(t => (
                   <TaskCard key={t.id} task={t} col={col} projects={projects}
@@ -319,7 +319,9 @@ function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, o
 
   const NEXT = { todo:"accepted", accepted:"inprogress", inprogress:"done" };
   const NEXT_LABEL = { todo:"✋ รับงาน", accepted:"🔧 เริ่มทำ", inprogress:"✅ ทำเสร็จ" };
+  const NEXT_STYLE = { todo:{ bg:"#e0f2fe",color:"#0369a1" }, accepted:{ bg:"#fef3c7",color:"#92400e" }, inprogress:{ bg:"#dcfce7",color:"#15803d" } };
   const nextStatus = NEXT[task.status];
+  const nextStyle = NEXT_STYLE[task.status]||{ bg:"#f1f5f9", color:"#475569" };
 
   return (
     <div onClick={()=>onCardClick(task)} style={{ background:"#fff",borderRadius:10,padding:12,marginBottom:8,
@@ -367,9 +369,8 @@ function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, o
         <div onClick={e=>e.stopPropagation()} style={{ display:"flex",gap:5,paddingTop:8,borderTop:"1px solid #f1f5f9",flexWrap:"wrap" }}>
           {nextStatus && (
             <button onClick={()=>onMove(task,nextStatus)}
-              style={{ flex:1,background:nextStatus==="done"?"#f0fdf4":nextStatus==="inprogress"?"#fffbeb":"#eff6ff",
-                border:`1px solid ${nextStatus==="done"?"#bbf7d0":nextStatus==="inprogress"?"#fde68a":"#bfdbfe"}`,
-                color:nextStatus==="done"?"#16a34a":nextStatus==="inprogress"?"#92400e":"#2563eb",
+              style={{ flex:1,background:nextStyle.bg,border:"none",color:nextStyle.color,
+                borderRadius:7,padding:"6px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
                 borderRadius:7,padding:"5px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
               {NEXT_LABEL[task.status]}
             </button>
