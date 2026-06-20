@@ -23,6 +23,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
     return () => window.removeEventListener("resize", onResize);
   }, []);
   const [showModal, setShowModal] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
 
   const [filterProj, setFilterProj]   = useState("all");
@@ -293,7 +294,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
                         </button>
                       )}
                       {isAdmin && (
-                        <button onClick={() => onDeleteOnsite(r.id)}
+                        <button onClick={() => setConfirmDeleteId(r.id)}
                           style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444",
                             borderRadius:7, padding:"5px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
                           🗑 ลบ
@@ -489,6 +490,29 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
         )}
       </div>
 
+      {confirmDeleteId && (
+        <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(15,23,42,.5)",
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
+          <div style={{ background:"#fff",borderRadius:16,padding:24,maxWidth:320,width:"100%",
+            boxShadow:"0 20px 60px rgba(0,0,0,.2)",textAlign:"center",fontFamily:"'Noto Sans Thai',sans-serif" }}>
+            <div style={{ fontSize:32,marginBottom:12 }}>🗑</div>
+            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:8 }}>ลบรายการ Onsite นี้?</div>
+            <div style={{ fontSize:13,color:"#64748b",marginBottom:20 }}>ไม่สามารถกู้คืนได้</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+              <button onClick={()=>setConfirmDeleteId(null)}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิก
+              </button>
+              <button onClick={()=>{ onDeleteOnsite(confirmDeleteId); setConfirmDeleteId(null); }}
+                style={{ background:"#ef4444",border:"none",color:"#fff",
+                  borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ลบ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showModal && (
         <OnsiteModal onClose={() => { setShowModal(false); setEditRecord(null); }}
           onSave={handleSave} saving={saving}
