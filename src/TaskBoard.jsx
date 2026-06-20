@@ -20,8 +20,11 @@ const PRIORITY_STYLE = {
 export default function TaskBoard({ onBack, projects, users, cases, currentUser, tasks, saving, onSaveTask, onDeleteTask, onConvertToCase }) {
   const [showModal, setShowModal] = useState(false);
   const [editTask, setEditTask]   = useState(null);
-  const [myOnly,   setMyOnly]     = useState(false);
-  const [confirmId, setConfirmId] = useState(null);
+  const [myOnly,     setMyOnly]     = useState(false);
+  const [confirmId,  setConfirmId]  = useState(null);
+  const [detailTask, setDetailTask] = useState(null);
+  const [comment,    setComment]    = useState("");
+  const [sending,    setSending]    = useState(false);
   const [isMobile] = useState(typeof window!=="undefined" && window.innerWidth < 640);
 
   const isAdmin    = currentUser?.role === "admin";
@@ -109,13 +112,144 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                   <TaskCard key={t.id} task={t} col={col} projects={projects}
                     currentUser={currentUser} isAdmin={isAdmin}
                     onMove={moveTask} onEdit={openEdit}
-                    onDelete={setConfirmId} onConvert={onConvertToCase}/>
+                    onDelete={setConfirmId} onConvert={onConvertToCase}
+                    onCardClick={setDetailTask}/>
                 ))}
               </div>
             );
           })}
         </div>
       </div>
+
+      {detailTask && (
+        <div style={{ position:"fixed",inset:0,zIndex:650,background:"rgba(15,23,42,.5)",
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+          onClick={()=>{ setDetailTask(null); setComment(""); }}>
+          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:540,
+            maxHeight:"92vh",display:"flex",flexDirection:"column",
+            boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
+            onClick={e=>e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ padding:"18px 20px",borderBottom:"1px solid #f1f5f9",flexShrink:0 }}>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8 }}>
+                <div style={{ flex:1,minWidth:0 }}>
+                  <div style={{ fontSize:15,fontWeight:800,color:"#0f172a",lineHeight:1.3 }}>{detailTask.title}</div>
+                  <div style={{ fontSize:12,color:"#64748b",marginTop:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
+                    {(()=>{ const proj=projects.find(p=>p.id===detailTask.projectId);
+                      return proj?<><span style={{ width:8,height:8,borderRadius:"50%",background:proj.color }}/>
+                        <span>{proj.name}</span></>:null; })()}
+                    {detailTask.site && <><span>·</span><span>📍 {detailTask.site}</span></>}
+                  </div>
+                </div>
+                <button onClick={()=>{ setDetailTask(null); setComment(""); }}
+                  style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+                    fontSize:14,width:30,height:30,borderRadius:8,flexShrink:0 }}>✕</button>
+              </div>
+              {/* meta row */}
+              <div style={{ display:"flex",gap:6,flexWrap:"wrap",marginTop:10 }}>
+                {(()=>{ const pri=PRIORITY_STYLE[detailTask.priority]||PRIORITY_STYLE.normal;
+                  return <span style={{ fontSize:11,padding:"2px 8px",borderRadius:12,fontWeight:700,
+                    background:pri.bg,color:pri.color }}>{pri.label}</span>; })()}
+                <span style={{ fontSize:11,padding:"2px 8px",borderRadius:12,fontWeight:600,
+                  background:"#f1f5f9",color:"#475569" }}>{detailTask.type}</span>
+                {detailTask.dueDate && <span style={{ fontSize:11,padding:"2px 8px",borderRadius:12,fontWeight:600,
+                  background:"#f8fafc",color:"#64748b" }}>📅 {detailTask.dueDate}</span>}
+              </div>
+              {/* assignees */}
+              <div style={{ display:"flex",gap:4,marginTop:8,alignItems:"center" }}>
+                <span style={{ fontSize:11,color:"#94a3b8" }}>ผู้รับผิดชอบ:</span>
+                {(detailTask.assignees||[]).map(name=>(
+                  <span key={name} style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",
+                    width:24,height:24,borderRadius:"50%",fontSize:11,fontWeight:700,color:"#fff",
+                    background:`hsl(${name.charCodeAt(0)*7%360},60%,65%)` }}>{name.charAt(0)}</span>
+                ))}
+                {(detailTask.assignees||[]).map(name=>(
+                  <span key={name+"n"} style={{ fontSize:12,color:"#475569" }}>{name}</span>
+                ))}
+              </div>
+              {detailTask.note && (
+                <div style={{ marginTop:10,background:"#f8fafc",borderRadius:8,
+                  padding:"8px 12px",fontSize:12,color:"#475569" }}>{detailTask.note}</div>
+              )}
+            </div>
+            {/* Comments */}
+            <div style={{ flex:1,overflowY:"auto",padding:"14px 20px" }}>
+              <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                letterSpacing:.5,marginBottom:10 }}>
+                💬 ความคิดเห็น ({(detailTask.comments||[]).length})
+              </div>
+              {(detailTask.comments||[]).length===0 ? (
+                <div style={{ textAlign:"center",color:"#cbd5e1",padding:"24px 0",fontSize:13 }}>
+                  ยังไม่มีความคิดเห็น
+                </div>
+              ) : (
+                <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+                  {(detailTask.comments||[]).map((c,i)=>{
+                    const isMe = c.by===currentUser?.name;
+                    return (
+                      <div key={i} style={{ display:"flex",gap:8,
+                        flexDirection:isMe?"row-reverse":"row" }}>
+                        <div style={{ width:28,height:28,borderRadius:"50%",flexShrink:0,
+                          background:`hsl(${(c.by||"").charCodeAt(0)*7%360},60%,65%)`,
+                          display:"flex",alignItems:"center",justifyContent:"center",
+                          fontSize:12,fontWeight:700,color:"#fff" }}>
+                          {(c.by||"?").charAt(0)}
+                        </div>
+                        <div style={{ maxWidth:"75%" }}>
+                          <div style={{ fontSize:10,color:"#94a3b8",marginBottom:3,
+                            textAlign:isMe?"right":"left" }}>
+                            {c.by} · {c.at?.slice(0,10)||""}
+                          </div>
+                          <div style={{ background:isMe?"#f0fdf4":"#f8fafc",
+                            border:`1px solid ${isMe?"#bbf7d0":"#e2e8f0"}`,
+                            borderRadius:isMe?"12px 4px 12px 12px":"4px 12px 12px 12px",
+                            padding:"8px 12px",fontSize:13,color:"#1e293b",lineHeight:1.6 }}>
+                            {c.text}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {/* Input */}
+            <div style={{ padding:"12px 16px",borderTop:"1px solid #f1f5f9",flexShrink:0,
+              display:"flex",gap:8,alignItems:"flex-end" }}>
+              <textarea value={comment} onChange={e=>setComment(e.target.value)}
+                onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault();
+                  if(!comment.trim()||sending) return;
+                  setSending(true);
+                  const newComment={ text:comment.trim(), by:currentUser?.name||"", at:new Date().toISOString() };
+                  const updated={ ...detailTask, comments:[...(detailTask.comments||[]),newComment] };
+                  onSaveTask(updated, detailTask.id);
+                  setDetailTask(updated);
+                  setComment(""); setSending(false);
+                }}}
+                placeholder="พิมพ์ข้อความ... (Enter ส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"
+                rows={2}
+                style={{ flex:1,border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px",
+                  fontSize:13,fontFamily:"inherit",resize:"none",outline:"none",
+                  background:"#f8fafc",lineHeight:1.5 }}/>
+              <button onClick={async()=>{
+                  if(!comment.trim()||sending) return;
+                  setSending(true);
+                  const newComment={ text:comment.trim(), by:currentUser?.name||"", at:new Date().toISOString() };
+                  const updated={ ...detailTask, comments:[...(detailTask.comments||[]),newComment] };
+                  await onSaveTask(updated, detailTask.id);
+                  setDetailTask(updated);
+                  setComment(""); setSending(false);
+                }}
+                disabled={!comment.trim()||sending}
+                style={{ background:"#6B21A8",border:"none",color:"#fff",borderRadius:10,
+                  padding:"10px 16px",fontSize:13,fontWeight:600,cursor:"pointer",
+                  fontFamily:"inherit",flexShrink:0,opacity:!comment.trim()||sending?0.5:1 }}>
+                ส่ง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmId && (
         <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(15,23,42,.5)",
@@ -150,7 +284,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
   );
 }
 
-function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, onDelete, onConvert }) {
+function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, onDelete, onConvert, onCardClick }) {
   const proj = projects.find(p=>p.id===task.projectId);
   const pri  = PRIORITY_STYLE[task.priority]||PRIORITY_STYLE.normal;
   const due  = daysLeft(task.dueDate);
@@ -163,8 +297,8 @@ function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, o
   const nextStatus = NEXT[task.status];
 
   return (
-    <div style={{ background:"#fff",borderRadius:10,padding:12,marginBottom:8,
-      boxShadow:"0 1px 2px rgba(0,0,0,.06)",
+    <div onClick={()=>onCardClick(task)} style={{ background:"#fff",borderRadius:10,padding:12,marginBottom:8,
+      boxShadow:"0 1px 2px rgba(0,0,0,.06)",cursor:"pointer",
       borderLeft:`3px solid ${proj?.color||col.color}` }}>
       <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",lineHeight:1.35,marginBottom:6 }}>
         {task.title}
@@ -194,13 +328,18 @@ function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, o
           </span>
         ))}
       </div>
+      {(task.comments||[]).length>0 && (
+        <div style={{ fontSize:11,color:"#64748b",marginBottom:4 }}>
+          💬 {task.comments.length} ความคิดเห็น
+        </div>
+      )}
       {task.dueDate && (
         <div style={{ fontSize:11,fontWeight:600,color:dueColor,marginBottom:6 }}>
           📅 {fmtDate(task.dueDate)} {due!==null&&(due<0?`(เกิน ${Math.abs(due)} วัน)`:due===0?"(วันนี้!)":due<=3?`(เหลือ ${due} วัน)`:"")}
         </div>
       )}
       {isMine && (
-        <div style={{ display:"flex",gap:5,paddingTop:8,borderTop:"1px solid #f1f5f9",flexWrap:"wrap" }}>
+        <div onClick={e=>e.stopPropagation()} style={{ display:"flex",gap:5,paddingTop:8,borderTop:"1px solid #f1f5f9",flexWrap:"wrap" }}>
           {nextStatus && (
             <button onClick={()=>onMove(task,nextStatus)}
               style={{ flex:1,background:nextStatus==="done"?"#f0fdf4":nextStatus==="inprogress"?"#fffbeb":"#eff6ff",
