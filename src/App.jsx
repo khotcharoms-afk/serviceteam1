@@ -591,22 +591,38 @@ export default function App({ currentUser, onSignOut }) {
     onSaveTask={async(data,id)=>{
       const docId = id||Date.now().toString();
       const isNew = !id;
+      const prevTask = id ? (tasks||[]).find(t=>t.id===id) : null;
       await setDoc(doc(db,"tasks",docId),data,{merge:true});
-      // แจ้งเตือนผู้รับผิดชอบเมื่อสร้างงานใหม่
+
+      const STATUS_LABEL = { todo:"รอรับงาน", accepted:"รับแล้ว", inprogress:"กำลังทำ", done:"เสร็จแล้ว" };
+      const batch = writeBatch(db);
+      const now = new Date().toISOString();
+
       if (isNew && (data.assignees||[]).length>0) {
-        const batch = writeBatch(db);
+        // แจ้งผู้รับผิดชอบเมื่อสร้างงานใหม่
         (data.assignees||[]).forEach(name => {
           const u = users.find(x=>x.name===name);
-          if (!u || u.id===currentUser?.id) return; // ไม่แจ้งตัวเอง
+          if (!u || u.id===currentUser?.id) return;
           batch.set(doc(db,"notifications",Date.now().toString()+u.id.slice(0,4)),{
-            type:"task", toUid:u.id, toName:name,
-            fromName:currentUser?.name||"",
-            message:`มีงานใหม่: "${data.title}" (${data.projectName||""})`,
-            createdAt:new Date().toISOString(), read:false,
+            type:"task", toUid:u.id, toName:name, fromName:currentUser?.name||"",
+            message:`มีงานใหม่: "${data.title}"${data.projectName?` (${data.projectName})`:""}`,
+            createdAt:now, read:false,
           });
         });
         await batch.commit();
         showToast("📋 สร้างงานและแจ้งเตือนแล้ว","success");
+      } else if (!isNew && prevTask && data.status && prevTask.status !== data.status) {
+        // แจ้ง admin เมื่อช่างเปลี่ยนสถานะ
+        const admins = users.filter(u=>u.role==="admin"&&u.id!==currentUser?.id);
+        admins.forEach(a=>{
+          batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)),{
+            type:"task", toUid:a.id, toName:a.name, fromName:currentUser?.name||"",
+            message:`"${data.title}" → ${STATUS_LABEL[data.status]||data.status}`,
+            createdAt:now, read:false,
+          });
+        });
+        await batch.commit();
+        showToast(`📋 ${STATUS_LABEL[data.status]||data.status}แล้ว`,"success");
       } else if (!isNew) {
         showToast("💾 บันทึกการแก้ไขแล้ว","success");
       }
