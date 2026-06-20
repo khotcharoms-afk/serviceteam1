@@ -578,7 +578,26 @@ export default function App({ currentUser, onSignOut }) {
     tasks={tasks} saving={saving}
     onSaveTask={async(data,id)=>{
       const docId = id||Date.now().toString();
+      const isNew = !id;
       await setDoc(doc(db,"tasks",docId),data,{merge:true});
+      // แจ้งเตือนผู้รับผิดชอบเมื่อสร้างงานใหม่
+      if (isNew && (data.assignees||[]).length>0) {
+        const batch = writeBatch(db);
+        (data.assignees||[]).forEach(name => {
+          const u = users.find(x=>x.name===name);
+          if (!u || u.id===currentUser?.id) return; // ไม่แจ้งตัวเอง
+          batch.set(doc(db,"notifications",Date.now().toString()+u.id.slice(0,4)),{
+            type:"task", toUid:u.id, toName:name,
+            fromName:currentUser?.name||"",
+            message:`มีงานใหม่: "${data.title}" (${data.projectName||""})`,
+            createdAt:new Date().toISOString(), read:false,
+          });
+        });
+        await batch.commit();
+        showToast("📋 สร้างงานและแจ้งเตือนแล้ว","success");
+      } else if (!isNew) {
+        showToast("💾 บันทึกการแก้ไขแล้ว","success");
+      }
     }}
     onDeleteTask={async(id)=>{
       await deleteDoc(doc(db,"tasks",id));
@@ -663,8 +682,15 @@ export default function App({ currentUser, onSignOut }) {
             <button onClick={()=>setShiftPage(true)} style={{ background:"#fefce8",border:"1px solid #fde68a",
               color:"#854d0e",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📅</button>
           )}
-          <button onClick={()=>setTaskPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
-            color:"#6B21A8",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📋</button>
+          <div style={{ position:"relative",display:"inline-flex" }}>
+            <button onClick={()=>setTaskPage(true)} style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",
+              color:"#6B21A8",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📋</button>
+            {(()=>{ const cnt=(tasks||[]).filter(t=>t.status==="todo"&&(t.assignees||[]).includes(currentUser?.name)).length;
+              return cnt>0?<span style={{ position:"absolute",top:-4,right:-4,background:"#dc2626",color:"#fff",
+                borderRadius:"50%",width:16,height:16,fontSize:10,fontWeight:700,
+                display:"flex",alignItems:"center",justifyContent:"center" }}>{cnt}</span>:null;
+            })()}
+          </div>
           <button onClick={()=>setOnsitePage(true)} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
             color:"#ea580c",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📍</button>
           <div style={{ position:"relative" }}>
@@ -1259,13 +1285,13 @@ export default function App({ currentUser, onSignOut }) {
                   <div style={{ fontSize:32,marginBottom:8 }}>🔔</div>ไม่มีการแจ้งเตือน
                 </div>
               ):notifications.map(n=>(
-                <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.type==="onsite"){ setOnsitePage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
+                <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.type==="onsite"){ setOnsitePage(true); } else if(n.type==="task"){ setTaskPage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
                   style={{ padding:"14px 18px",borderBottom:"1px solid #f8fafc",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
                     <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
-                      background:n.type==="handover"?"#dbeafe":n.type==="leave"?"#f0fdf4":n.type==="onsite"?"#fff7ed":"#f5f3ff",
+                      background:n.type==="handover"?"#dbeafe":n.type==="leave"?"#f0fdf4":n.type==="onsite"?"#fff7ed":n.type==="task"?"#f5f3ff":"#f5f3ff",
                       display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>
-                      {n.type==="handover"?"📤":n.type==="leave"?"📋":n.type==="onsite"?"📍":"👤"}
+                      {n.type==="handover"?"📤":n.type==="leave"?"📋":n.type==="onsite"?"📍":n.type==="task"?"📋":"👤"}
                     </div>
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ fontSize:14,fontWeight:n.read?400:700,color:"#0f172a",lineHeight:1.5 }}>
@@ -1275,6 +1301,8 @@ export default function App({ currentUser, onSignOut }) {
                           ? <>{n.message||`ใบลาของคุณได้รับการพิจารณาแล้ว`}</>
                           : n.type==="onsite"
                           ? <>{n.message||`รายการ Onsite อัปเดตแล้ว`}</>
+                          : n.type==="task"
+                          ? <>{n.message||`มีงานใหม่มอบหมายให้คุณ`}</>
                           : <>มีผู้ใช้ใหม่: <span style={{ color:"#7c3aed",fontWeight:700 }}>{n.toName}</span></>}
                       </div>
                       {n.note&&<div style={{ fontSize:12,color:"#64748b",marginTop:3,background:"#f8fafc",borderRadius:6,padding:"3px 8px",display:"inline-block" }}>"{n.note}"</div>}
