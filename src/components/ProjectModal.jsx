@@ -14,7 +14,6 @@ export default function ProjectModal({
   newProjContractType, setNewProjContractType,
   newProjContractStart, setNewProjContractStart,
   newProjProjectStatus, setNewProjProjectStatus,
-  newProjSlaHours, setNewProjSlaHours,
   newProjSites, setNewProjSites,
   saving, onSubmit
 }) {
@@ -161,27 +160,6 @@ export default function ProjectModal({
           onChange={e => setNewProjContractStart(e.target.value)}/>
         {newProjContractStart && <div style={{ fontSize:11,color:"#64748b",marginTop:4,fontWeight:600 }}>
           📅 {fmtDate(newProjContractStart)}
-        </div>}
-      </Field>
-      <Field label="SLA การตอบสนอง (ชั่วโมง)">
-        <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
-          <input type="number" min="0" style={IS({ flex:1,minWidth:100 })}
-            value={newProjSlaHours} placeholder="เช่น 24"
-            onChange={e=>setNewProjSlaHours(e.target.value)}/>
-          {[{l:"4 ชม.",v:"4"},{l:"24 ชม.",v:"24"},{l:"48 ชม.",v:"48"},{l:"72 ชม.",v:"72"}].map(b=>(
-            <button key={b.v} type="button" onClick={()=>setNewProjSlaHours(b.v)}
-              style={{ background:newProjSlaHours===b.v?"#dc2626":"#f1f5f9",
-                border:"1px solid #e2e8f0",color:newProjSlaHours===b.v?"#fff":"#475569",
-                borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
-              {b.l}
-            </button>
-          ))}
-          {newProjSlaHours && <button type="button" onClick={()=>setNewProjSlaHours("")}
-            style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-              borderRadius:7,padding:"6px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ล้าง</button>}
-        </div>
-        {newProjSlaHours && <div style={{ fontSize:11,color:"#dc2626",marginTop:4,fontWeight:600 }}>
-          ⏱ ต้องตอบสนองภายใน {newProjSlaHours} ชั่วโมง
         </div>}
       </Field>
       <Field label="ไซต์ย่อย">
