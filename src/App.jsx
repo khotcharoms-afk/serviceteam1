@@ -64,7 +64,6 @@ export default function App({ currentUser, onSignOut }) {
   const [newProjContractType,setNewProjContractType] = useState("");
   const [newProjContractStart,setNewProjContractStart] = useState("");
   const [newProjProjectStatus,setNewProjProjectStatus] = useState("");
-  const [newProjSlaHours,setNewProjSlaHours]         = useState("");
   const [newProjSites,setNewProjSites]       = useState([]);
 
   const [toast,setToast]   = useState(null);
@@ -518,7 +517,6 @@ export default function App({ currentUser, onSignOut }) {
         leaseEnd: r.leaseEnd||null,
         hirePurchaseEnd: null,
         projectStatus: r.projectStatus||null,
-        slaHours: null,
         sites: [],
       });
     });
@@ -531,7 +529,7 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjCustomer(p.customer||""); setNewProjContractType(p.contractType||""); setNewProjContractStart(p.contractStart||""); setNewProjProjectStatus(p.projectStatus||""); setNewProjSlaHours(p.slaHours?.toString()||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjCustomer(p.customer||""); setNewProjContractType(p.contractType||""); setNewProjContractStart(p.contractStart||""); setNewProjProjectStatus(p.projectStatus||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name||saving) return;
     setSaving(true);
@@ -543,10 +541,9 @@ export default function App({ currentUser, onSignOut }) {
     const contractType  = newProjContractType||null;
     const contractStart = newProjContractStart||null;
     const projectStatus = newProjProjectStatus||null;
-    const slaHours = newProjSlaHours ? parseFloat(newProjSlaHours) : null;
     const batch = writeBatch(db);
     const code = newProjCode.trim();
-    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, customer, contractType, contractStart, projectStatus, slaHours, sites:newProjSites });
+    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, customer, contractType, contractStart, projectStatus, sites:newProjSites });
     if(editProjId){
       cases.filter(c=>c.projectId===editProjId).forEach(c=>{
         batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd, hirePurchaseEnd },{ merge:true });
@@ -884,7 +881,6 @@ export default function App({ currentUser, onSignOut }) {
             {label:"เสร็จ",        val:stats.done,         color:"#10b981", key:"done"},
             {label:"รอดำเนินการ",  val:stats.hold,         color:"#ef4444", key:"hold"},
             {label:"ใกล้หมด",     val:stats.expiringSoon, color:"#f59e0b", key:"__exp"},
-            {label:"เกิน SLA",    val:(()=>{ return cases.filter(c=>{ const proj=projects.find(p=>p.id===c.projectId); if(!proj?.slaHours||c.status==="done") return false; const ref=c.activityAt||c.updatedAt; if(!ref) return false; return (Date.now()-new Date(ref).getTime())/3600000>proj.slaHours; }).length; })(), color:"#dc2626", key:"__sla"},
           ].map(s=>(
             <div key={s.key} onClick={()=>setFilterStat(filterStat===s.key?"all":s.key)}
               style={{ background:filterStat===s.key?s.color+"12":"#fff",
@@ -1278,7 +1274,6 @@ export default function App({ currentUser, onSignOut }) {
         newProjContractType={newProjContractType} setNewProjContractType={setNewProjContractType}
         newProjContractStart={newProjContractStart} setNewProjContractStart={setNewProjContractStart}
         newProjProjectStatus={newProjProjectStatus} setNewProjProjectStatus={setNewProjProjectStatus}
-        newProjSlaHours={newProjSlaHours} setNewProjSlaHours={setNewProjSlaHours}
         newProjSites={newProjSites} setNewProjSites={setNewProjSites}
         saving={saving} onSubmit={submitProj}/>
 
