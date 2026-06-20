@@ -64,6 +64,7 @@ export default function App({ currentUser, onSignOut }) {
   const [newProjContractType,setNewProjContractType] = useState("");
   const [newProjContractStart,setNewProjContractStart] = useState("");
   const [newProjProjectStatus,setNewProjProjectStatus] = useState("");
+  const [newProjSlaHours,setNewProjSlaHours]         = useState("");
   const [newProjSites,setNewProjSites]       = useState([]);
 
   const [toast,setToast]   = useState(null);
@@ -496,8 +497,16 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     const toImport = importRows.filter(r => importSelected[r.key]);
+    // กัน import ซ้ำ — เช็คชื่อกับโครงการที่มีอยู่แล้ว
+    const existingNames = new Set(projects.map(p => (p.name||"").trim().toLowerCase()));
+    const newOnly    = toImport.filter(r => !existingNames.has((r.name||"").trim().toLowerCase()));
+    const dupCount   = toImport.length - newOnly.length;
+    if (newOnly.length === 0) {
+      showToast(`ทุกโครงการมีอยู่แล้วในระบบ (${dupCount} รายการซ้ำ)`, "error");
+      setSaving(false); return;
+    }
     const batch = writeBatch(db);
-    toImport.forEach((r, i) => {
+    newOnly.forEach((r, i) => {
       const pid = Date.now().toString() + i;
       const color = COLOR_OPTS[i % COLOR_OPTS.length];
       batch.set(doc(db,"projects",pid), {
@@ -509,16 +518,20 @@ export default function App({ currentUser, onSignOut }) {
         leaseEnd: r.leaseEnd||null,
         hirePurchaseEnd: null,
         projectStatus: r.projectStatus||null,
+        slaHours: null,
         sites: [],
       });
     });
-    const ok = await commitWrite(batch.commit(), `Import ${toImport.length} โครงการแล้ว`);
+    const msg = dupCount > 0
+      ? `Import ${newOnly.length} โครงการแล้ว (ข้าม ${dupCount} รายการที่มีอยู่แล้ว)`
+      : `Import ${newOnly.length} โครงการแล้ว`;
+    const ok = await commitWrite(batch.commit(), msg);
     if (ok) { setImportModal(false); setImportRows([]); setImportSelected({}); refreshProjects(); }
     setSaving(false);
   }
 
   function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjCustomer(p.customer||""); setNewProjContractType(p.contractType||""); setNewProjContractStart(p.contractStart||""); setNewProjProjectStatus(p.projectStatus||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjCustomer(p.customer||""); setNewProjContractType(p.contractType||""); setNewProjContractStart(p.contractStart||""); setNewProjProjectStatus(p.projectStatus||""); setNewProjSlaHours(p.slaHours?.toString()||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name||saving) return;
     setSaving(true);
@@ -530,9 +543,10 @@ export default function App({ currentUser, onSignOut }) {
     const contractType  = newProjContractType||null;
     const contractStart = newProjContractStart||null;
     const projectStatus = newProjProjectStatus||null;
+    const slaHours = newProjSlaHours ? parseFloat(newProjSlaHours) : null;
     const batch = writeBatch(db);
     const code = newProjCode.trim();
-    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, customer, contractType, contractStart, projectStatus, sites:newProjSites });
+    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, customer, contractType, contractStart, projectStatus, slaHours, sites:newProjSites });
     if(editProjId){
       cases.filter(c=>c.projectId===editProjId).forEach(c=>{
         batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd, hirePurchaseEnd },{ merge:true });
@@ -870,6 +884,7 @@ export default function App({ currentUser, onSignOut }) {
             {label:"เสร็จ",        val:stats.done,         color:"#10b981", key:"done"},
             {label:"รอดำเนินการ",  val:stats.hold,         color:"#ef4444", key:"hold"},
             {label:"ใกล้หมด",     val:stats.expiringSoon, color:"#f59e0b", key:"__exp"},
+            {label:"เกิน SLA",    val:(()=>{ return cases.filter(c=>{ const proj=projects.find(p=>p.id===c.projectId); if(!proj?.slaHours||c.status==="done") return false; const ref=c.activityAt||c.updatedAt; if(!ref) return false; return (Date.now()-new Date(ref).getTime())/3600000>proj.slaHours; }).length; })(), color:"#dc2626", key:"__sla"},
           ].map(s=>(
             <div key={s.key} onClick={()=>setFilterStat(filterStat===s.key?"all":s.key)}
               style={{ background:filterStat===s.key?s.color+"12":"#fff",
@@ -1205,16 +1220,22 @@ export default function App({ currentUser, onSignOut }) {
               </span>
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:16 }}>
-              {importRows.map(r => (
+              {importRows.map(r => {
+                const isDup = projects.some(p=>(p.name||"").trim().toLowerCase()===(r.name||"").trim().toLowerCase());
+                return (
                 <label key={r.key} style={{ display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
                   padding:"8px 10px",borderRadius:8,
-                  background:importSelected[r.key]?"#f0fdf4":"#f8fafc",
-                  border:`1px solid ${importSelected[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
+                  background:isDup?"#fff5f5":importSelected[r.key]?"#f0fdf4":"#f8fafc",
+                  border:`1px solid ${isDup?"#fecaca":importSelected[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
                   <input type="checkbox" checked={!!importSelected[r.key]}
                     onChange={e=>setImportSelected(p=>({...p,[r.key]:e.target.checked}))}
                     style={{ marginTop:2,accentColor:"#16a34a",flexShrink:0 }}/>
-                  <div>
-                    <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{r.name}</div>
+                  <div style={{ flex:1,minWidth:0 }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
+                      <span style={{ fontSize:13,fontWeight:600,color:isDup?"#ef4444":"#0f172a" }}>{r.name}</span>
+                      {isDup && <span style={{ fontSize:10,background:"#fef2f2",color:"#ef4444",
+                        borderRadius:20,padding:"1px 7px",fontWeight:700 }}>มีอยู่แล้ว</span>}
+                    </div>
                     <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginTop:2 }}>
                       {r.code && <span style={{ fontSize:11,color:"#64748b" }}>{r.code}</span>}
                       {r.customer && <span style={{ fontSize:11,color:"#475569" }}>👤 {r.customer}</span>}
@@ -1226,7 +1247,8 @@ export default function App({ currentUser, onSignOut }) {
                     </div>
                   </div>
                 </label>
-              ))}
+                );
+              })}
             </div>
             <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
               <button onClick={()=>setImportModal(false)}
@@ -1256,6 +1278,7 @@ export default function App({ currentUser, onSignOut }) {
         newProjContractType={newProjContractType} setNewProjContractType={setNewProjContractType}
         newProjContractStart={newProjContractStart} setNewProjContractStart={setNewProjContractStart}
         newProjProjectStatus={newProjProjectStatus} setNewProjProjectStatus={setNewProjProjectStatus}
+        newProjSlaHours={newProjSlaHours} setNewProjSlaHours={setNewProjSlaHours}
         newProjSites={newProjSites} setNewProjSites={setNewProjSites}
         saving={saving} onSubmit={submitProj}/>
 
