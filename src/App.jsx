@@ -604,7 +604,6 @@ export default function App({ currentUser, onSignOut }) {
       showToast("ลบงานแล้ว","success");
     }}
     onConvertToCase={async(task)=>{
-      if(!window.confirm("สร้างเคสจากงานนี้?")) return;
       const proj = projects.find(p=>p.id===task.projectId);
       const now = new Date().toISOString();
       const cid = Date.now().toString();
