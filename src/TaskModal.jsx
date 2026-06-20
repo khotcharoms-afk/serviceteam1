@@ -200,7 +200,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
             disabled={saving||!title.trim()||assignees.length===0}
             style={{ background:"#6B21A8",border:"none",color:"#fff",borderRadius:10,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
-              opacity:saving||!title.trim()||!projId||assignees.length===0?0.5:1 }}>
+              opacity:saving||!title.trim()||assignees.length===0?0.5:1 }}>
             {saving?"กำลังบันทึก...":(isEdit?"💾 บันทึก":"➕ สร้างงาน")}
           </button>
         </div>
