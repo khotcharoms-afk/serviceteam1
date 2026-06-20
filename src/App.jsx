@@ -336,7 +336,6 @@ export default function App({ currentUser, onSignOut }) {
   }
 
   async function deleteOnsite(recordId) {
-    if (!window.confirm("ลบรายการ Onsite นี้?")) return;
     try {
       await deleteDoc(doc(db,"onsiteRecords",recordId));
       showToast("ลบรายการ Onsite แล้ว", "success");
