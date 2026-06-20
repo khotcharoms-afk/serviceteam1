@@ -17,6 +17,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
   const [projSearch, setProjSearch] = useState("");
   const [projDropdown, setProjDropdown] = useState(false);
   const [siteIndex, setSiteIndex] = useState("");
+  const [siteText,  setSiteText]  = useState(editRecord?.site || "");
   const [scope, setScope]       = useState(editRecord?.scope || "Maintenance");
   const [detail, setDetail]     = useState(editRecord?.detail || "");
   const [robotSerial, setRobotSerial] = useState(editRecord?.robotSerial || "");
@@ -52,7 +53,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
       date,
       projectId: proj?.id || projId || "",
       projectName: proj?.name || "",
-      site: selSite?.name || editRecord?.site || "",
+      site: selSite?.name || siteText.trim() || "",
       refCode: selSite?.refCode || "",
       scope,
       detail,
@@ -169,17 +170,26 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
           })()}
         </div>
 
-        {sites.length > 0 && (
-          <div style={{ marginBottom:14 }}>
-            <label style={labelStyle}>ไซต์งาน</label>
-            <select value={siteIndex} onChange={e => setSiteIndex(e.target.value)} style={inputStyle}>
-              <option value="">— เลือกไซต์ —</option>
-              {sites.map((s, i) => (
-                <option key={i} value={i}>{s.name}{s.refCode ? ` (${s.refCode})` : ""}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div style={{ marginBottom:14 }}>
+          <label style={labelStyle}>ไซต์งาน / สถานที่</label>
+          {sites.length > 0 ? (
+            <>
+              <select value={siteIndex} onChange={e => { setSiteIndex(e.target.value); setSiteText(""); }} style={inputStyle}>
+                <option value="">— เลือกไซต์ หรือพิมพ์เอง —</option>
+                {sites.map((s, i) => (
+                  <option key={i} value={i}>{s.name}{s.refCode ? ` (${s.refCode})` : ""}</option>
+                ))}
+              </select>
+              {siteIndex === "" && (
+                <input value={siteText} onChange={e=>setSiteText(e.target.value)}
+                  placeholder="หรือพิมพ์สถานที่เอง..." style={{ ...inputStyle, marginTop:6 }}/>
+              )}
+            </>
+          ) : (
+            <input value={siteText} onChange={e=>setSiteText(e.target.value)}
+              placeholder="เช่น อาคาร A, สาขากรุงเทพ..." style={inputStyle}/>
+          )}
+        </div>
 
         <div style={{ marginBottom:14 }}>
           <label style={labelStyle}>พนักงาน *</label>
