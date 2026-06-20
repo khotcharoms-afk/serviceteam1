@@ -21,7 +21,8 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
   const [showModal, setShowModal] = useState(false);
   const [editTask, setEditTask]   = useState(null);
   const [myOnly,     setMyOnly]     = useState(false);
-  const [confirmId,  setConfirmId]  = useState(null);
+  const [confirmId,      setConfirmId]      = useState(null);
+  const [confirmConvert, setConfirmConvert] = useState(null);
   const [detailTaskId, setDetailTaskId] = useState(null);
   const detailTask = (tasks||[]).find(t=>t.id===detailTaskId) || null;
   const [comment,    setComment]    = useState("");
@@ -113,7 +114,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                   <TaskCard key={t.id} task={t} col={col} projects={projects}
                     currentUser={currentUser} isAdmin={isAdmin}
                     onMove={moveTask} onEdit={openEdit}
-                    onDelete={setConfirmId} onConvert={onConvertToCase}
+                    onDelete={setConfirmId} onConvert={setConfirmConvert}
                     onCardClick={(t)=>setDetailTaskId(t.id)}/>
                 ))}
               </div>
@@ -244,6 +245,31 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                   padding:"10px 16px",fontSize:13,fontWeight:600,cursor:"pointer",
                   fontFamily:"inherit",flexShrink:0,opacity:!comment.trim()||sending?0.5:1 }}>
                 ส่ง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmConvert && (
+        <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(15,23,42,.5)",
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
+          <div style={{ background:"#fff",borderRadius:16,padding:24,maxWidth:340,width:"100%",
+            boxShadow:"0 20px 60px rgba(0,0,0,.2)",textAlign:"center" }}>
+            <div style={{ fontSize:32,marginBottom:12 }}>📁</div>
+            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:6 }}>สร้างเคสจากงานนี้?</div>
+            <div style={{ fontSize:13,color:"#64748b",marginBottom:4 }}>"{confirmConvert.title}"</div>
+            <div style={{ fontSize:12,color:"#94a3b8",marginBottom:20 }}>ระบบจะสร้างเคสในระบบให้อัตโนมัติ</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+              <button onClick={()=>setConfirmConvert(null)}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิก
+              </button>
+              <button onClick={()=>{ onConvertToCase(confirmConvert); setConfirmConvert(null); }}
+                style={{ background:"#6B21A8",border:"none",color:"#fff",
+                  borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                สร้างเคส
               </button>
             </div>
           </div>
