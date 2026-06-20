@@ -22,7 +22,8 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
   const [editTask, setEditTask]   = useState(null);
   const [myOnly,     setMyOnly]     = useState(false);
   const [confirmId,  setConfirmId]  = useState(null);
-  const [detailTask, setDetailTask] = useState(null);
+  const [detailTaskId, setDetailTaskId] = useState(null);
+  const detailTask = (tasks||[]).find(t=>t.id===detailTaskId) || null;
   const [comment,    setComment]    = useState("");
   const [sending,    setSending]    = useState(false);
   const [isMobile] = useState(typeof window!=="undefined" && window.innerWidth < 640);
@@ -113,7 +114,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                     currentUser={currentUser} isAdmin={isAdmin}
                     onMove={moveTask} onEdit={openEdit}
                     onDelete={setConfirmId} onConvert={onConvertToCase}
-                    onCardClick={setDetailTask}/>
+                    onCardClick={(t)=>setDetailTaskId(t.id)}/>
                 ))}
               </div>
             );
@@ -124,7 +125,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
       {detailTask && (
         <div style={{ position:"fixed",inset:0,zIndex:650,background:"rgba(15,23,42,.5)",
           display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-          onClick={()=>{ setDetailTask(null); setComment(""); }}>
+          onClick={()=>{ setDetailTaskId(null); setComment(""); }}>
           <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:540,
             maxHeight:"92vh",display:"flex",flexDirection:"column",
             boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
@@ -143,7 +144,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                 </div>
                 <button onClick={()=>{ setDetailTask(null); setComment(""); }}
                   style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
-                    fontSize:14,width:30,height:30,borderRadius:8,flexShrink:0 }}>✕</button>
+                    fontSize:14,width:30,height:30,borderRadius:8,flexShrink:0 }} onClick={()=>{ setDetailTaskId(null); setComment(""); }}>✕</button>
               </div>
               {/* meta row */}
               <div style={{ display:"flex",gap:6,flexWrap:"wrap",marginTop:10 }}>
@@ -223,7 +224,6 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                   const newComment={ text:comment.trim(), by:currentUser?.name||"", at:new Date().toISOString() };
                   const updated={ ...detailTask, comments:[...(detailTask.comments||[]),newComment] };
                   onSaveTask(updated, detailTask.id);
-                  setDetailTask(updated);
                   setComment(""); setSending(false);
                 }}}
                 placeholder="พิมพ์ข้อความ... (Enter ส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"
@@ -237,7 +237,6 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
                   const newComment={ text:comment.trim(), by:currentUser?.name||"", at:new Date().toISOString() };
                   const updated={ ...detailTask, comments:[...(detailTask.comments||[]),newComment] };
                   await onSaveTask(updated, detailTask.id);
-                  setDetailTask(updated);
                   setComment(""); setSending(false);
                 }}
                 disabled={!comment.trim()||sending}
