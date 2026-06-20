@@ -33,7 +33,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
   }
 
   function handleSave() {
-    if (!title.trim() || !projId || assignees.length===0) return;
+    if (!title.trim() || assignees.length===0) return;
     onSave({
       title: title.trim(), projectId: projId,
       projectName: selProj?.name || "",
@@ -79,7 +79,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
 
         {/* โครงการ — searchable */}
         <div style={{ marginBottom:14 }}>
-          <label style={LB}>โครงการ *</label>
+          <label style={LB}>โครงการ (ถ้ามี)</label>
           <div style={{ position:"relative" }}>
             <div style={{ display:"flex",alignItems:"center",border:"1px solid #e2e8f0",
               borderRadius:8,background:"#f8fafc",overflow:"hidden" }}>
@@ -197,7 +197,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
             color:"#475569",borderRadius:10,padding:12,fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={handleSave}
-            disabled={saving||!title.trim()||!projId||assignees.length===0}
+            disabled={saving||!title.trim()||assignees.length===0}
             style={{ background:"#6B21A8",border:"none",color:"#fff",borderRadius:10,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:saving||!title.trim()||!projId||assignees.length===0?0.5:1 }}>
