@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 
 const ROLE_OPTS = [
   { value:"admin",   label:"Admin",      color:"#7c3aed", bg:"#f5f3ff" },
@@ -11,7 +11,9 @@ const ROLE_OPTS = [
 export default function AdminUsers({ onBack }) {
   const [users, setUsers]       = useState([]);
   const [loading, setLoading]   = useState(true);
-  const [editUser, setEditUser] = useState(null);
+  const [editUser, setEditUser]     = useState(null);
+  const [cleaning, setCleaning]     = useState(false);
+  const [cleanResult, setCleanResult] = useState(null);
 
   useEffect(() => {
     const u = onSnapshot(collection(db,"users"), snap => {
@@ -28,6 +30,30 @@ export default function AdminUsers({ onBack }) {
   async function removeUser(uid) {
     if (!confirm("ลบผู้ใช้นี้ออกจากระบบ?")) return;
     await deleteDoc(doc(db,"users",uid));
+  }
+
+  async function cleanNotifications(days) {
+    setCleaning(true); setCleanResult(null);
+    try {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      const snap = await getDocs(collection(db,"notifications"));
+      const batch = writeBatch(db);
+      let count = 0;
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const created = new Date(data.createdAt||0);
+        if (data.read && created < cutoff) {
+          batch.delete(doc(db,"notifications",d.id));
+          count++;
+        }
+      });
+      if (count > 0) await batch.commit();
+      setCleanResult({ type:"success", msg:`ลบ notification ที่อ่านแล้วเกิน ${days} วัน จำนวน ${count} รายการ` });
+    } catch(e) {
+      setCleanResult({ type:"error", msg:"เกิดข้อผิดพลาด: "+e.message });
+    }
+    setCleaning(false);
   }
 
   async function saveUserSettings(uid, data) {
@@ -78,6 +104,41 @@ export default function AdminUsers({ onBack }) {
           ))}
           {!loading && active.length===0 && (
             <div style={{ textAlign:"center",color:"#cbd5e1",padding:32,fontSize:14 }}>ยังไม่มีผู้ใช้</div>
+          )}
+        </div>
+      </div>
+
+      {/* บำรุงรักษาระบบ */}
+      <div style={{ marginTop:32 }}>
+        <div style={{ fontSize:12,color:"#94a3b8",fontWeight:700,letterSpacing:1,
+          textTransform:"uppercase",marginBottom:12 }}>🛠 บำรุงรักษาระบบ</div>
+        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"16px 18px" }}>
+          <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:4 }}>🔔 ล้าง Notifications เก่า</div>
+          <div style={{ fontSize:12,color:"#64748b",marginBottom:14 }}>
+            ลบ notifications ที่อ่านแล้วออกจาก Firestore เพื่อลด reads quota
+          </div>
+          <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+            {[
+              { label:"เกิน 7 วัน",  days:7  },
+              { label:"เกิน 30 วัน", days:30 },
+              { label:"เกิน 60 วัน", days:60 },
+            ].map(opt=>(
+              <button key={opt.days} onClick={()=>cleanNotifications(opt.days)} disabled={cleaning}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,
+                  cursor:cleaning?"not-allowed":"pointer",fontFamily:"inherit",
+                  opacity:cleaning?0.6:1 }}>
+                {cleaning?"กำลังล้าง...":opt.label}
+              </button>
+            ))}
+          </div>
+          {cleanResult && (
+            <div style={{ marginTop:12,padding:"10px 14px",borderRadius:8,fontSize:12,fontWeight:600,
+              background:cleanResult.type==="success"?"#f0fdf4":"#fef2f2",
+              color:cleanResult.type==="success"?"#16a34a":"#dc2626",
+              border:`1px solid ${cleanResult.type==="success"?"#bbf7d0":"#fecaca"}` }}>
+              {cleanResult.type==="success"?"✅":"❌"} {cleanResult.msg}
+            </div>
           )}
         </div>
       </div>
