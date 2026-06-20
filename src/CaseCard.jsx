@@ -3,6 +3,14 @@ import { WarrantyPill, LeasePill, StatusPill } from "./UI.jsx";
 
 function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate }) {
   const days = daysLeft(c.warrantyEnd);
+  // SLA: นับจาก activityAt หรือ updatedAt ของเคส vs slaHours ของโครงการ
+  const slaOverdue = (() => {
+    if (!proj?.slaHours || c.status==="done") return null;
+    const ref = c.activityAt || c.updatedAt;
+    if (!ref) return null;
+    const elapsed = (Date.now() - new Date(ref).getTime()) / 3600000;
+    return elapsed > proj.slaHours ? Math.round(elapsed - proj.slaHours) : null;
+  })();
   return (
     <div onClick={onClick} style={{
       background:"#fff",
@@ -42,6 +50,11 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate }) {
       ):d!==null&&d<=90?(
         <div style={{ marginTop:4,fontSize:11,color:"#f59e0b",fontWeight:600 }}>⚠ สัญญาเช่าเหลือ {d} วัน</div>
       ):null; })()}
+      {slaOverdue!==null && (
+        <div style={{ marginTop:4,fontSize:11,color:"#dc2626",fontWeight:700 }}>
+          ⏱ เกิน SLA {slaOverdue} ชม.
+        </div>
+      )}
       {(c.updateLog||[]).length>0&&(
         <div style={{ marginTop:4,fontSize:11,color:"#16a34a",fontWeight:600 }}>
           📝 อัปเดตแล้ว {c.updateLog.length} ครั้ง
