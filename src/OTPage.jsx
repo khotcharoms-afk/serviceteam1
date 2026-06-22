@@ -6,7 +6,7 @@ import OTModal from "./OTModal.jsx";
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
   const [records, setRecords]   = useState([]);
-  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", staff:"" });
+  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", supervisorOT:"", staff:"" });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved]   = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -211,7 +211,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               { key:"position",   label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า" },
               { key:"dept",       label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ" },
               { key:"division",   label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ" },
-              { key:"supervisor", label:"ชื่อผู้บังคับบัญชา",        placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
+              { key:"supervisor", label:"ชื่อผู้บังคับบัญชา (ใบ OR)",  placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
+              { key:"supervisorOT", label:"ผู้บังคับบัญชา (หน้าปก OT)",   placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
               { key:"staff",      label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho" },
             ].map(f=>(
               <div key={f.key} style={{ marginBottom:12 }}>
