@@ -75,7 +75,15 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const myRecords = isAdmin ? records : records.filter(r => r.createdBy === currentUser?.id);
   const filtered = myRecords.filter(r => {
     if (filterName !== "all" && r.name !== filterName) return false;
-    if (filterMonth && !(r.dateIn||"").startsWith(filterMonth)) return false;
+    if (filterMonth) {
+      const [py, pm] = filterMonth.split("-").map(Number);
+      const prevPm = pm === 1 ? 12 : pm - 1;
+      const prevPy = pm === 1 ? py - 1 : py;
+      const start = new Date(`${prevPy}-${String(prevPm).padStart(2,"0")}-16`);
+      const end   = new Date(`${py}-${String(pm).padStart(2,"0")}-15`);
+      const d = new Date(r.dateIn||"");
+      if (d < start || d > end) return false;
+    }
     return true;
   });
   const names = [...new Set(myRecords.map(r=>r.name).filter(Boolean))].sort();
@@ -84,7 +92,11 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   // months list
   const months = [...new Set(myRecords.map(r=>(r.dateIn||"").slice(0,7)).filter(Boolean))].sort().reverse();
   const MONTH_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-  const fmtMonth = m => { const [y,mo]=m.split("-"); return `${MONTH_TH[parseInt(mo)-1]} ${(parseInt(y)+543)%100}`; };
+  const fmtMonth = m => {
+    const [y,mo] = m.split("-").map(Number);
+    const prevMo = mo === 1 ? 12 : mo - 1;
+    return `${MONTH_TH[mo-1]} ${(y+543)%100} (16 ${MONTH_TH[prevMo-1]} - 15 ${MONTH_TH[mo-1]})`;
+  };
   const fmtDate = d => { if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${parseInt(y)+543}`; };
 
   async function exportOR(r) {
