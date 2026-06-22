@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 
-const TEMPLATE_URL = "https://res.cloudinary.com/dxejx20ra/raw/upload/v1782153083/OT_template_clean_ojzym2.xlsx";
+const TEMPLATE_URL = "https://res.cloudinary.com/dxejx20ra/raw/upload/v1782126968/%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B8%9B%E0%B8%81_OT_ggbqbw.xlsx";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
@@ -10,11 +10,7 @@ export default async function handler(req, res) {
     const templateBuffer = await templateRes.arrayBuffer();
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(Buffer.from(templateBuffer));
-    if (!wb.worksheets || wb.worksheets.length === 0) {
-      throw new Error("No worksheets found in template");
-    }
     const ws = wb.worksheets[0];
-    console.log("ws name:", ws?.name, "worksheets:", wb.worksheets.length);
     const set = (addr, val) => { ws.getCell(addr).value = val; };
 
     const [py, pm] = (periodMonth || "-").split("-");
