@@ -202,9 +202,40 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               { key:"supervisor", label:"ชื่อผู้บังคับบัญชา (ใบ OR)",  placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
               { key:"supervisorOT", label:"ผู้บังคับบัญชา (หน้าปก OT)",   placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
               { key:"staff",      label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho" },
-              { key:"periodStart", label:"วันที่เริ่มรอบเบิก",           placeholder:"เช่น 16/05/2026" },
-              { key:"periodEnd",   label:"วันที่สิ้นสุดรอบเบิก",         placeholder:"เช่น 15/06/2026" },
             ].map(f=>(
+              <div key={f.key} style={{ marginBottom:12 }}>
+                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                  letterSpacing:.5,marginBottom:4,display:"block" }}>{f.label}</label>
+                <input value={profile[f.key]||""} placeholder={f.placeholder}
+                  onChange={e=>setProfile(p=>({...p,[f.key]:e.target.value}))}
+                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                    padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+              </div>
+            ))}
+
+            {/* รอบเบิก */}
+            <div style={{ marginBottom:12 }}>
+              <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                letterSpacing:.5,marginBottom:4,display:"block" }}>รอบเบิก OT</label>
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+                <div>
+                  <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่เริ่ม</div>
+                  <input type="date" value={profile.periodStart||""}
+                    onChange={e=>setProfile(p=>({...p,periodStart:e.target.value}))}
+                    style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                      padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                </div>
+                <div>
+                  <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่สิ้นสุด</div>
+                  <input type="date" value={profile.periodEnd||""}
+                    onChange={e=>setProfile(p=>({...p,periodEnd:e.target.value}))}
+                    style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                      padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                </div>
+              </div>
+            </div>
+
+            {[
               <div key={f.key} style={{ marginBottom:12 }}>
                 <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
                   letterSpacing:.5,marginBottom:4,display:"block" }}>{f.label}</label>
