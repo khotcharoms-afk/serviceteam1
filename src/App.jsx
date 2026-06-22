@@ -16,6 +16,7 @@ import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
+import OTPage from "./OTPage.jsx";
 import TaskBoard from "./TaskBoard.jsx";
 
 export default function App({ currentUser, onSignOut }) {
@@ -34,6 +35,7 @@ export default function App({ currentUser, onSignOut }) {
   const [shiftPage,setShiftPage] = useState(false);
   const [onsitePage,setOnsitePage] = useState(false);
   const [taskPage,setTaskPage]     = useState(false);
+  const [otPage,setOtPage]         = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
   const [globalQ, setGlobalQ]           = useState("");
   const [leavePage,setLeavePage]   = useState(false);
@@ -585,6 +587,8 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   if(leavePage) return <LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/>;
+  if(otPage) return <OTPage onBack={()=>setOtPage(false)}
+    projects={projects} users={users} currentUser={currentUser}/>;
   if(taskPage) return <TaskBoard onBack={()=>setTaskPage(false)}
     projects={projects} users={users} cases={cases} currentUser={currentUser}
     tasks={tasks} saving={saving}
@@ -700,6 +704,8 @@ export default function App({ currentUser, onSignOut }) {
           <button onClick={()=>{ setGlobalSearch(true); setGlobalQ(""); }}
             style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
               borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>🔍</button>
+          <button onClick={()=>setOtPage(true)} style={{ background:"#fefce8",border:"1px solid #fde68a",
+            color:"#854d0e",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>⏰</button>
           <button onClick={()=>setOnsitePage(true)} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
             color:"#ea580c",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📍</button>
           <div style={{ position:"relative",display:"inline-flex" }}>
@@ -776,6 +782,8 @@ export default function App({ currentUser, onSignOut }) {
               onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
               onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
+            <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
+              onClick={()=>{ setOtPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
               onClick={()=>{ setLeavePage(true); setMenuOpen(false); }}/>
             <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
