@@ -52,7 +52,7 @@ export default async function handler(req, res) {
       timeOut:        record.timeOut || "",
       description:    record.desc || "",
       employeeName:   profile.name || "",
-      supervisorName: profile.supervisor || "",
+      supervisorName: profile.examiner || profile.supervisor || "",
     };
 
     docXml = replacePlaceholders(docXml, data);
