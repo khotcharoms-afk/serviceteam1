@@ -26,6 +26,7 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [error, setError] = useState("");
+  const [customName, setCustomName] = useState(currentUser?.name||"");
 
   function calcWorkDays(from, to, offList) {
     if (!from || !to) return "";
@@ -49,26 +50,6 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
     if (!reason.trim()) { setError("กรุณากรอกเหตุผลการลา"); return; }
     if (!days || isNaN(days) || parseFloat(days) <= 0) { setError("กรุณากรอกจำนวนวัน"); return; }
 
-    // เช็คโควต้า
-    const user = (users||[]).find(u => u.id === (currentUser?.id||currentUser?.uid) || u.name === currentUser?.name);
-    const quota = user?.leaveQuota;
-    const typeLabel = leaveType==="vacation"?"พักผ่อน":leaveType==="personal"?"กิจ":leaveType==="sick"?"ป่วย":"อื่นๆ";
-    if (quota && quota[leaveType] !== undefined) {
-      const quotaDays = parseFloat(quota[leaveType]) || 0;
-      const requestDays = leaveUnit==="hour" ? parseFloat(days)/8 : parseFloat(days);
-      const usedDays = (allLeaves||[])
-        .filter(r => r.createdBy===(currentUser?.id||currentUser?.uid) && r.leaveType===leaveType && r.status==="approved")
-        .reduce((s,r) => s+(r.days||0), 0);
-      const remaining = quotaDays - usedDays;
-      if (requestDays > remaining) {
-        if (remaining <= 0) {
-          setError(`ไม่มีสิทธิ์ลา${typeLabel} (ได้รับ ${quotaDays} วัน/ปี, ใช้ไปแล้ว ${usedDays.toFixed(1)} วัน)`);
-        } else {
-          setError(`วันลา${typeLabel}คงเหลือ ${remaining.toFixed(1)} วัน ไม่เพียงพอ (มีสิทธิ์ ${quotaDays} วัน/ปี)`);
-        }
-        return;
-      }
-    }
     setError("");
     onSave({
       leaveType, otherType, workLocation, phone,
@@ -78,7 +59,7 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
       hours: leaveUnit==="hour" ? parseFloat(days) : parseFloat(days)*8,
       leaveUnit, displayAmount: parseFloat(days),
       dateFrom, dateTo,
-      name: currentUser?.name || "",
+      name: customName.trim() || currentUser?.name || "",
       status: "pending",
       createdAt: new Date().toISOString(),
       createdBy: currentUser?.id || currentUser?.uid || "",
@@ -105,6 +86,14 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>📋 ยื่นใบลา</h2>
           <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
+        </div>
+
+        {/* ชื่อผู้ลา */}
+        <div style={{ marginBottom:14 }}>
+          <label style={LB}>ชื่อ-นามสกุลผู้ลา *</label>
+          <input style={IS()} value={customName}
+            onChange={e=>setCustomName(e.target.value)}
+            placeholder="พิมพ์ชื่อ-นามสกุล..."/>
         </div>
 
         {/* ประเภทการลา */}
