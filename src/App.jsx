@@ -776,10 +776,8 @@ export default function App({ currentUser, onSignOut }) {
               onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
               onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
-            {/* ใบลาย้ายไป Mark-001 แล้ว — ซ่อนไว้เผื่อกลับมาใช้
             <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
               onClick={()=>{ setLeavePage(true); setMenuOpen(false); }}/>
-            */}
             <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
             <div style={{ overflowY:"auto",maxHeight:320,marginRight:-8,paddingRight:8 }}>
               {projects.map(p=>(
