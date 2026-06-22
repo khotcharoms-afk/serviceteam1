@@ -22,6 +22,8 @@ import TaskBoard from "./TaskBoard.jsx";
 export default function App({ currentUser, onSignOut }) {
   const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, tasks, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
 
+  const isAdminOrDev = ["admin","dev"].includes(currentUser?.role);
+
   const [view,setView]             = useState("overview");
   const [filterStat,setFilterStat] = useState("all");
   const [dateFrom,setDateFrom]     = useState("");
@@ -587,7 +589,7 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   if(leavePage) return <LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/>;
-  if(otPage && currentUser?.role!=="admin") { setOtPage(false); return null; }
+  if(otPage && !isAdminOrDev) { setOtPage(false); return null; }
   if(otPage) return <OTPage onBack={()=>setOtPage(false)}
     projects={projects} users={users} currentUser={currentUser}/>;
   if(taskPage) return <TaskBoard onBack={()=>setTaskPage(false)}
@@ -655,7 +657,7 @@ export default function App({ currentUser, onSignOut }) {
     }}/>;
   if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
-  if(dashboardPage && currentUser?.role==="admin") return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
+  if(dashboardPage && isAdminOrDev) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
 
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
@@ -705,7 +707,7 @@ export default function App({ currentUser, onSignOut }) {
           <button onClick={()=>{ setGlobalSearch(true); setGlobalQ(""); }}
             style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
               borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>🔍</button>
-          {currentUser?.role==="admin" && (
+          {isAdminOrDev && (
             <button onClick={()=>setOtPage(true)} style={{ background:"#fefce8",border:"1px solid #fde68a",
               color:"#854d0e",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>⏰</button>
           )}
@@ -761,7 +763,7 @@ export default function App({ currentUser, onSignOut }) {
               <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>{currentUser?.name}</div>
               <div style={{ fontSize:11,color:"#94a3b8",marginTop:2 }}>{currentUser?.email}</div>
               <div style={{ display:"flex",gap:6,marginTop:8 }}>
-                {currentUser?.role==="admin" && (
+                {isAdminOrDev && (
                   <button onClick={()=>{ setAdminPage(true); setMenuOpen(false); }}
                     style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",
                       borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
@@ -777,7 +779,7 @@ export default function App({ currentUser, onSignOut }) {
             </div>
             <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
               onClick={()=>{ setView("overview"); setMenuOpen(false); setFilterStat("all"); }}/>
-            {currentUser?.role==="admin" && (
+            {isAdminOrDev && (
               <DrawerItem active={false} color="#16a34a" icon="📊" label="Dashboard" count={""}
                 onClick={()=>{ setDashboardPage(true); setMenuOpen(false); }}/>
             )}
@@ -785,7 +787,7 @@ export default function App({ currentUser, onSignOut }) {
               onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
               onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
-            {currentUser?.role==="admin" && (
+            {isAdminOrDev && (
               <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
                 onClick={()=>{ setOtPage(true); setMenuOpen(false); }}/>
             )}
