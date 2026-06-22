@@ -11,6 +11,7 @@ export default async function handler(req, res) {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(Buffer.from(templateBuffer));
     const ws = wb.getWorksheet(1) || wb.getWorksheet("OT") || wb.worksheets[0];
+    console.log("worksheets:", wb.worksheets.length, "ws:", ws?.name);
     const set = (addr, val) => { ws.getCell(addr).value = val; };
 
     const [py, pm] = (periodMonth || "-").split("-");
