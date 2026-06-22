@@ -4,6 +4,7 @@ import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, wher
 
 const ROLE_OPTS = [
   { value:"admin",   label:"Admin",      color:"#7c3aed", bg:"#f5f3ff" },
+  { value:"dev",     label:"Dev",        color:"#0f766e", bg:"#f0fdfa" },
   { value:"user",    label:"User",       color:"#2563eb", bg:"#eff6ff" },
   { value:"pending", label:"รออนุมัติ",  color:"#f59e0b", bg:"#fef3c7" },
 ];
@@ -63,7 +64,7 @@ export default function AdminUsers({ onBack }) {
 
   const pending = users.filter(u=>u.role==="pending");
   const active  = users.filter(u=>u.role!=="pending").sort((a,b)=>{
-    const order = { admin:0, user:1 };
+    const order = { admin:0, dev:1, user:2 };
     return (order[a.role]??1) - (order[b.role]??1);
   });
 
