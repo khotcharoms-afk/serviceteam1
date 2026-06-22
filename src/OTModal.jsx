@@ -25,6 +25,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
   const [situation,  setSituation]  = useState(editRecord?.situation  || "Support");
   const [desc,       setDesc]       = useState(editRecord?.desc       || "");
   const [name,       setName]       = useState(editRecord?.name       || thaiName);
+  const [examiner,   setExaminer]   = useState(editRecord?.examiner   || "");
   const [hours,      setHours]      = useState(editRecord?.hours?.toString() || "");
   const [manualHours,setManualHours]= useState(false);
   const [remark,     setRemark]     = useState(editRecord?.remark     || "ปฏิบัติงานในวันหยุดประจำสัปดาห์");
@@ -59,6 +60,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
       situation,
       desc: desc.trim(),
       name: name.trim(),
+      examiner: examiner.trim(),
       hours: h,
       remark,
       createdBy: currentUser?.id||"",
@@ -223,11 +225,16 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
         </div>
 
         {/* ลายเซ็น */}
-        <div style={{ display:"grid",gridTemplateColumns:"1fr",gap:10,marginBottom:14 }}>
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14 }}>
           <div>
             <label style={LB}>ผู้เข้าทำงาน / Service *</label>
             <input value={name} onChange={e=>setName(e.target.value)}
               placeholder="ชื่อ-นามสกุล" style={IS}/>
+          </div>
+          <div>
+            <label style={LB}>ผู้ตรวจสอบ / Examiner</label>
+            <input value={examiner} onChange={e=>setExaminer(e.target.value)}
+              placeholder="ชื่อผู้ตรวจสอบ" style={IS}/>
           </div>
         </div>
 
