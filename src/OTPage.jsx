@@ -16,7 +16,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [filterName, setFilterName] = useState("all");
   const [filterMonth, setFilterMonth] = useState("");
   const [confirmId, setConfirmId] = useState(null);
-  const isAdmin = ["admin","dev"].includes(currentUser?.role);
+  const isAdmin = currentUser?.role === "dev";
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
