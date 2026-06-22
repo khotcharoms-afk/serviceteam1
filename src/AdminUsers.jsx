@@ -62,7 +62,10 @@ export default function AdminUsers({ onBack }) {
   }
 
   const pending = users.filter(u=>u.role==="pending");
-  const active  = users.filter(u=>u.role!=="pending");
+  const active  = users.filter(u=>u.role!=="pending").sort((a,b)=>{
+    const order = { admin:0, user:1 };
+    return (order[a.role]??1) - (order[b.role]??1);
+  });
 
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
