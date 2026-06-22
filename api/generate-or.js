@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 
-const TEMPLATE_URL = "https://res.cloudinary.com/dxejx20ra/raw/upload/v1782130242/OR_with_placeholders_tczf7z.docx";
+const TEMPLATE_URL = "https://res.cloudinary.com/dxejx20ra/raw/upload/v1782150809/OR_v3_template_tt54kf.docx";
 
 function escapeXml(str) {
   if (!str) return "";
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       location:       record.location || "",
       timeIn:         record.timeIn || "",
       timeOut:        record.timeOut || "",
-      description:    record.desc || "",
+      description:    (record.desc || "").substring(0, 200),
       employeeName:   profile.name || "",
       supervisorName: profile.examiner || profile.supervisor || "",
     };
