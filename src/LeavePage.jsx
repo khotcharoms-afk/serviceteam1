@@ -181,9 +181,10 @@ export default function LeavePage({ onBack, currentUser, users }) {
   const isAdmin = currentUser?.role === "admin";
 
   useEffect(() => {
-    const q = query(collection(db,"leaves"), orderBy("createdAt","desc"));
-    const u = onSnapshot(q, snap => {
-      setRecords(snap.docs.map(d => ({ id:d.id, ...d.data() })));
+    const u = onSnapshot(collection(db,"leaves"), snap => {
+      const data = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      data.sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+      setRecords(data);
       setLoading(false);
     });
     return u;
