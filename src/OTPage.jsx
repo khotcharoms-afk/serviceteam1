@@ -235,16 +235,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               </div>
             </div>
 
-            {[
-              <div key={f.key} style={{ marginBottom:12 }}>
-                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
-                  letterSpacing:.5,marginBottom:4,display:"block" }}>{f.label}</label>
-                <input value={profile[f.key]||""} placeholder={f.placeholder}
-                  onChange={e=>setProfile(p=>({...p,[f.key]:e.target.value}))}
-                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                    padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
-              </div>
-            ))}
+
+
             <button onClick={saveProfile} disabled={profileSaving||!profile.name?.trim()}
               style={{ width:"100%",background:profileSaved?"#16a34a":"#F97316",border:"none",color:"#fff",
                 borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
