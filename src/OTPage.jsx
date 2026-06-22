@@ -107,7 +107,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     }
   }
 
-
+  async function exportExcel() {
     const exportRecords = filtered.length > 0 ? filtered : myRecords;
     if (exportRecords.length === 0) return;
     if (!profile.name?.trim()) {
