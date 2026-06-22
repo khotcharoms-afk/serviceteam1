@@ -12,10 +12,24 @@ function escapeXml(str) {
     .replace(/'/g, "&apos;");
 }
 
+// Word splits placeholders across XML runs — strip tags first, replace, then restore
 function replacePlaceholders(xml, data) {
+  // Step 1: collapse runs so {{key}} is in one text node
+  // Replace across run boundaries by working on the raw XML
+  // Pattern: {{ ... }} may be split across <w:t>...</w:t> tags
+  // Strategy: remove XML tags temporarily between {{ and }}
   let result = xml;
+
   for (const [key, val] of Object.entries(data)) {
-    result = result.split(`{{${key}}}`).join(escapeXml(val));
+    const escaped = escapeXml(val);
+    // Build regex that matches {{key}} even with XML tags in between
+    const parts = `{{${key}}}`.split("").map(c =>
+      c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    );
+    // Allow any XML tags between each character
+    const xmlBetween = "(?:<[^>]*>)*";
+    const pattern = new RegExp(parts.join(xmlBetween), "g");
+    result = result.replace(pattern, escaped);
   }
   return result;
 }
@@ -43,15 +57,13 @@ export default async function handler(req, res) {
     let docXml = await docXmlFile.async("string");
 
     const data = {
-      orNumber:       record.orNumber || "",
       date:           fmtDateTH(record.dateIn),
-      sessionNo:      record.sessionNo || "",
       projectName:    record.projectName || "",
       location:       record.location || "",
       timeIn:         record.timeIn || "",
       timeOut:        record.timeOut || "",
-      description:    (record.desc || "").substring(0, 200),
-      employeeName:   profile.name || "",
+      description:    record.desc || "",
+      employeeName:   record.name || profile.name || "",
       supervisorName: record.examiner || profile.examiner || profile.supervisor || "",
     };
 
