@@ -54,7 +54,7 @@ function printLeave(leave, logoData, users, allRecords) {
   @media print { body { padding: 15px 20px; } @page { margin: 10mm; size: A4 landscape; } }
 </style>
 </head><body>
-${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoData}" style="max-height:60px;max-width:180px;object-fit:contain"/></div>` : ""}
+${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoData}" style="max-height:100px;max-width:260px;object-fit:contain"/></div>` : ""}
 <h1>ใบลา</h1>
 
 <div class="row">
