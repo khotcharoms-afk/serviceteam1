@@ -1,66 +1,89 @@
-import ExcelJS from "exceljs";
+import JSZip from "jszip";
+const TEMPLATE_URL = "https://res.cloudinary.com/dxejx20ra/raw/upload/v1782130242/OR_with_placeholders_tczf7z.docx";
 
-const TEMPLATE_URL = "https://res.cloudinary.com/dxejx20ra/raw/upload/v1782126968/%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B8%9B%E0%B8%81_OT_ggbqbw.xlsx";
+// Fallback: ถ้าไม่มี Cloudinary ใช้ local template
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function escapeXml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function replacePlaceholders(xml, data) {
+  let result = xml;
+  for (const [key, val] of Object.entries(data)) {
+    // placeholder อาจถูก split ใน XML runs ด้วย — ใช้ global replace
+    result = result.split(`{{${key}}}`).join(escapeXml(val));
+  }
+  return result;
+}
+
+const MONTH_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+  "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+
+function fmtDateTH(dateStr) {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-");
+  return `${parseInt(d)} ${MONTH_TH[parseInt(m)-1]} ${parseInt(y)+543}`;
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { profile, records, periodMonth } = req.body;
+
+  const { record, profile } = req.body;
+  // record: { dateIn, timeIn, timeOut, projectName, location, status, desc, orNumber, sessionNo, serviceId }
+  // profile: { name, supervisor }
+
   try {
-    const templateRes = await fetch(TEMPLATE_URL);
-    const templateBuffer = await templateRes.arrayBuffer();
-    const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(Buffer.from(templateBuffer));
-    const ws = wb.getWorksheet("OT") || wb.worksheets[0];
-    const set = (addr, val) => { ws.getCell(addr).value = val; };
-
-    const [py, pm] = (periodMonth || "-").split("-");
-    const prevPm = parseInt(pm) - 1 || 12;
-    const prevPy = prevPm === 12 ? parseInt(py) - 1 : parseInt(py);
-    const periodStart = periodMonth ? `16/${String(prevPm).padStart(2,"0")}/${prevPy+543}` : "";
-    const periodEnd   = periodMonth ? `15/${pm}/${parseInt(py)+543}` : "";
-    const MONTH_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-    const monthName = pm ? MONTH_TH[parseInt(pm)-1] : "";
-
-    set("A3", `ชื่อพนักงานผู้ขอเบิก .................${profile.name||""}............................................  รหัสพนักงาน ........${profile.empId||""}...............  ตำแหน่ง .......${profile.position||""}..............................  แผนก ..................${profile.dept||""}..........................  ฝ่าย ................${profile.division||""}..............................`);
-    set("A4", `การปฏิบัติงาน (ตามรอบวันที่ 16 เดือนก่อนหน้า ถึงวันที่ 15 เดือนปัจจุบัน) ตั้งแต่วันที่ ......................${periodStart}........................................ ถึงวันที่ ...............${periodEnd}........................................ เบิกประจำงวดเดือน ................${monthName}........................................ ปี ................${py?parseInt(py)+543:""}...........................`);
-
-    for (let i = 0; i < 18; i++) {
-      const r = records[i];
-      const row = 9 + i;
-      if (r) {
-        set(`A${row}`, i+1);
-        set(`B${row}`, `${r.dateIn||""} ${r.timeIn||""}`);
-        set(`C${row}`, `${r.dateOut||r.dateIn||""} ${r.timeOut||""}`);
-        set(`D${row}`, r.projectCode||"");
-        set(`E${row}`, r.projectName||"");
-        set(`F${row}`, r.desc||"");
-        set(`G${row}`, r.location||"");
-        set(`H${row}`, "PS");
-        set(`I${row}`, "PS");
-        set(`J${row}`, profile.position||"เจ้าหน้าที่บริการลูกค้า");
-        set(`K${row}`, r.hours||0);
-        set(`Q${row}`, profile.supervisor||"");
-        set(`R${row}`, profile.staff||"");
-        set(`S${row}`, r.remark||"");
-      } else {
-        ["A","B","C","D","E","F","G","H","I","J","K","L","Q","R","S"].forEach(c=>{ ws.getCell(`${c}${row}`).value = null; });
-      }
+    // โหลด template
+    let templateBuffer;
+    try {
+      const templateRes = await fetch(TEMPLATE_URL);
+      if (!templateRes.ok) throw new Error("Cloudinary fetch failed");
+      templateBuffer = Buffer.from(await templateRes.arrayBuffer());
+    } catch {
+      // fallback: ถ้า Cloudinary ไม่ได้ใช้ไฟล์ใน project (ต้องวางไว้ใน public/)
+      throw new Error("ไม่สามารถโหลด template ได้ กรุณาตรวจสอบ Cloudinary");
     }
 
-    const today = new Date();
-    const todayTH = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()+543}`;
-    set("A33", `( ...........${profile.name||""}............. )`);
-    set("F33", `( ${profile.supervisor||""} )`);
-    set("A34", `วันที่.............${todayTH}........................................`);
-    set("F34", `วันที่.............${todayTH}........................................`);
+    // unzip docx
+    const zip = await JSZip.loadAsync(templateBuffer);
+    const docXmlFile = zip.file("word/document.xml");
+    if (!docXmlFile) throw new Error("word/document.xml not found in template");
+    let docXml = await docXmlFile.async("string");
 
-    const buffer = await wb.xlsx.writeBuffer();
-    const filename = encodeURIComponent(`OT_${profile.name||"export"}_${periodMonth||"all"}.xlsx`);
-    res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition",`attachment; filename*=UTF-8''${filename}`);
-    res.send(Buffer.from(buffer));
-  } catch(err) {
-    console.error("generate-ot error:", err);
+    // inject data
+    const data = {
+      orNumber:      record.orNumber || "",
+      date:          fmtDateTH(record.dateIn),
+      sessionNo:     record.sessionNo || "",
+      projectName:   record.projectName || "",
+      location:      record.location || "",
+      timeIn:        record.timeIn || "",
+      timeOut:       record.timeOut || "",
+      description:   record.desc || "",
+      employeeName:  profile.name || "",
+      supervisorName: profile.supervisor || "",
+      signature:     "",
+    };
+
+    docXml = replacePlaceholders(docXml, data);
+    zip.file("word/document.xml", docXml);
+
+    const outBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+
+    const filename = encodeURIComponent(`OR_${record.orNumber || "export"}_${record.dateIn || "date"}.docx`);
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
+    res.send(outBuffer);
+
+  } catch (err) {
+    console.error("generate-or error:", err);
     res.status(500).json({ error: err.message });
   }
 }
