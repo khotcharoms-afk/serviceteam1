@@ -3,13 +3,13 @@ import { db } from "./firebase";
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 
 const ROLE_OPTS = [
-  { value:"admin",   label:"Admin",      color:"#7c3aed", bg:"#f5f3ff" },
   { value:"dev",     label:"Dev",        color:"#0f766e", bg:"#f0fdfa" },
+  { value:"admin",   label:"Admin",      color:"#7c3aed", bg:"#f5f3ff" },
   { value:"user",    label:"User",       color:"#2563eb", bg:"#eff6ff" },
   { value:"pending", label:"รออนุมัติ",  color:"#f59e0b", bg:"#fef3c7" },
 ];
 
-export default function AdminUsers({ onBack }) {
+export default function AdminUsers({ onBack, currentUser }) {
   const [users, setUsers]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [editUser, setEditUser]     = useState(null);
@@ -25,6 +25,9 @@ export default function AdminUsers({ onBack }) {
   }, []);
 
   async function changeRole(uid, role) {
+    const target = users.find(u=>u.id===uid);
+    // ห้าม non-dev เปลี่ยน role ของ dev หรือเปลี่ยนเป็น dev
+    if (currentUser?.role !== "dev" && (target?.role === "dev" || role === "dev")) return;
     await updateDoc(doc(db,"users",uid), { role });
   }
 
@@ -64,7 +67,7 @@ export default function AdminUsers({ onBack }) {
 
   const pending = users.filter(u=>u.role==="pending");
   const active  = users.filter(u=>u.role!=="pending").sort((a,b)=>{
-    const order = { admin:0, dev:1, user:2 };
+    const order = { dev:0, admin:1, user:2 };
     return (order[a.role]??1) - (order[b.role]??1);
   });
 
@@ -93,7 +96,7 @@ export default function AdminUsers({ onBack }) {
               <span style={{ background:"#fef3c7",color:"#f59e0b",borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700 }}>{pending.length}</span>
             </div>
             {pending.map(u=>(
-              <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onEdit={setEditUser}/>
+              <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onEdit={setEditUser} currentUser={currentUser}/>
             ))}
           </div>
         )}
@@ -104,7 +107,7 @@ export default function AdminUsers({ onBack }) {
             textTransform:"uppercase",marginBottom:12 }}>ผู้ใช้ทั้งหมด ({active.length})</div>
           {loading && <div style={{ textAlign:"center",color:"#94a3b8",padding:32 }}>กำลังโหลด...</div>}
           {active.map(u=>(
-            <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onEdit={setEditUser}/>
+            <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onEdit={setEditUser} currentUser={currentUser}/>
           ))}
           {!loading && active.length===0 && (
             <div style={{ textAlign:"center",color:"#cbd5e1",padding:32,fontSize:14 }}>ยังไม่มีผู้ใช้</div>
@@ -155,8 +158,9 @@ export default function AdminUsers({ onBack }) {
   );
 }
 
-function UserCard({ user, onRole, onRemove, onEdit }) {
+function UserCard({ user, onRole, onRemove, onEdit, currentUser }) {
   const roleOpt = ROLE_OPTS.find(r=>r.value===user.role)||ROLE_OPTS[2];
+  const visibleOpts = currentUser?.role==="dev" ? ROLE_OPTS : ROLE_OPTS.filter(r=>r.value!=="dev");
   return (
     <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
       padding:"14px 16px",marginBottom:10 }}>
@@ -176,7 +180,7 @@ function UserCard({ user, onRole, onRemove, onEdit }) {
           style={{ background:roleOpt.bg,border:`1px solid ${roleOpt.color}30`,
             color:roleOpt.color,borderRadius:8,padding:"5px 10px",fontSize:12,
             fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none" }}>
-          {ROLE_OPTS.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
+          {visibleOpts.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
         {user.role !== "pending" && (
           <button onClick={()=>onEdit(user)}
