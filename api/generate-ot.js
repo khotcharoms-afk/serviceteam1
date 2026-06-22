@@ -10,8 +10,11 @@ export default async function handler(req, res) {
     const templateBuffer = await templateRes.arrayBuffer();
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(Buffer.from(templateBuffer));
-    const ws = wb.getWorksheet(1) || wb.getWorksheet("OT") || wb.worksheets[0];
-    console.log("worksheets:", wb.worksheets.length, "ws:", ws?.name);
+    if (!wb.worksheets || wb.worksheets.length === 0) {
+      throw new Error("No worksheets found in template");
+    }
+    const ws = wb.worksheets[0];
+    console.log("ws name:", ws?.name, "worksheets:", wb.worksheets.length);
     const set = (addr, val) => { ws.getCell(addr).value = val; };
 
     const [py, pm] = (periodMonth || "-").split("-");
