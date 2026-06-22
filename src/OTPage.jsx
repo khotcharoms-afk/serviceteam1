@@ -1,11 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { db } from "./firebase.js";
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import OTModal from "./OTModal.jsx";
 import * as XLSX from "xlsx";
 
 export default function OTPage({ onBack, projects, users, currentUser }) {
+  const [tab, setTab]           = useState("list");
   const [records, setRecords]   = useState([]);
+  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"" });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved]   = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
   const [saving, setSaving]     = useState(false);
@@ -22,6 +26,16 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   }, []);
 
   useEffect(() => {
+    // โหลด profile ของ user นี้
+    const uid = currentUser?.id || currentUser?.uid;
+    if (uid) {
+      getDoc(doc(db,"otProfiles",uid)).then(d => {
+        if (d.exists()) setProfile(d.data());
+      });
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
     const u = onSnapshot(collection(db, "otRecords"), snap => {
       const data = snap.docs.map(d => ({ id:d.id, ...d.data() }));
       data.sort((a,b) => (b.dateIn||"").localeCompare(a.dateIn||""));
@@ -29,6 +43,15 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     });
     return u;
   }, []);
+
+  async function saveProfile() {
+    setProfileSaving(true);
+    const uid = currentUser?.id || currentUser?.uid;
+    await setDoc(doc(db,"otProfiles",uid), { ...profile, updatedAt: new Date().toISOString() });
+    setProfileSaving(false);
+    setProfileSaved(true);
+    setTimeout(() => setProfileSaved(false), 2000);
+  }
 
   async function saveOT(data, id) {
     setSaving(true);
@@ -78,7 +101,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     };
     const M = (r1,c1,r2,c2) => merges.push({s:{r:r1,c:c1},e:{r:r2,c:c2}});
 
-    const groupName = filterName!=="all" ? filterName : exportRecords[0]?.name||"";
+    const groupName = filterName!=="all" ? filterName : profile.name || exportRecords[0]?.name||"";
     const periodMonth = filterMonth||(exportRecords[0]?.dateIn||"").slice(0,7)||"";
     const [py,pm] = (periodMonth||"-").split("-");
     const prevPm = parseInt(pm)-1||12;
@@ -91,7 +114,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     C(1,0,"ใบเบิกค่าล่วงเวลา (OT) และค่าเบี้ยเลี้ยง",true,20,"left"); M(1,0,1,20);
 
     // Row 3: ชื่อพนักงาน (A3:O3)
-    C(2,0,`ชื่อพนักงานผู้ขอเบิก .................${groupName}...............................................................  รหัสพนักงาน .....................  ตำแหน่ง ..........................  แผนก ..........................  ฝ่าย ...........................`,true,20,"left");
+    C(2,0,`ชื่อพนักงานผู้ขอเบิก .................${groupName}...............................................................  รหัสพนักงาน ........${profile.empId||""}...............  ตำแหน่ง .......${profile.position||""}......................................  แผนก ..................${profile.dept||""}..........................  ฝ่าย ................${profile.division||""}..............................`,true,20,"left");
     M(2,0,2,14);
 
     // Row 4: รอบ (A4:O4)
@@ -171,8 +194,9 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     C(31,14,"   ชั่วโมง OT : การปฏิบัติงานในวันทำงาน ช่วงเวลาก่อนหรือหลังเวลา 9.00-18.00 น.",true,20,"left"); M(31,14,31,20);
 
     // Row 33 (index 32): ชื่อ
-    C(32,0,`( ...........${groupName}............. )`,true,20,"center"); M(32,0,32,4);
-    C(32,5,"(                                                                                    )",true,20,"center"); M(32,5,32,7);
+    C(32,0,`( ...........${groupName}............. )`,true,20,"center");
+    C(32,5,`( ${profile.supervisor||"                              "} )`,true,20,"center"); M(32,0,32,4);
+    M(32,5,32,7);
     C(32,8,"(                                                                                    )",false,20,"center"); M(32,8,32,13);
     C(32,14,"   ชั่วโมง OT : การปฏิบัติงานในวันหยุดช่วงเวลาก่อนหรือหลังเวลา 9.00-18.00 น.",true,20,"left"); M(32,14,32,20);
 
@@ -228,8 +252,53 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
       <div style={{ padding:isMobile?"12px 14px 48px":"16px 20px 48px",maxWidth:1100,margin:"0 auto" }}>
 
+        {/* Tab bar */}
+        <div style={{ display:"flex",gap:6,marginBottom:16,background:"#fff",border:"1px solid #e2e8f0",
+          borderRadius:10,padding:6 }}>
+          {[{key:"list",label:"📋 รายการ"},{key:"profile",label:"👤 โปรไฟล์"}].map(t=>(
+            <button key={t.key} onClick={()=>setTab(t.key)}
+              style={{ flex:1,padding:"7px",borderRadius:7,border:"none",fontSize:12,fontWeight:700,
+                cursor:"pointer",fontFamily:"inherit",
+                background:tab===t.key?"#F97316":"transparent",
+                color:tab===t.key?"#fff":"#64748b" }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Profile Tab */}
+        {tab==="profile" && (
+          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"20px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:"#0f172a",marginBottom:4 }}>โปรไฟล์ OT ของฉัน</div>
+            <div style={{ fontSize:12,color:"#64748b",marginBottom:16 }}>ข้อมูลนี้จะถูกใส่ใน Excel หน้าปก OT อัตโนมัติ</div>
+            {[
+              { key:"name",       label:"ชื่อ-นามสกุล (ภาษาไทย) *", placeholder:"เช่น นายสายัญห์ คชรมย์" },
+              { key:"empId",      label:"รหัสพนักงาน",                placeholder:"เช่น MT260101" },
+              { key:"position",   label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า" },
+              { key:"dept",       label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ" },
+              { key:"division",   label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ" },
+              { key:"supervisor", label:"ชื่อผู้บังคับบัญชา",        placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
+            ].map(f=>(
+              <div key={f.key} style={{ marginBottom:12 }}>
+                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                  letterSpacing:.5,marginBottom:4,display:"block" }}>{f.label}</label>
+                <input value={profile[f.key]||""} placeholder={f.placeholder}
+                  onChange={e=>setProfile(p=>({...p,[f.key]:e.target.value}))}
+                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                    padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+              </div>
+            ))}
+            <button onClick={saveProfile} disabled={profileSaving||!profile.name?.trim()}
+              style={{ width:"100%",background:profileSaved?"#16a34a":"#F97316",border:"none",color:"#fff",
+                borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+                opacity:!profile.name?.trim()?0.5:1,marginTop:4 }}>
+              {profileSaving?"กำลังบันทึก...":profileSaved?"✅ บันทึกแล้ว":"💾 บันทึกโปรไฟล์"}
+            </button>
+          </div>
+        )}
+
         {/* KPI */}
-        <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)",gap:10,marginBottom:16 }}>
+        {tab==="list" && <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)",gap:10,marginBottom:16 }}>
           {[
             { label:"รายการทั้งหมด", val:filtered.length, color:"#F97316" },
             { label:"ชั่วโมง OT รวม", val:`${totalHours} ชม.`, color:"#6B21A8" },
@@ -240,9 +309,10 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               <div style={{ fontSize:20,fontWeight:800,color:k.color }}>{k.val}</div>
             </div>
           ))}
-        </div>
+        </div>}
 
-        {/* Filters */}
+        {/* Filters — เฉพาะ tab รายการ */}
+        {tab==="list" && <>
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
           padding:"12px 16px",marginBottom:14,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
           {isAdmin && (
@@ -312,6 +382,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
             })}
           </div>
         )}
+      </>}
       </div>
 
       {/* Confirm delete */}
