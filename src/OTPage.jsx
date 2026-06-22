@@ -6,7 +6,7 @@ import OTModal from "./OTModal.jsx";
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
   const [records, setRecords]   = useState([]);
-  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", supervisorOT:"", staff:"" });
+  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", supervisorOT:"", staff:"", periodStart:"", periodEnd:"" });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved]   = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -75,15 +75,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const myRecords = isAdmin ? records : records.filter(r => r.createdBy === currentUser?.id);
   const filtered = myRecords.filter(r => {
     if (filterName !== "all" && r.name !== filterName) return false;
-    if (filterMonth) {
-      const [py, pm] = filterMonth.split("-").map(Number);
-      const prevPm = pm === 1 ? 12 : pm - 1;
-      const prevPy = pm === 1 ? py - 1 : py;
-      const start = new Date(`${prevPy}-${String(prevPm).padStart(2,"0")}-16`);
-      const end   = new Date(`${py}-${String(pm).padStart(2,"0")}-15`);
-      const d = new Date(r.dateIn||"");
-      if (d < start || d > end) return false;
-    }
+    if (filterMonth && !(r.dateIn||"").startsWith(filterMonth)) return false;
     return true;
   });
   const names = [...new Set(myRecords.map(r=>r.name).filter(Boolean))].sort();
@@ -92,11 +84,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   // months list
   const months = [...new Set(myRecords.map(r=>(r.dateIn||"").slice(0,7)).filter(Boolean))].sort().reverse();
   const MONTH_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-  const fmtMonth = m => {
-    const [y,mo] = m.split("-").map(Number);
-    const prevMo = mo === 1 ? 12 : mo - 1;
-    return `${MONTH_TH[mo-1]} ${(y+543)%100} (16 ${MONTH_TH[prevMo-1]} - 15 ${MONTH_TH[mo-1]})`;
-  };
+  const fmtMonth = m => { const [y,mo]=m.split("-"); return `${MONTH_TH[parseInt(mo)-1]} ${(parseInt(y)+543)%100}`; };
   const fmtDate = d => { if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${parseInt(y)+543}`; };
 
   async function exportOR(r) {
@@ -214,6 +202,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               { key:"supervisor", label:"ชื่อผู้บังคับบัญชา (ใบ OR)",  placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
               { key:"supervisorOT", label:"ผู้บังคับบัญชา (หน้าปก OT)",   placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
               { key:"staff",      label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho" },
+              { key:"periodStart", label:"วันที่เริ่มรอบเบิก",           placeholder:"เช่น 16/05/2026" },
+              { key:"periodEnd",   label:"วันที่สิ้นสุดรอบเบิก",         placeholder:"เช่น 15/06/2026" },
             ].map(f=>(
               <div key={f.key} style={{ marginBottom:12 }}>
                 <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
