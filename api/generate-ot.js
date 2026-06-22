@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const templateBuffer = await templateRes.arrayBuffer();
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(Buffer.from(templateBuffer));
-    const ws = wb.getWorksheet("OT") || wb.worksheets[0];
+    const ws = wb.getWorksheet(1) || wb.getWorksheet("OT") || wb.worksheets[0];
     const set = (addr, val) => { ws.getCell(addr).value = val; };
 
     const [py, pm] = (periodMonth || "-").split("-");
