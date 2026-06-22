@@ -82,7 +82,32 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const fmtMonth = m => { const [y,mo]=m.split("-"); return `${MONTH_TH[parseInt(mo)-1]} ${(parseInt(y)+543)%100}`; };
   const fmtDate = d => { if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${parseInt(y)+543}`; };
 
-  async function exportExcel() {
+  async function exportOR(r) {
+    if (!profile.name?.trim()) {
+      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+      setTab("profile");
+      return;
+    }
+    try {
+      const res = await fetch("/api/generate-or", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ record: r, profile }),
+      });
+      if (!res.ok) { const t = await res.text(); throw new Error(t); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `OR_${r.dateIn||"date"}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch(err) {
+      alert("Export ใบ OR ไม่สำเร็จ: " + err.message);
+    }
+  }
+
+
     const exportRecords = filtered.length > 0 ? filtered : myRecords;
     if (exportRecords.length === 0) return;
     if (!profile.name?.trim()) {
@@ -261,6 +286,9 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
                     </div>
                   </div>
                   <div style={{ display:"flex",gap:6,flexShrink:0 }}>
+                    <button onClick={()=>exportOR(r)}
+                      style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
+                        borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>🖨</button>
                     <button onClick={()=>{ setEditRecord(r); setShowModal(true); }}
                       style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
                         borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>✏️</button>
