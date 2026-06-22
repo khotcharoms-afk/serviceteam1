@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         set(`J${row}`, profile.position||"เจ้าหน้าที่บริการลูกค้า");
         set(`K${row}`, r.hours||0);
         set(`Q${row}`, profile.supervisor||"");
-        set(`R${row}`, profile.name||"");
+        set(`R${row}`, profile.staff||"");
         set(`S${row}`, r.remark||"");
       } else {
         ["A","B","C","D","E","F","G","H","I","J","K","L","Q","R","S"].forEach(c=>{ ws.getCell(`${c}${row}`).value = null; });
