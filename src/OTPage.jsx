@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { db } from "./firebase.js";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import OTModal from "./OTModal.jsx";
-import * as XLSX from "xlsx";
 
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
@@ -83,142 +82,35 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const fmtMonth = m => { const [y,mo]=m.split("-"); return `${MONTH_TH[parseInt(mo)-1]} ${(parseInt(y)+543)%100}`; };
   const fmtDate = d => { if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${parseInt(y)+543}`; };
 
-  function exportExcel() {
+  async function exportExcel() {
     const exportRecords = filtered.length > 0 ? filtered : myRecords;
     if (exportRecords.length === 0) return;
-
-    const wb = XLSX.utils.book_new();
-    const ws = {};
-    const merges = [];
-
-    const C = (r,c,v,bold,sz,align,border) => {
-      const addr = XLSX.utils.encode_cell({r,c});
-      const bt = {style:"thin"};
-      ws[addr] = { v, t:typeof v==="number"?"n":"s",
-        s:{ font:{bold:!!bold, sz:sz||20, name:"Angsana New"},
-            alignment:{horizontal:align||"left",vertical:"center",wrapText:true},
-            border: border?{top:bt,bottom:bt,left:bt,right:bt}:undefined }};
-    };
-    const M = (r1,c1,r2,c2) => merges.push({s:{r:r1,c:c1},e:{r:r2,c:c2}});
-
-    const groupName = filterName!=="all" ? filterName : profile.name || exportRecords[0]?.name||"";
-    const periodMonth = filterMonth||(exportRecords[0]?.dateIn||"").slice(0,7)||"";
-    const [py,pm] = (periodMonth||"-").split("-");
-    const prevPm = parseInt(pm)-1||12;
-    const prevPy = prevPm===12 ? parseInt(py)-1 : parseInt(py);
-    const periodStart = periodMonth ? `16/${String(prevPm).padStart(2,"0")}/${prevPy+543}` : "";
-    const periodEnd   = periodMonth ? `15/${pm}/${parseInt(py)+543}` : "";
-
-    // Row 1-2: ชื่อบริษัท + ชื่อใบ
-    C(0,0,"บริษัท เมทเธียร์ จำกัด",true,20,"left"); M(0,0,0,20);
-    C(1,0,"ใบเบิกค่าล่วงเวลา (OT) และค่าเบี้ยเลี้ยง",true,20,"left"); M(1,0,1,20);
-
-    // Row 3: ชื่อพนักงาน (A3:O3)
-    C(2,0,`ชื่อพนักงานผู้ขอเบิก .................${groupName}...............................................................  รหัสพนักงาน ........${profile.empId||""}...............  ตำแหน่ง .......${profile.position||""}......................................  แผนก ..................${profile.dept||""}..........................  ฝ่าย ................${profile.division||""}..............................`,true,20,"left");
-    M(2,0,2,14);
-
-    // Row 4: รอบ (A4:O4)
-    C(3,0,`การปฏิบัติงาน (ตามรอบวันที่ 16 เดือนก่อนหน้า ถึงวันที่ 15 เดือนปัจจุบัน) ตั้งแต่วันที่ ....${periodStart}.................... ถึงวันที่ ...${periodEnd}.................. เบิกประจำงวดเดือน .................. ปี ................`,true,18,"left");
-    M(3,0,3,14);
-
-    // Row 5: คำขอ (A5:N5)
-    C(4,0,"ขออนุมัติเบิกค่าปฏิบัติงานนอกเวลา (OT) และ/หรือ ค่าเบี้ยเลี้ยง โดยมีรายละเอียดการขอเบิกเป็นดังนี้",true,20,"left");
-    M(4,0,4,13);
-
-    // Row 6: empty row
-
-    // Row 7-8: Header (index 6-7)
-    // A-J: single cols merge row 7-8
-    const hdCols = ["No","Start Date","End Date","Project No.","Project Name (ระบุ)","Description","Location","Group","Division","Position"];
-    hdCols.forEach((h,i)=>{ C(6,i,h,true,20,"center",true); M(6,i,7,i); });
-    // K7:L7 = "รายการที่ขอเบิก"
-    C(6,10,"รายการที่ขอเบิก",true,20,"center",true); M(6,10,6,11);
-    // K8, L8
-    C(7,10,"ค่านอกเวลา (OT)\n(ชั่วโมง)",true,20,"center",true);
-    C(7,11,"ค่าเบี้ยเลี้ยง\n(บาท)",true,20,"center",true);
-    // M-R: merge row 7-8
-    [["*1",12],["*1.5",13],["*2",14],["*3",15],["ผู้บังคับบัญชา",16],["Staff",17]].forEach(([h,i])=>{
-      C(6,i,h,true,20,"center",true); M(6,i,7,i);
-    });
-    // S7:U8 = "หมายเหตุ"
-    C(6,18,"หมายเหตุ",true,20,"center",true); M(6,18,7,20);
-
-    // Data rows: start row 9 (index 8), fixed rows 9-26 (18 rows)
-    const MAX_DATA_ROWS = 18;
-    for (let i=0; i<MAX_DATA_ROWS; i++) {
-      const row = 8 + i;
-      const r = exportRecords[i];
-      if (r) {
-        C(row,0,i+1,false,20,"center",true);
-        C(row,1,`${r.dateIn||""} ${r.timeIn||""}`,false,20,"center",true);
-        C(row,2,`${r.dateOut||r.dateIn||""} ${r.timeOut||""}`,false,20,"center",true);
-        C(row,3,r.projectCode||"",false,20,"left",true);
-        C(row,4,r.projectName||"",false,20,"left",true);
-        C(row,5,r.desc||"",false,20,"left",true);
-        C(row,6,r.location||"",false,20,"left",true);
-        C(row,7,"PS",false,20,"center",true);
-        C(row,8,"PS",false,20,"center",true);
-        C(row,9,"เจ้าหน้าที่บริการลูกค้า",false,20,"left",true);
-        C(row,10,r.hours||0,false,20,"center",true);
-        C(row,11,"",false,20,"center",true);
-        [12,13,14,15].forEach(c=>C(row,c,"",false,20,"center",true));
-        C(row,16,"",false,20,"center",true);
-        C(row,17,groupName,false,20,"center",true);
-        C(row,18,r.remark||"",false,20,"center",true);
-        M(row,18,row,20);
-      } else {
-        // empty rows
-        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].forEach(c=>C(row,c,"",false,20,"center",true));
-        M(row,18,row,20);
-      }
+    if (!profile.name?.trim()) {
+      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+      setTab("profile");
+      return;
     }
-
-    // Row 27 (index 26): รวม — A27:J27 merge
-    C(26,0,"รวม",true,20,"center",true); M(26,0,26,9);
-    C(26,10,exportRecords.reduce((s,r)=>s+(r.hours||0),0),true,20,"center",true);
-
-    // Rows 28-29: empty
-    // Row 30 (index 29): ลายเซ็น header
-    C(29,0,"พนักงาน (ผู้ขอเบิก)",true,20,"center"); M(29,0,29,4);
-    C(29,5,"ผู้บังคับบัญชาต้นสังกัด(ผู้อนุมัติ)",true,20,"center"); M(29,5,29,7);
-    C(29,8,"แผนกทรัพยากรบุคคลและธุรการ(ผู้ตรวจสอบ)",true,20,"center"); M(29,8,29,13);
-    C(29,14,"ความหมายของประเภทการจ่าย OT/ข้อกำหนด",true,20,"center"); M(29,14,29,20);
-
-    // Row 31 (index 30)
-    C(30,14,"  ชั่วโมง OT : การปฏิบัติงานในวันหยุด ช่วงเวลา 9.00-18.00 น.",true,20,"left"); M(30,14,30,20);
-
-    // Row 32 (index 31): เส้น
-    C(31,0,"............................................................",false,20,"center"); M(31,0,31,4);
-    C(31,5,"............................................................",false,20,"center"); M(31,5,31,7);
-    C(31,8,"............................................................",false,20,"center"); M(31,8,31,13);
-    C(31,14,"   ชั่วโมง OT : การปฏิบัติงานในวันทำงาน ช่วงเวลาก่อนหรือหลังเวลา 9.00-18.00 น.",true,20,"left"); M(31,14,31,20);
-
-    // Row 33 (index 32): ชื่อ
-    C(32,0,`( ...........${groupName}............. )`,true,20,"center");
-    C(32,5,`( ${profile.supervisor||"                              "} )`,true,20,"center"); M(32,0,32,4);
-    M(32,5,32,7);
-    C(32,8,"(                                                                                    )",false,20,"center"); M(32,8,32,13);
-    C(32,14,"   ชั่วโมง OT : การปฏิบัติงานในวันหยุดช่วงเวลาก่อนหรือหลังเวลา 9.00-18.00 น.",true,20,"left"); M(32,14,32,20);
-
-    // Row 34 (index 33): วันที่
-    const todayTH = (()=>{ const d=new Date(); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`; })();
-    C(33,0,`วันที่.............${todayTH}................................`,true,20,"center"); M(33,0,33,4);
-    C(33,5,`วันที่.............${todayTH}................................`,true,20,"center"); M(33,5,33,7);
-    C(33,8,"วันที่................................................",true,20,"center"); M(33,8,33,13);
-    C(33,14,"   ข้อกำหนด : หน่วยชั่วโมงย่อยสุดของการเบิก OT = 0.5 ชั่วโมง",true,20,"left"); M(33,14,33,20);
-
-    ws["!merges"] = merges;
-    ws["!ref"] = XLSX.utils.encode_range({s:{r:0,c:0},e:{r:34,c:20}});
-    ws["!cols"] = [
-      {wch:5},{wch:22},{wch:22},{wch:15},{wch:45},
-      {wch:35},{wch:15},{wch:10},{wch:8},{wch:22},
-      {wch:13},{wch:13},{wch:6},{wch:6},{wch:6},{wch:6},
-      {wch:14},{wch:14},{wch:8},{wch:8},{wch:12}
-    ];
-    ws["!rows"] = Array(35).fill(null).map((_,i)=>({hpt: i===0||i===1?21:i===3?26:i>=8&&i<=25?32:i===6?18:i===7?44:21}));
-
-    XLSX.utils.book_append_sheet(wb, ws, "OT");
-    XLSX.writeFile(wb, `OT_${groupName}_${periodMonth||"all"}.xlsx`);
+    try {
+      const res = await fetch("/api/generate-ot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profile,
+          records: exportRecords,
+          periodMonth: filterMonth || (exportRecords[0]?.dateIn||"").slice(0,7) || "",
+        }),
+      });
+      if (!res.ok) { const t = await res.text(); throw new Error(t); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `OT_${profile.name}_${filterMonth||"all"}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch(err) {
+      alert("Export ไม่สำเร็จ: " + err.message);
+    }
   }
 
   const inputStyle = { border:"1px solid #e2e8f0",borderRadius:8,padding:"6px 10px",
