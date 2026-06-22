@@ -589,7 +589,6 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   if(leavePage) return <LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/>;
-  if(otPage && currentUser?.role!=="dev") { setOtPage(false); return null; }
   if(otPage) return <OTPage onBack={()=>setOtPage(false)}
     projects={projects} users={users} currentUser={currentUser}/>;
   if(taskPage) return <TaskBoard onBack={()=>setTaskPage(false)}
@@ -783,10 +782,8 @@ export default function App({ currentUser, onSignOut }) {
               onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
               onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
-            {currentUser?.role==="dev" && (
-              <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
-                onClick={()=>{ setOtPage(true); setMenuOpen(false); }}/>
-            )}
+            <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
+              onClick={()=>{ setOtPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
               onClick={()=>{ setLeavePage(true); setMenuOpen(false); }}/>
             <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
