@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         set(`I${row}`, "PS");
         set(`J${row}`, profile.position||"เจ้าหน้าที่บริการลูกค้า");
         set(`K${row}`, r.hours||0);
-        set(`Q${row}`, profile.supervisor||"");
+        set(`Q${row}`, profile.supervisorOT||profile.supervisor||"");
         set(`R${row}`, profile.staff||"");
         set(`S${row}`, r.remark||"");
       } else {
