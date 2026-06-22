@@ -56,7 +56,8 @@ export default async function handler(req, res) {
 
     const buffer = await wb.xlsx.writeBuffer();
     res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition",`attachment; filename="OT_${profile.name||"export"}_${periodMonth||"all"}.xlsx"`);
+    const filename = encodeURIComponent(`OT_${profile.name||"export"}_${periodMonth||"all"}.xlsx`);
+    res.setHeader("Content-Disposition",`attachment; filename*=UTF-8''${filename}`);
     res.send(Buffer.from(buffer));
   } catch(err) {
     console.error("generate-ot error:", err);
