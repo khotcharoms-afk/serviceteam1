@@ -54,11 +54,16 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
   async function saveOT(data, id) {
     setSaving(true);
-    const docId = id || Date.now().toString();
-    await setDoc(doc(db, "otRecords", docId), data, { merge: true });
-    setSaving(false);
-    setShowModal(false);
-    setEditRecord(null);
+    try {
+      const docId = id || Date.now().toString();
+      await setDoc(doc(db, "otRecords", docId), data, { merge: true });
+      setShowModal(false);
+      setEditRecord(null);
+    } catch(err) {
+      alert("บันทึกไม่สำเร็จ: " + err.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function deleteOT(id) {
