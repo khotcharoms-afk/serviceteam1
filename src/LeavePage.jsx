@@ -1,404 +1,242 @@
-import { useState, useEffect } from "react";
-import { db } from "./firebase";
-import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, setDoc, doc } from "firebase/firestore";
-import LeaveModal from "./LeaveModal.jsx";
+import { useState } from "react";
 
-const LEAVE_LABEL = { vacation:"ลาพักร้อน", personal:"ลากิจ", sick:"ลาป่วย", other:"อื่นๆ" };
-const STATUS_STYLE = {
-  pending:  { bg:"#fef9c3", color:"#854d0e", label:"รออนุมัติ" },
-  approved: { bg:"#f0fdf4", color:"#15803d", label:"อนุมัติแล้ว" },
-  rejected: { bg:"#fff1f2", color:"#be123c", label:"ไม่อนุมัติ" },
-};
+const LEAVE_TYPES = [
+  { id:"vacation", label:"ลาพักผ่อน" },
+  { id:"personal", label:"ลากิจ" },
+  { id:"sick",     label:"ลาป่วย" },
+  { id:"other",    label:"อื่นๆ" },
+];
+const DAYS_TH = ["จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์","อาทิตย์"];
 
-function printLeave(leave, logoData, users, allRecords) {
-  // คำนวณลามาแล้ว (approved ก่อนหน้า ไม่รวมใบนี้)
-  const prevLeaves = (allRecords||[]).filter(r =>
-    r.id !== leave.id &&
-    r.createdBy === leave.createdBy &&
-    r.status === "approved"
-  );
-  const prevSum = { vacation:0, personal:0, sick:0, other:0 };
-  prevLeaves.forEach(r => {
-    if (prevSum[r.leaveType] !== undefined) prevSum[r.leaveType] += (r.days||0);
-  });
+export default function LeaveModal({ onClose, onSave, saving, currentUser, users, allLeaves }) {
+  const today = new Date().toISOString().slice(0,10);
+  const [leaveType, setLeaveType] = useState("vacation");
+  const [otherType, setOtherType] = useState("");
+  const [workLocation, setWorkLocation] = useState("");
+  const [phone, setPhone] = useState("");
+  const [manager, setManager] = useState("");
+  const [department, setDepartment] = useState("");
+  const [empLevel, setEmpLevel] = useState("");
+  const [position, setPosition] = useState("");
+  const [empId, setEmpId] = useState("");
+  const [offDays, setOffDays] = useState([]);
+  const [reason, setReason] = useState("");
+  const [days, setDays] = useState("");
+  const [leaveUnit, setLeaveUnit] = useState("day");
+  const [dateFrom, setDateFrom] = useState(today);
+  const [dateTo, setDateTo] = useState(today);
+  const [error, setError] = useState("");
+  const [customName, setCustomName] = useState(currentUser?.name||"");
 
-  // วันลาที่ได้รับ
-  const user = (users||[]).find(u => u.id === leave.createdBy || u.name === leave.name);
-  const quota = user?.leaveQuota || {};
-
-  const typeLabel = leave.leaveType==="other"
-    ? (leave.otherType||"อื่นๆ")
-    : LEAVE_LABEL[leave.leaveType]||leave.leaveType;
-  const offDaysStr = (leave.offDays||[]).join("  ");
-
-  const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<title>ใบลา - ${leave.name}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Sarabun', sans-serif; font-size: 14px; padding: 30px 40px; color: #000; }
-  h1 { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 20px; }
-  .row { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-end; }
-  .field { flex: 1; }
-  .label { font-size: 12px; color: #555; margin-bottom: 2px; }
-  .line { border-bottom: 1px solid #000; min-width: 80px; padding: 2px 4px; min-height: 22px; }
-  .checkbox-row { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
-  .cb { display: flex; align-items: center; gap: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-  th, td { border: 1px solid #000; padding: 5px 8px; text-align: center; }
-  th { font-weight: 700; background: #f0f0f0; }
-  .sig-row { display: flex; gap: 20px; margin-top: 16px; }
-  .sig { flex: 1; text-align: center; }
-  .sig-line { border-bottom: 1px solid #000; margin: 24px 16px 4px; }
-  @media print { body { padding: 15px 20px; } @page { margin: 10mm; size: A4 landscape; } }
-</style>
-</head><body>
-${logoData ? `<div style="text-align:left;margin-bottom:8px"><img src="${logoData}" style="max-height:60px;max-width:180px;object-fit:contain"/></div>` : ""}
-<h1>ใบลา</h1>
-
-<div class="row">
-  <div class="label">ประเภทการลา:</div>
-  <div class="checkbox-row">
-    ${["vacation","personal","sick","other"].map(t=>`
-      <div class="cb"><span style="display:inline-block;width:14px;height:14px;border:1px solid #000;text-align:center;line-height:14px;font-size:11px">${leave.leaveType===t?"✓":""}</span> ${LEAVE_LABEL[t]||"อื่นๆ"}</div>
-    `).join("")}
-    ${leave.leaveType==="other" ? `<span>_${leave.otherType||"__________"}_</span>` : ""}
-  </div>
-</div>
-
-<div class="row">
-  <div class="field"><div class="label">สถานที่ปฏิบัติงาน</div><div class="line">${leave.workLocation||""}</div></div>
-  <div class="field"><div class="label">โทรศัพท์</div><div class="line">${leave.phone||""}</div></div>
-</div>
-
-<div class="row">
-  <div class="field"><div class="label">เรียน ผู้จัดการแผนก</div><div class="line">${leave.manager||""}</div></div>
-  <div class="field"><div class="label">สำนัก/ฝ่าย</div><div class="line">${leave.department||""}</div></div>
-</div>
-
-<div class="row">
-  <div class="label">ข้าพเจ้า</div>
-  <div class="line" style="flex:2">${leave.name||""}</div>
-  <div class="label">พนักงานระดับ</div>
-  <div class="line" style="flex:1">${leave.empLevel||""}</div>
-  <div class="label">ตำแหน่ง</div>
-  <div class="line" style="flex:2">${leave.position||""}</div>
-  <div class="label">เลขบัตรพนักงาน</div>
-  <div class="line" style="flex:1">${leave.empId||""}</div>
-</div>
-
-<div class="row" style="margin-top:8px">
-  <div class="label">วันหยุดประจำสัปดาห์:</div>
-  <div class="checkbox-row">
-    ${["จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์","อาทิตย์"].map(d=>`
-      <div class="cb"><span style="display:inline-block;width:14px;height:14px;border:1px solid #000;text-align:center;line-height:14px;font-size:11px">${(leave.offDays||[]).includes(d)?"✓":""}</span> ${d}</div>
-    `).join("")}
-  </div>
-</div>
-
-<div class="row">
-  <div class="label">มีความประสงค์ขออนุญาตลาหยุดเนื่องจาก</div>
-  <div class="line" style="flex:3">${leave.reason||""}</div>
-  <div class="label">มีกำหนด</div>
-  <div class="line" style="width:50px">${leave.days||""}</div>
-  <div class="label">${leave.leaveUnit==="hour"?"ชม.":"วัน"}</div>
-</div>
-
-<div class="row">
-  <div class="label">นับตั้งแต่วันที่</div>
-  <div class="line" style="flex:2">${leave.dateFrom||""}</div>
-  <div class="label">ถึงวันที่</div>
-  <div class="line" style="flex:2">${leave.dateTo||""}</div>
-</div>
-
-<div class="sig-row">
-  <div class="sig"><div class="sig-line"></div><div>ผู้ขอลา</div></div>
-  <div class="sig"><div class="sig-line"></div><div>พนักงานที่ควบคุม</div></div>
-  <div class="sig"><div class="sig-line"></div><div>ผู้อนุมัติ</div></div>
-</div>
-
-<table>
-  <tr><th colspan="7">สำหรับเจ้าหน้าที่ระเบียนวันลาประจำฝ่าย</th></tr>
-  <tr>
-    <th rowspan="2">รายการ</th>
-    <th colspan="5">นับเป็นวันลา</th>
-    <th rowspan="2">ไม่นับวันลา<br/>ลาพิเศษ 1</th>
-  </tr>
-  <tr><th>ลาพักร้อน</th><th>ลากิจ</th><th>ลาป่วย</th><th>ลาพิเศษ</th><th>อื่นๆ</th></tr>
-  <tr><td>ลามาแล้ว</td>
-    <td>${prevSum.vacation||""}</td>
-    <td>${prevSum.personal||""}</td>
-    <td>${prevSum.sick||""}</td>
-    <td></td>
-    <td>${prevSum.other||""}</td>
-    <td></td>
-  </tr>
-  <tr><td>ลาครั้งนี้</td>
-    <td>${leave.leaveType==="vacation"?leave.days:""}</td>
-    <td>${leave.leaveType==="personal"?leave.days:""}</td>
-    <td>${leave.leaveType==="sick"?leave.days:""}</td>
-    <td></td>
-    <td>${leave.leaveType==="other"?leave.days:""}</td>
-    <td></td>
-  </tr>
-  <tr><td>รวม</td>
-    <td>${leave.leaveType==="vacation"?(prevSum.vacation+(leave.days||0)):prevSum.vacation||""}</td>
-    <td>${leave.leaveType==="personal"?(prevSum.personal+(leave.days||0)):prevSum.personal||""}</td>
-    <td>${leave.leaveType==="sick"?(prevSum.sick+(leave.days||0)):prevSum.sick||""}</td>
-    <td></td>
-    <td>${leave.leaveType==="other"?(prevSum.other+(leave.days||0)):prevSum.other||""}</td>
-    <td></td>
-  </tr>
-  ${quota.vacation||quota.personal||quota.sick ? `
-  <tr><td style="font-size:11px;color:#555">วันที่ได้รับ</td>
-    <td style="font-size:11px;color:#555">${quota.vacation||"-"}</td>
-    <td style="font-size:11px;color:#555">${quota.personal||"-"}</td>
-    <td style="font-size:11px;color:#555">${quota.sick||"-"}</td>
-    <td></td>
-    <td style="font-size:11px;color:#555">${quota.other||"-"}</td>
-    <td></td>
-  </tr>` : ""}
-</table>
-
-<script>window.onload=()=>{ window.print(); }</script>
-</body></html>`;
-
-  const w = window.open("","_blank");
-  w.document.write(html);
-  w.document.close();
-}
-
-export default function LeavePage({ onBack, currentUser, users }) {
-  const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const logoData = '/logo.png';
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterName, setFilterName] = useState("all");
-
-  const isAdmin = currentUser?.role === "admin";
-
-  useEffect(() => {
-    const q = query(collection(db,"leaves"), orderBy("createdAt","desc"));
-    const u = onSnapshot(q, snap => {
-      setRecords(snap.docs.map(d => ({ id:d.id, ...d.data() })));
-      setLoading(false);
+  function calcWorkDays(from, to, offList) {
+    if (!from || !to) return "";
+    const start = new Date(from), end = new Date(to);
+    if (end < start) return "";
+    const m = {"จันทร์":1,"อังคาร":2,"พุธ":3,"พฤหัส":4,"ศุกร์":5,"เสาร์":6,"อาทิตย์":0};
+    const off = new Set(offList.map(d=>m[d]));
+    let n=0, cur=new Date(start);
+    while(cur<=end){ if(!off.has(cur.getDay()))n++; cur.setDate(cur.getDate()+1); }
+    return n;
+  }
+  function toggleDay(d) {
+    setOffDays(prev => {
+      const next = prev.includes(d) ? prev.filter(x=>x!==d) : [...prev,d];
+      if(leaveUnit==="day"){ const c=calcWorkDays(dateFrom,dateTo,next); if(c!=="")setDays(String(c)); }
+      return next;
     });
-    return u;
-  }, []);
-
-  async function saveLeave(data) {
-    setSaving(true);
-    try {
-      await addDoc(collection(db,"leaves"), data);
-      setShowModal(false);
-    } catch(e) { console.error(e); }
-    setSaving(false);
   }
 
-  async function deleteLeave(id) {
-    if (!window.confirm("ลบใบลานี้?")) return;
-    try {
-      await deleteDoc(doc(db,"leaves",id));
-    } catch(e) { console.error(e); }
+  function handleSave() {
+    if (!reason.trim()) { setError("กรุณากรอกเหตุผลการลา"); return; }
+    if (!days || isNaN(days) || parseFloat(days) <= 0) { setError("กรุณากรอกจำนวนวัน"); return; }
+
+    setError("");
+    onSave({
+      leaveType, otherType, workLocation, phone,
+      manager, department, empLevel, position, empId,
+      offDays, reason,
+      days: leaveUnit==="hour" ? parseFloat(days)/8 : parseFloat(days),
+      hours: leaveUnit==="hour" ? parseFloat(days) : parseFloat(days)*8,
+      leaveUnit, displayAmount: parseFloat(days),
+      dateFrom, dateTo,
+      name: customName.trim() || currentUser?.name || "",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser?.id || currentUser?.uid || "",
+    });
   }
 
-  async function updateStatus(id, status) {
-    try {
-      const leave = records.find(r => r.id === id);
-      await updateDoc(doc(db,"leaves",id), {
-        status,
-        approvedBy: currentUser?.name||"",
-        approvedAt: new Date().toISOString(),
-      });
-      // ส่ง notification ไปหา user ที่ยื่นใบลา
-      if (leave?.createdBy) {
-        const statusText = status === "approved" ? "อนุมัติแล้ว ✅" : "ไม่อนุมัติ ❌";
-        const leaveTypeText = LEAVE_LABEL[leave.leaveType] || leave.leaveType;
-        await setDoc(doc(db,"notifications",Date.now().toString()), {
-          type: "leave",
-          toUid: leave.createdBy,
-          toName: leave.name || "",
-          fromName: currentUser?.name || "",
-          message: `ใบลา${leaveTypeText} ${leave.days} วัน (${leave.dateFrom}) — ${statusText}`,
-          createdAt: new Date().toISOString(),
-          read: false,
-        });
-      }
-    } catch(e) { console.error(e); }
-  }
-
-  // filter
-  const myRecords = isAdmin ? records : records.filter(r => r.createdBy === (currentUser?.id || currentUser?.uid));
-  const filtered = myRecords.filter(r => {
-    if (filterStatus !== "all" && r.status !== filterStatus) return false;
-    if (filterName !== "all" && r.name !== filterName) return false;
-    return true;
+  const IS = (extra={}) => ({
+    width:"100%", border:"1px solid #e2e8f0", borderRadius:8,
+    padding:"8px 12px", fontSize:13, fontFamily:"inherit",
+    outline:"none", background:"#f8fafc", boxSizing:"border-box", ...extra,
   });
-
-  // summary — นับเฉพาะ approved เท่านั้น
-  const names = [...new Set(records.map(r=>r.name).filter(Boolean))].sort();
-  const approvedRecords = myRecords.filter(r => r.status === "approved");
-  const summary = {};
-  approvedRecords.forEach(r => {
-    if (!summary[r.name]) summary[r.name] = { vacation:0, personal:0, sick:0, other:0 };
-    summary[r.name][r.leaveType] = (summary[r.name][r.leaveType]||0) + (r.days||0);
-  });
-
-  const inputStyle = {
-    border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 10px",
-    fontSize:12, fontFamily:"inherit", background:"#f8fafc", outline:"none",
-  };
+  const LB = { fontSize:11, color:"#94a3b8", fontWeight:700,
+    textTransform:"uppercase", letterSpacing:.5, marginBottom:4, display:"block" };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f8fafc", fontFamily:"'Noto Sans Thai',sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
+    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+      onClick={onClose}>
+      <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:520,
+        maxHeight:"92vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:24 }}
+        onClick={e=>e.stopPropagation()}>
 
-      {/* Header */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"14px 20px",
-        display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"#f1f5f9", border:"none", borderRadius:8,
-          padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit", color:"#475569", fontWeight:600 }}>
-          ← กลับ
-        </button>
-        <div style={{ fontSize:16, fontWeight:800, color:"#0f172a" }}>📋 ใบลา</div>
-        <button onClick={()=>setShowModal(true)} style={{ marginLeft:"auto",
-          background:"#2563eb", border:"none", color:"#fff", borderRadius:8,
-          padding:"7px 14px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-          + ยื่นใบลา
-        </button>
-      </div>
-
-      <div style={{ padding:"16px 20px 48px", maxWidth:900, margin:"0 auto" }}>
-
-        {/* Summary cards */}
-        {Object.keys(summary).length > 0 && (
-          <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0",
-            padding:"14px 16px", marginBottom:16 }}>
-            <div style={{ fontSize:11, color:"#94a3b8", fontWeight:700, marginBottom:10,
-              textTransform:"uppercase", letterSpacing:1 }}>สรุปวันลา</div>
-            <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-                <thead>
-                  <tr style={{ background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
-                    {["ชื่อ","ลาพักร้อน","ลากิจ","ลาป่วย","อื่นๆ"].map(h=>(
-                      <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:11,
-                        color:"#64748b", fontWeight:700 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(summary).map(([name, s]) => (
-                    <tr key={name} style={{ borderBottom:"1px solid #f1f5f9" }}>
-                      <td style={{ padding:"8px 12px", fontWeight:600, color:"#0f172a" }}>{name}</td>
-                      <td style={{ padding:"8px 12px", color:"#2563eb" }}>{s.vacation||0} วัน</td>
-                      <td style={{ padding:"8px 12px", color:"#7c3aed" }}>{s.personal||0} วัน</td>
-                      <td style={{ padding:"8px 12px", color:"#dc2626" }}>{s.sick||0} วัน</td>
-                      <td style={{ padding:"8px 12px", color:"#475569" }}>{s.other||0} วัน</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Filters */}
-        <div style={{ background:"#fff", borderRadius:12, padding:"12px 16px",
-          border:"1px solid #e2e8f0", marginBottom:16,
-          display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
-          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={inputStyle}>
-            <option value="all">ทุกสถานะ</option>
-            <option value="pending">รออนุมัติ</option>
-            <option value="approved">อนุมัติแล้ว</option>
-            <option value="rejected">ไม่อนุมัติ</option>
-          </select>
-          {isAdmin && (
-            <select value={filterName} onChange={e=>setFilterName(e.target.value)} style={inputStyle}>
-              <option value="all">ทุกคน</option>
-              {names.map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-          )}
-          <span style={{ fontSize:12, color:"#94a3b8", marginLeft:"auto" }}>{filtered.length} รายการ</span>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>📋 ยื่นใบลา</h2>
+          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+            cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
 
-        {/* List */}
-        {loading ? (
-          <div style={{ textAlign:"center", color:"#94a3b8", padding:48 }}>กำลังโหลด...</div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign:"center", color:"#cbd5e1", padding:48, fontSize:14 }}>
-            ยังไม่มีใบลา
-          </div>
-        ) : (
-          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {filtered.map(r => {
-              const st = STATUS_STYLE[r.status] || STATUS_STYLE.pending;
-              const typeLabel = r.leaveType==="other" ? (r.otherType||"อื่นๆ") : LEAVE_LABEL[r.leaveType]||r.leaveType;
-              return (
-                <div key={r.id} style={{ background:"#fff", borderRadius:12,
-                  border:"1px solid #e2e8f0", padding:"14px 16px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
-                    <div>
-                      <div style={{ fontSize:14, fontWeight:700, color:"#0f172a" }}>{r.name}</div>
-                      <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>
-                        {typeLabel} · {r.days} {r.leaveUnit==="hour"?"ชม.":"วัน"} · {r.dateFrom} ถึง {r.dateTo}
-                      </div>
-                      {r.reason && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>เหตุผล: {r.reason}</div>}
-                    </div>
-                    <span style={{ background:st.bg, color:st.color, borderRadius:20,
-                      padding:"3px 10px", fontSize:11, fontWeight:700, whiteSpace:"nowrap" }}>
-                      {st.label}
-                    </span>
-                  </div>
-                  <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                    <button onClick={()=>printLeave(r, logoData, users, records)}
-                      style={{ background:"#f8fafc", border:"1px solid #e2e8f0", color:"#475569",
-                        borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
-                        fontFamily:"inherit", fontWeight:600 }}>
-                      🖨 Export PDF
-                    </button>
-                    {isAdmin && (
-                      <button onClick={()=>deleteLeave(r.id)}
-                        style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444",
-                          borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
-                          fontFamily:"inherit", fontWeight:600 }}>
-                        🗑 ลบ
-                      </button>
-                    )}
-                    {isAdmin && r.status === "pending" && r.createdBy !== (currentUser?.id || currentUser?.uid) && (<>
-                      <button onClick={()=>updateStatus(r.id,"approved")}
-                        style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#15803d",
-                          borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
-                          fontFamily:"inherit", fontWeight:600 }}>
-                        ✅ อนุมัติ
-                      </button>
-                      <button onClick={()=>updateStatus(r.id,"rejected")}
-                        style={{ background:"#fff1f2", border:"1px solid #fecdd3", color:"#be123c",
-                          borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
-                          fontFamily:"inherit", fontWeight:600 }}>
-                        ❌ ไม่อนุมัติ
-                      </button>
-                    </>)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+        {/* ชื่อผู้ลา */}
+        <div style={{ marginBottom:14 }}>
+          <label style={LB}>ชื่อ-นามสกุลผู้ลา *</label>
+          <input style={IS()} value={customName}
+            onChange={e=>setCustomName(e.target.value)}
+            placeholder="พิมพ์ชื่อ-นามสกุล..."/>
+        </div>
 
-      {showModal && (
-        <LeaveModal
-          onClose={()=>setShowModal(false)}
-          onSave={saveLeave}
-          saving={saving}
-          currentUser={currentUser}
-          users={users}
-          allLeaves={records}
-        />
-      )}
+        {/* ประเภทการลา */}
+        <div style={{ marginBottom:14 }}>
+          <label style={LB}>ประเภทการลา *</label>
+          <div style={{ display:"flex",flexWrap:"wrap",gap:8 }}>
+            {LEAVE_TYPES.map(t => (
+              <label key={t.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
+                background: leaveType===t.id ? "#eff6ff" : "#f8fafc",
+                border:`1px solid ${leaveType===t.id ? "#bfdbfe" : "#e2e8f0"}`,
+                borderRadius:8, padding:"6px 12px", fontSize:13 }}>
+                <input type="radio" name="leaveType" value={t.id}
+                  checked={leaveType===t.id} onChange={()=>setLeaveType(t.id)}
+                  style={{ accentColor:"#2563eb" }}/>
+                {t.label}
+              </label>
+            ))}
+          </div>
+          {leaveType==="other" && (
+            <input style={{ ...IS(), marginTop:8 }} value={otherType}
+              onChange={e=>setOtherType(e.target.value)} placeholder="ระบุประเภทการลา"/>
+          )}
+        </div>
+
+        {/* สถานที่ + โทร */}
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14 }}>
+          <div>
+            <label style={LB}>สถานที่ปฏิบัติงาน</label>
+            <input style={IS()} value={workLocation} onChange={e=>setWorkLocation(e.target.value)}/>
+          </div>
+          <div>
+            <label style={LB}>โทรศัพท์</label>
+            <input style={IS()} value={phone} onChange={e=>setPhone(e.target.value)}/>
+          </div>
+        </div>
+
+        {/* เรียน */}
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14 }}>
+          <div>
+            <label style={LB}>เรียน ผู้จัดการแผนก</label>
+            <input style={IS()} value={manager} onChange={e=>setManager(e.target.value)}/>
+          </div>
+          <div>
+            <label style={LB}>สำนัก/ฝ่าย</label>
+            <input style={IS()} value={department} onChange={e=>setDepartment(e.target.value)}/>
+          </div>
+        </div>
+
+        {/* ข้อมูลพนักงาน */}
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14 }}>
+          <div>
+            <label style={LB}>พนักงานระดับ</label>
+            <input style={IS()} value={empLevel} onChange={e=>setEmpLevel(e.target.value)}/>
+          </div>
+          <div>
+            <label style={LB}>ตำแหน่ง</label>
+            <input style={IS()} value={position} onChange={e=>setPosition(e.target.value)}/>
+          </div>
+          <div>
+            <label style={LB}>เลขบัตรพนักงาน</label>
+            <input style={IS()} value={empId} onChange={e=>setEmpId(e.target.value)}/>
+          </div>
+        </div>
+
+        {/* วันหยุดประจำสัปดาห์ */}
+        <div style={{ marginBottom:14 }}>
+          <label style={LB}>วันหยุดประจำสัปดาห์</label>
+          <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
+            {DAYS_TH.map(d => (
+              <label key={d} style={{ display:"flex",alignItems:"center",gap:4,cursor:"pointer",
+                background: offDays.includes(d) ? "#f0fdf4" : "#f8fafc",
+                border:`1px solid ${offDays.includes(d) ? "#bbf7d0" : "#e2e8f0"}`,
+                borderRadius:8, padding:"4px 10px", fontSize:12 }}>
+                <input type="checkbox" checked={offDays.includes(d)}
+                  onChange={()=>toggleDay(d)} style={{ accentColor:"#16a34a" }}/>
+                {d}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* เหตุผล */}
+        <div style={{ marginBottom:14 }}>
+          <label style={LB}>เหตุผลการลา *</label>
+          <textarea value={reason} onChange={e=>{ setReason(e.target.value); setError(""); }}
+            rows={2} style={{ ...IS(), resize:"vertical" }}
+            placeholder="ระบุเหตุผลการลา"/>
+        </div>
+
+        {/* วันที่ */}
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12 }}>
+          <div>
+            <label style={LB}>ตั้งแต่วันที่</label>
+            <input type="date" style={IS()} value={dateFrom} onChange={e=>{
+              setDateFrom(e.target.value);
+              if(leaveUnit==="day"){const c=calcWorkDays(e.target.value,dateTo,offDays);if(c!=="")setDays(String(c));}
+            }}/>
+          </div>
+          <div>
+            <label style={LB}>ถึงวันที่</label>
+            <input type="date" style={IS()} value={dateTo} onChange={e=>{
+              setDateTo(e.target.value);
+              if(leaveUnit==="day"){const c=calcWorkDays(dateFrom,e.target.value,offDays);if(c!=="")setDays(String(c));}
+            }}/>
+          </div>
+        </div>
+        {/* จำนวน + toggle วัน/ชม. */}
+        <div style={{ marginBottom:16 }}>
+          <label style={LB}>จำนวน *</label>
+          <div style={{ display:"flex",gap:6 }}>
+            <div style={{ display:"flex",border:"1px solid #e2e8f0",borderRadius:8,overflow:"hidden",flexShrink:0 }}>
+              {[{v:"day",l:"วัน"},{v:"hour",l:"ชม."}].map(u=>(
+                <button key={u.v} type="button" onClick={()=>{setLeaveUnit(u.v);setDays("");}}
+                  style={{ padding:"8px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,
+                    border:"none",background:leaveUnit===u.v?"#2563eb":"#f8fafc",
+                    color:leaveUnit===u.v?"#fff":"#64748b" }}>{u.l}</button>
+              ))}
+            </div>
+            <input type="number" min="0" step={leaveUnit==="day"?0.5:1}
+              style={IS({flex:1})} value={days}
+              placeholder={leaveUnit==="day"?"คำนวณอัตโนมัติ":"จำนวน ชม."}
+              onChange={e=>{setDays(e.target.value);setError("");}}/>
+          </div>
+          {leaveUnit==="hour"&&days&&<div style={{fontSize:11,color:"#2563eb",marginTop:4}}>= {(parseFloat(days)/8).toFixed(2)} วัน (8 ชม./วัน)</div>}
+          {leaveUnit==="day"&&days&&<div style={{fontSize:11,color:"#2563eb",marginTop:4}}>= {parseFloat(days)*8} ชม.</div>}
+        </div>
+
+        {error && <div style={{ color:"#ef4444",fontSize:12,marginBottom:12,fontWeight:500 }}>⚠ {error}</div>}
+
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
+          <button onClick={onClose}
+            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+              borderRadius:10,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            ยกเลิก
+          </button>
+          <button onClick={handleSave} disabled={saving}
+            style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
+              padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+              opacity:saving?0.7:1 }}>
+            {saving ? "กำลังบันทึก..." : "📋 ยื่นใบลา"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
