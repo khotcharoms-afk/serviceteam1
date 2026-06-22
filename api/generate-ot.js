@@ -16,8 +16,18 @@ export default async function handler(req, res) {
     const [py, pm] = (periodMonth || "-").split("-");
     const prevPm = parseInt(pm) - 1 || 12;
     const prevPy = prevPm === 12 ? parseInt(py) - 1 : parseInt(py);
-    const periodStart = profile.periodStart || (periodMonth ? `16/${String(prevPm).padStart(2,"0")}/${prevPy+543}` : "");
-    const periodEnd   = profile.periodEnd   || (periodMonth ? `15/${pm}/${parseInt(py)+543}` : "");
+
+    function fmtPeriodDate(d) {
+      if (!d) return "";
+      if (d.includes("-")) {
+        const [y,m,dd] = d.split("-");
+        return `${dd}/${m}/${parseInt(y)+543}`;
+      }
+      return d;
+    }
+
+    const periodStart = profile.periodStart ? fmtPeriodDate(profile.periodStart) : (periodMonth ? `16/${String(prevPm).padStart(2,"0")}/${prevPy+543}` : "");
+    const periodEnd   = profile.periodEnd   ? fmtPeriodDate(profile.periodEnd)   : (periodMonth ? `15/${pm}/${parseInt(py)+543}` : "");
     const MONTH_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
     const monthName = pm ? MONTH_TH[parseInt(pm)-1] : "";
 
