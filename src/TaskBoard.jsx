@@ -29,7 +29,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
   const [sending,    setSending]    = useState(false);
   const [isMobile] = useState(typeof window!=="undefined" && window.innerWidth < 640);
 
-  const isAdmin    = currentUser?.role === "admin";
+  const isAdmin    = ["admin","dev"].includes(currentUser?.role);
   const canCreate  = isAdmin; // admin + หัวหน้าทีม (role:"leader" ถ้ามีในอนาคต)
 
   const filteredTasks = (tasks||[]).filter(t =>
