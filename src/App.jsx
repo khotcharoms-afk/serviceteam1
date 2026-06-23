@@ -781,21 +781,23 @@ export default function App({ currentUser, onSignOut }) {
                 </button>
               </div>
             </div>
+            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"4px 8px 8px" }}>หน้าหลัก</div>
             <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
               onClick={()=>{ setView("overview"); setMenuOpen(false); setFilterStat("all"); }}/>
             {isAdminOrDev && (
               <DrawerItem active={false} color="#16a34a" icon="📊" label="Dashboard" count={""}
                 onClick={()=>{ setDashboardPage(true); setMenuOpen(false); }}/>
             )}
-            <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
-              onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
+            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>ปฏิบัติการ</div>
             <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
               onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
               onClick={()=>{ setOtPage(true); setMenuOpen(false); }}/>
+            <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
+              onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
               onClick={()=>{ setLeavePage(true); setMenuOpen(false); }}/>
-            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
+            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>โครงการ</div>
             <div style={{ overflowY:"auto",maxHeight:320,marginRight:-8,paddingRight:8 }}>
               {projects.map(p=>(
                 <div key={p.id}>
@@ -1409,15 +1411,28 @@ export default function App({ currentUser, onSignOut }) {
 
 function DrawerItem({ active, onClick, icon, label, count, color }) {
   return (
-    <button onClick={onClick} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",
-      width:"100%",background:active?color+"12":"transparent",
-      border:active?`1px solid ${color}25`:"1px solid transparent",
-      borderRadius:8,padding:"10px 10px",cursor:"pointer",fontFamily:"inherit",marginBottom:2,textAlign:"left" }}>
-      <span style={{ display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0 }}>
-        <span style={{ fontSize:9,color:active?color:"#cbd5e1" }}>{icon}</span>
-        <span style={{ fontSize:13,color:active?"#0f172a":"#64748b",fontWeight:active?700:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
+    <button onClick={onClick} style={{
+      display:"flex", alignItems:"center", justifyContent:"space-between",
+      width:"100%", background: active ? color+"14" : "transparent",
+      border:"none", borderRadius:10, padding:"9px 10px 9px 8px",
+      cursor:"pointer", fontFamily:"inherit", marginBottom:2, textAlign:"left",
+      position:"relative", overflow:"hidden",
+    }}>
+      {active && <span style={{ position:"absolute",left:0,top:"20%",bottom:"20%",width:3,
+        borderRadius:"0 3px 3px 0", background:color }}/>}
+      <span style={{ display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0,paddingLeft:active?6:0 }}>
+        <span style={{ width:30,height:30,borderRadius:8,flexShrink:0,
+          background: active ? color+"20" : "#f1f5f9",
+          display:"flex",alignItems:"center",justifyContent:"center",fontSize:15 }}>{icon}</span>
+        <span style={{ fontSize:13,color:active?"#0f172a":"#475569",fontWeight:active?700:500,
+          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
-      <span style={{ fontSize:11,background:active?color+"15":"#f1f5f9",borderRadius:20,padding:"2px 8px",color:active?color:"#94a3b8",flexShrink:0,marginLeft:4,fontWeight:600 }}>{count}</span>
+      {count !== "" && count !== undefined && (
+        <span style={{ fontSize:11,background:active?color+"20":"#f1f5f9",borderRadius:20,
+          padding:"2px 9px",color:active?color:"#94a3b8",flexShrink:0,marginLeft:4,fontWeight:700 }}>
+          {count}
+        </span>
+      )}
     </button>
   );
 }
