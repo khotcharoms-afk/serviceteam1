@@ -1,35 +1,34 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, setDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, deleteDoc, doc } from "firebase/firestore";
 import LeaveModal from "./LeaveModal.jsx";
 
 const LEAVE_LABEL = { vacation:"ลาพักร้อน", personal:"ลากิจ", sick:"ลาป่วย", other:"อื่นๆ" };
-const STATUS_STYLE = {
-  pending:  { bg:"#fef9c3", color:"#854d0e", label:"รออนุมัติ" },
-  approved: { bg:"#f0fdf4", color:"#15803d", label:"อนุมัติแล้ว" },
-  rejected: { bg:"#fff1f2", color:"#be123c", label:"ไม่อนุมัติ" },
-};
+
+function fmtDateTH(d) {
+  if (!d) return "";
+  const MONTH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+    "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  const parts = d.split("-");
+  if (parts.length === 3) {
+    const [y, m, dd] = parts;
+    return `${parseInt(dd)} ${MONTH[parseInt(m)-1]} ${parseInt(y)+543}`;
+  }
+  return d;
+}
 
 function printLeave(leave, logoData, users, allRecords) {
-  // คำนวณลามาแล้ว (approved ก่อนหน้า ไม่รวมใบนี้)
   const prevLeaves = (allRecords||[]).filter(r =>
-    r.id !== leave.id &&
-    r.createdBy === leave.createdBy &&
-    r.status === "approved"
+    r.id !== leave.id && r.createdBy === leave.createdBy
   );
   const prevSum = { vacation:0, personal:0, sick:0, other:0 };
   prevLeaves.forEach(r => {
     if (prevSum[r.leaveType] !== undefined) prevSum[r.leaveType] += (r.days||0);
   });
 
-  // วันลาที่ได้รับ
   const user = (users||[]).find(u => u.id === leave.createdBy || u.name === leave.name);
   const quota = user?.leaveQuota || {};
-
-  const typeLabel = leave.leaveType==="other"
-    ? (leave.otherType||"อื่นๆ")
-    : LEAVE_LABEL[leave.leaveType]||leave.leaveType;
-  const offDaysStr = (leave.offDays||[]).join("  ");
+  const typeLabel = leave.leaveType==="other" ? (leave.otherType||"อื่นๆ") : LEAVE_LABEL[leave.leaveType]||leave.leaveType;
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -56,7 +55,6 @@ function printLeave(leave, logoData, users, allRecords) {
 </head><body>
 ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoData}" style="max-height:100px;max-width:260px;object-fit:contain"/></div>` : ""}
 <h1>ใบลา</h1>
-
 <div class="row">
   <div class="label">ประเภทการลา:</div>
   <div class="checkbox-row">
@@ -66,17 +64,14 @@ ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoDa
     ${leave.leaveType==="other" ? `<span>_${leave.otherType||"__________"}_</span>` : ""}
   </div>
 </div>
-
 <div class="row">
   <div class="field"><div class="label">สถานที่ปฏิบัติงาน</div><div class="line">${leave.workLocation||""}</div></div>
   <div class="field"><div class="label">โทรศัพท์</div><div class="line">${leave.phone||""}</div></div>
 </div>
-
 <div class="row">
   <div class="field"><div class="label">เรียน ผู้จัดการแผนก</div><div class="line">${leave.manager||""}</div></div>
   <div class="field"><div class="label">สำนัก/ฝ่าย</div><div class="line">${leave.department||""}</div></div>
 </div>
-
 <div class="row">
   <div class="label">ข้าพเจ้า</div>
   <div class="line" style="flex:2">${leave.name||""}</div>
@@ -87,7 +82,6 @@ ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoDa
   <div class="label">เลขบัตรพนักงาน</div>
   <div class="line" style="flex:1">${leave.empId||""}</div>
 </div>
-
 <div class="row" style="margin-top:8px">
   <div class="label">วันหยุดประจำสัปดาห์:</div>
   <div class="checkbox-row">
@@ -96,7 +90,6 @@ ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoDa
     `).join("")}
   </div>
 </div>
-
 <div class="row">
   <div class="label">มีความประสงค์ขออนุญาตลาหยุดเนื่องจาก</div>
   <div class="line" style="flex:3">${leave.reason||""}</div>
@@ -104,20 +97,17 @@ ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoDa
   <div class="line" style="width:50px">${leave.days||""}</div>
   <div class="label">${leave.leaveUnit==="hour"?"ชม.":"วัน"}</div>
 </div>
-
 <div class="row">
   <div class="label">นับตั้งแต่วันที่</div>
-  <div class="line" style="flex:2">${leave.dateFrom||""}</div>
+  <div class="line" style="flex:2">${fmtDateTH(leave.dateFrom)}</div>
   <div class="label">ถึงวันที่</div>
-  <div class="line" style="flex:2">${leave.dateTo||""}</div>
+  <div class="line" style="flex:2">${fmtDateTH(leave.dateTo)}</div>
 </div>
-
 <div class="sig-row">
   <div class="sig"><div class="sig-line"></div><div>ผู้ขอลา</div></div>
   <div class="sig"><div class="sig-line"></div><div>พนักงานที่ควบคุม</div></div>
   <div class="sig"><div class="sig-line"></div><div>ผู้อนุมัติ</div></div>
 </div>
-
 <table>
   <tr><th colspan="7">สำหรับเจ้าหน้าที่ระเบียนวันลาประจำฝ่าย</th></tr>
   <tr>
@@ -127,20 +117,14 @@ ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoDa
   </tr>
   <tr><th>ลาพักร้อน</th><th>ลากิจ</th><th>ลาป่วย</th><th>ลาพิเศษ</th><th>อื่นๆ</th></tr>
   <tr><td>ลามาแล้ว</td>
-    <td>${prevSum.vacation||""}</td>
-    <td>${prevSum.personal||""}</td>
-    <td>${prevSum.sick||""}</td>
-    <td></td>
-    <td>${prevSum.other||""}</td>
-    <td></td>
+    <td>${prevSum.vacation||""}</td><td>${prevSum.personal||""}</td>
+    <td>${prevSum.sick||""}</td><td></td><td>${prevSum.other||""}</td><td></td>
   </tr>
   <tr><td>ลาครั้งนี้</td>
     <td>${leave.leaveType==="vacation"?leave.days:""}</td>
     <td>${leave.leaveType==="personal"?leave.days:""}</td>
     <td>${leave.leaveType==="sick"?leave.days:""}</td>
-    <td></td>
-    <td>${leave.leaveType==="other"?leave.days:""}</td>
-    <td></td>
+    <td></td><td>${leave.leaveType==="other"?leave.days:""}</td><td></td>
   </tr>
   <tr><td>รวม</td>
     <td>${leave.leaveType==="vacation"?(prevSum.vacation+(leave.days||0)):prevSum.vacation||""}</td>
@@ -155,12 +139,9 @@ ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoDa
     <td style="font-size:11px;color:#555">${quota.vacation||"-"}</td>
     <td style="font-size:11px;color:#555">${quota.personal||"-"}</td>
     <td style="font-size:11px;color:#555">${quota.sick||"-"}</td>
-    <td></td>
-    <td style="font-size:11px;color:#555">${quota.other||"-"}</td>
-    <td></td>
+    <td></td><td style="font-size:11px;color:#555">${quota.other||"-"}</td><td></td>
   </tr>` : ""}
 </table>
-
 <script>window.onload=()=>{ window.print(); }</script>
 </body></html>`;
 
@@ -174,9 +155,8 @@ export default function LeavePage({ onBack, currentUser, users }) {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const logoData = '/logo.png';
-  const [filterStatus, setFilterStatus] = useState("all");
   const [filterName, setFilterName] = useState("all");
+  const logoData = '/logo.png';
 
   const isAdmin = ["admin","dev"].includes(currentUser?.role);
 
@@ -193,60 +173,25 @@ export default function LeavePage({ onBack, currentUser, users }) {
   async function saveLeave(data) {
     setSaving(true);
     try {
-      await addDoc(collection(db,"leaves"), data);
+      await addDoc(collection(db,"leaves"), { ...data, status:"approved" });
       setShowModal(false);
     } catch(e) { console.error(e); }
     setSaving(false);
   }
 
   async function deleteLeave(id) {
-    if (!window.confirm("ลบใบลานี้?")) return;
-    try {
-      await deleteDoc(doc(db,"leaves",id));
-    } catch(e) { console.error(e); }
+    try { await deleteDoc(doc(db,"leaves",id)); }
+    catch(e) { console.error(e); }
   }
 
-  async function updateStatus(id, status) {
-    try {
-      const leave = records.find(r => r.id === id);
-      await updateDoc(doc(db,"leaves",id), {
-        status,
-        approvedBy: currentUser?.name||"",
-        approvedAt: new Date().toISOString(),
-      });
-      // ส่ง notification ไปหา user ที่ยื่นใบลา
-      if (leave?.createdBy) {
-        const statusText = status === "approved" ? "อนุมัติแล้ว ✅" : "ไม่อนุมัติ ❌";
-        const leaveTypeText = LEAVE_LABEL[leave.leaveType] || leave.leaveType;
-        await setDoc(doc(db,"notifications",Date.now().toString()), {
-          type: "leave",
-          toUid: leave.createdBy,
-          toName: leave.name || "",
-          fromName: currentUser?.name || "",
-          message: `ใบลา${leaveTypeText} ${leave.days} วัน (${leave.dateFrom}) — ${statusText}`,
-          createdAt: new Date().toISOString(),
-          read: false,
-        });
-      }
-    } catch(e) { console.error(e); }
-  }
+  const myRecords = isAdmin
+    ? records
+    : records.filter(r => r.createdBy === (currentUser?.id || currentUser?.uid));
 
-  // filter
-  const myRecords = isAdmin ? records : records.filter(r => r.createdBy === (currentUser?.id || currentUser?.uid));
-  const filtered = myRecords.filter(r => {
-    if (filterStatus !== "all" && r.status !== filterStatus) return false;
-    if (filterName !== "all" && r.name !== filterName) return false;
-    return true;
-  });
-
-  // summary — นับเฉพาะ approved เท่านั้น
   const names = [...new Set(records.map(r=>r.name).filter(Boolean))].sort();
-  const approvedRecords = myRecords.filter(r => r.status === "approved");
-  const summary = {};
-  approvedRecords.forEach(r => {
-    if (!summary[r.name]) summary[r.name] = { vacation:0, personal:0, sick:0, other:0 };
-    summary[r.name][r.leaveType] = (summary[r.name][r.leaveType]||0) + (r.days||0);
-  });
+  const filtered = myRecords.filter(r =>
+    filterName === "all" || r.name === filterName
+  );
 
   const inputStyle = {
     border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 10px",
@@ -274,48 +219,10 @@ export default function LeavePage({ onBack, currentUser, users }) {
 
       <div style={{ padding:"16px 20px 48px", maxWidth:900, margin:"0 auto" }}>
 
-        {/* Summary cards */}
-        {Object.keys(summary).length > 0 && (
-          <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0",
-            padding:"14px 16px", marginBottom:16 }}>
-            <div style={{ fontSize:11, color:"#94a3b8", fontWeight:700, marginBottom:10,
-              textTransform:"uppercase", letterSpacing:1 }}>สรุปวันลา</div>
-            <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-                <thead>
-                  <tr style={{ background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
-                    {["ชื่อ","ลาพักร้อน","ลากิจ","ลาป่วย","อื่นๆ"].map(h=>(
-                      <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:11,
-                        color:"#64748b", fontWeight:700 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(summary).map(([name, s]) => (
-                    <tr key={name} style={{ borderBottom:"1px solid #f1f5f9" }}>
-                      <td style={{ padding:"8px 12px", fontWeight:600, color:"#0f172a" }}>{name}</td>
-                      <td style={{ padding:"8px 12px", color:"#2563eb" }}>{s.vacation||0} วัน</td>
-                      <td style={{ padding:"8px 12px", color:"#7c3aed" }}>{s.personal||0} วัน</td>
-                      <td style={{ padding:"8px 12px", color:"#dc2626" }}>{s.sick||0} วัน</td>
-                      <td style={{ padding:"8px 12px", color:"#475569" }}>{s.other||0} วัน</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Filters */}
+        {/* Filter */}
         <div style={{ background:"#fff", borderRadius:12, padding:"12px 16px",
           border:"1px solid #e2e8f0", marginBottom:16,
           display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
-          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={inputStyle}>
-            <option value="all">ทุกสถานะ</option>
-            <option value="pending">รออนุมัติ</option>
-            <option value="approved">อนุมัติแล้ว</option>
-            <option value="rejected">ไม่อนุมัติ</option>
-          </select>
           {isAdmin && (
             <select value={filterName} onChange={e=>setFilterName(e.target.value)} style={inputStyle}>
               <option value="all">ทุกคน</option>
@@ -335,23 +242,16 @@ export default function LeavePage({ onBack, currentUser, users }) {
         ) : (
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             {filtered.map(r => {
-              const st = STATUS_STYLE[r.status] || STATUS_STYLE.pending;
               const typeLabel = r.leaveType==="other" ? (r.otherType||"อื่นๆ") : LEAVE_LABEL[r.leaveType]||r.leaveType;
               return (
                 <div key={r.id} style={{ background:"#fff", borderRadius:12,
                   border:"1px solid #e2e8f0", padding:"14px 16px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
-                    <div>
-                      <div style={{ fontSize:14, fontWeight:700, color:"#0f172a" }}>{r.name}</div>
-                      <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>
-                        {typeLabel} · {r.days} {r.leaveUnit==="hour"?"ชม.":"วัน"} · {r.dateFrom} ถึง {r.dateTo}
-                      </div>
-                      {r.reason && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>เหตุผล: {r.reason}</div>}
+                  <div style={{ marginBottom:8 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:"#0f172a" }}>{r.name}</div>
+                    <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>
+                      {typeLabel} · {r.days} {r.leaveUnit==="hour"?"ชม.":"วัน"} · {r.dateFrom} ถึง {r.dateTo}
                     </div>
-                    <span style={{ background:st.bg, color:st.color, borderRadius:20,
-                      padding:"3px 10px", fontSize:11, fontWeight:700, whiteSpace:"nowrap" }}>
-                      {st.label}
-                    </span>
+                    {r.reason && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>เหตุผล: {r.reason}</div>}
                   </div>
                   <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                     <button onClick={()=>printLeave(r, logoData, users, records)}
@@ -368,20 +268,6 @@ export default function LeavePage({ onBack, currentUser, users }) {
                         🗑 ลบ
                       </button>
                     )}
-                    {isAdmin && r.status === "pending" && r.createdBy !== (currentUser?.id || currentUser?.uid) && (<>
-                      <button onClick={()=>updateStatus(r.id,"approved")}
-                        style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#15803d",
-                          borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
-                          fontFamily:"inherit", fontWeight:600 }}>
-                        ✅ อนุมัติ
-                      </button>
-                      <button onClick={()=>updateStatus(r.id,"rejected")}
-                        style={{ background:"#fff1f2", border:"1px solid #fecdd3", color:"#be123c",
-                          borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
-                          fontFamily:"inherit", fontWeight:600 }}>
-                        ❌ ไม่อนุมัติ
-                      </button>
-                    </>)}
                   </div>
                 </div>
               );
