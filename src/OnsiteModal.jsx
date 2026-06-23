@@ -48,7 +48,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
   function handleSave() {
     if (!projId) return;
     if (techs.length === 0) return;
-    const isAdmin = currentUser?.role === "admin";
+    const isAdmin = ["admin","dev"].includes(currentUser?.role);
     onSave({
       date,
       projectId: proj?.id || projId || "",
@@ -99,7 +99,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
 
-        {currentUser?.role !== "admin" && (
+        {!["admin","dev"].includes(currentUser?.role) && (
           <div style={{ background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,
             padding:"10px 14px",marginBottom:14,fontSize:12,color:"#92400e" }}>
             ℹ️ รายการนี้จะส่งให้ admin อนุมัติก่อนนับเข้ารายงาน
