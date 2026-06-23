@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     const MONTH_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
     const monthName = profile.periodMonth || (pm ? MONTH_TH[parseInt(pm)-1] : "");
 
-    set("A3", `ชื่อพนักงานผู้ขอเบิก .................${profile.name||""}............................................  รหัสพนักงาน ........${profile.empId||""}...............  ตำแหน่ง .......${profile.position||""}..............................  แผนก ..................${profile.dept||""}..........................  ฝ่าย ................${profile.division||""}..............................`);
+    set("A3", `ชื่อพนักงานผู้ขอเบิก .................${profile.nameTH||""}............................................  รหัสพนักงาน ........${profile.empId||""}...............  ตำแหน่ง .......${profile.position||""}..............................  แผนก ..................${profile.dept||""}..........................  ฝ่าย ................${profile.division||""}..............................`);
     set("A4", `การปฏิบัติงาน (ตามรอบวันที่ 16 เดือนก่อนหน้า ถึงวันที่ 15 เดือนปัจจุบัน) ตั้งแต่วันที่ ......................${periodStart}........................................ ถึงวันที่ ...............${periodEnd}........................................ เบิกประจำงวดเดือน ................${monthName}........................................ ปี ................${py?parseInt(py)+543:""}...........................`);
 
     const sortedRecords = [...records].sort((a,b) => (a.dateIn||"").localeCompare(b.dateIn||""));
@@ -58,13 +58,13 @@ export default async function handler(req, res) {
 
     const today = new Date();
     const todayTH = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()+543}`;
-    set("A33", `( ...........${profile.name||""}............. )`);
+    set("A33", `( ...........${profile.nameTH||""}............. )`);
     set("F33", `( ${profile.supervisor||""} )`);
     set("A34", `วันที่.............${todayTH}........................................`);
     set("F34", `วันที่.............${todayTH}........................................`);
 
     const buffer = await wb.xlsx.writeBuffer();
-    const filename = encodeURIComponent(`OT_${profile.name||"export"}_${periodMonth||"all"}.xlsx`);
+    const filename = encodeURIComponent(`OT_${profile.nameTH||"export"}_${periodMonth||"all"}.xlsx`);
     res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition",`attachment; filename*=UTF-8''${filename}`);
     res.send(Buffer.from(buffer));
