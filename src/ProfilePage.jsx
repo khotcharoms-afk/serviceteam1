@@ -1,7 +1,53 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { auth, db } from "./firebase";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
+
+function ComboBox({ value, onChange, options, placeholder, style }) {
+  const [open, setOpen] = React.useState(false);
+  const [q, setQ] = React.useState(value||"");
+  const ref = React.useRef(null);
+
+  React.useEffect(() => { setQ(value||""); }, [value]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const filtered = options.filter(o => o.toLowerCase().includes(q.toLowerCase()));
+
+  return (
+    <div ref={ref} style={{ position:"relative" }}>
+      <div style={{ position:"relative" }}>
+        <input value={q} placeholder={placeholder}
+          onChange={e=>{ setQ(e.target.value); onChange(e.target.value); setOpen(true); }}
+          onFocus={()=>setOpen(true)}
+          style={{ ...style, paddingRight:32 }}/>
+        <span onClick={()=>setOpen(o=>!o)}
+          style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)",
+            cursor:"pointer", color:"#94a3b8", fontSize:12, userSelect:"none" }}>▼</span>
+      </div>
+      {open && filtered.length > 0 && (
+        <div style={{ position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:999,
+          background:"#fff", border:"1px solid #e2e8f0", borderRadius:10,
+          boxShadow:"0 8px 24px rgba(0,0,0,.12)", overflow:"hidden" }}>
+          {filtered.map(o=>(
+            <div key={o} onClick={()=>{ setQ(o); onChange(o); setOpen(false); }}
+              style={{ padding:"10px 14px", fontSize:13, cursor:"pointer", color:"#0f172a",
+                fontFamily:"inherit", transition:"background .1s" }}
+              onMouseEnter={e=>e.currentTarget.style.background="#f1f5f9"}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+              {o}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProfilePage({ onBack, currentUser, onSignOut }) {
   const [tab, setTab] = useState("info");
@@ -205,15 +251,14 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
               ].map(f=>(
                 <div key={f.key} style={{ marginBottom:14 }}>
                   <label style={LB}>{f.label}</label>
-                  <input value={otProfile[f.key]||""} placeholder={f.placeholder}
-                    list={f.opts.length ? `opts-${f.key}` : undefined}
-                    onChange={e=>setOtProfile(p=>({...p,[f.key]:e.target.value}))}
-                    style={IS}/>
-                  {f.opts.length > 0 && (
-                    <datalist id={`opts-${f.key}`}>
-                      {f.opts.map(o=><option key={o} value={o}/>)}
-                    </datalist>
-                  )}
+                  {f.opts.length > 0
+                    ? <ComboBox value={otProfile[f.key]||""} placeholder={f.placeholder}
+                        options={f.opts} style={IS}
+                        onChange={v=>setOtProfile(p=>({...p,[f.key]:v}))}/>
+                    : <input value={otProfile[f.key]||""} placeholder={f.placeholder}
+                        onChange={e=>setOtProfile(p=>({...p,[f.key]:e.target.value}))}
+                        style={IS}/>
+                  }
                 </div>
               ))}
               {otMsg && <div style={{ marginBottom:12, fontSize:13,
