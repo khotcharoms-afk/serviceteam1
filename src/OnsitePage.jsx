@@ -1,510 +1,366 @@
-import { useState, useEffect } from "react";
-import * as XLSX from "xlsx";
-import OnsiteModal from "./OnsiteModal.jsx";
+import { useState, useEffect, useCallback } from "react";
+import { db } from "./firebase.js";
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
+import OTModal from "./OTModal.jsx";
 
-const SCOPE_LABEL = {
-  Maintenance:"บำรุงรักษา", Installation:"ติดตั้ง",
-  Inspection:"ตรวจสอบ", Troubleshooting:"แก้ไขปัญหา", Other:"อื่นๆ",
-};
-
-const STATUS_STYLE = {
-  pending:  { bg:"#fef9c3", color:"#854d0e", label:"รออนุมัติ" },
-  approved: { bg:"#f0fdf4", color:"#15803d", label:"อนุมัติแล้ว" },
-  rejected: { bg:"#fff1f2", color:"#be123c", label:"ไม่อนุมัติ" },
-};
-
-export default function OnsitePage({ onBack, projects, users, currentUser, onsiteRecords, onSaveOnsite, onApproveOnsite, onDeleteOnsite, saving }) {
-
-  const [tab, setTab] = useState("list");   // list | report | export
+export default function OTPage({ onBack, projects, users, currentUser }) {
+  const [tab, setTab]           = useState("list");
+  const [records, setRecords]   = useState([]);
+  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", supervisorOT:"", staff:"", periodStart:"", periodEnd:"", periodMonth:"" });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved]   = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editRecord, setEditRecord] = useState(null);
+  const [saving, setSaving]     = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 640);
+  const [filterName, setFilterName] = useState("all");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [confirmId, setConfirmId] = useState(null);
+  const isAdmin = currentUser?.role === "dev";
+
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  const [showModal, setShowModal] = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [editRecord, setEditRecord] = useState(null);
 
-  const [filterProj, setFilterProj]   = useState("all");
-  const [filterTech, setFilterTech]   = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [dateFrom, setDateFrom]       = useState("");
-  const [dateTo, setDateTo]           = useState("");
-  const [machineSearch, setMachineSearch] = useState("");
+  useEffect(() => {
+    // โหลด profile ของ user นี้
+    const uid = currentUser?.id || currentUser?.uid;
+    if (uid) {
+      getDoc(doc(db,"otProfiles",uid)).then(d => {
+        if (d.exists()) setProfile(d.data());
+      });
+    }
+  }, [currentUser]);
 
-  const isAdmin = currentUser?.role === "admin";
+  useEffect(() => {
+    const u = onSnapshot(collection(db, "otRecords"), snap => {
+      const data = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      data.sort((a,b) => (b.dateIn||"").localeCompare(a.dateIn||""));
+      setRecords(data);
+    });
+    return u;
+  }, []);
 
-  // คำนวณ laborCost ใหม่จาก onsiteRate ปัจจุบัน
-  const records = (onsiteRecords || []).map(r => {
-    const laborCost = (r.techs||[]).reduce((sum, name) => {
-      const u = (users || []).find(u => u.name === name);
-      return sum + (u?.onsiteRate || 0);
-    }, 0);
-    return { ...r, laborCost, totalCost: (r.travelCost||0)+(r.shippingCost||0)+(r.partsCost||0)+laborCost };
-  });
+  async function saveProfile() {
+    setProfileSaving(true);
+    const uid = currentUser?.id || currentUser?.uid;
+    await setDoc(doc(db,"otProfiles",uid), { ...profile, updatedAt: new Date().toISOString() });
+    setProfileSaving(false);
+    setProfileSaved(true);
+    setTimeout(() => setProfileSaved(false), 2000);
+  }
 
-  const filtered = records.filter(r => {
-    if (filterProj !== "all" && r.projectId !== filterProj) return false;
-    if (filterTech !== "all" && !(r.techs||[]).includes(filterTech)) return false;
-    if (filterStatus !== "all" && (r.status||"pending") !== filterStatus) return false;
-    if (dateFrom && r.date < dateFrom) return false;
-    if (dateTo && r.date > dateTo) return false;
+  async function saveOT(data, id) {
+    setSaving(true);
+    try {
+      const docId = id || Date.now().toString();
+      await setDoc(doc(db, "otRecords", docId), data, { merge: true });
+      setShowModal(false);
+      setEditRecord(null);
+    } catch(err) {
+      alert("บันทึกไม่สำเร็จ: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteOT(id) {
+    await deleteDoc(doc(db, "otRecords", id));
+    setConfirmId(null);
+  }
+
+  // filter
+  const myRecords = isAdmin ? records : records.filter(r => r.createdBy === currentUser?.id);
+  const filtered = myRecords.filter(r => {
+    if (filterName !== "all" && r.name !== filterName) return false;
+    if (filterMonth && !(r.dateIn||"").startsWith(filterMonth)) return false;
     return true;
-  }).sort((a,b) => (b.date||"").localeCompare(a.date||""));
-
-  const pendingCount = records.filter(r => (r.status||"pending") === "pending").length;
-
-  // รายงานนับเฉพาะ approved
-  const approvedRecords = filtered.filter(r => r.status === "approved");
-  const totalLabor  = approvedRecords.reduce((s,r) => s + (r.laborCost||0), 0);
-  const totalTravel = approvedRecords.reduce((s,r) => s + (r.travelCost||0), 0);
-  const totalAll    = approvedRecords.reduce((s,r) => s + (r.totalCost||0), 0);
-
-  const techNames = [...new Set(records.flatMap(r => r.techs||[]))].sort();
-
-  // จัดกลุ่มตาม serial เครื่อง
-  const byMachine = {};
-  records.filter(r => r.robotSerial && r.robotSerial.trim()).forEach(r => {
-    const sn = r.robotSerial.trim();
-    if (!byMachine[sn]) byMachine[sn] = { serial:sn, records:[], totalCost:0, projectName:r.projectName||"", projectId:r.projectId||"" };
-    byMachine[sn].records.push(r);
-    if (r.status === "approved") byMachine[sn].totalCost += (r.totalCost||0);
   });
-  const machineList = Object.values(byMachine).map(m => ({
-    ...m,
-    records: m.records.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")),
-    lastDate: m.records.reduce((max,r)=>(r.date||"")>max?(r.date||""):max, ""),
-  })).sort((a,b)=>(b.lastDate||"").localeCompare(a.lastDate||""));
-  const filteredMachines = machineList.filter(m =>
-    !machineSearch || m.serial.toLowerCase().includes(machineSearch.toLowerCase()) ||
-    m.projectName.toLowerCase().includes(machineSearch.toLowerCase())
-  );
+  const names = [...new Set(myRecords.map(r=>r.name).filter(Boolean))].sort();
+  const totalHours = filtered.reduce((s,r) => s+(r.hours||0), 0);
 
-  // สรุปรายคน (เฉพาะ approved)
-  const perPerson = {};
-  approvedRecords.forEach(r => {
-    (r.techs||[]).forEach(name => {
-      if (!perPerson[name]) perPerson[name] = { count:0, labor:0 };
-      const u = (users||[]).find(u => u.name === name);
-      perPerson[name].count += 1;
-      perPerson[name].labor += (u?.onsiteRate || 0);
-    });
-  });
+  // months list
+  const months = [...new Set(myRecords.map(r=>(r.dateIn||"").slice(0,7)).filter(Boolean))].sort().reverse();
+  const MONTH_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  const fmtMonth = m => { const [y,mo]=m.split("-"); return `${MONTH_TH[parseInt(mo)-1]} ${(parseInt(y)+543)%100}`; };
+  const fmtDate = d => { if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${parseInt(y)+543}`; };
 
-  // สรุปรายโครงการ (เฉพาะ approved)
-  const perProject = {};
-  approvedRecords.forEach(r => {
-    const key = r.projectId || "unknown";
-    if (!perProject[key]) perProject[key] = { count:0, total:0, name:r.projectName||"" };
-    perProject[key].count += 1;
-    perProject[key].total += (r.totalCost||0);
-  });
-
-  async function handleSave(data, recordId) {
-    await onSaveOnsite(data, recordId);
-    setShowModal(false);
-    setEditRecord(null);
+  async function exportOR(r) {
+    if (!profile.name?.trim()) {
+      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+      setTab("profile");
+      return;
+    }
+    try {
+      const res = await fetch("/api/generate-or", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ record: r, profile }),
+      });
+      if (!res.ok) { const t = await res.text(); throw new Error(t); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `OR_${r.dateIn||"date"}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch(err) {
+      alert("Export ใบ OR ไม่สำเร็จ: " + err.message);
+    }
   }
 
-  function openEdit(r) {
-    setEditRecord(r);
-    setShowModal(true);
+  async function exportExcel() {
+    const exportRecords = filtered.length > 0 ? filtered : myRecords;
+    if (exportRecords.length === 0) return;
+    if (!profile.name?.trim()) {
+      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+      setTab("profile");
+      return;
+    }
+    try {
+      const res = await fetch("/api/generate-ot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profile,
+          records: exportRecords,
+          periodMonth: filterMonth || (exportRecords[0]?.dateIn||"").slice(0,7) || "",
+        }),
+      });
+      if (!res.ok) { const t = await res.text(); throw new Error(t); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `OT_${profile.name}_${filterMonth||"all"}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch(err) {
+      alert("Export ไม่สำเร็จ: " + err.message);
+    }
   }
 
-  function exportExcel() {
-    const rows = approvedRecords.map((r,i) => {
-      const proj = projects.find(p => p.id === r.projectId);
-      return {
-        "ลำดับ": i+1,
-        "วันที่": r.date||"",
-        "โครงการ": proj?.name||r.projectName||r.projectId||"",
-        "ไซต์งาน": r.site||"",
-        "ขอบเขต": SCOPE_LABEL[r.scope]||r.scope||"",
-        "รายละเอียด": r.detail||"",
-        "พนักงาน": (r.techs||[]).join(", "),
-        "ระยะทาง(กม.)": r.km||0,
-        "ค่าเดินทาง": r.travelCost||0,
-        "ค่าขนส่ง": r.shippingCost||0,
-        "ค่าอุปกรณ์": r.partsCost||0,
-        "ค่าแรง": r.laborCost||0,
-        "รวม": r.totalCost||0,
-      };
-    });
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [5,12,18,14,12,24,20,10,12,10,10,10,12].map(w=>({wch:w}));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Onsite");
-    const now = new Date();
-    const projName = filterProj!=="all" ? (projects.find(p=>p.id===filterProj)?.name||"") : "ทั้งหมด";
-    XLSX.writeFile(wb, `Onsite_${projName}_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}.xlsx`);
-  }
-
-  const inputStyle = {
-    border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 10px",
-    fontSize:12, fontFamily:"inherit", background:"#f8fafc", outline:"none",
-    flex: isMobile ? "1 1 calc(50% - 5px)" : "0 1 auto", minWidth:0,
-  };
+  const inputStyle = { border:"1px solid #e2e8f0",borderRadius:8,padding:"6px 10px",
+    fontSize:12,fontFamily:"inherit",background:"#f8fafc",outline:"none" };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f8fafc", fontFamily:"'Noto Sans Thai',sans-serif" }}>
+    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
 
       {/* Header */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"14px 20px",
-        display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"#f1f5f9", border:"none", borderRadius:8,
-          padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit", color:"#475569", fontWeight:600 }}>
+      <div style={{ background:"#fff",borderBottom:"1px solid #e2e8f0",padding:"14px 20px",
+        display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
+        <button onClick={onBack} style={{ background:"#f1f5f9",border:"none",borderRadius:8,
+          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#475569",fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16, fontWeight:800, color:"#0f172a" }}>📍 Onsite</div>
-        {isAdmin && pendingCount > 0 && (
-          <span style={{ background:"#fef9c3", color:"#854d0e", borderRadius:20,
-            padding:"3px 10px", fontSize:12, fontWeight:700 }}>
-            {pendingCount} รออนุมัติ
-          </span>
-        )}
-        <button onClick={() => { setEditRecord(null); setShowModal(true); }}
-          style={{ marginLeft:"auto", background:"#f97316", border:"none", color:"#fff",
-            borderRadius:8, padding:"8px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-          + บันทึก Onsite
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"0 20px",
-        display:"flex", gap:4, position:"sticky", top:57, zIndex:9 }}>
-        {[
-          { key:"list",   label:"📋 รายการ" },
-          { key:"report", label:"📊 รายงาน" },
-          { key:"machine", label:"🤖 เครื่อง" },
-          { key:"export", label:"📥 Export" },
-        ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            style={{ background:"none", border:"none", borderBottom:`2px solid ${tab===t.key?"#f97316":"transparent"}`,
-              color: tab===t.key?"#f97316":"#94a3b8", padding:"12px 16px", fontSize:13,
-              fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-            {t.label}
+        <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>⏰ บันทึก OT</div>
+        <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
+          <button onClick={exportExcel}
+            style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
+              borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            📥 Export Excel
           </button>
-        ))}
+          <button onClick={()=>{ setEditRecord(null); setShowModal(true); }}
+            style={{ background:"#F97316",border:"none",color:"#fff",borderRadius:8,
+              padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            + บันทึก OT
+          </button>
+        </div>
       </div>
 
-      <div style={{ padding:isMobile?"12px 14px 48px":"16px 20px 48px", maxWidth:1100, margin:"0 auto" }}>
+      <div style={{ padding:isMobile?"12px 14px 48px":"16px 20px 48px",maxWidth:1100,margin:"0 auto" }}>
 
-        {/* Filters (list + report) */}
-        {tab !== "export" && (
-          <div style={{ background:"#fff", borderRadius:12, padding:"14px 16px",
-            border:"1px solid #e2e8f0", marginBottom:16,
-            display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
-            <select value={filterProj} onChange={e=>setFilterProj(e.target.value)} style={inputStyle}>
-              <option value="all">ทุกโครงการ</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <select value={filterTech} onChange={e=>setFilterTech(e.target.value)} style={inputStyle}>
-              <option value="all">ทุกคน</option>
-              {techNames.map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-            {tab === "list" && (
-              <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={inputStyle}>
-                <option value="all">ทุกสถานะ</option>
-                <option value="pending">รออนุมัติ</option>
-                <option value="approved">อนุมัติแล้ว</option>
-                <option value="rejected">ไม่อนุมัติ</option>
-              </select>
-            )}
-            <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={inputStyle}/>
-            <span style={{ fontSize:12, color:"#94a3b8" }}>ถึง</span>
-            <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={inputStyle}/>
-            {(filterProj!=="all"||filterTech!=="all"||filterStatus!=="all"||dateFrom||dateTo) && (
-              <button onClick={()=>{ setFilterProj("all"); setFilterTech("all"); setFilterStatus("all"); setDateFrom(""); setDateTo(""); }}
-                style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444",
-                  borderRadius:8, padding:"6px 10px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
-                ล้าง
-              </button>
-            )}
-            <span style={{ fontSize:12, color:"#94a3b8", marginLeft:"auto" }}>{filtered.length} รายการ</span>
-          </div>
-        )}
+        {/* Tab bar */}
+        <div style={{ display:"flex",gap:6,marginBottom:16,background:"#fff",border:"1px solid #e2e8f0",
+          borderRadius:10,padding:6 }}>
+          {[{key:"list",label:"📋 รายการ"},{key:"profile",label:"👤 โปรไฟล์"}].map(t=>(
+            <button key={t.key} onClick={()=>setTab(t.key)}
+              style={{ flex:1,padding:"7px",borderRadius:7,border:"none",fontSize:12,fontWeight:700,
+                cursor:"pointer",fontFamily:"inherit",
+                background:tab===t.key?"#F97316":"transparent",
+                color:tab===t.key?"#fff":"#64748b" }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-        {/* ─── TAB: LIST ─── */}
-        {tab === "list" && (
-          filtered.length === 0 ? (
-            <div style={{ textAlign:"center", color:"#cbd5e1", padding:48, fontSize:14 }}>ยังไม่มีข้อมูล Onsite</div>
-          ) : (
-            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-              {filtered.map(r => {
-                const proj = projects.find(p => p.id === r.projectId);
-                const st = STATUS_STYLE[r.status||"pending"];
-                const canEdit = isAdmin || r.createdBy === currentUser?.name;
-                return (
-                  <div key={r.id} style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0",
-                    padding:"14px 16px", borderLeft:`4px solid ${st.color}` }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-                          <span style={{ fontSize:14, fontWeight:700, color:"#0f172a" }}>{proj?.name||r.projectName||r.projectId}</span>
-                          <span style={{ background:st.bg, color:st.color, borderRadius:20,
-                            padding:"2px 10px", fontSize:11, fontWeight:700 }}>{st.label}</span>
-                        </div>
-                        <div style={{ fontSize:12, color:"#64748b", marginTop:3 }}>
-                          {r.site && `📍 ${r.site} · `}{r.date} · {SCOPE_LABEL[r.scope]||r.scope}
-                        </div>
-                        <div style={{ fontSize:12, color:"#475569", marginTop:2 }}>
-                          👤 {(r.techs||[]).join(", ")}
-                        </div>
-                        {r.detail && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>{r.detail}</div>}
-                        {r.status === "approved" && r.approvedBy && (
-                          <div style={{ fontSize:11, color:"#16a34a", marginTop:4 }}>
-                            ✅ อนุมัติโดย {r.approvedBy}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ textAlign:"right", marginLeft:12, flexShrink:0 }}>
-                        <div style={{ fontSize:18, fontWeight:800, color:"#f97316" }}>{(r.totalCost||0).toLocaleString()}</div>
-                        <div style={{ fontSize:10, color:"#94a3b8" }}>บาท</div>
-                      </div>
-                    </div>
-                    <div style={{ display:"flex", gap:6, flexWrap:"wrap", paddingTop:8, borderTop:"1px solid #f1f5f9" }}>
-                      {isAdmin && (r.status||"pending") === "pending" && (
-                        <>
-                          <button onClick={() => onApproveOnsite(r.id, "approved")}
-                            style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#15803d",
-                              borderRadius:7, padding:"5px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-                            ✅ อนุมัติ
-                          </button>
-                          <button onClick={() => onApproveOnsite(r.id, "rejected")}
-                            style={{ background:"#fff1f2", border:"1px solid #fecdd3", color:"#be123c",
-                              borderRadius:7, padding:"5px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-                            ❌ ไม่อนุมัติ
-                          </button>
-                        </>
-                      )}
-                      {isAdmin && r.status === "approved" && (
-                        <button onClick={() => onApproveOnsite(r.id, "pending")}
-                          style={{ background:"#fffbeb", border:"1px solid #fde68a", color:"#92400e",
-                            borderRadius:7, padding:"5px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-                          ↩ คืนเป็นรออนุมัติ
-                        </button>
-                      )}
-                      {canEdit && (
-                        <button onClick={() => openEdit(r)}
-                          style={{ background:"#eff6ff", border:"1px solid #bfdbfe", color:"#2563eb",
-                            borderRadius:7, padding:"5px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-                          ✏️ แก้ไข
-                        </button>
-                      )}
-                      {isAdmin && (
-                        <button onClick={() => setConfirmDeleteId(r.id)}
-                          style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444",
-                            borderRadius:7, padding:"5px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-                          🗑 ลบ
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )
-        )}
-
-        {/* ─── TAB: REPORT ─── */}
-        {tab === "report" && (
-          <>
-            <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:12, marginBottom:16 }}>
-              {[
-                { label:"ครั้ง Onsite (อนุมัติ)", val:approvedRecords.length, color:"#2563eb", unit:"ครั้ง" },
-                { label:"ค่าแรงรวม",    val:totalLabor.toLocaleString(), color:"#16a34a", unit:"บาท" },
-                { label:"รวมทั้งสิ้น",  val:totalAll.toLocaleString(), color:"#f97316", unit:"บาท" },
-              ].map(c => (
-                <div key={c.label} style={{ background:"#fff", borderRadius:12, padding:"14px 16px",
-                  border:`1px solid ${c.color}20`, boxShadow:"0 1px 3px rgba(0,0,0,.05)" }}>
-                  <div style={{ fontSize:11, color:"#94a3b8", fontWeight:700, marginBottom:4 }}>{c.label}</div>
-                  <div style={{ fontSize:22, fontWeight:800, color:c.color }}>{c.val}</div>
-                  <div style={{ fontSize:11, color:"#94a3b8" }}>{c.unit}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* สรุปรายคน */}
-            <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0", padding:"16px", marginBottom:16 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"#0f172a", marginBottom:12 }}>👤 สรุปรายคน</div>
-              {Object.keys(perPerson).length === 0 ? (
-                <div style={{ fontSize:13, color:"#cbd5e1" }}>ยังไม่มีข้อมูล</div>
-              ) : (
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {Object.entries(perPerson).sort((a,b)=>b[1].labor-a[1].labor).map(([name,d]) => (
-                    <div key={name} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-                      padding:"10px 12px", background:"#f8fafc", borderRadius:8 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                        <div style={{ width:32, height:32, borderRadius:"50%",
-                          background:`hsl(${name.charCodeAt(0)*7%360},60%,70%)`,
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:13, fontWeight:700, color:"#fff" }}>{name.charAt(0)}</div>
-                        <div>
-                          <div style={{ fontSize:13, fontWeight:600, color:"#0f172a" }}>{name}</div>
-                          <div style={{ fontSize:11, color:"#94a3b8" }}>{d.count} ครั้ง</div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize:15, fontWeight:700, color:"#16a34a" }}>{d.labor.toLocaleString()} บาท</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* สรุปรายโครงการ */}
-            <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0", padding:"16px" }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"#0f172a", marginBottom:12 }}>◆ สรุปรายโครงการ</div>
-              {Object.keys(perProject).length === 0 ? (
-                <div style={{ fontSize:13, color:"#cbd5e1" }}>ยังไม่มีข้อมูล</div>
-              ) : (
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {Object.entries(perProject).sort((a,b)=>b[1].total-a[1].total).map(([pid,d]) => {
-                    const proj = projects.find(p => p.id === pid);
-                    return (
-                      <div key={pid} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-                        padding:"10px 12px", background:"#f8fafc", borderRadius:8 }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                          <span style={{ width:10, height:10, borderRadius:"50%", background:proj?.color||"#94a3b8" }}/>
-                          <div>
-                            <div style={{ fontSize:13, fontWeight:600, color:"#0f172a" }}>{proj?.name||d.name||pid}</div>
-                            <div style={{ fontSize:11, color:"#94a3b8" }}>{d.count} ครั้ง</div>
-                          </div>
-                        </div>
-                        <div style={{ fontSize:15, fontWeight:700, color:"#f97316" }}>{d.total.toLocaleString()} บาท</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* ─── TAB: MACHINE ─── */}
-        {tab === "machine" && (
-          <>
-            <div style={{ background:"#fff", borderRadius:12, padding:"12px 16px",
-              border:"1px solid #e2e8f0", marginBottom:16 }}>
-              <input value={machineSearch} onChange={e=>setMachineSearch(e.target.value)}
-                placeholder="🔍 ค้นหา Serial หรือโครงการ..."
-                style={{ width:"100%", border:"1px solid #e2e8f0", borderRadius:8,
-                  padding:"8px 12px", fontSize:13, fontFamily:"inherit", background:"#f8fafc", outline:"none" }}/>
-            </div>
-            {filteredMachines.length === 0 ? (
-              <div style={{ textAlign:"center", color:"#cbd5e1", padding:48, fontSize:14 }}>
-                ยังไม่มีข้อมูลเครื่อง (ต้องระบุ Serial ตอนบันทึก Onsite)
+        {/* Profile Tab */}
+        {tab==="profile" && (
+          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"20px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:"#0f172a",marginBottom:4 }}>โปรไฟล์ OT ของฉัน</div>
+            <div style={{ fontSize:12,color:"#64748b",marginBottom:16 }}>ข้อมูลนี้จะถูกใส่ใน Excel หน้าปก OT อัตโนมัติ</div>
+            {[
+              { key:"name",       label:"ชื่อ-นามสกุล (ภาษาไทย) *", placeholder:"เช่น นายสายัญห์ คชรมย์" },
+              { key:"empId",      label:"รหัสพนักงาน",                placeholder:"เช่น MT260101" },
+              { key:"position",   label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า" },
+              { key:"dept",       label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ" },
+              { key:"division",   label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ" },
+              { key:"supervisor", label:"ชื่อผู้บังคับบัญชา (ใบ OR)",  placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
+              { key:"supervisorOT", label:"ผู้บังคับบัญชา (หน้าปก OT)",   placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
+              { key:"staff",      label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho" },
+            ].map(f=>(
+              <div key={f.key} style={{ marginBottom:12 }}>
+                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                  letterSpacing:.5,marginBottom:4,display:"block" }}>{f.label}</label>
+                <input value={profile[f.key]||""} placeholder={f.placeholder}
+                  onChange={e=>setProfile(p=>({...p,[f.key]:e.target.value}))}
+                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                    padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
               </div>
-            ) : (
-              <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                {filteredMachines.map(m => {
-                  const proj = projects.find(p => p.id === m.projectId);
-                  const approvedCount = m.records.filter(r=>r.status==="approved").length;
-                  return (
-                    <div key={m.serial} style={{ background:"#fff", borderRadius:12,
-                      border:"1px solid #e2e8f0", overflow:"hidden" }}>
-                      <div style={{ background:"#f8fafc", padding:"14px 16px", borderBottom:"1px solid #e2e8f0",
-                        display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
-                        <div style={{ width:40, height:40, borderRadius:10, background:"#fff7ed",
-                          border:"1px solid #fed7aa", display:"flex", alignItems:"center",
-                          justifyContent:"center", fontSize:20, flexShrink:0 }}>🤖</div>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:15, fontWeight:800, color:"#0f172a" }}>{m.serial}</div>
-                          <div style={{ fontSize:12, color:"#64748b", display:"flex", alignItems:"center", gap:5 }}>
-                            <span style={{ width:8, height:8, borderRadius:"50%", background:proj?.color||"#94a3b8" }}/>
-                            {proj?.name || m.projectName || "—"}
-                          </div>
-                        </div>
-                        <div style={{ textAlign:"right" }}>
-                          <div style={{ fontSize:18, fontWeight:800, color:"#f97316" }}>{m.totalCost.toLocaleString()}</div>
-                          <div style={{ fontSize:10, color:"#94a3b8" }}>บาทรวม · {approvedCount} ครั้ง</div>
-                        </div>
-                      </div>
-                      <div style={{ padding:"12px 16px" }}>
-                        <div style={{ fontSize:10, color:"#94a3b8", fontWeight:700, textTransform:"uppercase",
-                          letterSpacing:.5, marginBottom:10 }}>ประวัติการเข้าซ่อม ({m.records.length})</div>
-                        <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
-                          {m.records.map((r,i) => {
-                            const st = STATUS_STYLE[r.status||"pending"];
-                            const isLast = i === m.records.length-1;
-                            return (
-                              <div key={r.id} style={{ display:"flex", gap:12, position:"relative" }}>
-                                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
-                                  <div style={{ width:10, height:10, borderRadius:"50%",
-                                    background:st.color, marginTop:4, flexShrink:0, zIndex:1 }}/>
-                                  {!isLast && <div style={{ width:2, flex:1, background:"#e2e8f0", marginTop:2 }}/>}
-                                </div>
-                                <div style={{ paddingBottom:isLast?0:16, flex:1, minWidth:0 }}>
-                                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:8 }}>
-                                    <span style={{ fontSize:13, fontWeight:700, color:"#0f172a" }}>{r.date}</span>
-                                    <span style={{ fontSize:13, fontWeight:700, color:"#f97316" }}>{(r.totalCost||0).toLocaleString()} บ.</span>
-                                  </div>
-                                  <div style={{ fontSize:12, color:"#475569", marginTop:2 }}>
-                                    {SCOPE_LABEL[r.scope]||r.scope} · 👤 {(r.techs||[]).join(", ")}
-                                  </div>
-                                  {r.detail && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>{r.detail}</div>}
-                                  <span style={{ display:"inline-block", marginTop:4, background:st.bg, color:st.color,
-                                    borderRadius:20, padding:"1px 8px", fontSize:10, fontWeight:700 }}>{st.label}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
+            ))}
 
-        {/* ─── TAB: EXPORT ─── */}
-        {tab === "export" && (
-          <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0", padding:"20px" }}>
-            <div style={{ fontSize:14, fontWeight:700, color:"#0f172a", marginBottom:8 }}>📥 Export Excel</div>
-            <div style={{ fontSize:12, color:"#64748b", marginBottom:16 }}>
-              เลือกโครงการและช่วงเวลาที่ต้องการ แล้วดาวน์โหลดเป็นไฟล์ Excel (เฉพาะรายการที่อนุมัติแล้ว)
+            {/* รอบเบิก */}
+            <div style={{ marginBottom:12 }}>
+              <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                letterSpacing:.5,marginBottom:4,display:"block" }}>เดือนที่เบิก (ชื่อเต็ม)</label>
+              <input value={profile.periodMonth||""} placeholder="เช่น กรกฎาคม"
+                onChange={e=>setProfile(p=>({...p,periodMonth:e.target.value}))}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc",marginBottom:8 }}/>
             </div>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:10, alignItems:"center", marginBottom:16 }}>
-              <select value={filterProj} onChange={e=>setFilterProj(e.target.value)} style={inputStyle}>
-                <option value="all">ทุกโครงการ</option>
-                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={inputStyle}/>
-              <span style={{ fontSize:12, color:"#94a3b8" }}>ถึง</span>
-              <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={inputStyle}/>
+            <div style={{ marginBottom:12 }}>
+              <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                letterSpacing:.5,marginBottom:4,display:"block" }}>รอบเบิก OT</label>
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+                <div>
+                  <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่เริ่ม</div>
+                  <input value={profile.periodStart||""} placeholder="เช่น 16/06/2026"
+                    onChange={e=>setProfile(p=>({...p,periodStart:e.target.value}))}
+                    style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                      padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                </div>
+                <div>
+                  <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่สิ้นสุด</div>
+                  <input value={profile.periodEnd||""} placeholder="เช่น 15/07/2026"
+                    onChange={e=>setProfile(p=>({...p,periodEnd:e.target.value}))}
+                    style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                      padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                </div>
+              </div>
             </div>
-            <div style={{ background:"#f8fafc", borderRadius:8, padding:"12px 14px", marginBottom:16 }}>
-              <div style={{ fontSize:12, color:"#64748b" }}>จะ export ทั้งหมด <b style={{ color:"#f97316" }}>{approvedRecords.length}</b> รายการ
-                · รวม <b style={{ color:"#f97316" }}>{totalAll.toLocaleString()}</b> บาท</div>
-            </div>
-            <button onClick={exportExcel} disabled={approvedRecords.length===0}
-              style={{ background:"#16a34a", border:"none", color:"#fff", borderRadius:10,
-                padding:"12px 24px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit",
-                opacity: approvedRecords.length===0?0.5:1 }}>
-              📥 ดาวน์โหลด Excel
+
+
+
+            <button onClick={saveProfile} disabled={profileSaving||!profile.name?.trim()}
+              style={{ width:"100%",background:profileSaved?"#16a34a":"#F97316",border:"none",color:"#fff",
+                borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+                opacity:!profile.name?.trim()?0.5:1,marginTop:4 }}>
+              {profileSaving?"กำลังบันทึก...":profileSaved?"✅ บันทึกแล้ว":"💾 บันทึกโปรไฟล์"}
             </button>
           </div>
         )}
+
+        {/* KPI */}
+        {tab==="list" && <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)",gap:10,marginBottom:16 }}>
+          {[
+            { label:"รายการทั้งหมด", val:filtered.length, color:"#F97316" },
+            { label:"ชั่วโมง OT รวม", val:`${totalHours} ชม.`, color:"#6B21A8" },
+            { label:"เฉลี่ยต่อครั้ง", val:`${filtered.length>0?(totalHours/filtered.length).toFixed(1):0} ชม.`, color:"#16a34a" },
+          ].map(k=>(
+            <div key={k.label} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px 16px" }}>
+              <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>{k.label}</div>
+              <div style={{ fontSize:20,fontWeight:800,color:k.color }}>{k.val}</div>
+            </div>
+          ))}
+        </div>}
+
+        {/* Filters — เฉพาะ tab รายการ */}
+        {tab==="list" && <>
+        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
+          padding:"12px 16px",marginBottom:14,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
+          {isAdmin && (
+            <select value={filterName} onChange={e=>setFilterName(e.target.value)} style={inputStyle}>
+              <option value="all">ทุกคน</option>
+              {names.map(n=><option key={n} value={n}>{n}</option>)}
+            </select>
+          )}
+          <select value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} style={inputStyle}>
+            <option value="">ทุกเดือน</option>
+            {months.map(m=><option key={m} value={m}>{fmtMonth(m)}</option>)}
+          </select>
+          {(filterName!=="all"||filterMonth) && (
+            <button onClick={()=>{ setFilterName("all"); setFilterMonth(""); }}
+              style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                borderRadius:8,padding:"5px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
+              ล้าง
+            </button>
+          )}
+        </div>
+
+        {/* Records */}
+        {filtered.length === 0 ? (
+          <div style={{ textAlign:"center",color:"#cbd5e1",padding:48,fontSize:14 }}>
+            ยังไม่มีข้อมูล OT
+          </div>
+        ) : (
+          <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+            {filtered.map(r => {
+              const proj = projects.find(p=>p.id===r.projectId);
+              return (
+                <div key={r.id} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
+                  padding:"14px 16px",display:"flex",gap:12,alignItems:"flex-start" }}>
+                  <div style={{ width:44,height:44,borderRadius:10,background:"#fff7ed",
+                    border:"1px solid #fed7aa",display:"flex",alignItems:"center",
+                    justifyContent:"center",fontSize:20,flexShrink:0 }}>⏰</div>
+                  <div style={{ flex:1,minWidth:0 }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4 }}>
+                      <span style={{ fontSize:14,fontWeight:700,color:"#0f172a" }}>{r.name}</span>
+                      <span style={{ fontSize:13,fontWeight:700,color:"#F97316" }}>{r.hours} ชม.</span>
+                    </div>
+                    {proj && (
+                      <div style={{ fontSize:12,color:"#64748b",display:"flex",alignItems:"center",gap:5,marginBottom:3 }}>
+                        <span style={{ width:8,height:8,borderRadius:"50%",background:proj.color||"#94a3b8" }}/>
+                        {proj.name}
+                      </div>
+                    )}
+                    <div style={{ fontSize:12,color:"#475569",marginBottom:3 }}>{r.desc}</div>
+                    <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
+                      <span style={{ fontSize:11,color:"#94a3b8" }}>📅 {fmtDate(r.dateIn)} {r.timeIn} - {r.timeOut}</span>
+                      {r.location && <span style={{ fontSize:11,color:"#94a3b8" }}>📍 {r.location}</span>}
+                      <span style={{ fontSize:11,color:"#94a3b8" }}>{r.remark}</span>
+                    </div>
+                  </div>
+                  <div style={{ display:"flex",gap:6,flexShrink:0 }}>
+                    <button onClick={()=>exportOR(r)}
+                      style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
+                        borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>🖨</button>
+                    <button onClick={()=>{ setEditRecord(r); setShowModal(true); }}
+                      style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
+                        borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>✏️</button>
+                    {isAdmin && (
+                      <button onClick={()=>setConfirmId(r.id)}
+                        style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+                          borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>🗑</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </>}
       </div>
 
-      {confirmDeleteId && (
+      {/* Confirm delete */}
+      {confirmId && (
         <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(15,23,42,.5)",
           display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
           <div style={{ background:"#fff",borderRadius:16,padding:24,maxWidth:320,width:"100%",
-            boxShadow:"0 20px 60px rgba(0,0,0,.2)",textAlign:"center",fontFamily:"'Noto Sans Thai',sans-serif" }}>
+            textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}>
             <div style={{ fontSize:32,marginBottom:12 }}>🗑</div>
-            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:8 }}>ลบรายการ Onsite นี้?</div>
+            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:8 }}>ลบรายการ OT นี้?</div>
             <div style={{ fontSize:13,color:"#64748b",marginBottom:20 }}>ไม่สามารถกู้คืนได้</div>
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
-              <button onClick={()=>setConfirmDeleteId(null)}
+              <button onClick={()=>setConfirmId(null)}
                 style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
                   borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
                 ยกเลิก
               </button>
-              <button onClick={()=>{ onDeleteOnsite(confirmDeleteId); setConfirmDeleteId(null); }}
+              <button onClick={()=>deleteOT(confirmId)}
                 style={{ background:"#ef4444",border:"none",color:"#fff",
                   borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
                 ลบ
@@ -513,9 +369,10 @@ export default function OnsitePage({ onBack, projects, users, currentUser, onsit
           </div>
         </div>
       )}
+
       {showModal && (
-        <OnsiteModal onClose={() => { setShowModal(false); setEditRecord(null); }}
-          onSave={handleSave} saving={saving}
+        <OTModal onClose={()=>{ setShowModal(false); setEditRecord(null); }}
+          onSave={saveOT} saving={saving}
           projects={projects} users={users} currentUser={currentUser}
           editRecord={editRecord}/>
       )}
