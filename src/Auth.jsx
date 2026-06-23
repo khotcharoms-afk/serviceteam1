@@ -68,7 +68,7 @@ export default function Auth() {
         createdAt: new Date().toISOString(),
       });
       // Notify all admins about new registration
-      const adminsSnap = await getDocs(query(collection(db,"users"), where("role","==","admin")));
+      const adminsSnap = await getDocs(query(collection(db,"users"), where("role","in",["admin","dev"])));
       for(const adminDoc of adminsSnap.docs) {
         await setDoc(doc(db,"notifications",`newuser-${cred.user.uid}-${adminDoc.id}`), {
           type:      "new_user",
