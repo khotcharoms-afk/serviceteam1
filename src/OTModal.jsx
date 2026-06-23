@@ -10,7 +10,7 @@ function calcHours(timeIn, timeOut, dateIn, dateOut) {
   return Math.round((d2-d1)/3600000*2)/2;
 }
 
-export default function OTModal({ onClose, onSave, saving, projects, users, currentUser, editRecord }) {
+export default function OTModal({ onClose, onSave, saving, projects, users, currentUser, editRecord, profile }) {
   const today = new Date().toISOString().slice(0,10);
   const thaiName = (users||[]).find(u=>u.id===(currentUser?.id||currentUser?.uid))?.name || currentUser?.name || "";
 
@@ -24,7 +24,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
   const [location,   setLocation]   = useState(editRecord?.location   || "");
   const [situation,  setSituation]  = useState(editRecord?.situation  || "Support");
   const [desc,       setDesc]       = useState(editRecord?.desc       || "");
-  const [name,       setName]       = useState(editRecord?.name       || thaiName);
+  const [name,       setName]       = useState(editRecord?.name       || profile?.name || thaiName);
   const [examiner,   setExaminer]   = useState(editRecord?.examiner   || "");
   const [hours,      setHours]      = useState(editRecord?.hours?.toString() || "");
   const [manualHours,setManualHours]= useState(false);
