@@ -178,7 +178,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterName, setFilterName] = useState("all");
 
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = ["admin","dev"].includes(currentUser?.role);
 
   useEffect(() => {
     const u = onSnapshot(collection(db,"leaves"), snap => {
