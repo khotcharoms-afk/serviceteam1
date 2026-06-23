@@ -29,7 +29,7 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
   const [sending,    setSending]    = useState(false);
   const [isMobile] = useState(typeof window!=="undefined" && window.innerWidth < 640);
 
-  const isAdmin    = ["admin","dev"].includes(currentUser?.role);
+  const isAdmin    = currentUser?.role === "admin";
   const canCreate  = isAdmin; // admin + หัวหน้าทีม (role:"leader" ถ้ามีในอนาคต)
 
   const filteredTasks = (tasks||[]).filter(t =>
@@ -362,7 +362,7 @@ function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, o
       )}
       {task.dueDate && (
         <div style={{ fontSize:11,fontWeight:600,color:dueColor,marginBottom:6 }}>
-          📅 {fmtDate(task.dueDate)} {due!==null&&(due<0?`(เกิน ${Math.abs(due)} วัน)`:due===0?"(วันนี้!)":due<=3?`(เหลือ ${due} วัน)`:"")}
+          📅 {fmtDate(task.dueDate)} {due!==null&&task.status!=="done"&&(due<0?`(เกิน ${Math.abs(due)} วัน)`:due===0?"(วันนี้!)":due<=3?`(เหลือ ${due} วัน)`:"")}
         </div>
       )}
       {isMine && (
