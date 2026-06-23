@@ -19,7 +19,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [showORDatePicker, setShowORDatePicker] = useState(false);
   const [orDateFrom, setOrDateFrom] = useState("");
   const [orDateTo, setOrDateTo]     = useState("");
-  const isAdmin = currentUser?.role === "dev";
+  const isAdmin = ["admin","dev"].includes(currentUser?.role);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
