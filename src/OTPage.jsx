@@ -6,7 +6,7 @@ import OTModal from "./OTModal.jsx";
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
   const [records, setRecords]   = useState([]);
-  const [profile, setProfile]   = useState({ periodStart:"", periodEnd:"", periodMonth:"" });
+  const [profile, setProfile]   = useState({ nameTH:"", periodStart:"", periodEnd:"", periodMonth:"" });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved]   = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -35,6 +35,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         if (d.exists()) {
           const data = d.data();
           setProfile({
+            nameTH: data.nameTH||"",
             periodStart: data.periodStart||"",
             periodEnd: data.periodEnd||"",
             periodMonth: data.periodMonth||"",
@@ -98,8 +99,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const fmtDate = d => { if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${parseInt(y)+543}`; };
 
   async function exportOR(r) {
-    if (!profile.name?.trim()) {
-      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+    if (!profile.nameTH?.trim()) {
+      alert("กรุณาตั้งค่าข้อมูล OT ในโปรไฟล์ก่อน (tab 👤 โปรไฟล์)");
       setTab("profile");
       return;
     }
@@ -123,8 +124,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   }
 
   async function exportAllOR() {
-    if (!profile.name?.trim()) {
-      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+    if (!profile.nameTH?.trim()) {
+      alert("กรุณาตั้งค่าข้อมูล OT ในโปรไฟล์ก่อน (tab 👤 โปรไฟล์)");
       setTab("profile");
       return;
     }
@@ -154,7 +155,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `OR_${profile.name||"export"}_${orDateFrom||"all"}.docx`;
+      a.download = `OR_${profile.nameTH||"export"}_${orDateFrom||"all"}.docx`;
       a.click();
       URL.revokeObjectURL(url);
     } catch(err) {
@@ -165,8 +166,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   async function exportExcel() {
     const exportRecords = filtered.length > 0 ? filtered : myRecords;
     if (exportRecords.length === 0) return;
-    if (!profile.name?.trim()) {
-      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+    if (!profile.nameTH?.trim()) {
+      alert("กรุณาตั้งค่าข้อมูล OT ในโปรไฟล์ก่อน (tab 👤 โปรไฟล์)");
       setTab("profile");
       return;
     }
@@ -185,7 +186,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `OT_${profile.name}_${filterMonth||"all"}.xlsx`;
+      a.download = `OT_${profile.nameTH||"export"}_${filterMonth||"all"}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
     } catch(err) {
