@@ -220,14 +220,14 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
                 <div>
                   <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่เริ่ม</div>
-                  <input type="date" value={profile.periodStart||""}
+                  <input value={profile.periodStart||""} placeholder="เช่น 16/06/2026"
                     onChange={e=>setProfile(p=>({...p,periodStart:e.target.value}))}
                     style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
                       padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
                 </div>
                 <div>
                   <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่สิ้นสุด</div>
-                  <input type="date" value={profile.periodEnd||""}
+                  <input value={profile.periodEnd||""} placeholder="เช่น 15/07/2026"
                     onChange={e=>setProfile(p=>({...p,periodEnd:e.target.value}))}
                     style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
                       padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
