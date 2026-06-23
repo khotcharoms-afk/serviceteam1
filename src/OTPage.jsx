@@ -459,7 +459,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         <OTModal onClose={()=>{ setShowModal(false); setEditRecord(null); }}
           onSave={saveOT} saving={saving}
           projects={projects} users={users} currentUser={currentUser}
-          editRecord={editRecord}/>
+          editRecord={editRecord} profile={profile}/>
       )}
     </div>
   );
