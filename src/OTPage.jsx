@@ -15,7 +15,9 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 640);
   const [filterName, setFilterName] = useState("all");
   const [filterMonth, setFilterMonth] = useState("");
-  const [confirmId, setConfirmId] = useState(null);
+  const [showORDatePicker, setShowORDatePicker] = useState(false);
+  const [orDateFrom, setOrDateFrom] = useState("");
+  const [orDateTo, setOrDateTo]     = useState("");
   const isAdmin = currentUser?.role === "dev";
 
   useEffect(() => {
@@ -118,21 +120,32 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       setTab("profile");
       return;
     }
-    const exportRecords = filtered.length > 0 ? filtered : myRecords;
-    if (exportRecords.length === 0) return;
+    setShowORDatePicker(true);
+  }
+
+  async function doExportAllOR() {
+    const from = orDateFrom ? new Date(orDateFrom) : null;
+    const to   = orDateTo   ? new Date(orDateTo)   : null;
+    const exportRecords = myRecords.filter(r => {
+      const d = new Date(r.dateIn||"");
+      if (from && d < from) return false;
+      if (to   && d > to)   return false;
+      return true;
+    }).sort((a,b)=>(a.dateIn||"").localeCompare(b.dateIn||""));
+    if (exportRecords.length === 0) { alert("ไม่มีรายการในช่วงวันที่นี้"); return; }
+    setShowORDatePicker(false);
     try {
-      const sorted = [...exportRecords].sort((a,b)=>(a.dateIn||"").localeCompare(b.dateIn||""));
       const res = await fetch("/api/generate-or", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ records: sorted, profile }),
+        body: JSON.stringify({ records: exportRecords, profile }),
       });
       if (!res.ok) { const t = await res.text(); throw new Error(t); }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `OR_all_${profile.name||"export"}.docx`;
+      a.download = `OR_${profile.name||"export"}_${orDateFrom||"all"}.docx`;
       a.click();
       URL.revokeObjectURL(url);
     } catch(err) {
@@ -397,6 +410,44 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
                 style={{ background:"#ef4444",border:"none",color:"#fff",
                   borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
                 ลบ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showORDatePicker && (
+        <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
+          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
+          onClick={()=>setShowORDatePicker(false)}>
+          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:380,
+            padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:16 }}>🖨 Export ใบ OR — เลือกช่วงวันที่</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16 }}>
+              <div>
+                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,display:"block",marginBottom:4 }}>ตั้งแต่วันที่</label>
+                <input type="date" value={orDateFrom} onChange={e=>setOrDateFrom(e.target.value)}
+                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 12px",
+                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+              </div>
+              <div>
+                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,display:"block",marginBottom:4 }}>ถึงวันที่</label>
+                <input type="date" value={orDateTo} onChange={e=>setOrDateTo(e.target.value)}
+                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 12px",
+                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+              </div>
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
+              <button onClick={()=>setShowORDatePicker(false)}
+                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                  borderRadius:10,padding:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ยกเลิก
+              </button>
+              <button onClick={doExportAllOR}
+                style={{ background:"#1d4ed8",border:"none",color:"#fff",
+                  borderRadius:10,padding:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                🖨 Export ใบ OR
               </button>
             </div>
           </div>
