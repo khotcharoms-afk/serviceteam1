@@ -13,7 +13,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
 
   // OT Profile
   const [otProfile, setOtProfile] = useState({
-    empId:"", position:"", dept:"", division:"",
+    nameTH:"", empId:"", position:"", dept:"", division:"",
     supervisor:"", supervisorOT:"", staff:""
   });
   const [otSaving, setOtSaving] = useState(false);
@@ -40,6 +40,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
       if (d.exists()) {
         const data = d.data();
         setOtProfile({
+          nameTH: data.nameTH||"",
           empId: data.empId||"",
           position: data.position||"",
           dept: data.dept||"",
@@ -190,7 +191,8 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 ℹ️ ข้อมูลนี้จะถูกใส่ใน Excel หน้าปก OT และใบ OR อัตโนมัติ
               </div>
               {[
-                { key:"empId",       label:"รหัสพนักงาน",               placeholder:"เช่น MT260101" },
+                { key:"nameTH",      label:"ชื่อ-นามสกุล (ภาษาไทย)",   placeholder:"เช่น นายสายัญห์ คชรมย์" },
+              { key:"empId",       label:"รหัสพนักงาน",               placeholder:"เช่น MT260101" },
                 { key:"position",    label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า" },
                 { key:"dept",        label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ" },
                 { key:"division",    label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ" },
