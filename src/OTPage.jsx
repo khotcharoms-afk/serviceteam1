@@ -19,7 +19,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [showORDatePicker, setShowORDatePicker] = useState(false);
   const [orDateFrom, setOrDateFrom] = useState("");
   const [orDateTo, setOrDateTo]     = useState("");
-  const isAdmin = ["admin","dev"].includes(currentUser?.role);
+  const isAdmin = currentUser?.role === "dev";
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
@@ -276,15 +276,37 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
                 <div>
                   <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่เริ่ม</div>
-                  <input value={profile.periodStart||""} placeholder="เช่น 16/06/2026"
-                    onChange={e=>setProfile(p=>({...p,periodStart:e.target.value}))}
+                  <input type="date" value={
+                      profile.periodStart
+                        ? profile.periodStart.includes("-") && profile.periodStart.length===10 && !profile.periodStart.match(/^\d{2}\//)
+                          ? profile.periodStart
+                          : (() => { const p=profile.periodStart.split("/"); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:""; })()
+                        : ""
+                    }
+                    onChange={e=>{
+                      const val = e.target.value; // YYYY-MM-DD
+                      const MONTH_TH=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+                      const mo = val ? MONTH_TH[parseInt(val.slice(5,7))-1] : "";
+                      const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
+                      setProfile(p=>({...p, periodStart:fmt, periodMonth:mo||p.periodMonth}));
+                    }}
                     style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
                       padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
                 </div>
                 <div>
                   <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่สิ้นสุด</div>
-                  <input value={profile.periodEnd||""} placeholder="เช่น 15/07/2026"
-                    onChange={e=>setProfile(p=>({...p,periodEnd:e.target.value}))}
+                  <input type="date" value={
+                      profile.periodEnd
+                        ? profile.periodEnd.includes("-") && profile.periodEnd.length===10 && !profile.periodEnd.match(/^\d{2}\//)
+                          ? profile.periodEnd
+                          : (() => { const p=profile.periodEnd.split("/"); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:""; })()
+                        : ""
+                    }
+                    onChange={e=>{
+                      const val = e.target.value;
+                      const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
+                      setProfile(p=>({...p,periodEnd:fmt}));
+                    }}
                     style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
                       padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
                 </div>
