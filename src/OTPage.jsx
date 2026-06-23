@@ -15,6 +15,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 640);
   const [filterName, setFilterName] = useState("all");
   const [filterMonth, setFilterMonth] = useState("");
+  const [confirmId, setConfirmId] = useState(null);
   const [showORDatePicker, setShowORDatePicker] = useState(false);
   const [orDateFrom, setOrDateFrom] = useState("");
   const [orDateTo, setOrDateTo]     = useState("");
