@@ -6,7 +6,7 @@ import OTModal from "./OTModal.jsx";
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
   const [records, setRecords]   = useState([]);
-  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", supervisorOT:"", staff:"", periodStart:"", periodEnd:"" });
+  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", supervisorOT:"", staff:"", periodStart:"", periodEnd:"", periodMonth:"" });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved]   = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -214,6 +214,14 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
             ))}
 
             {/* รอบเบิก */}
+            <div style={{ marginBottom:12 }}>
+              <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
+                letterSpacing:.5,marginBottom:4,display:"block" }}>เดือนที่เบิก (ชื่อเต็ม)</label>
+              <input value={profile.periodMonth||""} placeholder="เช่น กรกฎาคม"
+                onChange={e=>setProfile(p=>({...p,periodMonth:e.target.value}))}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc",marginBottom:8 }}/>
+            </div>
             <div style={{ marginBottom:12 }}>
               <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
                 letterSpacing:.5,marginBottom:4,display:"block" }}>รอบเบิก OT</label>
