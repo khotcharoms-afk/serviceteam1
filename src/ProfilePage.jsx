@@ -191,20 +191,29 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 ℹ️ ข้อมูลนี้จะถูกใส่ใน Excel หน้าปก OT และใบ OR อัตโนมัติ
               </div>
               {[
-                { key:"nameTH",      label:"ชื่อ-นามสกุล (ภาษาไทย)",   placeholder:"เช่น นายสายัญห์ คชรมย์" },
-              { key:"empId",       label:"รหัสพนักงาน",               placeholder:"เช่น MT260101" },
-                { key:"position",    label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า" },
-                { key:"dept",        label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ" },
-                { key:"division",    label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ" },
-                { key:"supervisor",  label:"ชื่อผู้บังคับบัญชา (ใบ OR)", placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
-                { key:"supervisorOT",label:"ผู้บังคับบัญชา (หน้าปก OT)", placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
-                { key:"staff",       label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho" },
+                { key:"nameTH",      label:"ชื่อ-นามสกุล (ภาษาไทย)",   placeholder:"เช่น นายสายัญห์ คชรมย์", opts:[] },
+                { key:"empId",       label:"รหัสพนักงาน",               placeholder:"เช่น MT260101", opts:[] },
+                { key:"position",    label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า",
+                  opts:["เจ้าหน้าที่บริการลูกค้า","วิศวกรติดตั้ง"] },
+                { key:"dept",        label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ",
+                  opts:["ศูนย์บริการ"] },
+                { key:"division",    label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ",
+                  opts:["โครงการและการจัดการบริการ"] },
+                { key:"supervisor",  label:"ชื่อผู้บังคับบัญชา (ใบ OR)", placeholder:"เช่น นายณัฐพงศ์ รัตนไชย", opts:[] },
+                { key:"supervisorOT",label:"ผู้บังคับบัญชา (หน้าปก OT)", placeholder:"เช่น นายณัฐพงศ์ รัตนไชย", opts:[] },
+                { key:"staff",       label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho", opts:[] },
               ].map(f=>(
                 <div key={f.key} style={{ marginBottom:14 }}>
                   <label style={LB}>{f.label}</label>
                   <input value={otProfile[f.key]||""} placeholder={f.placeholder}
+                    list={f.opts.length ? `opts-${f.key}` : undefined}
                     onChange={e=>setOtProfile(p=>({...p,[f.key]:e.target.value}))}
                     style={IS}/>
+                  {f.opts.length > 0 && (
+                    <datalist id={`opts-${f.key}`}>
+                      {f.opts.map(o=><option key={o} value={o}/>)}
+                    </datalist>
+                  )}
                 </div>
               ))}
               {otMsg && <div style={{ marginBottom:12, fontSize:13,
