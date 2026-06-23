@@ -36,6 +36,13 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
           const data = d.data();
           setProfile({
             nameTH: data.nameTH||"",
+            empId: data.empId||"",
+            position: data.position||"",
+            dept: data.dept||"",
+            division: data.division||"",
+            supervisor: data.supervisor||"",
+            supervisorOT: data.supervisorOT||"",
+            staff: data.staff||"",
             periodStart: data.periodStart||"",
             periodEnd: data.periodEnd||"",
             periodMonth: data.periodMonth||"",
