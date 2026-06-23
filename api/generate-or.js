@@ -12,23 +12,14 @@ function escapeXml(str) {
     .replace(/'/g, "&apos;");
 }
 
-// Word splits placeholders across XML runs — strip tags first, replace, then restore
 function replacePlaceholders(xml, data) {
-  // Step 1: collapse runs so {{key}} is in one text node
-  // Replace across run boundaries by working on the raw XML
-  // Pattern: {{ ... }} may be split across <w:t>...</w:t> tags
-  // Strategy: remove XML tags temporarily between {{ and }}
   let result = xml;
-
   for (const [key, val] of Object.entries(data)) {
     const escaped = escapeXml(val);
-    // Build regex that matches {{key}} even with XML tags in between
     const parts = `{{${key}}}`.split("").map(c =>
       c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     );
-    // Allow any XML tags between each character
-    const xmlBetween = "(?:<[^>]*>)*";
-    const pattern = new RegExp(parts.join(xmlBetween), "g");
+    const pattern = new RegExp(parts.join("(?:<[^>]*>)*"), "g");
     result = result.replace(pattern, escaped);
   }
   return result;
@@ -43,38 +34,82 @@ function fmtDateTH(dateStr) {
   return `${parseInt(d)} ${MONTH_TH[parseInt(m)-1]} ${parseInt(y)+543}`;
 }
 
+function buildData(record, profile) {
+  return {
+    date:           fmtDateTH(record.dateIn),
+    projectName:    record.projectName || "",
+    location:       record.location || "",
+    timeIn:         record.timeIn || "",
+    timeOut:        record.timeOut || "",
+    description:    record.desc || "",
+    employeeName:   record.name || profile.name || "",
+    supervisorName: record.examiner || profile.supervisor || "",
+  };
+}
+
+// Extract body content between <w:body> tags
+function extractBody(xml) {
+  const bodyMatch = xml.match(/<w:body>([\s\S]*)<\/w:body>/);
+  return bodyMatch ? bodyMatch[1] : "";
+}
+
+// Page break XML
+const PAGE_BREAK = `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`;
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { record, profile } = req.body;
+  const { record, records, profile } = req.body;
+
+  // Support both single record and multiple records
+  const allRecords = records || (record ? [record] : []);
+  if (allRecords.length === 0) return res.status(400).json({ error: "No records" });
+
   try {
     const templateRes = await fetch(TEMPLATE_URL);
     if (!templateRes.ok) throw new Error("Cloudinary fetch failed");
     const templateBuffer = Buffer.from(await templateRes.arrayBuffer());
 
+    if (allRecords.length === 1) {
+      // Single record — original behavior
+      const zip = await JSZip.loadAsync(templateBuffer);
+      const docXmlFile = zip.file("word/document.xml");
+      let docXml = await docXmlFile.async("string");
+      docXml = replacePlaceholders(docXml, buildData(allRecords[0], profile));
+      zip.file("word/document.xml", docXml);
+      const outBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+      const filename = encodeURIComponent(`OR_${allRecords[0].dateIn || "date"}.docx`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+      res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
+      return res.send(outBuffer);
+    }
+
+    // Multiple records — merge into one document with page breaks
     const zip = await JSZip.loadAsync(templateBuffer);
     const docXmlFile = zip.file("word/document.xml");
-    if (!docXmlFile) throw new Error("word/document.xml not found");
-    let docXml = await docXmlFile.async("string");
+    const templateXml = await docXmlFile.async("string");
 
-    const data = {
-      date:           fmtDateTH(record.dateIn),
-      projectName:    record.projectName || "",
-      location:       record.location || "",
-      timeIn:         record.timeIn || "",
-      timeOut:        record.timeOut || "",
-      description:    record.desc || "",
-      employeeName:   record.name || profile.name || "",
-      supervisorName: record.examiner || profile.supervisor || "",
-    };
+    // Get body of each record
+    const bodies = allRecords.map(r => {
+      const injected = replacePlaceholders(templateXml, buildData(r, profile));
+      return extractBody(injected);
+    });
 
-    docXml = replacePlaceholders(docXml, data);
-    zip.file("word/document.xml", docXml);
+    // Build merged body: page1 + pagebreak + page2 + ...
+    const mergedBody = bodies.join(PAGE_BREAK);
 
+    // Replace body in template
+    const mergedXml = templateXml.replace(
+      /<w:body>[\s\S]*<\/w:body>/,
+      `<w:body>${mergedBody}</w:body>`
+    );
+
+    zip.file("word/document.xml", mergedXml);
     const outBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
-    const filename = encodeURIComponent(`OR_${record.dateIn || "date"}.docx`);
+    const filename = encodeURIComponent(`OR_${profile.name||"export"}_all.docx`);
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
     res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
     res.send(outBuffer);
+
   } catch (err) {
     console.error("generate-or error:", err);
     res.status(500).json({ error: err.message });
