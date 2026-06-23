@@ -98,7 +98,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   const [showMemberManager, setShowMemberManager] = useState(false);
   const [showScheduleManager, setShowScheduleManager] = useState(false);
 
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = ["admin","dev"].includes(currentUser?.role);
   const canEditShift = isAdmin || currentUser?.canEditShift === true;
   const isMobile = window.innerWidth < 640;
   const sortedMembers = [...shiftMembers].sort((a,b)=>(a.order||0)-(b.order||0));
