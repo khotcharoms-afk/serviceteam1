@@ -18,16 +18,6 @@ function fmtDateTH(d) {
 }
 
 function printLeave(leave, logoData, users, allRecords) {
-  const prevLeaves = (allRecords||[]).filter(r =>
-    r.id !== leave.id && r.createdBy === leave.createdBy
-  );
-  const prevSum = { vacation:0, personal:0, sick:0, other:0 };
-  prevLeaves.forEach(r => {
-    if (prevSum[r.leaveType] !== undefined) prevSum[r.leaveType] += (r.days||0);
-  });
-
-  const user = (users||[]).find(u => u.id === leave.createdBy || u.name === leave.name);
-  const quota = user?.leaveQuota || {};
   const typeLabel = leave.leaveType==="other" ? (leave.otherType||"อื่นๆ") : LEAVE_LABEL[leave.leaveType]||leave.leaveType;
 
   const html = `<!DOCTYPE html>
@@ -44,9 +34,6 @@ function printLeave(leave, logoData, users, allRecords) {
   .line { border-bottom: 1px solid #000; min-width: 80px; padding: 2px 4px; min-height: 22px; }
   .checkbox-row { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
   .cb { display: flex; align-items: center; gap: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-  th, td { border: 1px solid #000; padding: 5px 8px; text-align: center; }
-  th { font-weight: 700; background: #f0f0f0; }
   .sig-row { display: flex; gap: 20px; margin-top: 16px; }
   .sig { flex: 1; text-align: center; }
   .sig-line { border-bottom: 1px solid #000; margin: 24px 16px 4px; }
@@ -108,40 +95,6 @@ ${logoData ? `<div style="text-align:left;margin-bottom:12px"><img src="${logoDa
   <div class="sig"><div class="sig-line"></div><div>พนักงานที่ควบคุม</div></div>
   <div class="sig"><div class="sig-line"></div><div>ผู้อนุมัติ</div></div>
 </div>
-<table>
-  <tr><th colspan="7">สำหรับเจ้าหน้าที่ระเบียนวันลาประจำฝ่าย</th></tr>
-  <tr>
-    <th rowspan="2">รายการ</th>
-    <th colspan="5">นับเป็นวันลา</th>
-    <th rowspan="2">ไม่นับวันลา<br/>ลาพิเศษ 1</th>
-  </tr>
-  <tr><th>ลาพักร้อน</th><th>ลากิจ</th><th>ลาป่วย</th><th>ลาพิเศษ</th><th>อื่นๆ</th></tr>
-  <tr><td>ลามาแล้ว</td>
-    <td>${prevSum.vacation||""}</td><td>${prevSum.personal||""}</td>
-    <td>${prevSum.sick||""}</td><td></td><td>${prevSum.other||""}</td><td></td>
-  </tr>
-  <tr><td>ลาครั้งนี้</td>
-    <td>${leave.leaveType==="vacation"?leave.days:""}</td>
-    <td>${leave.leaveType==="personal"?leave.days:""}</td>
-    <td>${leave.leaveType==="sick"?leave.days:""}</td>
-    <td></td><td>${leave.leaveType==="other"?leave.days:""}</td><td></td>
-  </tr>
-  <tr><td>รวม</td>
-    <td>${leave.leaveType==="vacation"?(prevSum.vacation+(leave.days||0)):prevSum.vacation||""}</td>
-    <td>${leave.leaveType==="personal"?(prevSum.personal+(leave.days||0)):prevSum.personal||""}</td>
-    <td>${leave.leaveType==="sick"?(prevSum.sick+(leave.days||0)):prevSum.sick||""}</td>
-    <td></td>
-    <td>${leave.leaveType==="other"?(prevSum.other+(leave.days||0)):prevSum.other||""}</td>
-    <td></td>
-  </tr>
-  ${quota.vacation||quota.personal||quota.sick ? `
-  <tr><td style="font-size:11px;color:#555">วันที่ได้รับ</td>
-    <td style="font-size:11px;color:#555">${quota.vacation||"-"}</td>
-    <td style="font-size:11px;color:#555">${quota.personal||"-"}</td>
-    <td style="font-size:11px;color:#555">${quota.sick||"-"}</td>
-    <td></td><td style="font-size:11px;color:#555">${quota.other||"-"}</td><td></td>
-  </tr>` : ""}
-</table>
 <script>window.onload=()=>{ window.print(); }</script>
 </body></html>`;
 
@@ -218,6 +171,47 @@ export default function LeavePage({ onBack, currentUser, users }) {
       </div>
 
       <div style={{ padding:"16px 20px 48px", maxWidth:900, margin:"0 auto" }}>
+
+        {/* Summary */}
+        {(() => {
+          const summary = {};
+          myRecords.forEach(r => {
+            if (!summary[r.name]) summary[r.name] = { vacation:0, personal:0, sick:0, other:0 };
+            if (summary[r.name][r.leaveType] !== undefined)
+              summary[r.name][r.leaveType] += (r.days||0);
+          });
+          if (Object.keys(summary).length === 0) return null;
+          return (
+            <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0",
+              padding:"14px 16px", marginBottom:16 }}>
+              <div style={{ fontSize:11, color:"#94a3b8", fontWeight:700, marginBottom:10,
+                textTransform:"uppercase", letterSpacing:1 }}>สรุปวันลา</div>
+              <div style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                  <thead>
+                    <tr style={{ background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
+                      {["ชื่อ","ลาพักร้อน","ลากิจ","ลาป่วย","อื่นๆ"].map(h=>(
+                        <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:11,
+                          color:"#64748b", fontWeight:700 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(summary).map(([name, s]) => (
+                      <tr key={name} style={{ borderBottom:"1px solid #f1f5f9" }}>
+                        <td style={{ padding:"8px 12px", fontWeight:600, color:"#0f172a" }}>{name}</td>
+                        <td style={{ padding:"8px 12px", color:"#2563eb" }}>{s.vacation||0} วัน</td>
+                        <td style={{ padding:"8px 12px", color:"#7c3aed" }}>{s.personal||0} วัน</td>
+                        <td style={{ padding:"8px 12px", color:"#dc2626" }}>{s.sick||0} วัน</td>
+                        <td style={{ padding:"8px 12px", color:"#475569" }}>{s.other||0} วัน</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Filter */}
         <div style={{ background:"#fff", borderRadius:12, padding:"12px 16px",
