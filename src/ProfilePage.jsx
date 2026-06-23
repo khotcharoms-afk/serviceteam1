@@ -1,15 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { auth, db } from "./firebase";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 
 export default function ProfilePage({ onBack, currentUser, onSignOut }) {
-  const [tab, setTab] = useState("info"); // "info" | "password"
+  const [tab, setTab] = useState("info");
 
   // Info
   const [displayName, setDisplayName] = useState(currentUser?.name || "");
   const [infoSaving, setInfoSaving]   = useState(false);
   const [infoMsg, setInfoMsg]         = useState("");
+
+  // OT Profile
+  const [otProfile, setOtProfile] = useState({
+    empId:"", position:"", dept:"", division:"",
+    supervisor:"", supervisorOT:"", staff:""
+  });
+  const [otSaving, setOtSaving] = useState(false);
+  const [otMsg, setOtMsg]       = useState("");
 
   // Password
   const [currentPw, setCurrentPw]   = useState("");
@@ -25,6 +33,25 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
   const LB = { fontSize:11, color:"#94a3b8", fontWeight:700, textTransform:"uppercase",
     letterSpacing:.5, marginBottom:4, display:"block" };
 
+  useEffect(() => {
+    const uid = currentUser?.uid || currentUser?.id;
+    if (!uid) return;
+    getDoc(doc(db,"otProfiles",uid)).then(d => {
+      if (d.exists()) {
+        const data = d.data();
+        setOtProfile({
+          empId: data.empId||"",
+          position: data.position||"",
+          dept: data.dept||"",
+          division: data.division||"",
+          supervisor: data.supervisor||"",
+          supervisorOT: data.supervisorOT||"",
+          staff: data.staff||"",
+        });
+      }
+    });
+  }, [currentUser]);
+
   async function saveInfo() {
     if (!displayName.trim()) return;
     setInfoSaving(true); setInfoMsg("");
@@ -33,10 +60,26 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
         name: displayName.trim()
       });
       setInfoMsg("✅ บันทึกแล้ว");
-    } catch(err) {
-      setInfoMsg("❌ " + err.message);
-    }
+    } catch(err) { setInfoMsg("❌ " + err.message); }
     setInfoSaving(false);
+  }
+
+  async function saveOT() {
+    setOtSaving(true); setOtMsg("");
+    try {
+      const uid = currentUser?.uid || currentUser?.id;
+      // อ่าน profile เดิมก่อน เพื่อไม่ให้ทับ period fields
+      const existing = await getDoc(doc(db,"otProfiles",uid));
+      const prev = existing.exists() ? existing.data() : {};
+      await setDoc(doc(db,"otProfiles",uid), {
+        ...prev,
+        ...otProfile,
+        name: displayName || currentUser?.name || "",
+        updatedAt: new Date().toISOString(),
+      });
+      setOtMsg("✅ บันทึกแล้ว");
+    } catch(err) { setOtMsg("❌ " + err.message); }
+    setOtSaving(false);
   }
 
   async function changePassword() {
@@ -55,9 +98,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
     } catch(err) {
       if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
         setPwError("รหัสผ่านปัจจุบันไม่ถูกต้อง");
-      } else {
-        setPwError(err.message);
-      }
+      } else { setPwError(err.message); }
     }
     setPwSaving(false);
   }
@@ -66,7 +107,6 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
 
   return (
     <div style={{ minHeight:"100vh", background:"#f8fafc", fontFamily:"'Noto Sans Thai','Sora',sans-serif" }}>
-      {/* Header */}
       <header style={{ background:"#fff", borderBottom:"1px solid #e2e8f0",
         padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
         <button onClick={onBack} style={{ background:"#f1f5f9", border:"none", borderRadius:8,
@@ -76,7 +116,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
         <div style={{ fontSize:15, fontWeight:700, color:"#0f172a" }}>โปรไฟล์</div>
       </header>
 
-      <div style={{ maxWidth:480, margin:"32px auto", padding:"0 16px" }}>
+      <div style={{ maxWidth:520, margin:"32px auto", padding:"0 16px" }}>
         {/* Avatar */}
         <div style={{ textAlign:"center", marginBottom:24 }}>
           <div style={{ width:72, height:72, borderRadius:"50%",
@@ -99,22 +139,26 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
         {/* Tabs */}
         <div style={{ display:"flex", background:"#f1f5f9", borderRadius:10,
           padding:4, marginBottom:20, gap:4 }}>
-          {[{v:"info",l:"ข้อมูลส่วนตัว"},{v:"password",l:"เปลี่ยนรหัสผ่าน"}].map(t=>(
-            <button key={t.v} onClick={()=>{ setTab(t.v); setInfoMsg(""); setPwMsg(""); setPwError(""); }}
+          {[
+            {v:"info",l:"ข้อมูลส่วนตัว"},
+            {v:"ot",l:"ข้อมูล OT"},
+            {v:"password",l:"รหัสผ่าน"},
+          ].map(t=>(
+            <button key={t.v} onClick={()=>{ setTab(t.v); setInfoMsg(""); setPwMsg(""); setPwError(""); setOtMsg(""); }}
               style={{ flex:1, padding:"8px 0", borderRadius:8, border:"none",
                 background:tab===t.v?"#fff":"transparent",
                 color:tab===t.v?"#0f172a":"#94a3b8",
-                fontWeight:tab===t.v?700:500, fontSize:13, cursor:"pointer",
+                fontWeight:tab===t.v?700:500, fontSize:12, cursor:"pointer",
                 fontFamily:"inherit", boxShadow:tab===t.v?"0 1px 4px rgba(0,0,0,.08)":"none" }}>
               {t.l}
             </button>
           ))}
         </div>
 
-        {/* Card */}
         <div style={{ background:"#fff", borderRadius:16, padding:24,
           boxShadow:"0 4px 24px rgba(0,0,0,.06)", border:"1px solid #e2e8f0" }}>
 
+          {/* Tab: ข้อมูลส่วนตัว */}
           {tab === "info" && (
             <>
               <div style={{ marginBottom:16 }}>
@@ -138,6 +182,41 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
             </>
           )}
 
+          {/* Tab: ข้อมูล OT */}
+          {tab === "ot" && (
+            <>
+              <div style={{ fontSize:12, color:"#64748b", marginBottom:16,
+                background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:8, padding:"8px 12px" }}>
+                ℹ️ ข้อมูลนี้จะถูกใส่ใน Excel หน้าปก OT และใบ OR อัตโนมัติ
+              </div>
+              {[
+                { key:"empId",       label:"รหัสพนักงาน",               placeholder:"เช่น MT260101" },
+                { key:"position",    label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า" },
+                { key:"dept",        label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ" },
+                { key:"division",    label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ" },
+                { key:"supervisor",  label:"ชื่อผู้บังคับบัญชา (ใบ OR)", placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
+                { key:"supervisorOT",label:"ผู้บังคับบัญชา (หน้าปก OT)", placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
+                { key:"staff",       label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho" },
+              ].map(f=>(
+                <div key={f.key} style={{ marginBottom:14 }}>
+                  <label style={LB}>{f.label}</label>
+                  <input value={otProfile[f.key]||""} placeholder={f.placeholder}
+                    onChange={e=>setOtProfile(p=>({...p,[f.key]:e.target.value}))}
+                    style={IS}/>
+                </div>
+              ))}
+              {otMsg && <div style={{ marginBottom:12, fontSize:13,
+                color:otMsg.startsWith("✅")?"#16a34a":"#ef4444" }}>{otMsg}</div>}
+              <button onClick={saveOT} disabled={otSaving}
+                style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
+                  borderRadius:10, padding:12, fontSize:14, fontWeight:600,
+                  cursor:"pointer", fontFamily:"inherit", opacity:otSaving?0.6:1 }}>
+                {otSaving ? "กำลังบันทึก..." : "💾 บันทึกข้อมูล OT"}
+              </button>
+            </>
+          )}
+
+          {/* Tab: รหัสผ่าน */}
           {tab === "password" && (
             <>
               <div style={{ marginBottom:14 }}>
@@ -180,7 +259,6 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           )}
         </div>
 
-        {/* Sign out */}
         <button onClick={onSignOut}
           style={{ width:"100%", marginTop:16, background:"#fff",
             border:"1px solid #fecaca", color:"#ef4444", borderRadius:10,
