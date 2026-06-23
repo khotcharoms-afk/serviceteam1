@@ -6,7 +6,7 @@ import OTModal from "./OTModal.jsx";
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
   const [records, setRecords]   = useState([]);
-  const [profile, setProfile]   = useState({ name:"", empId:"", position:"", dept:"", division:"", supervisor:"", supervisorOT:"", staff:"", periodStart:"", periodEnd:"", periodMonth:"" });
+  const [profile, setProfile]   = useState({ periodStart:"", periodEnd:"", periodMonth:"" });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved]   = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +32,14 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     const uid = currentUser?.id || currentUser?.uid;
     if (uid) {
       getDoc(doc(db,"otProfiles",uid)).then(d => {
-        if (d.exists()) setProfile(d.data());
+        if (d.exists()) {
+          const data = d.data();
+          setProfile({
+            periodStart: data.periodStart||"",
+            periodEnd: data.periodEnd||"",
+            periodMonth: data.periodMonth||"",
+          });
+        }
       });
     }
   }, [currentUser]);
@@ -225,7 +232,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         {/* Tab bar */}
         <div style={{ display:"flex",gap:6,marginBottom:16,background:"#fff",border:"1px solid #e2e8f0",
           borderRadius:10,padding:6 }}>
-          {[{key:"list",label:"📋 รายการ"},{key:"profile",label:"👤 โปรไฟล์"}].map(t=>(
+          {[{key:"list",label:"📋 รายการ"}].map(t=>(
             <button key={t.key} onClick={()=>setTab(t.key)}
               style={{ flex:1,padding:"7px",borderRadius:7,border:"none",fontSize:12,fontWeight:700,
                 cursor:"pointer",fontFamily:"inherit",
@@ -236,93 +243,59 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
           ))}
         </div>
 
-        {/* Profile Tab */}
-        {tab==="profile" && (
-          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"20px 20px" }}>
-            <div style={{ fontSize:14,fontWeight:700,color:"#0f172a",marginBottom:4 }}>โปรไฟล์ OT ของฉัน</div>
-            <div style={{ fontSize:12,color:"#64748b",marginBottom:16 }}>ข้อมูลนี้จะถูกใส่ใน Excel หน้าปก OT อัตโนมัติ</div>
-            {[
-              { key:"name",       label:"ชื่อ-นามสกุล (ภาษาไทย) *", placeholder:"เช่น นายสายัญห์ คชรมย์" },
-              { key:"empId",      label:"รหัสพนักงาน",                placeholder:"เช่น MT260101" },
-              { key:"position",   label:"ตำแหน่ง",                   placeholder:"เช่น เจ้าหน้าที่บริการลูกค้า" },
-              { key:"dept",       label:"แผนก",                      placeholder:"เช่น ศูนย์บริการ" },
-              { key:"division",   label:"ฝ่าย",                      placeholder:"เช่น โครงการและการจัดการบริการ" },
-              { key:"supervisor", label:"ชื่อผู้บังคับบัญชา (ใบ OR)",  placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
-              { key:"supervisorOT", label:"ผู้บังคับบัญชา (หน้าปก OT)",   placeholder:"เช่น นายณัฐพงศ์ รัตนไชย" },
-              { key:"staff",      label:"Staff (ผู้ร่วมงาน)",         placeholder:"เช่น nuttapong sayan.kho" },
-            ].map(f=>(
-              <div key={f.key} style={{ marginBottom:12 }}>
-                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
-                  letterSpacing:.5,marginBottom:4,display:"block" }}>{f.label}</label>
-                <input value={profile[f.key]||""} placeholder={f.placeholder}
-                  onChange={e=>setProfile(p=>({...p,[f.key]:e.target.value}))}
-                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                    padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
-              </div>
-            ))}
-
-            {/* รอบเบิก */}
-            <div style={{ marginBottom:12 }}>
-              <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
-                letterSpacing:.5,marginBottom:4,display:"block" }}>เดือนที่เบิก (ชื่อเต็ม)</label>
+        {/* Period Section — แสดงเหนือ list เสมอ */}
+        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
+          padding:"16px 20px",marginBottom:16 }}>
+          <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:12 }}>รอบเบิก OT</div>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,alignItems:"end" }}>
+            <div>
+              <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>เดือนที่เบิก</div>
               <input value={profile.periodMonth||""} placeholder="เช่น กรกฎาคม"
                 onChange={e=>setProfile(p=>({...p,periodMonth:e.target.value}))}
                 style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc",marginBottom:8 }}/>
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
             </div>
-            <div style={{ marginBottom:12 }}>
-              <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",
-                letterSpacing:.5,marginBottom:4,display:"block" }}>รอบเบิก OT</label>
-              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
-                <div>
-                  <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่เริ่ม</div>
-                  <input type="date" value={
-                      profile.periodStart
-                        ? profile.periodStart.includes("-") && profile.periodStart.length===10 && !profile.periodStart.match(/^\d{2}\//)
-                          ? profile.periodStart
-                          : (() => { const p=profile.periodStart.split("/"); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:""; })()
-                        : ""
-                    }
-                    onChange={e=>{
-                      const val = e.target.value; // YYYY-MM-DD
-                      const MONTH_TH=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-                      const mo = val ? MONTH_TH[parseInt(val.slice(5,7))-1] : "";
-                      const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
-                      setProfile(p=>({...p, periodStart:fmt, periodMonth:mo||p.periodMonth}));
-                    }}
-                    style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                      padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
-                </div>
-                <div>
-                  <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>วันที่สิ้นสุด</div>
-                  <input type="date" value={
-                      profile.periodEnd
-                        ? profile.periodEnd.includes("-") && profile.periodEnd.length===10 && !profile.periodEnd.match(/^\d{2}\//)
-                          ? profile.periodEnd
-                          : (() => { const p=profile.periodEnd.split("/"); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:""; })()
-                        : ""
-                    }
-                    onChange={e=>{
-                      const val = e.target.value;
-                      const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
-                      setProfile(p=>({...p,periodEnd:fmt}));
-                    }}
-                    style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                      padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
-                </div>
-              </div>
+            <div>
+              <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>วันที่เริ่ม</div>
+              <input type="date"
+                value={profile.periodStart
+                  ? (profile.periodStart.includes("/")
+                    ? (()=>{ const p=profile.periodStart.split("/"); return `${p[2]}-${p[1]}-${p[0]}`; })()
+                    : profile.periodStart)
+                  : ""}
+                onChange={e=>{
+                  const val = e.target.value;
+                  const MONTH_TH=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+                  const mo = val ? MONTH_TH[parseInt(val.slice(5,7))-1] : "";
+                  const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
+                  setProfile(p=>({...p, periodStart:fmt, periodMonth:mo||p.periodMonth}));
+                }}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
             </div>
-
-
-
-            <button onClick={saveProfile} disabled={profileSaving||!profile.name?.trim()}
-              style={{ width:"100%",background:profileSaved?"#16a34a":"#F97316",border:"none",color:"#fff",
-                borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
-                opacity:!profile.name?.trim()?0.5:1,marginTop:4 }}>
-              {profileSaving?"กำลังบันทึก...":profileSaved?"✅ บันทึกแล้ว":"💾 บันทึกโปรไฟล์"}
-            </button>
+            <div>
+              <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>วันที่สิ้นสุด</div>
+              <input type="date"
+                value={profile.periodEnd
+                  ? (profile.periodEnd.includes("/")
+                    ? (()=>{ const p=profile.periodEnd.split("/"); return `${p[2]}-${p[1]}-${p[0]}`; })()
+                    : profile.periodEnd)
+                  : ""}
+                onChange={e=>{
+                  const val = e.target.value;
+                  const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
+                  setProfile(p=>({...p,periodEnd:fmt}));
+                }}
+                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+            </div>
           </div>
-        )}
+          <button onClick={saveProfile} disabled={profileSaving}
+            style={{ marginTop:12,background:profileSaved?"#16a34a":"#F97316",border:"none",color:"#fff",
+              borderRadius:8,padding:"8px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            {profileSaving?"กำลังบันทึก...":profileSaved?"✅ บันทึกแล้ว":"💾 บันทึกรอบเบิก"}
+          </button>
+        </div>
 
         {/* KPI */}
         {tab==="list" && <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)",gap:10,marginBottom:16 }}>
