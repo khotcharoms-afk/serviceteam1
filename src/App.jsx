@@ -40,8 +40,7 @@ export default function App({ currentUser, onSignOut }) {
   const [taskPage,setTaskPage]     = useState(false);
   const [otPage,setOtPage]         = useState(false);
   const [profilePage,setProfilePage] = useState(false);
-  const [globalSearch, setGlobalSearch] = useState(false);
-  const [globalQ, setGlobalQ]           = useState("");
+
   const [leavePage,setLeavePage]   = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
@@ -706,9 +705,6 @@ export default function App({ currentUser, onSignOut }) {
           </div>
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-          <button onClick={()=>{ setGlobalSearch(true); setGlobalQ(""); }}
-            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
-              borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>🔍</button>
           <button onClick={()=>setOnsitePage(true)} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
             color:"#ea580c",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📍</button>
           <div style={{ position:"relative",display:"inline-flex" }}>
@@ -1133,109 +1129,7 @@ export default function App({ currentUser, onSignOut }) {
         onChecklist={saveChecklist}
         saving={saving}/>
 
-      {globalSearch && (
-        <div style={{ position:"fixed",inset:0,zIndex:800,background:"rgba(15,23,42,.6)",
-          display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"60px 16px 16px" }}
-          onClick={()=>setGlobalSearch(false)}>
-          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:620,
-            maxHeight:"80vh",display:"flex",flexDirection:"column",
-            boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
-            onClick={e=>e.stopPropagation()}>
-            {/* Search input */}
-            <div style={{ padding:"14px 16px",borderBottom:"1px solid #f1f5f9",display:"flex",alignItems:"center",gap:10 }}>
-              <span style={{ fontSize:18,flexShrink:0 }}>🔍</span>
-              <input autoFocus value={globalQ} onChange={e=>setGlobalQ(e.target.value)}
-                placeholder="ค้นหาเคส งาน Onsite โครงการ..."
-                style={{ flex:1,border:"none",outline:"none",fontSize:15,fontFamily:"inherit",
-                  color:"#0f172a",background:"transparent" }}/>
-              {globalQ && <button onClick={()=>setGlobalQ("")}
-                style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:16 }}>✕</button>}
-              <button onClick={()=>setGlobalSearch(false)}
-                style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
-                  fontSize:12,padding:"4px 10px",borderRadius:6,fontFamily:"inherit" }}>Esc</button>
-            </div>
-            {/* Results */}
-            <div style={{ overflowY:"auto",flex:1,padding:"8px 0" }}>
-              {globalQ.trim().length < 2 ? (
-                <div style={{ padding:"32px",textAlign:"center",color:"#94a3b8",fontSize:13 }}>
-                  พิมพ์อย่างน้อย 2 ตัวอักษร
-                </div>
-              ) : (()=>{
-                const q = globalQ.trim().toLowerCase();
-                const matchCases = cases.filter(c=>[c.title,c.site,c.note,c.type].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
-                const matchTasks = (tasks||[]).filter(t=>[t.title,t.site,t.note,t.projectName].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
-                const matchOnsite = (onsiteRecords||[]).filter(r=>[r.projectName,r.site,r.detail,r.scope].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
-                const matchProjs = projects.filter(p=>[p.name,p.code,p.customer].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
-                const total = matchCases.length+matchTasks.length+matchOnsite.length+matchProjs.length;
-                if(total===0) return (
-                  <div style={{ padding:"32px",textAlign:"center",color:"#94a3b8",fontSize:13 }}>ไม่พบผลลัพธ์</div>
-                );
-                const Section = ({icon,label,items,render})=>items.length===0?null:(
-                  <div>
-                    <div style={{ padding:"8px 16px 4px",fontSize:10,color:"#94a3b8",fontWeight:700,
-                      textTransform:"uppercase",letterSpacing:.5 }}>{icon} {label} ({items.length})</div>
-                    {items.map(render)}
-                  </div>
-                );
-                return (
-                  <div>
-                    <Section icon="📁" label="โครงการ" items={matchProjs} render={p=>(
-                      <div key={p.id} onClick={()=>{ setView(p.id); setFilterStat("all"); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,
-                          borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
-                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
-                        <div>
-                          <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{p.name}</div>
-                          {p.customer&&<div style={{ fontSize:11,color:"#64748b" }}>👤 {p.customer}</div>}
-                        </div>
-                      </div>
-                    )}/>
-                    <Section icon="📋" label="เคส" items={matchCases} render={c=>{
-                      const proj=projects.find(p=>p.id===c.projectId);
-                      return (
-                      <div key={c.id} onClick={()=>{ setDetailCase(c); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
-                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{c.title}</div>
-                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-                          {proj&&<><span style={{ color:proj.color,marginRight:4 }}>◆</span>{proj.name} · </>}{c.site||""} · {c.date||""}
-                        </div>
-                      </div>
-                    );}}/>
-                    <Section icon="📋" label="งาน (Board)" items={matchTasks} render={t=>{
-                      const proj=projects.find(p=>p.id===t.projectId);
-                      return (
-                      <div key={t.id} onClick={()=>{ setTaskPage(true); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
-                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{t.title}</div>
-                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-                          {proj&&<>{proj.name} · </>}{t.site||""} {t.dueDate&&`· ${t.dueDate}`}
-                        </div>
-                      </div>
-                    );}}/>
-                    <Section icon="📍" label="Onsite" items={matchOnsite} render={r=>(
-                      <div key={r.id} onClick={()=>{ setOnsitePage(true); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
-                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{r.projectName||r.projectId}</div>
-                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
-                          {r.site&&`📍 ${r.site} · `}{r.date||""} · {r.scope||""}
-                        </div>
-                      </div>
-                    )}/>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {importCaseModal && (
         <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
