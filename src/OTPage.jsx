@@ -112,6 +112,34 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     }
   }
 
+  async function exportAllOR() {
+    if (!profile.name?.trim()) {
+      alert("กรุณาตั้งค่าโปรไฟล์ OT ก่อน (tab 👤 โปรไฟล์)");
+      setTab("profile");
+      return;
+    }
+    const exportRecords = filtered.length > 0 ? filtered : myRecords;
+    if (exportRecords.length === 0) return;
+    try {
+      const sorted = [...exportRecords].sort((a,b)=>(a.dateIn||"").localeCompare(b.dateIn||""));
+      const res = await fetch("/api/generate-or", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ records: sorted, profile }),
+      });
+      if (!res.ok) { const t = await res.text(); throw new Error(t); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `OR_all_${profile.name||"export"}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch(err) {
+      alert("Export ใบ OR ไม่สำเร็จ: " + err.message);
+    }
+  }
+
   async function exportExcel() {
     const exportRecords = filtered.length > 0 ? filtered : myRecords;
     if (exportRecords.length === 0) return;
@@ -159,6 +187,11 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         </button>
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>⏰ บันทึก OT</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
+          <button onClick={exportAllOR}
+            style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",
+              borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            🖨 Export ใบ OR
+          </button>
           <button onClick={exportExcel}
             style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
               borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
