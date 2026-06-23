@@ -76,8 +76,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-      onClick={onClose}>
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
       <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:540,
         maxHeight:"92vh",overflowY:"auto",padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
