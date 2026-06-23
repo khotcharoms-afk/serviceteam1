@@ -16,7 +16,7 @@ import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
-import OTPage from "./OTPage.jsx";
+import ProfilePage from "./ProfilePage.jsx";
 import TaskBoard from "./TaskBoard.jsx";
 
 export default function App({ currentUser, onSignOut }) {
@@ -38,6 +38,7 @@ export default function App({ currentUser, onSignOut }) {
   const [onsitePage,setOnsitePage] = useState(false);
   const [taskPage,setTaskPage]     = useState(false);
   const [otPage,setOtPage]         = useState(false);
+  const [profilePage,setProfilePage] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
   const [globalQ, setGlobalQ]           = useState("");
   const [leavePage,setLeavePage]   = useState(false);
@@ -589,6 +590,7 @@ export default function App({ currentUser, onSignOut }) {
 
   if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
   if(leavePage) return <LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/>;
+  if(profilePage) return <ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/>;
   if(otPage) return <OTPage onBack={()=>setOtPage(false)}
     projects={projects} users={users} currentUser={currentUser}/>;
   if(taskPage) return <TaskBoard onBack={()=>setTaskPage(false)}
@@ -736,9 +738,14 @@ export default function App({ currentUser, onSignOut }) {
             + เคสใหม่
           </button>
           {!isMobile && (
-            <button onClick={onSignOut} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",
-              color:"#64748b",borderRadius:8,padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit" }}
-              title="ออกจากระบบ">🚪</button>
+            <button onClick={()=>setProfilePage(true)}
+              style={{ width:34,height:34,borderRadius:"50%",border:"2px solid #e2e8f0",
+                background:"linear-gradient(135deg,#F97316,#6B21A8)",
+                color:"#fff",fontSize:12,fontWeight:800,cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center" }}
+              title={currentUser?.name}>
+              {(currentUser?.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+            </button>
           )}
         </div>
       </header>
@@ -765,6 +772,11 @@ export default function App({ currentUser, onSignOut }) {
                     👥 จัดการ User
                   </button>
                 )}
+                <button onClick={()=>{ setProfilePage(true); setMenuOpen(false); }}
+                  style={{ background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",
+                    borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
+                  👤 โปรไฟล์
+                </button>
                 <button onClick={onSignOut}
                   style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
                     borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
