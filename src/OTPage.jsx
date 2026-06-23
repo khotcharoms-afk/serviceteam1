@@ -128,6 +128,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     const from = orDateFrom ? new Date(orDateFrom) : null;
     const to   = orDateTo   ? new Date(orDateTo)   : null;
     const exportRecords = myRecords.filter(r => {
+      if (r.createdBy !== (currentUser?.id||currentUser?.uid)) return false;
       const d = new Date(r.dateIn||"");
       if (from && d < from) return false;
       if (to   && d > to)   return false;
