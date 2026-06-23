@@ -290,7 +290,7 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     try {
-      const isAdmin = currentUser?.role === "admin";
+      const isAdmin = ["admin","dev"].includes(currentUser?.role);
       const id = recordId || Date.now().toString();
       const payload = {
         ...data,
@@ -303,7 +303,7 @@ export default function App({ currentUser, onSignOut }) {
 
       // แจ้ง admin ถ้าเป็น user บันทึก (สถานะ pending)
       if (!isAdmin && payload.status === "pending") {
-        const admins = users.filter(u => u.role === "admin");
+        const admins = users.filter(u => ["admin","dev"].includes(u.role));
         const batch = writeBatch(db);
         admins.forEach(a => {
           batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)), {
@@ -621,7 +621,7 @@ export default function App({ currentUser, onSignOut }) {
         showToast("📋 สร้างงานและแจ้งเตือนแล้ว","success");
       } else if (!isNew && prevTask && data.status && prevTask.status !== data.status) {
         // แจ้ง admin เมื่อช่างเปลี่ยนสถานะ
-        const admins = users.filter(u=>u.role==="admin"&&u.id!==currentUser?.id);
+        const admins = users.filter(u=>["admin","dev"].includes(u.role)&&u.id!==currentUser?.id);
         admins.forEach(a=>{
           batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)),{
             type:"task", toUid:a.id, toName:a.name, fromName:currentUser?.name||"",
