@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 const SITUATION_OPTS = ["Support", "Commissioning"];
+const EXAMINER_OPTS = ["นายณัฐพงศ์ รัตนไชย", "นายพีรพงษ์ คล่องวิชา", "นายเจริญชัย สุวรรณประทีป"];
 
 function calcHours(timeIn, timeOut, dateIn, dateOut) {
   if (!timeIn || !timeOut || !dateIn) return "";
@@ -232,8 +233,10 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
           </div>
           <div>
             <label style={LB}>ผู้ตรวจสอบ / Examiner</label>
-            <input value={examiner} onChange={e=>setExaminer(e.target.value)}
-              placeholder="ชื่อผู้ตรวจสอบ" style={IS}/>
+            <select value={examiner} onChange={e=>setExaminer(e.target.value)} style={IS}>
+              <option value="">เลือกผู้ตรวจสอบ</option>
+              {EXAMINER_OPTS.map(o=><option key={o} value={o}>{o}</option>)}
+            </select>
           </div>
         </div>
 
