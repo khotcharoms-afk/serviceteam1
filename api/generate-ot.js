@@ -32,14 +32,22 @@ export default async function handler(req, res) {
     set("A3", `ชื่อพนักงานผู้ขอเบิก .................${profile.nameTH||""}............................................  รหัสพนักงาน ........${profile.empId||""}...............  ตำแหน่ง .......${profile.position||""}..............................  แผนก ..................${profile.dept||""}..........................  ฝ่าย ................${profile.division||""}..............................`);
     set("A4", `การปฏิบัติงาน (ตามรอบวันที่ 16 เดือนก่อนหน้า ถึงวันที่ 15 เดือนปัจจุบัน) ตั้งแต่วันที่ ......................${periodStart}........................................ ถึงวันที่ ...............${periodEnd}........................................ เบิกประจำงวดเดือน ................${monthName}........................................ ปี ................${py?parseInt(py)+543:""}...........................`);
 
+    function fmtDateShort(d) {
+      if (!d) return "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        const [y,m,dd] = d.split("-");
+        return `${dd}/${m}/${String(parseInt(y)+543).slice(-2)}`;
+      }
+      return d;
+    }
     const sortedRecords = [...records].sort((a,b) => (a.dateIn||"").localeCompare(b.dateIn||""));
     for (let i = 0; i < 18; i++) {
       const r = sortedRecords[i];
       const row = 9 + i;
       if (r) {
         set(`A${row}`, i+1);
-        set(`B${row}`, `${r.dateIn||""} ${r.timeIn||""}`);
-        set(`C${row}`, `${r.dateOut||r.dateIn||""} ${r.timeOut||""}`);
+        set(`B${row}`, `${fmtDateShort(r.dateIn)} ${r.timeIn||""}`);
+        set(`C${row}`, `${fmtDateShort(r.dateOut||r.dateIn)} ${r.timeOut||""}`);
         set(`D${row}`, r.projectCode||"");
         set(`E${row}`, r.projectName||"");
         set(`F${row}`, r.desc||"");
