@@ -129,7 +129,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
       done: pc.filter(c=>c.status==="done").length,
       hold: pc.filter(c=>c.status==="hold").length,
     };
-  });
+  }).filter(p=>p.total>0).sort((a,b)=>b.total-a.total).slice(0,8);
 
   return (
     <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
@@ -359,7 +359,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
         {/* สถิติต่อโครงการ — compact table */}
         <div style={{ marginBottom:20 }}>
           <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:10 }}>
-            <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>◆ สถิติต่อโครงการ</div>
+            <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>◆ สถิติต่อโครงการ <span style={{ fontSize:11,color:"#94a3b8",fontWeight:400 }}>(Top 8)</span></div>
             <span style={{ background:"#f1f5f9",color:"#64748b",borderRadius:20,
               padding:"1px 8px",fontSize:11,fontWeight:700 }}>{projects.length}</span>
           </div>
