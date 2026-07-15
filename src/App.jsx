@@ -522,9 +522,13 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     const toImport = importRows.filter(r => importSelected[r.key]);
-    // กัน import ซ้ำ — เช็คชื่อกับโครงการที่มีอยู่แล้ว
+    // กัน import ซ้ำ — เช็คจากชื่อโครงการ หรือ รหัสโครงการ (code) ที่มีอยู่แล้ว
     const existingNames = new Set(projects.map(p => (p.name||"").trim().toLowerCase()));
-    const newOnly    = toImport.filter(r => !existingNames.has((r.name||"").trim().toLowerCase()));
+    const existingCodes = new Set(projects.map(p => (p.code||"").trim().toLowerCase()).filter(Boolean));
+    const newOnly    = toImport.filter(r =>
+      !existingNames.has((r.name||"").trim().toLowerCase()) &&
+      !(r.code && existingCodes.has((r.code||"").trim().toLowerCase()))
+    );
     const dupCount   = toImport.length - newOnly.length;
     if (newOnly.length === 0) {
       showToast(`ทุกโครงการมีอยู่แล้วในระบบ (${dupCount} รายการซ้ำ)`, "error");
@@ -1382,7 +1386,19 @@ export default function App({ currentUser, onSignOut }) {
             <div style={{ fontSize:12,color:"#64748b",marginBottom:12 }}>
               เลือกโครงการที่ต้องการ import — กดเลือกทั้งหมดหรือเลือกทีละรายการ
             </div>
-            <div style={{ display:"flex",gap:8,marginBottom:12 }}>
+            {(()=>{
+              const dupCount = importRows.filter(r=>
+                projects.some(p=>(p.name||"").trim().toLowerCase()===(r.name||"").trim().toLowerCase() ||
+                  (r.code && (p.code||"").trim().toLowerCase()===(r.code||"").trim().toLowerCase()))
+              ).length;
+              return dupCount>0 && (
+                <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:8,
+                  padding:"8px 12px",marginBottom:12,fontSize:12,color:"#b91c1c" }}>
+                  ⚠️ พบ {dupCount} รายการที่มีอยู่ในระบบแล้ว (ชื่อหรือรหัสโครงการตรงกัน)
+                </div>
+              );
+            })()}
+            <div style={{ display:"flex",gap:8,marginBottom:12,flexWrap:"wrap" }}>
               <button onClick={()=>{ const s={}; importRows.forEach(r=>s[r.key]=true); setImportSelected(s); }}
                 style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
                   borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -1393,13 +1409,26 @@ export default function App({ currentUser, onSignOut }) {
                   borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
                 ยกเลิกทั้งหมด
               </button>
+              <button onClick={()=>{
+                const s={};
+                importRows.forEach(r=>{
+                  const isDup=projects.some(p=>(p.name||"").trim().toLowerCase()===(r.name||"").trim().toLowerCase()||
+                    (r.code&&(p.code||"").trim().toLowerCase()===(r.code||"").trim().toLowerCase()));
+                  s[r.key]=!isDup;
+                });
+                setImportSelected(s);
+              }} style={{ background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",
+                borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ✕ ไม่เลือกรายการซ้ำ
+              </button>
               <span style={{ marginLeft:"auto",fontSize:12,color:"#64748b",alignSelf:"center" }}>
                 เลือกแล้ว {Object.values(importSelected).filter(Boolean).length} รายการ
               </span>
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:16 }}>
               {importRows.map(r => {
-                const isDup = projects.some(p=>(p.name||"").trim().toLowerCase()===(r.name||"").trim().toLowerCase());
+                const isDup = projects.some(p=>(p.name||"").trim().toLowerCase()===(r.name||"").trim().toLowerCase() ||
+                  (r.code && (p.code||"").trim().toLowerCase()===(r.code||"").trim().toLowerCase()));
                 return (
                 <label key={r.key} style={{ display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
                   padding:"8px 10px",borderRadius:8,
