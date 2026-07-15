@@ -16,7 +16,6 @@ import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
-import OTPage from "./OTPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import TaskBoard from "./TaskBoard.jsx";
 
@@ -40,7 +39,8 @@ export default function App({ currentUser, onSignOut }) {
   const [taskPage,setTaskPage]     = useState(false);
   const [otPage,setOtPage]         = useState(false);
   const [profilePage,setProfilePage] = useState(false);
-
+  const [globalSearch, setGlobalSearch] = useState(false);
+  const [globalQ, setGlobalQ]           = useState("");
   const [leavePage,setLeavePage]   = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
@@ -290,7 +290,7 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     try {
-      const isAdmin = ["admin","dev"].includes(currentUser?.role);
+      const isAdmin = currentUser?.role === "admin";
       const id = recordId || Date.now().toString();
       const payload = {
         ...data,
@@ -303,7 +303,7 @@ export default function App({ currentUser, onSignOut }) {
 
       // แจ้ง admin ถ้าเป็น user บันทึก (สถานะ pending)
       if (!isAdmin && payload.status === "pending") {
-        const admins = users.filter(u => ["admin","dev"].includes(u.role));
+        const admins = users.filter(u => u.role === "admin");
         const batch = writeBatch(db);
         admins.forEach(a => {
           batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)), {
@@ -472,9 +472,25 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     const toImport = importCaseRows.filter(r => importCaseSel[r.key]);
-    const batch = writeBatch(db);
+    // เช็คซ้ำกับเคสที่มีอยู่แล้ว โดยเทียบ title + projectName + date
+    const existingKeys = new Set(cases.map(c =>
+      `${(c.title||"").trim().toLowerCase()}|${(c.projectId||"").trim()}|${(c.date||"").slice(0,10)}`
+    ));
+    const dupRows = [];
+    const newRows = [];
     toImport.forEach(r => {
       const proj = projects.find(p => p.name?.toLowerCase().includes(r.projectName?.toLowerCase()) || r.projectName?.toLowerCase().includes(p.name?.toLowerCase()));
+      const key = `${(r.title||"").trim().toLowerCase()}|${(proj?.id||"").trim()}|${(r.date||"").slice(0,10)}`;
+      if (existingKeys.has(key)) dupRows.push(r);
+      else newRows.push({ r, proj });
+    });
+    if (newRows.length === 0) {
+      showToast(`ทุกเคสมีอยู่ในระบบแล้ว (${dupRows.length} รายการซ้ำ)`, "error");
+      setSaving(false);
+      return;
+    }
+    const batch = writeBatch(db);
+    newRows.forEach(({ r, proj }) => {
       const now = new Date().toISOString();
       batch.set(doc(db,"cases",r.id), {
         title: r.title,
@@ -494,7 +510,10 @@ export default function App({ currentUser, onSignOut }) {
         activityAt: now,
       });
     });
-    const ok = await commitWrite(batch.commit(), `Import ${toImport.length} เคสแล้ว`);
+    const msg = dupRows.length > 0
+      ? `Import ${newRows.length} เคสแล้ว (ข้าม ${dupRows.length} รายการซ้ำ)`
+      : `Import ${newRows.length} เคสแล้ว`;
+    const ok = await commitWrite(batch.commit(), msg);
     if (ok) { setImportCaseModal(false); setImportCaseRows([]); setImportCaseSel({}); }
     setSaving(false);
   }
@@ -621,7 +640,7 @@ export default function App({ currentUser, onSignOut }) {
         showToast("📋 สร้างงานและแจ้งเตือนแล้ว","success");
       } else if (!isNew && prevTask && data.status && prevTask.status !== data.status) {
         // แจ้ง admin เมื่อช่างเปลี่ยนสถานะ
-        const admins = users.filter(u=>["admin","dev"].includes(u.role)&&u.id!==currentUser?.id);
+        const admins = users.filter(u=>u.role==="admin"&&u.id!==currentUser?.id);
         admins.forEach(a=>{
           batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)),{
             type:"task", toUid:a.id, toName:a.name, fromName:currentUser?.name||"",
@@ -705,6 +724,9 @@ export default function App({ currentUser, onSignOut }) {
           </div>
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+          <button onClick={()=>{ setGlobalSearch(true); setGlobalQ(""); }}
+            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+              borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>🔍</button>
           <button onClick={()=>setOnsitePage(true)} style={{ background:"#fff7ed",border:"1px solid #fed7aa",
             color:"#ea580c",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>📍</button>
           <div style={{ position:"relative",display:"inline-flex" }}>
@@ -781,23 +803,21 @@ export default function App({ currentUser, onSignOut }) {
                 </button>
               </div>
             </div>
-            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"4px 8px 8px" }}>หน้าหลัก</div>
             <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
               onClick={()=>{ setView("overview"); setMenuOpen(false); setFilterStat("all"); }}/>
             {isAdminOrDev && (
               <DrawerItem active={false} color="#16a34a" icon="📊" label="Dashboard" count={""}
                 onClick={()=>{ setDashboardPage(true); setMenuOpen(false); }}/>
             )}
-            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>ปฏิบัติการ</div>
+            <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
+              onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
               onClick={()=>{ setOnsitePage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
               onClick={()=>{ setOtPage(true); setMenuOpen(false); }}/>
-            <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
-              onClick={()=>{ setShiftPage(true); setMenuOpen(false); }}/>
             <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
               onClick={()=>{ setLeavePage(true); setMenuOpen(false); }}/>
-            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>โครงการ</div>
+            <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 6px" }}>โครงการ</div>
             <div style={{ overflowY:"auto",maxHeight:320,marginRight:-8,paddingRight:8 }}>
               {projects.map(p=>(
                 <div key={p.id}>
@@ -1131,7 +1151,109 @@ export default function App({ currentUser, onSignOut }) {
         onChecklist={saveChecklist}
         saving={saving}/>
 
-
+      {globalSearch && (
+        <div style={{ position:"fixed",inset:0,zIndex:800,background:"rgba(15,23,42,.6)",
+          display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"60px 16px 16px" }}
+          onClick={()=>setGlobalSearch(false)}>
+          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:620,
+            maxHeight:"80vh",display:"flex",flexDirection:"column",
+            boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
+            onClick={e=>e.stopPropagation()}>
+            {/* Search input */}
+            <div style={{ padding:"14px 16px",borderBottom:"1px solid #f1f5f9",display:"flex",alignItems:"center",gap:10 }}>
+              <span style={{ fontSize:18,flexShrink:0 }}>🔍</span>
+              <input autoFocus value={globalQ} onChange={e=>setGlobalQ(e.target.value)}
+                placeholder="ค้นหาเคส งาน Onsite โครงการ..."
+                style={{ flex:1,border:"none",outline:"none",fontSize:15,fontFamily:"inherit",
+                  color:"#0f172a",background:"transparent" }}/>
+              {globalQ && <button onClick={()=>setGlobalQ("")}
+                style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:16 }}>✕</button>}
+              <button onClick={()=>setGlobalSearch(false)}
+                style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+                  fontSize:12,padding:"4px 10px",borderRadius:6,fontFamily:"inherit" }}>Esc</button>
+            </div>
+            {/* Results */}
+            <div style={{ overflowY:"auto",flex:1,padding:"8px 0" }}>
+              {globalQ.trim().length < 2 ? (
+                <div style={{ padding:"32px",textAlign:"center",color:"#94a3b8",fontSize:13 }}>
+                  พิมพ์อย่างน้อย 2 ตัวอักษร
+                </div>
+              ) : (()=>{
+                const q = globalQ.trim().toLowerCase();
+                const matchCases = cases.filter(c=>[c.title,c.site,c.note,c.type].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
+                const matchTasks = (tasks||[]).filter(t=>[t.title,t.site,t.note,t.projectName].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
+                const matchOnsite = (onsiteRecords||[]).filter(r=>[r.projectName,r.site,r.detail,r.scope].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
+                const matchProjs = projects.filter(p=>[p.name,p.code,p.customer].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
+                const total = matchCases.length+matchTasks.length+matchOnsite.length+matchProjs.length;
+                if(total===0) return (
+                  <div style={{ padding:"32px",textAlign:"center",color:"#94a3b8",fontSize:13 }}>ไม่พบผลลัพธ์</div>
+                );
+                const Section = ({icon,label,items,render})=>items.length===0?null:(
+                  <div>
+                    <div style={{ padding:"8px 16px 4px",fontSize:10,color:"#94a3b8",fontWeight:700,
+                      textTransform:"uppercase",letterSpacing:.5 }}>{icon} {label} ({items.length})</div>
+                    {items.map(render)}
+                  </div>
+                );
+                return (
+                  <div>
+                    <Section icon="📁" label="โครงการ" items={matchProjs} render={p=>(
+                      <div key={p.id} onClick={()=>{ setView(p.id); setFilterStat("all"); setGlobalSearch(false); setGlobalQ(""); }}
+                        style={{ padding:"10px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,
+                          borderBottom:"1px solid #f8fafc" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                        <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                        <div>
+                          <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{p.name}</div>
+                          {p.customer&&<div style={{ fontSize:11,color:"#64748b" }}>👤 {p.customer}</div>}
+                        </div>
+                      </div>
+                    )}/>
+                    <Section icon="📋" label="เคส" items={matchCases} render={c=>{
+                      const proj=projects.find(p=>p.id===c.projectId);
+                      return (
+                      <div key={c.id} onClick={()=>{ setDetailCase(c); setGlobalSearch(false); setGlobalQ(""); }}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{c.title}</div>
+                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
+                          {proj&&<><span style={{ color:proj.color,marginRight:4 }}>◆</span>{proj.name} · </>}{c.site||""} · {c.date||""}
+                        </div>
+                      </div>
+                    );}}/>
+                    <Section icon="📋" label="งาน (Board)" items={matchTasks} render={t=>{
+                      const proj=projects.find(p=>p.id===t.projectId);
+                      return (
+                      <div key={t.id} onClick={()=>{ setTaskPage(true); setGlobalSearch(false); setGlobalQ(""); }}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{t.title}</div>
+                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
+                          {proj&&<>{proj.name} · </>}{t.site||""} {t.dueDate&&`· ${t.dueDate}`}
+                        </div>
+                      </div>
+                    );}}/>
+                    <Section icon="📍" label="Onsite" items={matchOnsite} render={r=>(
+                      <div key={r.id} onClick={()=>{ setOnsitePage(true); setGlobalSearch(false); setGlobalQ(""); }}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{r.projectName||r.projectId}</div>
+                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
+                          {r.site&&`📍 ${r.site} · `}{r.date||""} · {r.scope||""}
+                        </div>
+                      </div>
+                    )}/>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {importCaseModal && (
         <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
@@ -1151,7 +1273,20 @@ export default function App({ currentUser, onSignOut }) {
             <div style={{ fontSize:12,color:"#64748b",marginBottom:12 }}>
               เลือกเคสที่ต้องการ import — โครงการจะจับคู่อัตโนมัติจากชื่อ
             </div>
-            <div style={{ display:"flex",gap:8,marginBottom:12 }}>
+            {(()=>{
+              const dupCount = importCaseRows.filter(r=>{
+                const proj=projects.find(p=>p.name?.toLowerCase().includes(r.projectName?.toLowerCase())||r.projectName?.toLowerCase().includes(p.name?.toLowerCase()));
+                const key=`${(r.title||"").trim().toLowerCase()}|${(proj?.id||"").trim()}|${(r.date||"").slice(0,10)}`;
+                return cases.some(c=>`${(c.title||"").trim().toLowerCase()}|${(c.projectId||"").trim()}|${(c.date||"").slice(0,10)}`===key);
+              }).length;
+              return dupCount>0 && (
+                <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:8,
+                  padding:"8px 12px",marginBottom:12,fontSize:12,color:"#b91c1c" }}>
+                  ⚠️ พบ {dupCount} รายการที่มีอยู่ในระบบแล้ว (ชื่อ + โครงการ + วันที่ตรงกัน)
+                </div>
+              );
+            })()}
+            <div style={{ display:"flex",gap:8,marginBottom:12,flexWrap:"wrap" }}>
               <button onClick={()=>{ const s={}; importCaseRows.forEach(r=>s[r.key]=true); setImportCaseSel(s); }}
                 style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
                   borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -1162,6 +1297,19 @@ export default function App({ currentUser, onSignOut }) {
                   borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
                 ยกเลิกทั้งหมด
               </button>
+              <button onClick={()=>{
+                const s={};
+                importCaseRows.forEach(r=>{
+                  const proj=projects.find(p=>p.name?.toLowerCase().includes(r.projectName?.toLowerCase())||r.projectName?.toLowerCase().includes(p.name?.toLowerCase()));
+                  const key=`${(r.title||"").trim().toLowerCase()}|${(proj?.id||"").trim()}|${(r.date||"").slice(0,10)}`;
+                  const isDup=cases.some(c=>`${(c.title||"").trim().toLowerCase()}|${(c.projectId||"").trim()}|${(c.date||"").slice(0,10)}`===key);
+                  s[r.key]=!isDup;
+                });
+                setImportCaseSel(s);
+              }} style={{ background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",
+                borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                ✕ ไม่เลือกรายการซ้ำ
+              </button>
               <span style={{ marginLeft:"auto",fontSize:12,color:"#64748b",alignSelf:"center" }}>
                 เลือกแล้ว {Object.values(importCaseSel).filter(Boolean).length} รายการ
               </span>
@@ -1169,17 +1317,23 @@ export default function App({ currentUser, onSignOut }) {
             <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:16 }}>
               {importCaseRows.map(r => {
                 const proj = projects.find(p => p.name?.toLowerCase().includes(r.projectName?.toLowerCase()) || r.projectName?.toLowerCase().includes(p.name?.toLowerCase()));
+                const dupKey = `${(r.title||"").trim().toLowerCase()}|${(proj?.id||"").trim()}|${(r.date||"").slice(0,10)}`;
+                const isDupCase = cases.some(c=>`${(c.title||"").trim().toLowerCase()}|${(c.projectId||"").trim()}|${(c.date||"").slice(0,10)}`===dupKey);
                 return (
                   <label key={r.key} style={{ display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
                     padding:"8px 10px",borderRadius:8,
-                    background:importCaseSel[r.key]?"#f0fdf4":"#f8fafc",
-                    border:`1px solid ${importCaseSel[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
+                    background:isDupCase?"#fff5f5":importCaseSel[r.key]?"#f0fdf4":"#f8fafc",
+                    border:`1px solid ${isDupCase?"#fecaca":importCaseSel[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
                     <input type="checkbox" checked={!!importCaseSel[r.key]}
                       onChange={e=>setImportCaseSel(p=>({...p,[r.key]:e.target.checked}))}
                       style={{ marginTop:2,accentColor:"#16a34a",flexShrink:0 }}/>
                     <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
-                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{r.title}</div>
+                      <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+                        <span style={{ fontSize:13,fontWeight:600,color:isDupCase?"#ef4444":"#0f172a",
+                          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{r.title}</span>
+                        {isDupCase && <span style={{ fontSize:10,background:"#fef2f2",color:"#ef4444",
+                          border:"1px solid #fecaca",borderRadius:4,padding:"1px 6px",flexShrink:0,fontWeight:700 }}>ซ้ำ</span>}
+                      </div>
                       <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginTop:2 }}>
                         {r.site&&<span style={{ fontSize:11,color:"#64748b" }}>📍 {r.site}</span>}
                         {proj ? <span style={{ fontSize:11,color:proj.color||"#2563eb",fontWeight:600 }}>◆ {proj.name}</span>
@@ -1411,28 +1565,15 @@ export default function App({ currentUser, onSignOut }) {
 
 function DrawerItem({ active, onClick, icon, label, count, color }) {
   return (
-    <button onClick={onClick} style={{
-      display:"flex", alignItems:"center", justifyContent:"space-between",
-      width:"100%", background: active ? color+"14" : "transparent",
-      border:"none", borderRadius:10, padding:"9px 10px 9px 8px",
-      cursor:"pointer", fontFamily:"inherit", marginBottom:2, textAlign:"left",
-      position:"relative", overflow:"hidden",
-    }}>
-      {active && <span style={{ position:"absolute",left:0,top:"20%",bottom:"20%",width:3,
-        borderRadius:"0 3px 3px 0", background:color }}/>}
-      <span style={{ display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0,paddingLeft:active?6:0 }}>
-        <span style={{ width:30,height:30,borderRadius:8,flexShrink:0,
-          background: active ? color+"20" : "#f1f5f9",
-          display:"flex",alignItems:"center",justifyContent:"center",fontSize:15 }}>{icon}</span>
-        <span style={{ fontSize:13,color:active?"#0f172a":"#475569",fontWeight:active?700:500,
-          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
+    <button onClick={onClick} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",
+      width:"100%",background:active?color+"12":"transparent",
+      border:active?`1px solid ${color}25`:"1px solid transparent",
+      borderRadius:8,padding:"10px 10px",cursor:"pointer",fontFamily:"inherit",marginBottom:2,textAlign:"left" }}>
+      <span style={{ display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0 }}>
+        <span style={{ fontSize:9,color:active?color:"#cbd5e1" }}>{icon}</span>
+        <span style={{ fontSize:13,color:active?"#0f172a":"#64748b",fontWeight:active?700:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
-      {count !== "" && count !== undefined && (
-        <span style={{ fontSize:11,background:active?color+"20":"#f1f5f9",borderRadius:20,
-          padding:"2px 9px",color:active?color:"#94a3b8",flexShrink:0,marginLeft:4,fontWeight:700 }}>
-          {count}
-        </span>
-      )}
+      <span style={{ fontSize:11,background:active?color+"15":"#f1f5f9",borderRadius:20,padding:"2px 8px",color:active?color:"#94a3b8",flexShrink:0,marginLeft:4,fontWeight:600 }}>{count}</span>
     </button>
   );
 }
