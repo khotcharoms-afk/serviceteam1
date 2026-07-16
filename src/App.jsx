@@ -16,6 +16,7 @@ import DetailModal from "./components/DetailModal.jsx";
 import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
+import OTPage from "./OTPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import TaskBoard from "./TaskBoard.jsx";
 
