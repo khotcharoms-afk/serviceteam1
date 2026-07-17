@@ -17,6 +17,7 @@ import Dashboard from "./Dashboard.jsx";
 import ShiftCalendar from "./ShiftCalendar.jsx";
 import OnsitePage from "./OnsitePage.jsx";
 import Drawer from "./Drawer.jsx";
+import ImportModal from "./ImportModal.jsx";
 import NavBar from "./NavBar.jsx";
 import OTPage from "./OTPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
@@ -1107,163 +1108,14 @@ export default function App({ currentUser, onSignOut }) {
         </div>
       )}
 
-      {importCaseModal && (
-        <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
-          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-          onClick={()=>setImportCaseModal(false)}>
-          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:600,
-            maxHeight:"88vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:24 }}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-              <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>
-                📋 Import เคส ({importCaseRows.length} รายการ)
-              </h2>
-              <button onClick={()=>setImportCaseModal(false)}
-                style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
-                  fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
-            </div>
-            <div style={{ fontSize:12,color:"#64748b",marginBottom:12 }}>
-              เลือกเคสที่ต้องการ import — โครงการจะจับคู่อัตโนมัติจากชื่อ
-            </div>
-            <div style={{ display:"flex",gap:8,marginBottom:12 }}>
-              <button onClick={()=>{ const s={}; importCaseRows.forEach(r=>s[r.key]=true); setImportCaseSel(s); }}
-                style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
-                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                เลือกทั้งหมด
-              </button>
-              <button onClick={()=>setImportCaseSel({})}
-                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#64748b",
-                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                ยกเลิกทั้งหมด
-              </button>
-              <span style={{ marginLeft:"auto",fontSize:12,color:"#64748b",alignSelf:"center" }}>
-                เลือกแล้ว {Object.values(importCaseSel).filter(Boolean).length} รายการ
-              </span>
-            </div>
-            <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:16 }}>
-              {importCaseRows.map(r => {
-                const proj = projects.find(p => p.name?.toLowerCase().includes(r.projectName?.toLowerCase()) || r.projectName?.toLowerCase().includes(p.name?.toLowerCase()));
-                return (
-                  <label key={r.key} style={{ display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
-                    padding:"8px 10px",borderRadius:8,
-                    background:importCaseSel[r.key]?"#f0fdf4":"#f8fafc",
-                    border:`1px solid ${importCaseSel[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
-                    <input type="checkbox" checked={!!importCaseSel[r.key]}
-                      onChange={e=>setImportCaseSel(p=>({...p,[r.key]:e.target.checked}))}
-                      style={{ marginTop:2,accentColor:"#16a34a",flexShrink:0 }}/>
-                    <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
-                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{r.title}</div>
-                      <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginTop:2 }}>
-                        {r.site&&<span style={{ fontSize:11,color:"#64748b" }}>📍 {r.site}</span>}
-                        {proj ? <span style={{ fontSize:11,color:proj.color||"#2563eb",fontWeight:600 }}>◆ {proj.name}</span>
-                          : <span style={{ fontSize:11,color:"#f59e0b" }}>⚠ ไม่พบโครงการ: {r.projectName}</span>}
-                        <span style={{ fontSize:11,color:"#64748b" }}>{r.date}</span>
-                        <span style={{ fontSize:11,color:"#64748b" }}>{r.type}</span>
-                      </div>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-            <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
-              <button onClick={()=>setImportCaseModal(false)}
-                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
-                  borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                ยกเลิก
-              </button>
-              <button onClick={doImportCases} disabled={saving||Object.values(importCaseSel).filter(Boolean).length===0}
-                style={{ background:"#16a34a",border:"none",color:"#fff",borderRadius:10,
-                  padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
-                  opacity:saving?0.7:1 }}>
-                {saving?"กำลัง import...":`Import ${Object.values(importCaseSel).filter(Boolean).length} เคส`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {importModal && (
-        <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
-          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-          onClick={()=>setImportModal(false)}>
-          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:600,
-            maxHeight:"88vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",
-            padding:"24px" }}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-              <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>
-                📥 Import โครงการ ({importRows.length} รายการ)
-              </h2>
-              <button onClick={()=>setImportModal(false)}
-                style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
-                  fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
-            </div>
-            <div style={{ fontSize:12,color:"#64748b",marginBottom:12 }}>
-              เลือกโครงการที่ต้องการ import — กดเลือกทั้งหมดหรือเลือกทีละรายการ
-            </div>
-            <div style={{ display:"flex",gap:8,marginBottom:12 }}>
-              <button onClick={()=>{ const s={}; importRows.forEach(r=>s[r.key]=true); setImportSelected(s); }}
-                style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
-                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                เลือกทั้งหมด
-              </button>
-              <button onClick={()=>setImportSelected({})}
-                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#64748b",
-                  borderRadius:7,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                ยกเลิกทั้งหมด
-              </button>
-              <span style={{ marginLeft:"auto",fontSize:12,color:"#64748b",alignSelf:"center" }}>
-                เลือกแล้ว {Object.values(importSelected).filter(Boolean).length} รายการ
-              </span>
-            </div>
-            <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:16 }}>
-              {importRows.map(r => {
-                const isDup = projects.some(p=>(p.name||"").trim().toLowerCase()===(r.name||"").trim().toLowerCase());
-                return (
-                <label key={r.key} style={{ display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
-                  padding:"8px 10px",borderRadius:8,
-                  background:isDup?"#fff5f5":importSelected[r.key]?"#f0fdf4":"#f8fafc",
-                  border:`1px solid ${isDup?"#fecaca":importSelected[r.key]?"#bbf7d0":"#e2e8f0"}` }}>
-                  <input type="checkbox" checked={!!importSelected[r.key]}
-                    onChange={e=>setImportSelected(p=>({...p,[r.key]:e.target.checked}))}
-                    style={{ marginTop:2,accentColor:"#16a34a",flexShrink:0 }}/>
-                  <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
-                      <span style={{ fontSize:13,fontWeight:600,color:isDup?"#ef4444":"#0f172a" }}>{r.name}</span>
-                      {isDup && <span style={{ fontSize:10,background:"#fef2f2",color:"#ef4444",
-                        borderRadius:20,padding:"1px 7px",fontWeight:700 }}>มีอยู่แล้ว</span>}
-                    </div>
-                    <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginTop:2 }}>
-                      {r.code && <span style={{ fontSize:11,color:"#64748b" }}>{r.code}</span>}
-                      {r.customer && <span style={{ fontSize:11,color:"#475569" }}>👤 {r.customer}</span>}
-                      {r.contractType && <span style={{ fontSize:11,
-                        color:r.contractType==="เช่า"?"#8b5cf6":r.contractType==="ขายขาด"?"#16a34a":"#0891b2",
-                        fontWeight:600 }}>{r.contractType}</span>}
-                      {r.warrantyEnd && <span style={{ fontSize:11,color:"#64748b" }}>🛡 {r.warrantyEnd}</span>}
-                      {r.projectStatus && <span style={{ fontSize:11,color:"#64748b" }}>{r.projectStatus}</span>}
-                    </div>
-                  </div>
-                </label>
-                );
-              })}
-            </div>
-            <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
-              <button onClick={()=>setImportModal(false)}
-                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
-                  borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                ยกเลิก
-              </button>
-              <button onClick={doImport} disabled={saving||Object.values(importSelected).filter(Boolean).length===0}
-                style={{ background:"#16a34a",border:"none",color:"#fff",borderRadius:10,
-                  padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
-                  opacity:saving?0.7:1 }}>
-                {saving?"กำลัง import...":` Import ${Object.values(importSelected).filter(Boolean).length} โครงการ`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ImportModal
+        importModal={importModal} setImportModal={setImportModal}
+        importRows={importRows} importSelected={importSelected} setImportSelected={setImportSelected}
+        doImport={doImport} saving={saving} projects={projects}
+        importCaseModal={importCaseModal} setImportCaseModal={setImportCaseModal}
+        importCaseRows={importCaseRows} importCaseSel={importCaseSel} setImportCaseSel={setImportCaseSel}
+        doImportCases={doImportCases} cases={cases}
+      />
       <ProjectModal open={projModal} onClose={()=>setProjModal(false)}
         newProjCode={newProjCode} setNewProjCode={setNewProjCode}
         editProjId={editProjId}
