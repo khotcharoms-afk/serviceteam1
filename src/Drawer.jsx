@@ -36,7 +36,7 @@ export default function Drawer({
   cases, projects,
   setDashboardPage,
   setShiftPage, setOnsitePage, setOtPage, setLeavePage,
-  setAdminPage, setProfilePage,
+  setAdminPage, setProfilePage, setKnowledgePage,
   openAddProj, handleImportFile, handleImportCaseFile,
 }) {
   if (!open) return null;
@@ -98,6 +98,8 @@ export default function Drawer({
           onClick={()=>{ setShiftPage(true); onClose(); }}/>
         <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
           onClick={()=>{ setLeavePage(true); onClose(); }}/>
+        <DrawerItem active={false} color="#6B21A8" icon="💡" label="Knowledge Hub" count={""}
+          onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
 
         {/* โครงการ */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 8px 8px" }}>
