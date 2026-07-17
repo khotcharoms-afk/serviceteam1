@@ -20,6 +20,7 @@ import Drawer from "./Drawer.jsx";
 import ImportModal from "./ImportModal.jsx";
 import NavBar from "./NavBar.jsx";
 import OTPage from "./OTPage.jsx";
+import KnowledgeHub from "./KnowledgeHub.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import TaskBoard from "./TaskBoard.jsx";
 
@@ -41,6 +42,7 @@ export default function App({ currentUser, onSignOut }) {
   const [shiftPage,setShiftPage] = useState(false);
   const [onsitePage,setOnsitePage] = useState(false);
   const [taskPage,setTaskPage]     = useState(false);
+  const [knowledgePage,setKnowledgePage] = useState(false);
   const [otPage,setOtPage]         = useState(false);
   const [profilePage,setProfilePage] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
@@ -662,6 +664,7 @@ export default function App({ currentUser, onSignOut }) {
     }}/>;
   if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
+  if(knowledgePage) return <KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/>;
   if(dashboardPage && isAdminOrDev) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
 
   return (
