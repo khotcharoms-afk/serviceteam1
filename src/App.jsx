@@ -717,7 +717,7 @@ export default function App({ currentUser, onSignOut }) {
         cases={cases} projects={projects}
         setDashboardPage={setDashboardPage}
         setShiftPage={setShiftPage} setOnsitePage={setOnsitePage}
-        setOtPage={setOtPage} setLeavePage={setLeavePage}
+        setOtPage={setOtPage} setLeavePage={setLeavePage} setKnowledgePage={setKnowledgePage}
         setAdminPage={setAdminPage} setProfilePage={setProfilePage}
         openAddProj={openAddProj}
         handleImportFile={handleImportFile}
