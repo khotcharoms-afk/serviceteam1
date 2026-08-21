@@ -143,6 +143,7 @@ const emptyStandardForm = {
   model: "", partType: "",
   diameter: "", thickness: "", gainX: "", gainY: "",
   warning: 5, critical: 10,
+  modelUrl: "",
 };
 
 function StandardsTab({ standards, canManage, currentUser }) {
@@ -167,6 +168,7 @@ function StandardsTab({ standards, canManage, currentUser }) {
       gainY: s.specs?.gainY ?? "",
       warning: s.thresholds?.warning ?? 5,
       critical: s.thresholds?.critical ?? 10,
+      modelUrl: s.modelUrl || "",
     });
     setEditingId(s.id);
     setShowForm(true);
@@ -191,6 +193,7 @@ function StandardsTab({ standards, canManage, currentUser }) {
         warning: parseFloat(form.warning) || 5,
         critical: parseFloat(form.critical) || 10,
       },
+      modelUrl: form.modelUrl.trim(),
       updatedBy: currentUser?.name || "unknown",
       updatedAt: serverTimestamp(),
     };
@@ -305,6 +308,16 @@ function StandardsTab({ standards, canManage, currentUser }) {
                 onChange={v => setForm({ ...form, critical: v })} />
             </div>
 
+            <div style={{ marginBottom: 18 }}>
+              <FormField label="ลิงก์โมเดล 3D (.glb) — ไม่บังคับ" value={form.modelUrl}
+                onChange={v => setForm({ ...form, modelUrl: v })}
+                placeholder="https://... (Cloudinary / Firebase Storage)" />
+              <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>
+                ตั้งชื่อชิ้นส่วนในไฟล์ให้มีคำว่า diameter / thickness / gainX / gainY ปนอยู่ ระบบจะลงสีให้อัตโนมัติ
+                ถ้าเว้นว่างไว้ ระบบจะแสดงแบบจำลองทรงล้อทั่วไปแทน
+              </div>
+            </div>
+
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setShowForm(false)} style={{
                 flex: 1, background: "#f1f5f9", border: "none", color: "#475569",
@@ -415,7 +428,7 @@ function InspectTab({ standards, inspections, currentUser }) {
               ))}
             </div>
 
-            <Part3DView results={liveResults} overallStatus={overallStatus} />
+            <Part3DView results={liveResults} overallStatus={overallStatus} modelUrl={selected.modelUrl || undefined} />
           </>
         )}
 
