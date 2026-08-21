@@ -4,6 +4,7 @@ import {
   doc, updateDoc, deleteDoc, serverTimestamp
 } from "firebase/firestore";
 import { db } from "./firebase";
+import Part3DView from "./Part3DView.jsx";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
@@ -401,17 +402,21 @@ function InspectTab({ standards, inspections, currentUser }) {
         </select>
 
         {selected && (
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8,
-            margin: "12px 0", padding: 10, background: "#f8fafc", borderRadius: 8,
-          }}>
-            {FIELDS.map(f => (
-              <div key={f.key} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 9, color: "#94a3b8" }}>{f.label}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>{selected.specs?.[f.key]}</div>
-              </div>
-            ))}
-          </div>
+          <>
+            <div style={{
+              display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8,
+              margin: "12px 0", padding: 10, background: "#f8fafc", borderRadius: 8,
+            }}>
+              {FIELDS.map(f => (
+                <div key={f.key} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 9, color: "#94a3b8" }}>{f.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>{selected.specs?.[f.key]}</div>
+                </div>
+              ))}
+            </div>
+
+            <Part3DView results={liveResults} overallStatus={overallStatus} />
+          </>
         )}
 
         <div style={{ display: "grid", gridTemplateColumns: isMobileGrid(), gap: 10, marginTop: 14 }}>
