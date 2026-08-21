@@ -21,5 +21,6 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
+    "three": "^0.160.0",
   }
 }
