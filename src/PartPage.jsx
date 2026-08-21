@@ -3,7 +3,7 @@ import {
   collection, addDoc, onSnapshot, query, orderBy,
   doc, updateDoc, deleteDoc, serverTimestamp
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "./firebase";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
