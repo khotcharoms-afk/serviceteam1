@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, forwardRef } from "react";
 import {
   collection, addDoc, onSnapshot, query, orderBy,
   doc, updateDoc, deleteDoc, serverTimestamp
 } from "firebase/firestore";
 import { db } from "./firebase";
 import Part3DView from "./Part3DView.jsx";
+import CaliperConnector from "./CaliperConnector.jsx";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
@@ -345,6 +346,8 @@ function InspectTab({ standards, inspections, currentUser }) {
   const [projectId, setProjectId] = useState("");
   const [values, setValues] = useState({ diameter: "", thickness: "", gainX: "", gainY: "" });
   const [saving, setSaving] = useState(false);
+  const [activeField, setActiveField] = useState(FIELDS[0].key);
+  const fieldRefs = useRef({});
 
   const selected = standards.find(s => s.id === selectedId);
 
@@ -369,6 +372,16 @@ function InspectTab({ standards, inspections, currentUser }) {
   const resetForm = () => {
     setSerialNo(""); setCaseId(""); setProjectId("");
     setValues({ diameter: "", thickness: "", gainX: "", gainY: "" });
+    setActiveField(FIELDS[0].key);
+  };
+
+  const handleCaliperValue = (num) => {
+    if (!selected) return;
+    setValues(prev => ({ ...prev, [activeField]: String(num) }));
+    const idx = FIELDS.findIndex(f => f.key === activeField);
+    const next = FIELDS[(idx + 1) % FIELDS.length];
+    setActiveField(next.key);
+    requestAnimationFrame(() => fieldRefs.current[next.key]?.focus());
   };
 
   const handleSubmit = async () => {
@@ -441,15 +454,24 @@ function InspectTab({ standards, inspections, currentUser }) {
         <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", margin: "16px 0 8px" }}>
           ค่าที่วัดได้
         </div>
+
+        <CaliperConnector onValue={handleCaliperValue} disabled={!selected} />
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {FIELDS.map(f => {
             const r = liveResults[f.key];
             const meta = r?.status ? STATUS_META[r.status] : null;
+            const isActive = activeField === f.key;
             return (
-              <div key={f.key}>
+              <div key={f.key} style={{
+                borderRadius: 10, padding: isActive ? 4 : 0,
+                boxShadow: isActive ? "0 0 0 2px #F97316" : "none",
+              }}>
                 <FormField
+                  ref={el => (fieldRefs.current[f.key] = el)}
                   label={f.label} type="number" value={values[f.key]}
                   onChange={v => setValues({ ...values, [f.key]: v })}
+                  onFocus={() => setActiveField(f.key)}
                   disabled={!selected}
                 />
                 {meta && (
@@ -464,6 +486,7 @@ function InspectTab({ standards, inspections, currentUser }) {
             );
           })}
         </div>
+
 
         {overallStatus && (
           <div style={{
@@ -536,15 +559,19 @@ function FormLabel({ children }) {
   return <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>{children}</div>;
 }
 
-function FormField({ label, value, onChange, type = "text", placeholder, disabled }) {
+const FormField = forwardRef(function FormField(
+  { label, value, onChange, type = "text", placeholder, disabled, onFocus }, ref
+) {
   return (
     <div>
       <FormLabel>{label}</FormLabel>
       <input
+        ref={ref}
         type={type}
         value={value}
         placeholder={placeholder}
         disabled={disabled}
+        onFocus={onFocus}
         onChange={e => onChange(e.target.value)}
         style={{
           width: "100%", border: "1px solid #e2e8f0", borderRadius: 8,
@@ -554,7 +581,7 @@ function FormField({ label, value, onChange, type = "text", placeholder, disable
       />
     </div>
   );
-}
+});
 
 const selectStyle = {
   width: "100%", border: "1px solid #e2e8f0", borderRadius: 8,
