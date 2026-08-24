@@ -41,6 +41,25 @@ const STATUS_META = {
   critical: { icon: "🔴", label: "เปลี่ยน", color: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
 };
 
+// Visual (no-tool) surface condition checklist for the wheel/tread.
+// severity "critical" items force a 🔴, "warning" items force at least ⚠️ if nothing worse is checked.
+const CONDITION_ITEMS = [
+  { key: "cracks", label: "แตกลายงา", severity: "critical" },
+  { key: "flatSpot", label: "จุดแบน/เป็นเหลี่ยม", severity: "critical" },
+  { key: "delamination", label: "ผิวหลุดล่อน", severity: "critical" },
+  { key: "bulging", label: "บวม/นูน", severity: "warning" },
+  { key: "debris", label: "สิ่งแปลกปลอมฝังติด", severity: "warning" },
+];
+
+const emptyCondition = CONDITION_ITEMS.reduce((acc, c) => ({ ...acc, [c.key]: false }), {});
+
+function conditionStatusFrom(condition) {
+  const checked = CONDITION_ITEMS.filter(c => condition[c.key]);
+  if (checked.length === 0) return "ok";
+  if (checked.some(c => c.severity === "critical")) return "critical";
+  return "warning";
+}
+
 export default function PartPage({ currentUser, onBack, isMobile }) {
   const [tab, setTab] = useState("inspect"); // "inspect" | "standards"
   const [standards, setStandards] = useState([]);
@@ -348,6 +367,8 @@ function InspectTab({ standards, inspections, currentUser }) {
   const [saving, setSaving] = useState(false);
   const [activeField, setActiveField] = useState(FIELDS[0].key);
   const fieldRefs = useRef({});
+  const [condition, setCondition] = useState(emptyCondition);
+  const [conditionNote, setConditionNote] = useState("");
 
   const selected = standards.find(s => s.id === selectedId);
 
@@ -369,10 +390,14 @@ function InspectTab({ standards, inspections, currentUser }) {
     return "ok";
   }, [liveResults]);
 
+  const conditionStatus = useMemo(() => conditionStatusFrom(condition), [condition]);
+
   const resetForm = () => {
     setSerialNo(""); setCaseId(""); setProjectId("");
     setValues({ diameter: "", thickness: "", gainX: "", gainY: "" });
     setActiveField(FIELDS[0].key);
+    setCondition(emptyCondition);
+    setConditionNote("");
   };
 
   const handleCaliperValue = (num) => {
@@ -387,7 +412,8 @@ function InspectTab({ standards, inspections, currentUser }) {
   const handleSubmit = async () => {
     if (!selected) { alert("กรุณาเลือกรุ่น/ประเภทอะไหล่"); return; }
     const anyFilled = Object.values(values).some(v => v !== "");
-    if (!anyFilled) { alert("กรุณากรอกค่าที่วัดอย่างน้อย 1 ค่า"); return; }
+    const anyConditionChecked = CONDITION_ITEMS.some(c => condition[c.key]);
+    if (!anyFilled && !anyConditionChecked) { alert("กรุณากรอกค่าที่วัด หรือติ๊กสภาพผิวอย่างน้อย 1 อย่าง"); return; }
 
     setSaving(true);
     try {
@@ -406,6 +432,9 @@ function InspectTab({ standards, inspections, currentUser }) {
         },
         results: liveResults,
         overallStatus,
+        condition,
+        conditionNote: conditionNote.trim(),
+        conditionStatus,
         inspectedBy: currentUser?.name || "unknown",
         createdAt: serverTimestamp(),
       });
@@ -488,6 +517,48 @@ function InspectTab({ standards, inspections, currentUser }) {
         </div>
 
 
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", margin: "18px 0 8px" }}>
+          สภาพผิวหน้ายาง (ตรวจด้วยสายตา — ไม่ต้องใช้เครื่องมือ)
+        </div>
+        <div style={{
+          display: "grid", gridTemplateColumns: isMobileGrid(), gap: 8,
+          background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: 12,
+        }}>
+          {CONDITION_ITEMS.map(c => (
+            <label key={c.key} style={{
+              display: "flex", alignItems: "center", gap: 8, fontSize: 13,
+              color: condition[c.key] ? "#0f172a" : "#475569", cursor: "pointer",
+              fontWeight: condition[c.key] ? 700 : 500,
+            }}>
+              <input
+                type="checkbox"
+                checked={condition[c.key]}
+                disabled={!selected}
+                onChange={e => setCondition({ ...condition, [c.key]: e.target.checked })}
+                style={{ width: 16, height: 16, accentColor: c.severity === "critical" ? "#dc2626" : "#d97706" }}
+              />
+              {c.label}
+            </label>
+          ))}
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <FormField
+            label="หมายเหตุเพิ่มเติม (ถ้ามี)" value={conditionNote}
+            onChange={setConditionNote} disabled={!selected}
+            placeholder="เช่น ตำแหน่งที่พบ, ความรุนแรง"
+          />
+        </div>
+        {CONDITION_ITEMS.some(c => condition[c.key]) && (
+          <div style={{
+            marginTop: 8, padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+            background: STATUS_META[conditionStatus].bg,
+            border: `1px solid ${STATUS_META[conditionStatus].border}`,
+            color: STATUS_META[conditionStatus].color,
+          }}>
+            {STATUS_META[conditionStatus].icon} สภาพผิว: {STATUS_META[conditionStatus].label}
+          </div>
+        )}
+
         {overallStatus && (
           <div style={{
             marginTop: 16, padding: 12, borderRadius: 10, textAlign: "center",
@@ -519,6 +590,8 @@ function InspectTab({ standards, inspections, currentUser }) {
         )}
         {inspections.slice(0, 30).map(insp => {
           const meta = insp.overallStatus ? STATUS_META[insp.overallStatus] : null;
+          const condMeta = insp.conditionStatus && insp.conditionStatus !== "ok"
+            ? STATUS_META[insp.conditionStatus] : null;
           return (
             <div key={insp.id} style={{
               background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10,
@@ -532,15 +605,26 @@ function InspectTab({ standards, inspections, currentUser }) {
                   {insp.inspectedBy} {insp.projectId && `· โครงการ: ${insp.projectId}`}
                 </div>
               </div>
-              {meta && (
-                <div style={{
-                  fontSize: 12, fontWeight: 800, color: meta.color, background: meta.bg,
-                  border: `1px solid ${meta.border}`, borderRadius: 8, padding: "4px 10px",
-                  whiteSpace: "nowrap",
-                }}>
-                  {meta.icon} {meta.label}
-                </div>
-              )}
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                {meta && (
+                  <div style={{
+                    fontSize: 12, fontWeight: 800, color: meta.color, background: meta.bg,
+                    border: `1px solid ${meta.border}`, borderRadius: 8, padding: "4px 10px",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {meta.icon} {meta.label}
+                  </div>
+                )}
+                {condMeta && (
+                  <div title="สภาพผิว" style={{
+                    fontSize: 12, fontWeight: 800, color: condMeta.color, background: condMeta.bg,
+                    border: `1px solid ${condMeta.border}`, borderRadius: 8, padding: "4px 10px",
+                    whiteSpace: "nowrap",
+                  }}>
+                    👁 {condMeta.label}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
