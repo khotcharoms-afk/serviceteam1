@@ -361,8 +361,6 @@ function StandardsTab({ standards, canManage, currentUser }) {
 function InspectTab({ standards, inspections, currentUser }) {
   const [selectedId, setSelectedId] = useState("");
   const [serialNo, setSerialNo] = useState("");
-  const [caseId, setCaseId] = useState("");
-  const [projectId, setProjectId] = useState("");
   const [values, setValues] = useState({ diameter: "", thickness: "", gainX: "", gainY: "" });
   const [saving, setSaving] = useState(false);
   const [activeField, setActiveField] = useState(FIELDS[0].key);
@@ -393,7 +391,7 @@ function InspectTab({ standards, inspections, currentUser }) {
   const conditionStatus = useMemo(() => conditionStatusFrom(condition), [condition]);
 
   const resetForm = () => {
-    setSerialNo(""); setCaseId(""); setProjectId("");
+    setSerialNo("");
     setValues({ diameter: "", thickness: "", gainX: "", gainY: "" });
     setActiveField(FIELDS[0].key);
     setCondition(emptyCondition);
@@ -422,8 +420,6 @@ function InspectTab({ standards, inspections, currentUser }) {
         partType: selected.partType,
         standardId: selected.id,
         serialNo: serialNo.trim(),
-        caseId: caseId.trim(),
-        projectId: projectId.trim(),
         values: {
           diameter: parseFloat(values.diameter) || null,
           thickness: parseFloat(values.thickness) || null,
@@ -474,10 +470,8 @@ function InspectTab({ standards, inspections, currentUser }) {
           </>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobileGrid(), gap: 10, marginTop: 14 }}>
+        <div style={{ marginTop: 14 }}>
           <FormField label="Serial No." value={serialNo} onChange={setSerialNo} />
-          <FormField label="Case ID" value={caseId} onChange={setCaseId} />
-          <FormField label="Project ID" value={projectId} onChange={setProjectId} />
         </div>
 
         <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", margin: "16px 0 8px" }}>
@@ -602,7 +596,7 @@ function InspectTab({ standards, inspections, currentUser }) {
                   {insp.model} · {insp.partType} {insp.serialNo && `· SN: ${insp.serialNo}`}
                 </div>
                 <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                  {insp.inspectedBy} {insp.projectId && `· โครงการ: ${insp.projectId}`}
+                  {insp.inspectedBy}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
