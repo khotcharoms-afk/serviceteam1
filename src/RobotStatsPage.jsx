@@ -20,7 +20,7 @@ const SITE_CONFIG = {
   'PDR_LPN_OPM': { site: 'แพนโดร่า สาขาลำพูน 2 operation' },
   'RAM2':        { site: 'โรงพยาบาลรามคำแหง' },
   'VBH_BKK':     { site: 'รพ.วิภารามพัฒนาการ' },
-  'KKP':         { site: 'ธนาคารเกียรตินาคิน สาขา อโศก' },
+  'KKP_ASOK':    { site: 'ธนาคารเกียรตินาคิน สาขา อโศก' },
 
   'THAMC_F1': { site: 'โรงพยาบาลธรรมศาสตร์รังสิต', label: 'ชั้น 1' },
   'THAMC_F2': { site: 'โรงพยาบาลธรรมศาสตร์รังสิต', label: 'ชั้น 2' },
@@ -64,7 +64,7 @@ const SITE_CONFIG = {
 // ── ลำดับการแสดงผลในรายงาน (เรียงตามลำดับโค้ดในนี้) ──
 // ไซต์ที่ไม่มีโค้ดอยู่ในลิสต์นี้ จะถูกจัดไว้ท้ายสุดตามลำดับที่มาจาก VIGGO
 const SITE_ORDER = [
-  'DAD', 'PDR_LPN_PRD', 'PDR_LPN_OPM', 'RAM2', 'VBH_BKK', 'KKP', 'VBH_LEAM',
+  'DAD', 'PDR_LPN_PRD', 'PDR_LPN_OPM', 'RAM2', 'VBH_BKK', 'KKP_ASOK', 'VBH_LEAM',
   'THAMC_F1', 'THAMC_F2', 'THAMC_F4', 'THAMC_F5',
   'ARL_BTC', 'ARL_HUM', 'ARL_LKB', 'ARL_MAS_1', 'ARL_MAS_2', 'ARL_PTH', 'ARL_RKH', 'ARL_RPR', 'ARL_SVB',
   'SCB_WEST', 'SCB_EAST', 'SCB_MID',
