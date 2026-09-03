@@ -21,6 +21,7 @@ import ImportModal from "./ImportModal.jsx";
 import NavBar from "./NavBar.jsx";
 import OTPage from "./OTPage.jsx";
 import PartPage from "./PartPage.jsx";
+import RobotStatsPage from "./RobotStatsPage.jsx";
 import KnowledgeHub from "./KnowledgeHub.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import TaskBoard from "./TaskBoard.jsx";
@@ -46,6 +47,7 @@ export default function App({ currentUser, onSignOut }) {
   const [knowledgePage,setKnowledgePage] = useState(false);
   const [otPage,setOtPage]         = useState(false);
   const [partPage,setPartPage]     = useState(false);
+  const [robotStatsPage,setRobotStatsPage] = useState(false);
   const [profilePage,setProfilePage] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
   const [globalQ, setGlobalQ]           = useState("");
@@ -668,6 +670,7 @@ export default function App({ currentUser, onSignOut }) {
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(knowledgePage) return <KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/>;
   if(partPage) return <PartPage onBack={()=>setPartPage(false)} currentUser={currentUser}/>;
+  if(robotStatsPage) return <RobotStatsPage onBack={()=>setRobotStatsPage(false)}/>;
   if(dashboardPage && isAdminOrDev) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
 
   return (
@@ -722,6 +725,7 @@ export default function App({ currentUser, onSignOut }) {
         setShiftPage={setShiftPage} setOnsitePage={setOnsitePage}
         setOtPage={setOtPage} setLeavePage={setLeavePage} setKnowledgePage={setKnowledgePage}
         setPartPage={setPartPage}
+        setRobotStatsPage={setRobotStatsPage}
         setAdminPage={setAdminPage} setProfilePage={setProfilePage}
         openAddProj={openAddProj}
         handleImportFile={handleImportFile}
