@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
 
-const ORANGE = '#F97316';
 const PURPLE = '#6B21A8';
+const ORANGE = '#F97316';
+const SLATE_900 = '#0f172a';
+const SLATE_500 = '#64748b';
+const SLATE_400 = '#94a3b8';
+const BORDER = '#e2e8f0';
+const BG = '#f8fafc';
+const GREEN = '#16a34a';
+const AMBER = '#f59e0b';
+const RED = '#ef4444';
 
 function todayStr(offsetDays = 0) {
   const d = new Date();
@@ -9,11 +17,75 @@ function todayStr(offsetDays = 0) {
   return d.toISOString().split('T')[0];
 }
 
-function formatMinutes(mins) {
+function formatHours(mins) {
   const n = Number(mins) || 0;
   const h = Math.floor(n / 60);
   const m = Math.round(n % 60);
-  return `${h} ชม. ${m} นาที`;
+  return `${h} ชม. ${m} น.`;
+}
+
+function pctOf(r) {
+  const plan = Number(r.plan_clean_area) || 0;
+  const actual = Number(r.actual_clean_area) || 0;
+  if (plan <= 0) return null;
+  return (actual / plan) * 100;
+}
+
+function performanceColor(pct) {
+  if (pct === null) return SLATE_400;
+  if (pct >= 90) return GREEN;
+  if (pct >= 70) return AMBER;
+  return RED;
+}
+
+function ProgressBar({ pct }) {
+  const color = performanceColor(pct);
+  const width = pct === null ? 0 : Math.min(100, Math.max(0, pct));
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, height: 7, borderRadius: 20, background: '#eef1f5', overflow: 'hidden' }}>
+        <div style={{ width: `${width}%`, height: '100%', background: color, borderRadius: 20, transition: 'width .3s' }} />
+      </div>
+      <span style={{ fontSize: 12.5, fontWeight: 700, color, minWidth: 40, textAlign: 'right' }}>
+        {pct === null ? '—' : `${pct.toFixed(0)}%`}
+      </span>
+    </div>
+  );
+}
+
+function QuickRangeBtn({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: active ? PURPLE : '#fff',
+        border: `1px solid ${active ? PURPLE : BORDER}`,
+        color: active ? '#fff' : SLATE_500,
+        borderRadius: 8,
+        padding: '6px 13px',
+        fontSize: 12.5,
+        fontWeight: 600,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function StatCard({ label, value, sub, color }) {
+  return (
+    <div style={{
+      background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14,
+      padding: '14px 16px', flex: 1, minWidth: 130, borderLeft: `4px solid ${color}`,
+    }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: SLATE_900, lineHeight: 1.15 }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: SLATE_500, marginTop: 3, fontWeight: 600 }}>{label}</div>
+      {sub && <div style={{ fontSize: 10.5, color: SLATE_400, marginTop: 2 }}>{sub}</div>}
+    </div>
+  );
 }
 
 export default function RobotStatsPage({ onBack }) {
@@ -22,17 +94,14 @@ export default function RobotStatsPage({ onBack }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [query, setQuery] = useState('');
+  const isMobile = window.innerWidth < 720;
 
-  async function fetchData() {
+  async function fetchData(from = startDate, to = endDate) {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
-        start_time: startDate,
-        end_time: endDate,
-        page: '1',
-        size: '100',
-      });
+      const params = new URLSearchParams({ start_time: from, end_time: to, page: '1', size: '100' });
       const res = await fetch(`/api/robot-stats?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
@@ -50,81 +119,168 @@ export default function RobotStatsPage({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function setRange(daysBack) {
+    const to = todayStr();
+    const from = todayStr(-daysBack);
+    setStartDate(from);
+    setEndDate(to);
+    fetchData(from, to);
+  }
+
+  const filteredRows = rows.filter((r) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return [r.vehicle_name, r.project_name].some((x) => x?.toLowerCase().includes(q));
+  });
+
+  const totalTask = rows.reduce((s, r) => s + (Number(r.task_num) || 0), 0);
+  const totalActual = rows.reduce((s, r) => s + (Number(r.actual_clean_area) || 0), 0);
+  const totalPlan = rows.reduce((s, r) => s + (Number(r.plan_clean_area) || 0), 0);
+  const avgPct = totalPlan > 0 ? (totalActual / totalPlan) * 100 : null;
+  const activeCount = rows.filter((r) => Number(r.task_num) > 0).length;
+
+  const isToday = startDate === todayStr() && endDate === todayStr();
+  const is7 = startDate === todayStr(-6) && endDate === todayStr();
+  const is30 = startDate === todayStr(-29) && endDate === todayStr();
+
   return (
-    <div style={{ padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>←</button>
-        <h2 style={{ color: PURPLE, margin: 0 }}>📊 สถิติการทำงานหุ่นยนต์ (VIGGO)</h2>
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+      {/* Header */}
+      <div style={{ background: '#fff', borderBottom: `1px solid ${BORDER}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={onBack} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: SLATE_500, flexShrink: 0 }}>←</button>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: SLATE_900, display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ fontSize: 17 }}>📊</span> สถิติการทำงานหุ่นยนต์
+            </div>
+            <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>ข้อมูลจากระบบ VIGGO</div>
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-        <label>
-          จาก:{' '}
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-        </label>
-        <label>
-          ถึง:{' '}
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-        </label>
-        <button
-          onClick={fetchData}
-          disabled={loading}
-          style={{
-            background: ORANGE,
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            padding: '8px 16px',
-            cursor: 'pointer',
-          }}
-        >
-          {loading ? 'กำลังโหลด...' : '🔍 ค้นหา'}
-        </button>
-      </div>
+      <div style={{ padding: 16, maxWidth: 1100, margin: '0 auto' }}>
+        {/* Date filter */}
+        <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+            <span style={{ fontSize: 12, color: SLATE_500, fontWeight: 600 }}>📅 ช่วงวันที่:</span>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+              style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+            <span style={{ fontSize: 12, color: SLATE_400 }}>ถึง</span>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+              style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+            <button onClick={() => fetchData()} disabled={loading}
+              style={{ background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {loading ? 'กำลังโหลด…' : 'ค้นหา'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <QuickRangeBtn label="วันนี้" active={isToday} onClick={() => setRange(0)} />
+            <QuickRangeBtn label="7 วัน" active={is7} onClick={() => setRange(6)} />
+            <QuickRangeBtn label="30 วัน" active={is30} onClick={() => setRange(29)} />
+          </div>
+        </div>
 
-      {error && <div style={{ color: 'red', marginBottom: 12 }}>⚠️ {error}</div>}
+        {error && (
+          <div style={{ background: '#fff5f5', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 12, padding: '12px 16px', marginBottom: 14, fontSize: 13.5 }}>
+            ⚠️ {error}
+          </div>
+        )}
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead>
-            <tr style={{ background: PURPLE, color: '#fff' }}>
-              <th style={th}>รถ</th>
-              <th style={th}>โปรเจกต์</th>
-              <th style={th}>จำนวนงาน</th>
-              <th style={th}>เวลาทำงานรวม</th>
-              <th style={th}>พื้นที่วางแผน (ตร.ม.)</th>
-              <th style={th}>พื้นที่ทำจริง (ตร.ม.)</th>
-              <th style={th}>ยังไม่ทำ (ตร.ม.)</th>
-              <th style={th}>% สำเร็จ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const pct = r.plan_clean_area > 0
-                ? ((Number(r.actual_clean_area) / Number(r.plan_clean_area)) * 100).toFixed(1)
-                : '-';
+        {/* Summary stats */}
+        {rows.length > 0 && (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+            <StatCard label="รถที่ทำงาน" value={`${activeCount}/${rows.length}`} color={PURPLE} sub="คัน" />
+            <StatCard label="งานทั้งหมด" value={totalTask.toLocaleString()} color="#2563eb" sub="งาน" />
+            <StatCard label="พื้นที่ทำสำเร็จ" value={`${Math.round(totalActual).toLocaleString()}`} color={ORANGE} sub="ตร.ม." />
+            <StatCard label="% สำเร็จเฉลี่ย" value={avgPct === null ? '—' : `${avgPct.toFixed(0)}%`} color={performanceColor(avgPct)} sub="ถ่วงน้ำหนักตามพื้นที่" />
+          </div>
+        )}
+
+        {/* Search */}
+        {rows.length > 0 && (
+          <div style={{ position: 'relative', marginBottom: 14 }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: SLATE_400, fontSize: 15 }}>⌕</span>
+            <input
+              placeholder="ค้นหารถ หรือโปรเจกต์..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={{ width: '100%', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, color: SLATE_900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
+            />
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && rows.length === 0 && !error && (
+          <div style={{ background: '#fff', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '48px 20px', textAlign: 'center', color: SLATE_400 }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
+            <div style={{ fontSize: 14 }}>ไม่พบข้อมูลในช่วงวันที่นี้</div>
+          </div>
+        )}
+
+        {/* Mobile: card list */}
+        {isMobile && filteredRows.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {filteredRows.map((r) => {
+              const pct = pctOf(r);
               return (
-                <tr key={r.vin} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={td}>{r.vehicle_name}</td>
-                  <td style={td}>{r.project_name}</td>
-                  <td style={td}>{r.task_num}</td>
-                  <td style={td}>{formatMinutes(r.total_time)}</td>
-                  <td style={td}>{Number(r.plan_clean_area).toLocaleString()}</td>
-                  <td style={td}>{Number(r.actual_clean_area).toLocaleString()}</td>
-                  <td style={td}>{Number(r.uncleaned_area).toLocaleString()}</td>
-                  <td style={td}>{pct}%</td>
-                </tr>
+                <div key={r.vin} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 14.5, fontWeight: 800, color: SLATE_900 }}>{r.vehicle_name}</div>
+                      <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>{r.project_name}</div>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: SLATE_500, textAlign: 'right' }}>
+                      {r.task_num} งาน<br />{formatHours(r.total_time)}
+                    </div>
+                  </div>
+                  <ProgressBar pct={pct} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11 }}>
+                    <span style={{ color: SLATE_400 }}>ทำแล้ว {Number(r.actual_clean_area).toLocaleString()} ตร.ม.</span>
+                    <span style={{ color: SLATE_400 }}>ยังไม่ทำ {Number(r.uncleaned_area).toLocaleString()} ตร.ม.</span>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
-        {!loading && rows.length === 0 && !error && (
-          <div style={{ textAlign: 'center', padding: 24, color: '#999' }}>ไม่พบข้อมูล</div>
+          </div>
+        )}
+
+        {/* Desktop: table */}
+        {!isMobile && filteredRows.length > 0 && (
+          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                <thead>
+                  <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
+                    {['รถ', 'โปรเจกต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
+                      <th key={h} style={{ padding: '11px 14px', textAlign: h === 'ผลงาน' ? 'left' : 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRows.map((r) => {
+                    const pct = pctOf(r);
+                    return (
+                      <tr key={r.vin} style={{ borderBottom: `1px solid #f1f5f9` }}>
+                        <td style={{ padding: '12px 14px', fontWeight: 700, color: SLATE_900 }}>{r.vehicle_name}</td>
+                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.project_name}</td>
+                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.task_num}</td>
+                        <td style={{ padding: '12px 14px', color: SLATE_500, whiteSpace: 'nowrap' }}>{formatHours(r.total_time)}</td>
+                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{Number(r.actual_clean_area).toLocaleString()}</td>
+                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{Number(r.uncleaned_area).toLocaleString()}</td>
+                        <td style={{ padding: '12px 14px', minWidth: 140 }}><ProgressBar pct={pct} /></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {rows.length > 0 && filteredRows.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 32, color: SLATE_400, fontSize: 13.5 }}>ไม่พบรถหรือโปรเจกต์ที่ตรงกับคำค้นหา</div>
         )}
       </div>
     </div>
   );
 }
-
-const th = { padding: '10px 8px', textAlign: 'left' };
-const td = { padding: '8px' };
