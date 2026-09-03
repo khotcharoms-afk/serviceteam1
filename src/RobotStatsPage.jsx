@@ -484,7 +484,7 @@ export default function RobotStatsPage({ onBack }) {
         </div>
       </div>
 
-      <div style={{ padding: 16, maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ padding: 16, maxWidth: 1400, margin: '0 auto' }}>
         {/* Date filter */}
         <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
@@ -635,8 +635,8 @@ export default function RobotStatsPage({ onBack }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
-                    {['สถานะ', 'รถ', 'โปรเจกต์', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
-                      <th key={h} style={{ padding: '11px 14px', textAlign: h === 'ผลงาน' ? 'left' : 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700 }}>{h}</th>
+                    {['สถานะ', 'รถ', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
+                      <th key={h} style={{ padding: '10px 10px', textAlign: 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -645,18 +645,20 @@ export default function RobotStatsPage({ onBack }) {
                     const pct = pctOf(r);
                     return (
                       <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa', cursor: 'pointer' }}>
-                        <td style={{ padding: '12px 14px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
-                        <td style={{ padding: '12px 14px', fontWeight: 700, color: SLATE_900 }}>
+                        <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
+                        <td style={{ padding: '10px 10px', fontWeight: 700, color: SLATE_900, whiteSpace: 'nowrap' }}>
                           {r.vehicle_name}
                           <div style={{ fontSize: 10, color: SLATE_400, fontWeight: 400, fontFamily: 'monospace' }}>{r.vin}</div>
                         </td>
-                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.project_name}</td>
-                        <td style={{ padding: '12px 14px', color: SLATE_900, fontWeight: 600 }}>{siteName(r.project_name)}</td>
-                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.task_num}</td>
-                        <td style={{ padding: '12px 14px', color: SLATE_500, whiteSpace: 'nowrap' }}>{formatHours(r.total_time)}</td>
-                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{Number(r.actual_clean_area).toLocaleString()}</td>
-                        <td style={{ padding: '12px 14px', color: SLATE_500 }}>{Number(r.uncleaned_area).toLocaleString()}</td>
-                        <td style={{ padding: '12px 14px', minWidth: 140 }}><ProgressBar pct={pct} /></td>
+                        <td style={{ padding: '10px 10px', color: SLATE_900, fontWeight: 600 }}>
+                          {siteName(r.project_name)}
+                          <div style={{ fontSize: 10, color: SLATE_400, fontWeight: 400 }}>{r.project_name}</div>
+                        </td>
+                        <td style={{ padding: '10px 10px', color: SLATE_500 }}>{r.task_num}</td>
+                        <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{formatHours(r.total_time)}</td>
+                        <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{Number(r.actual_clean_area).toLocaleString()}</td>
+                        <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{Number(r.uncleaned_area).toLocaleString()}</td>
+                        <td style={{ padding: '10px 10px', minWidth: 110 }}><ProgressBar pct={pct} /></td>
                       </tr>
                     );
                   })}
