@@ -440,7 +440,7 @@ export default function RobotStatsPage({ onBack }) {
       if (statusFilter === 'notworked') return !worked;
       return true;
     })
-    .sort((a, b) => (Number(a.task_num) > 0 ? 1 : 0) - (Number(b.task_num) > 0 ? 1 : 0));
+    .sort((a, b) => (Number(b.task_num) > 0 ? 1 : 0) - (Number(a.task_num) > 0 ? 1 : 0));
 
   const totalTask = rows.reduce((s, r) => s + (Number(r.task_num) || 0), 0);
   const totalActual = rows.reduce((s, r) => s + (Number(r.actual_clean_area) || 0), 0);
