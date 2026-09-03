@@ -11,6 +11,53 @@ const GREEN = '#16a34a';
 const AMBER = '#f59e0b';
 const RED = '#ef4444';
 
+// ── แก้ตรงนี้เพื่อกำหนดชื่อไซต์ภาษาไทยที่จะใช้ในรายงาน ──
+// key = ชื่อโปรเจกต์ที่ได้จาก VIGGO (r.project_name), value = ชื่อไทยที่จะโชว์ในรายงาน
+// ถ้าโค้ดไหนยังไม่ได้ใส่ไว้ในนี้ จะโชว์เป็นโค้ดเดิมไปก่อน
+const SITE_NAMES = {
+  // ตัวอย่าง: 'ARL_MAS_2': 'ศูนย์ราชการแจ้งวัฒนะ',
+};
+
+// ── (ไม่บังคับ) แก้ตรงนี้ถ้าอยากตั้งชื่อเฉพาะให้รถบางคัน (เช่น ระบุเป็น "ชั้น 1" แทนชื่อรถ) ──
+// key = ชื่อรถจาก VIGGO (r.vehicle_name), value = label ที่จะโชว์แทน
+const VEHICLE_LABELS = {
+  // ตัวอย่าง: 'MT-30': 'ชั้น 1',
+};
+
+function siteName(code) {
+  return SITE_NAMES[code] || code || 'ไม่ระบุไซต์';
+}
+function vehicleLabel(name) {
+  return VEHICLE_LABELS[name] || name;
+}
+
+function buildDailyReport(rows) {
+  const bySite = {};
+  rows.forEach((r) => {
+    const site = r.project_name || '';
+    if (!bySite[site]) bySite[site] = [];
+    bySite[site].push(r);
+  });
+
+  const lines = [];
+  Object.keys(bySite).forEach((site) => {
+    const vehicles = bySite[site];
+    lines.push(siteName(site));
+    if (vehicles.length === 1) {
+      const worked = Number(vehicles[0].task_num) > 0;
+      lines.push(worked ? '🟢ออนไลน์ทำงานปกติ' : '🔴ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน');
+    } else {
+      vehicles.forEach((v) => {
+        const worked = Number(v.task_num) > 0;
+        const label = vehicleLabel(v.vehicle_name);
+        lines.push(worked ? `🟢${label} ออนไลน์ทำงานปกติ` : `🔴${label} ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน`);
+      });
+    }
+    lines.push('');
+  });
+  return lines.join('\n').trim();
+}
+
 function todayStr(offsetDays = 0) {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
@@ -50,6 +97,20 @@ function ProgressBar({ pct }) {
         {pct === null ? '—' : `${pct.toFixed(0)}%`}
       </span>
     </div>
+  );
+}
+
+function StatusBadge({ worked }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      background: worked ? '#f0fdf4' : '#fff5f5',
+      color: worked ? GREEN : RED,
+      border: `1px solid ${worked ? '#bbf7d0' : '#fecaca'}`,
+      borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+    }}>
+      {worked ? '✅ ทำงาน' : '⛔ ไม่ได้ทำงาน'}
+    </span>
   );
 }
 
@@ -95,6 +156,9 @@ export default function RobotStatsPage({ onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // all | worked | notworked
+  const [showReport, setShowReport] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isMobile = window.innerWidth < 720;
 
   async function fetchData(from = startDate, to = endDate) {
@@ -127,21 +191,42 @@ export default function RobotStatsPage({ onBack }) {
     fetchData(from, to);
   }
 
-  const filteredRows = rows.filter((r) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return [r.vehicle_name, r.project_name].some((x) => x?.toLowerCase().includes(q));
-  });
+  const filteredRows = rows
+    .filter((r) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return [r.vehicle_name, r.project_name, r.vin].some((x) => x?.toLowerCase().includes(q));
+    })
+    .filter((r) => {
+      const worked = Number(r.task_num) > 0;
+      if (statusFilter === 'worked') return worked;
+      if (statusFilter === 'notworked') return !worked;
+      return true;
+    })
+    .sort((a, b) => (Number(a.task_num) > 0 ? 1 : 0) - (Number(b.task_num) > 0 ? 1 : 0));
 
   const totalTask = rows.reduce((s, r) => s + (Number(r.task_num) || 0), 0);
   const totalActual = rows.reduce((s, r) => s + (Number(r.actual_clean_area) || 0), 0);
   const totalPlan = rows.reduce((s, r) => s + (Number(r.plan_clean_area) || 0), 0);
   const avgPct = totalPlan > 0 ? (totalActual / totalPlan) * 100 : null;
   const activeCount = rows.filter((r) => Number(r.task_num) > 0).length;
+  const notWorkedCount = rows.length - activeCount;
 
   const isToday = startDate === todayStr() && endDate === todayStr();
   const is7 = startDate === todayStr(-6) && endDate === todayStr();
   const is30 = startDate === todayStr(-29) && endDate === todayStr();
+
+  const reportText = buildDailyReport(rows);
+
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(reportText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      alert('คัดลอกไม่สำเร็จ ลองกดค้างเพื่อเลือกข้อความเองแทน');
+    }
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
@@ -188,11 +273,58 @@ export default function RobotStatsPage({ onBack }) {
 
         {/* Summary stats */}
         {rows.length > 0 && (
-          <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-            <StatCard label="รถที่ทำงาน" value={`${activeCount}/${rows.length}`} color={PURPLE} sub="คัน" />
+          <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+            <div onClick={() => setStatusFilter(statusFilter === 'worked' ? 'all' : 'worked')} style={{ cursor: 'pointer', flex: 1, minWidth: 130 }}>
+              <StatCard label="รถที่ทำงาน" value={activeCount} color={GREEN} sub={`จากทั้งหมด ${rows.length} คัน`} />
+            </div>
+            <div onClick={() => setStatusFilter(statusFilter === 'notworked' ? 'all' : 'notworked')} style={{ cursor: 'pointer', flex: 1, minWidth: 130 }}>
+              <StatCard label="รถที่ไม่ได้ทำงาน" value={notWorkedCount} color={RED} sub="กดดูรายการ" />
+            </div>
             <StatCard label="งานทั้งหมด" value={totalTask.toLocaleString()} color="#2563eb" sub="งาน" />
             <StatCard label="พื้นที่ทำสำเร็จ" value={`${Math.round(totalActual).toLocaleString()}`} color={ORANGE} sub="ตร.ม." />
-            <StatCard label="% สำเร็จเฉลี่ย" value={avgPct === null ? '—' : `${avgPct.toFixed(0)}%`} color={performanceColor(avgPct)} sub="ถ่วงน้ำหนักตามพื้นที่" />
+          </div>
+        )}
+
+        {/* Status filter chips */}
+        {rows.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+            <QuickRangeBtn label={`ทั้งหมด (${rows.length})`} active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+            <QuickRangeBtn label={`ทำงาน (${activeCount})`} active={statusFilter === 'worked'} onClick={() => setStatusFilter('worked')} />
+            <QuickRangeBtn label={`ไม่ได้ทำงาน (${notWorkedCount})`} active={statusFilter === 'notworked'} onClick={() => setStatusFilter('notworked')} />
+            <div style={{ flex: 1 }} />
+            <button
+              onClick={() => setShowReport((v) => !v)}
+              style={{
+                background: showReport ? PURPLE : '#fff', color: showReport ? '#fff' : PURPLE,
+                border: `1px solid ${PURPLE}`, borderRadius: 8, padding: '6px 13px',
+                fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+              }}
+            >
+              📋 {showReport ? 'ซ่อนรายงาน' : 'สร้างรายงานประจำวัน'}
+            </button>
+          </div>
+        )}
+
+        {/* Daily report panel */}
+        {showReport && rows.length > 0 && (
+          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: SLATE_900 }}>รายงานประจำวัน · {endDate}</div>
+              <button onClick={copyReport}
+                style={{ background: copied ? GREEN : ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {copied ? '✓ คัดลอกแล้ว' : '📋 คัดลอกข้อความ'}
+              </button>
+            </div>
+            <pre style={{
+              whiteSpace: 'pre-wrap', fontFamily: "'Noto Sans Thai',sans-serif", fontSize: 13.5,
+              color: SLATE_900, background: BG, borderRadius: 10, padding: 14, margin: 0, lineHeight: 1.7,
+              maxHeight: 420, overflowY: 'auto',
+            }}>
+              {reportText}
+            </pre>
+            <div style={{ fontSize: 11, color: SLATE_400, marginTop: 8 }}>
+              💡 ชื่อไซต์ยังเป็นโค้ดจาก VIGGO อยู่ — แก้ชื่อไทยได้ในไฟล์ RobotStatsPage.jsx ตรง SITE_NAMES ด้านบนไฟล์
+            </div>
           </div>
         )}
 
@@ -201,7 +333,7 @@ export default function RobotStatsPage({ onBack }) {
           <div style={{ position: 'relative', marginBottom: 14 }}>
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: SLATE_400, fontSize: 15 }}>⌕</span>
             <input
-              placeholder="ค้นหารถ หรือโปรเจกต์..."
+              placeholder="ค้นหารถ, VIN หรือโปรเจกต์..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{ width: '100%', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, color: SLATE_900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
@@ -228,10 +360,13 @@ export default function RobotStatsPage({ onBack }) {
                     <div>
                       <div style={{ fontSize: 14.5, fontWeight: 800, color: SLATE_900 }}>{r.vehicle_name}</div>
                       <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>{r.project_name}</div>
+                      <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
-                    <div style={{ fontSize: 11.5, color: SLATE_500, textAlign: 'right' }}>
-                      {r.task_num} งาน<br />{formatHours(r.total_time)}
-                    </div>
+                    <StatusBadge worked={Number(r.task_num) > 0} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: SLATE_500, marginBottom: 10 }}>
+                    <span>{r.task_num} งาน</span>
+                    <span>{formatHours(r.total_time)}</span>
                   </div>
                   <ProgressBar pct={pct} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11 }}>
@@ -251,7 +386,7 @@ export default function RobotStatsPage({ onBack }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
-                    {['รถ', 'โปรเจกต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
+                    {['สถานะ', 'รถ', 'โปรเจกต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
                       <th key={h} style={{ padding: '11px 14px', textAlign: h === 'ผลงาน' ? 'left' : 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700 }}>{h}</th>
                     ))}
                   </tr>
@@ -260,8 +395,12 @@ export default function RobotStatsPage({ onBack }) {
                   {filteredRows.map((r) => {
                     const pct = pctOf(r);
                     return (
-                      <tr key={r.vin} style={{ borderBottom: `1px solid #f1f5f9` }}>
-                        <td style={{ padding: '12px 14px', fontWeight: 700, color: SLATE_900 }}>{r.vehicle_name}</td>
+                      <tr key={r.vin} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa' }}>
+                        <td style={{ padding: '12px 14px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
+                        <td style={{ padding: '12px 14px', fontWeight: 700, color: SLATE_900 }}>
+                          {r.vehicle_name}
+                          <div style={{ fontSize: 10, color: SLATE_400, fontWeight: 400, fontFamily: 'monospace' }}>{r.vin}</div>
+                        </td>
                         <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.project_name}</td>
                         <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.task_num}</td>
                         <td style={{ padding: '12px 14px', color: SLATE_500, whiteSpace: 'nowrap' }}>{formatHours(r.total_time)}</td>
@@ -278,7 +417,7 @@ export default function RobotStatsPage({ onBack }) {
         )}
 
         {rows.length > 0 && filteredRows.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 32, color: SLATE_400, fontSize: 13.5 }}>ไม่พบรถหรือโปรเจกต์ที่ตรงกับคำค้นหา</div>
+          <div style={{ textAlign: 'center', padding: 32, color: SLATE_400, fontSize: 13.5 }}>ไม่พบรถที่ตรงกับเงื่อนไขที่เลือก</div>
         )}
       </div>
     </div>
