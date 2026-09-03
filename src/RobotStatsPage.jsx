@@ -17,7 +17,7 @@ function formatMinutes(mins) {
 }
 
 export default function RobotStatsPage({ onBack }) {
-  const [startDate, setStartDate] = useState(todayStr(-7));
+  const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
