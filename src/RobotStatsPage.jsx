@@ -278,7 +278,7 @@ export default function RobotStatsPage({ onBack }) {
     .filter((r) => {
       const q = query.trim().toLowerCase();
       if (!q) return true;
-      return [r.vehicle_name, r.project_name, r.vin].some((x) => x?.toLowerCase().includes(q));
+      return [r.vehicle_name, r.project_name, r.vin, siteName(r.project_name)].some((x) => x?.toLowerCase().includes(q));
     })
     .filter((r) => {
       const worked = Number(r.task_num) > 0;
@@ -446,6 +446,7 @@ export default function RobotStatsPage({ onBack }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
                       <div style={{ fontSize: 14.5, fontWeight: 800, color: SLATE_900 }}>{r.vehicle_name}</div>
+                      <div style={{ fontSize: 12, color: SLATE_500, marginTop: 1, fontWeight: 600 }}>{siteName(r.project_name)}</div>
                       <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>{r.project_name}</div>
                       <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
@@ -473,7 +474,7 @@ export default function RobotStatsPage({ onBack }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
-                    {['สถานะ', 'รถ', 'โปรเจกต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
+                    {['สถานะ', 'รถ', 'โปรเจกต์', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
                       <th key={h} style={{ padding: '11px 14px', textAlign: h === 'ผลงาน' ? 'left' : 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700 }}>{h}</th>
                     ))}
                   </tr>
@@ -489,6 +490,7 @@ export default function RobotStatsPage({ onBack }) {
                           <div style={{ fontSize: 10, color: SLATE_400, fontWeight: 400, fontFamily: 'monospace' }}>{r.vin}</div>
                         </td>
                         <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.project_name}</td>
+                        <td style={{ padding: '12px 14px', color: SLATE_900, fontWeight: 600 }}>{siteName(r.project_name)}</td>
                         <td style={{ padding: '12px 14px', color: SLATE_500 }}>{r.task_num}</td>
                         <td style={{ padding: '12px 14px', color: SLATE_500, whiteSpace: 'nowrap' }}>{formatHours(r.total_time)}</td>
                         <td style={{ padding: '12px 14px', color: SLATE_500 }}>{Number(r.actual_clean_area).toLocaleString()}</td>
