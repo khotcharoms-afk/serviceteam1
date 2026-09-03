@@ -146,6 +146,20 @@ function todayStr(offsetDays = 0) {
   return d.toISOString().split('T')[0];
 }
 
+function mondayOfThisWeek() {
+  const d = new Date();
+  const day = d.getDay(); // 0=อาทิตย์ ... 6=เสาร์
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diffToMonday);
+  return d.toISOString().split('T')[0];
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
 function formatHours(mins) {
   const n = Number(mins) || 0;
   const h = Math.floor(n / 60);
@@ -270,14 +284,18 @@ function VehicleDetail({ vehicle, onBack }) {
       setError(null);
       try {
         const dayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+        const monday = mondayOfThisWeek();
         const days = [];
-        for (let i = 6; i >= 0; i--) days.push(todayStr(-i));
+        for (let i = 0; i < 7; i++) days.push(addDays(monday, i));
         const results = await Promise.all(days.map(async (date) => {
+          const d = new Date(date);
+          if (date > todayStr()) {
+            return { date, dateShort: `${d.getDate()}/${d.getMonth() + 1}`, dayLabel: dayNames[d.getDay()], task_num: 0, actual_clean_area: 0, total_time: 0 };
+          }
           const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
           const res = await fetch(`/api/robot-stats?${params.toString()}`);
           const data = await res.json();
           const row = (data.result || []).find((r) => r.vin === vehicle.vin);
-          const d = new Date(date);
           return {
             date,
             dateShort: `${d.getDate()}/${d.getMonth() + 1}`,
