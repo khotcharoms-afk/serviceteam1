@@ -88,7 +88,7 @@ function siteLabel(code, fallbackName) {
   return SITE_CONFIG[code]?.label || fallbackName;
 }
 
-function buildDailyReport(rows) {
+function buildDailyReport(rows, mode = 'morning') {
   const bySite = {};
   rows.forEach((r) => {
     const code = r.project_name || '';
@@ -117,11 +117,23 @@ function buildDailyReport(rows) {
     const needsLabel = vehicles.length > 1 || vehicles.some((v) => SITE_CONFIG[v.project_name]?.label);
     vehicles.forEach((v) => {
       const worked = Number(v.task_num) > 0;
-      if (needsLabel) {
-        const label = siteLabel(v.project_name, v.vehicle_name);
-        lines.push(worked ? `🟢${label} ออนไลน์ทำงานปกติ` : `🔴${label} ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน`);
+      const label = needsLabel ? siteLabel(v.project_name, v.vehicle_name) : null;
+
+      if (mode === 'evening') {
+        if (worked) {
+          const area = Math.round(Number(v.actual_clean_area) || 0);
+          lines.push(label
+            ? `🟢ออนไลน์ ${label} ทำงานปกติ ${area} ตารางเมตร`
+            : `🟢ออนไลน์ทำงานปกติ ${area} ตารางเมตร`);
+        } else {
+          lines.push(label
+            ? `🔴ออฟไลน์ ${label} ยังไม่ได้เริ่มสั่งงาน`
+            : '🔴ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน');
+        }
       } else {
-        lines.push(worked ? '🟢ออนไลน์ทำงานปกติ' : '🔴ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน');
+        lines.push(label
+          ? (worked ? `🟢${label} ออนไลน์ทำงานปกติ` : `🔴${label} ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน`)
+          : (worked ? '🟢ออนไลน์ทำงานปกติ' : '🔴ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน'));
       }
     });
   });
@@ -228,6 +240,7 @@ export default function RobotStatsPage({ onBack }) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // all | worked | notworked
   const [showReport, setShowReport] = useState(false);
+  const [reportMode, setReportMode] = useState('morning'); // morning | evening
   const [copied, setCopied] = useState(false);
   const isMobile = window.innerWidth < 720;
 
@@ -286,7 +299,7 @@ export default function RobotStatsPage({ onBack }) {
   const is7 = startDate === todayStr(-6) && endDate === todayStr();
   const is30 = startDate === todayStr(-29) && endDate === todayStr();
 
-  const reportText = buildDailyReport(rows);
+  const reportText = buildDailyReport(rows, reportMode);
 
   async function copyReport() {
     try {
@@ -378,12 +391,16 @@ export default function RobotStatsPage({ onBack }) {
         {/* Daily report panel */}
         {showReport && rows.length > 0 && (
           <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: SLATE_900 }}>รายงานประจำวัน · {endDate}</div>
-              <button onClick={copyReport}
-                style={{ background: copied ? GREEN : ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                {copied ? '✓ คัดลอกแล้ว' : '📋 คัดลอกข้อความ'}
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <QuickRangeBtn label="🌅 เช้า" active={reportMode === 'morning'} onClick={() => setReportMode('morning')} />
+                <QuickRangeBtn label="🌙 เย็น" active={reportMode === 'evening'} onClick={() => setReportMode('evening')} />
+                <button onClick={copyReport}
+                  style={{ background: copied ? GREEN : ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {copied ? '✓ คัดลอกแล้ว' : '📋 คัดลอกข้อความ'}
+                </button>
+              </div>
             </div>
             <pre style={{
               whiteSpace: 'pre-wrap', fontFamily: "'Noto Sans Thai',sans-serif", fontSize: 13.5,
