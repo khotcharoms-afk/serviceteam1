@@ -11,30 +11,67 @@ const GREEN = '#16a34a';
 const AMBER = '#f59e0b';
 const RED = '#ef4444';
 
-// ── แก้ตรงนี้เพื่อกำหนดชื่อไซต์ภาษาไทยที่จะใช้ในรายงาน ──
-// key = ชื่อโปรเจกต์ที่ได้จาก VIGGO (r.project_name), value = ชื่อไทยที่จะโชว์ในรายงาน
-// ถ้าโค้ดไหนยังไม่ได้ใส่ไว้ในนี้ จะโชว์เป็นโค้ดเดิมไปก่อน
-const SITE_NAMES = {
-  // ตัวอย่าง: 'ARL_MAS_2': 'ศูนย์ราชการแจ้งวัฒนะ',
-};
+// ── ตั้งค่าชื่อไซต์ที่ใช้ในรายงาน ──
+// key = ชื่อโปรเจกต์จาก VIGGO (r.project_name)
+// site  = ชื่อไซต์ที่จะโชว์ในรายงาน
+// label = (ใส่เฉพาะไซต์ที่มีรถ/จุดย่อยหลายจุด เช่น หลายชั้น หรือหลายรุ่น) ป้ายกำกับหน้าสถานะ
+const SITE_CONFIG = {
+  'PDR_LPN_PRD': { site: 'แพนโดร่า สาขาลำพูน production' },
+  'PDR_LPN_OPM': { site: 'แพนโดร่า สาขาลำพูน 2 operation' },
+  'RAM2':        { site: 'โรงพยาบาลรามคำแหง' },
+  'VBH_BKK':     { site: 'รพ.วิภารามพัฒนาการ' },
+  'KKP':         { site: 'ธนาคารเกียรตินาคิน สาขา อโศก' },
 
-// ── (ไม่บังคับ) แก้ตรงนี้ถ้าอยากตั้งชื่อเฉพาะให้รถบางคัน (เช่น ระบุเป็น "ชั้น 1" แทนชื่อรถ) ──
-// key = ชื่อรถจาก VIGGO (r.vehicle_name), value = label ที่จะโชว์แทน
-const VEHICLE_LABELS = {
-  // ตัวอย่าง: 'MT-30': 'ชั้น 1',
+  'THAMC_F1': { site: 'โรงพยาบาลธรรมศาสตร์รังสิต', label: 'ชั้น 1' },
+  'THAMC_F2': { site: 'โรงพยาบาลธรรมศาสตร์รังสิต', label: 'ชั้น 2' },
+  'THAMC_F4': { site: 'โรงพยาบาลธรรมศาสตร์รังสิต', label: 'ชั้น 4' },
+  'THAMC_F5': { site: 'โรงพยาบาลธรรมศาสตร์รังสิต', label: 'ชั้น 5' },
+
+  'ARL_MAS_1': { site: 'ARL - Makkasan', label: 'SC50' },
+  'ARL_MAS_2': { site: 'ARL - Makkasan', label: 'SC80' },
+
+  'SCB_WEST': { site: 'SCB - WEST' },
+  'SCB_EAST': { site: 'SCB - EAST' },
+  'SCB_MID':  { site: 'SCB - HQ' },
+
+  'VBH_AMTA': { site: 'VPH_Amata_SC50' },
+  'SP_SNK':   { site: 'SP_Srinakarin_SC50PLUS' },
+
+  'SET_1': { site: 'SET Ratchada 1' },
+  'SET_2': { site: 'SET Ratchada 2' },
+  'SET_3': { site: 'SET Ratchada 3' },
+
+  'RAV_CHM':   { site: 'RAV_CHM' },
+  'CP-meiji':  { site: 'CP-MEJI' },
+
+  'AOTGA_TH_3': { site: 'AOTGA', label: 'FL.B.EAST' },
+  'AOTGA_TH_2': { site: 'AOTGA', label: 'FL.B.WEST' },
+  'AOTGA_TH_1': { site: 'AOTGA', label: 'FL.2.WEST' },
+
+  'ARL_BTC': { site: 'ARL - Ban Thap Chang' },
+  'ARL_HUM': { site: 'ARL - Hua Mak' },
+  'ARL_LKB': { site: 'ARL - Lat Krabang' },
+  'ARL_PTH': { site: 'ARL - Phaya Thai' },
+  'ARL_RKH': { site: 'ARL - Ramkhamhaeng' },
+  'ARL_RPR': { site: 'ARL - Ratchaprarop' },
+  'ARL_SVB': { site: 'ARL - Suvarnabhumi' },
+
+  // ยังไม่มีโค้ด VIGGO — เติมทีหลังได้ตามรูปแบบด้านบน:
+  // ศูนย์ราชการแจ้งวัฒนะ, รพ.วิภารามแหลมฉบัง MIX-1, SET Northpark 1, SET Northpark 2
 };
 
 function siteName(code) {
-  return SITE_NAMES[code] || code || 'ไม่ระบุไซต์';
+  return SITE_CONFIG[code]?.site || code || 'ไม่ระบุไซต์';
 }
-function vehicleLabel(name) {
-  return VEHICLE_LABELS[name] || name;
+function siteLabel(code, fallbackName) {
+  return SITE_CONFIG[code]?.label || fallbackName;
 }
 
 function buildDailyReport(rows) {
   const bySite = {};
   rows.forEach((r) => {
-    const site = r.project_name || '';
+    const code = r.project_name || '';
+    const site = siteName(code);
     if (!bySite[site]) bySite[site] = [];
     bySite[site].push(r);
   });
@@ -42,18 +79,17 @@ function buildDailyReport(rows) {
   const lines = [];
   Object.keys(bySite).forEach((site) => {
     const vehicles = bySite[site];
-    lines.push(siteName(site));
-    if (vehicles.length === 1) {
-      const worked = Number(vehicles[0].task_num) > 0;
-      lines.push(worked ? '🟢ออนไลน์ทำงานปกติ' : '🔴ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน');
-    } else {
-      vehicles.forEach((v) => {
-        const worked = Number(v.task_num) > 0;
-        const label = vehicleLabel(v.vehicle_name);
+    lines.push(site);
+    const needsLabel = vehicles.length > 1 || vehicles.some((v) => SITE_CONFIG[v.project_name]?.label);
+    vehicles.forEach((v) => {
+      const worked = Number(v.task_num) > 0;
+      if (needsLabel) {
+        const label = siteLabel(v.project_name, v.vehicle_name);
         lines.push(worked ? `🟢${label} ออนไลน์ทำงานปกติ` : `🔴${label} ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน`);
-      });
-    }
-    lines.push('');
+      } else {
+        lines.push(worked ? '🟢ออนไลน์ทำงานปกติ' : '🔴ออฟไลน์ ยังไม่ได้เริ่มสั่งงาน');
+      }
+    });
   });
   return lines.join('\n').trim();
 }
@@ -323,7 +359,7 @@ export default function RobotStatsPage({ onBack }) {
               {reportText}
             </pre>
             <div style={{ fontSize: 11, color: SLATE_400, marginTop: 8 }}>
-              💡 ชื่อไซต์ยังเป็นโค้ดจาก VIGGO อยู่ — แก้ชื่อไทยได้ในไฟล์ RobotStatsPage.jsx ตรง SITE_NAMES ด้านบนไฟล์
+              💡 บางไซต์ยังไม่มีโค้ด VIGGO เลยยังไม่โผล่ในรายงาน — เติมเพิ่มได้ในไฟล์ RobotStatsPage.jsx ตรง SITE_CONFIG ด้านบนไฟล์
             </div>
           </div>
         )}
