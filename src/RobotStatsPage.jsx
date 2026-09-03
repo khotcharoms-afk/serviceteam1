@@ -55,10 +55,28 @@ const SITE_CONFIG = {
   'ARL_RKH': { site: 'ARL - Ramkhamhaeng' },
   'ARL_RPR': { site: 'ARL - Ratchaprarop' },
   'ARL_SVB': { site: 'ARL - Suvarnabhumi' },
-
-  // ยังไม่มีโค้ด VIGGO — เติมทีหลังได้ตามรูปแบบด้านบน:
-  // ศูนย์ราชการแจ้งวัฒนะ, รพ.วิภารามแหลมฉบัง MIX-1, SET Northpark 1, SET Northpark 2
+  'DAD':     { site: 'ศูนย์ราชการแจ้งวัฒนะ' },
+  'VBH_LEAM': { site: 'รพ.วิภารามแหลมฉบัง MIX-1' },
+  'CMA_1':   { site: 'SET Northpark 1' },
+  'CMA_2':   { site: 'SET Northpark 2' },
 };
+
+// ── ลำดับการแสดงผลในรายงาน (เรียงตามลำดับโค้ดในนี้) ──
+// ไซต์ที่ไม่มีโค้ดอยู่ในลิสต์นี้ จะถูกจัดไว้ท้ายสุดตามลำดับที่มาจาก VIGGO
+const SITE_ORDER = [
+  'DAD', 'PDR_LPN_PRD', 'PDR_LPN_OPM', 'RAM2', 'VBH_BKK', 'KKP', 'VBH_LEAM',
+  'THAMC_F1', 'THAMC_F2', 'THAMC_F4', 'THAMC_F5',
+  'ARL_BTC', 'ARL_HUM', 'ARL_LKB', 'ARL_MAS_1', 'ARL_MAS_2', 'ARL_PTH', 'ARL_RKH', 'ARL_RPR', 'ARL_SVB',
+  'SCB_WEST', 'SCB_EAST', 'SCB_MID',
+  'VBH_AMTA', 'SP_SNK',
+  'SET_1', 'SET_2', 'SET_3', 'CMA_1', 'CMA_2',
+  'RAV_CHM', 'CP-meiji',
+  'AOTGA_TH_3', 'AOTGA_TH_2', 'AOTGA_TH_1',
+];
+function orderIndex(code) {
+  const i = SITE_ORDER.indexOf(code);
+  return i === -1 ? 9999 : i;
+}
 
 function siteName(code) {
   return SITE_CONFIG[code]?.site || code || 'ไม่ระบุไซต์';
@@ -76,8 +94,20 @@ function buildDailyReport(rows) {
     bySite[site].push(r);
   });
 
+  // เรียงรถภายในแต่ละไซต์ตามลำดับที่กำหนด
+  Object.values(bySite).forEach((vehicles) => {
+    vehicles.sort((a, b) => orderIndex(a.project_name) - orderIndex(b.project_name));
+  });
+
+  // เรียงไซต์ตามลำดับต่ำสุดของโค้ดในกลุ่มนั้น
+  const orderedSites = Object.keys(bySite).sort((siteA, siteB) => {
+    const minA = Math.min(...bySite[siteA].map((v) => orderIndex(v.project_name)));
+    const minB = Math.min(...bySite[siteB].map((v) => orderIndex(v.project_name)));
+    return minA - minB;
+  });
+
   const lines = [];
-  Object.keys(bySite).forEach((site) => {
+  orderedSites.forEach((site) => {
     const vehicles = bySite[site];
     lines.push(site);
     const needsLabel = vehicles.length > 1 || vehicles.some((v) => SITE_CONFIG[v.project_name]?.label);
@@ -359,7 +389,7 @@ export default function RobotStatsPage({ onBack }) {
               {reportText}
             </pre>
             <div style={{ fontSize: 11, color: SLATE_400, marginTop: 8 }}>
-              💡 บางไซต์ยังไม่มีโค้ด VIGGO เลยยังไม่โผล่ในรายงาน — เติมเพิ่มได้ในไฟล์ RobotStatsPage.jsx ตรง SITE_CONFIG ด้านบนไฟล์
+              💡 ถ้ามีไซต์ใหม่เพิ่มใน VIGGO ที่ยังไม่มีในรายงาน ให้เพิ่มโค้ดในไฟล์ RobotStatsPage.jsx ตรง SITE_CONFIG และ SITE_ORDER ด้านบนไฟล์
             </div>
           </div>
         )}
