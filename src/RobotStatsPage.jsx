@@ -231,6 +231,141 @@ function StatCard({ label, value, sub, color }) {
   );
 }
 
+function WeekBarChart({ data, maxValue }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 170, padding: '0 4px' }}>
+      {data.map((d) => {
+        const h = maxValue > 0 ? (d.actual_clean_area / maxValue) * 100 : 0;
+        const isToday = d.date === todayStr();
+        return (
+          <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: SLATE_500, whiteSpace: 'nowrap' }}>
+              {d.actual_clean_area > 0 ? d.actual_clean_area.toLocaleString() : '-'}
+            </div>
+            <div style={{ width: '100%', height: 110, display: 'flex', alignItems: 'flex-end' }}>
+              <div style={{
+                width: '100%', height: `${d.actual_clean_area > 0 ? Math.max(h, 4) : 0}%`,
+                background: isToday ? ORANGE : PURPLE, borderRadius: '6px 6px 0 0',
+                transition: 'height .3s',
+              }} />
+            </div>
+            <div style={{ fontSize: 12, fontWeight: isToday ? 800 : 600, color: isToday ? ORANGE : SLATE_500 }}>{d.dayLabel}</div>
+            <div style={{ fontSize: 9.5, color: SLATE_400 }}>{d.dateShort}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function VehicleDetail({ vehicle, onBack }) {
+  const [weekData, setWeekData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWeek() {
+      setLoading(true);
+      setError(null);
+      try {
+        const dayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+        const days = [];
+        for (let i = 6; i >= 0; i--) days.push(todayStr(-i));
+        const results = await Promise.all(days.map(async (date) => {
+          const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
+          const res = await fetch(`/api/robot-stats?${params.toString()}`);
+          const data = await res.json();
+          const row = (data.result || []).find((r) => r.vin === vehicle.vin);
+          const d = new Date(date);
+          return {
+            date,
+            dateShort: `${d.getDate()}/${d.getMonth() + 1}`,
+            dayLabel: dayNames[d.getDay()],
+            task_num: Number(row?.task_num) || 0,
+            actual_clean_area: Math.round(Number(row?.actual_clean_area) || 0),
+            total_time: Number(row?.total_time) || 0,
+          };
+        }));
+        if (!cancelled) setWeekData(results);
+      } catch (err) {
+        if (!cancelled) setError('โหลดข้อมูลรายสัปดาห์ไม่สำเร็จ ลองใหม่อีกครั้ง');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadWeek();
+    return () => { cancelled = true; };
+  }, [vehicle.vin]);
+
+  const maxArea = Math.max(1, ...weekData.map((d) => d.actual_clean_area));
+  const weekTotalArea = weekData.reduce((s, d) => s + d.actual_clean_area, 0);
+  const weekTotalTask = weekData.reduce((s, d) => s + d.task_num, 0);
+  const daysWorked = weekData.filter((d) => d.task_num > 0).length;
+
+  return (
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+      <div style={{ background: '#fff', borderBottom: `1px solid ${BORDER}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={onBack} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: SLATE_500, flexShrink: 0 }}>←</button>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: SLATE_900 }}>{vehicle.vehicle_name}</div>
+            <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>{siteName(vehicle.project_name)} · {vehicle.vin}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: 16, maxWidth: 700, margin: '0 auto' }}>
+        {error && (
+          <div style={{ background: '#fff5f5', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 12, padding: '12px 16px', marginBottom: 14, fontSize: 13.5 }}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 48, color: SLATE_400 }}>กำลังโหลดข้อมูล 7 วันล่าสุด…</div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+              <StatCard label="พื้นที่รวม 7 วัน" value={weekTotalArea.toLocaleString()} color={ORANGE} sub="ตร.ม." />
+              <StatCard label="งานรวม 7 วัน" value={weekTotalTask.toLocaleString()} color="#2563eb" sub="งาน" />
+              <StatCard label="วันที่ทำงาน" value={`${daysWorked}/7`} color={GREEN} sub="วัน" />
+            </div>
+
+            <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: SLATE_900, marginBottom: 14 }}>พื้นที่ทำความสะอาดรายวัน (ตร.ม.)</div>
+              <WeekBarChart data={weekData} maxValue={maxArea} />
+            </div>
+
+            <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                <thead>
+                  <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
+                    {['วัน', 'วันที่', 'งาน', 'เวลาทำงาน', 'พื้นที่ (ตร.ม.)'].map((h) => (
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {weekData.map((d) => (
+                    <tr key={d.date} style={{ borderBottom: '1px solid #f1f5f9', background: d.date === todayStr() ? '#fff7ed' : 'transparent' }}>
+                      <td style={{ padding: '10px 14px', fontWeight: 700, color: SLATE_900 }}>{d.dayLabel}</td>
+                      <td style={{ padding: '10px 14px', color: SLATE_500 }}>{d.dateShort}</td>
+                      <td style={{ padding: '10px 14px', color: SLATE_500 }}>{d.task_num}</td>
+                      <td style={{ padding: '10px 14px', color: SLATE_500 }}>{formatHours(d.total_time)}</td>
+                      <td style={{ padding: '10px 14px', color: SLATE_900, fontWeight: 600 }}>{d.actual_clean_area.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function RobotStatsPage({ onBack }) {
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
@@ -242,6 +377,7 @@ export default function RobotStatsPage({ onBack }) {
   const [showReport, setShowReport] = useState(false);
   const [reportMode, setReportMode] = useState('morning'); // morning | evening
   const [copied, setCopied] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const isMobile = window.innerWidth < 720;
 
   async function fetchData(from = startDate, to = endDate) {
@@ -309,6 +445,10 @@ export default function RobotStatsPage({ onBack }) {
     } catch (e) {
       alert('คัดลอกไม่สำเร็จ ลองกดค้างเพื่อเลือกข้อความเองแทน');
     }
+  }
+
+  if (selectedVehicle) {
+    return <VehicleDetail vehicle={selectedVehicle} onBack={() => setSelectedVehicle(null)} />;
   }
 
   return (
@@ -417,14 +557,17 @@ export default function RobotStatsPage({ onBack }) {
 
         {/* Search */}
         {rows.length > 0 && (
-          <div style={{ position: 'relative', marginBottom: 14 }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: SLATE_400, fontSize: 15 }}>⌕</span>
-            <input
-              placeholder="ค้นหารถ, VIN หรือโปรเจกต์..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{ width: '100%', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, color: SLATE_900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
-            />
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: SLATE_400, fontSize: 15 }}>⌕</span>
+              <input
+                placeholder="ค้นหารถ, VIN หรือโปรเจกต์..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                style={{ width: '100%', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, color: SLATE_900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
+              />
+            </div>
+            <div style={{ fontSize: 11, color: SLATE_400, marginTop: 6 }}>💡 กดที่รถแต่ละคันเพื่อดูผลงานย้อนหลัง 7 วัน</div>
           </div>
         )}
 
@@ -442,7 +585,7 @@ export default function RobotStatsPage({ onBack }) {
             {filteredRows.map((r) => {
               const pct = pctOf(r);
               return (
-                <div key={r.vin} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14 }}>
+                <div key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
                       <div style={{ fontSize: 14.5, fontWeight: 800, color: SLATE_900 }}>{r.vehicle_name}</div>
@@ -483,7 +626,7 @@ export default function RobotStatsPage({ onBack }) {
                   {filteredRows.map((r) => {
                     const pct = pctOf(r);
                     return (
-                      <tr key={r.vin} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa' }}>
+                      <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa', cursor: 'pointer' }}>
                         <td style={{ padding: '12px 14px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
                         <td style={{ padding: '12px 14px', fontWeight: 700, color: SLATE_900 }}>
                           {r.vehicle_name}
