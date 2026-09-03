@@ -78,6 +78,9 @@ function orderIndex(code) {
   return i === -1 ? 9999 : i;
 }
 
+// ── โค้ดที่ยังไม่ต้องโชว์ในรายงาน (เช่น รถที่ยังอยู่ในคลัง ยังไม่ได้ส่งไซต์) ──
+const EXCLUDED_CODES = ['MTTH_2', 'MTTH_3', 'MTTH_4', 'MTTH_5', 'MTTH_7', '泰国20260822'];
+
 function siteName(code) {
   return SITE_CONFIG[code]?.site || code || 'ไม่ระบุไซต์';
 }
@@ -89,6 +92,7 @@ function buildDailyReport(rows) {
   const bySite = {};
   rows.forEach((r) => {
     const code = r.project_name || '';
+    if (EXCLUDED_CODES.includes(code)) return;
     const site = siteName(code);
     if (!bySite[site]) bySite[site] = [];
     bySite[site].push(r);
