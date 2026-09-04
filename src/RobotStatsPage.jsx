@@ -406,58 +406,35 @@ export default function RobotStatsPage({ onBack }) {
   const [idleLoading, setIdleLoading] = useState(false);
   const isMobile = window.innerWidth < 720;
 
-  const IDLE_MAX_DAYS = 180; // เพดานสูงสุด — เกินนี้ถือว่า "180+ วัน"
+  const IDLE_LOOKBACK = 14;
 
   async function loadIdleDays() {
     setIdleLoading(true);
     try {
-      const byVin = {}; // vin -> { 'YYYY-MM-DD': true/false }
-      let scanned = 0;
-      let batchSize = 7; // เริ่มเช็คสั้นๆ ก่อน แล้วค่อยขยายเป็นเท่าตัวถ้ายังไม่เจอ
+      const days = [];
+      for (let i = 0; i < IDLE_LOOKBACK; i++) days.push(todayStr(-i));
+      const dayResults = await Promise.all(days.map(async (date) => {
+        const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
+        const res = await fetch(`/api/robot-stats?${params.toString()}`);
+        const data = await res.json();
+        return { date, rows: data.result || [] };
+      }));
+      const byVin = {};
+      dayResults.forEach(({ date, rows: dayRows }) => {
+        dayRows.forEach((r) => {
+          if (!byVin[r.vin]) byVin[r.vin] = {};
+          byVin[r.vin][date] = Number(r.task_num) > 0;
+        });
+      });
       const result = {};
-      let unresolvedVins = null; // null = ยังไม่รู้ว่ามีคันไหนบ้าง (รอบแรก)
-
-      while (scanned < IDLE_MAX_DAYS) {
-        const size = Math.min(batchSize, IDLE_MAX_DAYS - scanned);
-        const batchDays = [];
-        for (let i = scanned; i < scanned + size; i++) batchDays.push(todayStr(-i));
-
-        const dayResults = await Promise.all(batchDays.map(async (date) => {
-          const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
-          const res = await fetch(`/api/robot-stats?${params.toString()}`);
-          const data = await res.json();
-          return { date, rows: data.result || [] };
-        }));
-        dayResults.forEach(({ date, rows: dayRows }) => {
-          dayRows.forEach((r) => {
-            if (!byVin[r.vin]) byVin[r.vin] = {};
-            byVin[r.vin][date] = Number(r.task_num) > 0;
-          });
-        });
-        scanned += size;
-
-        // เช็คว่าคันไหนยังไม่เจอวันที่ทำงานเลยในช่วงที่สแกนมาทั้งหมด
-        const stillUnresolved = [];
-        Object.keys(byVin).forEach((vin) => {
-          let count = 0;
-          let found = false;
-          for (let i = 0; i < scanned; i++) {
-            if (byVin[vin][todayStr(-i)]) { found = true; break; }
-            count++;
-          }
-          if (found) result[vin] = count;
-          else stillUnresolved.push(vin);
-        });
-
-        if (stillUnresolved.length === 0) break; // ทุกคันเจอวันที่ทำงานแล้ว จบได้เลย
-        unresolvedVins = stillUnresolved;
-        batchSize = batchSize * 2; // ขยายช่วงเป็นเท่าตัวสำหรับรอบถัดไป
-      }
-
-      // คันที่ยังไม่เจอแม้สแกนครบเพดานแล้ว ให้ถือว่าหยุดมานานเกินเพดาน
-      if (unresolvedVins) {
-        unresolvedVins.forEach((vin) => { result[vin] = IDLE_MAX_DAYS; });
-      }
+      Object.keys(byVin).forEach((vin) => {
+        let count = 0;
+        for (let i = 0; i < IDLE_LOOKBACK; i++) {
+          if (byVin[vin][todayStr(-i)]) break;
+          count++;
+        }
+        result[vin] = count;
+      });
       setIdleDays(result);
     } catch (e) {
       // เงียบไว้ — ถ้าโหลดไม่สำเร็จแค่ไม่โชว์คอลัมน์นี้ ไม่ต้องขึ้น error รบกวนหน้าหลัก
@@ -682,9 +659,9 @@ export default function RobotStatsPage({ onBack }) {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                       <StatusBadge worked={Number(r.task_num) > 0} />
-                      {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS) && (
+                      {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK) && (
                         <span style={{ fontSize: 10.5, fontWeight: 700, color: RED }}>
-                          ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}
+                          ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)}
                         </span>
                       )}
                     </div>
@@ -723,8 +700,8 @@ export default function RobotStatsPage({ onBack }) {
                       <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa', cursor: 'pointer' }}>
                         <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
-                          {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
-                            ? <span style={{ color: RED, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>
+                          {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)
+                            ? <span style={{ color: RED, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)}</span>
                             : (idleLoading ? <span style={{ color: SLATE_400, fontSize: 12 }}>…</span> : <span style={{ color: SLATE_400 }}>-</span>)}
                         </td>
                         <td style={{ padding: '10px 10px', fontWeight: 700, color: SLATE_900, whiteSpace: 'nowrap' }}>
