@@ -667,7 +667,7 @@ export default function App({ currentUser, onSignOut }) {
   if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(knowledgePage) return <KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/>;
-  if(robotStatsPage) return <RobotStatsPage onBack={()=>setRobotStatsPage(false)}/>;
+  if(robotStatsPage) return <RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/>;
   if(dashboardPage && isAdminOrDev) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
 
   return (
