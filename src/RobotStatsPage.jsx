@@ -845,3 +845,5 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
     </div>
   );
 }
+
+export { siteName, SITE_CONFIG };
