@@ -20,7 +20,6 @@ import Drawer from "./Drawer.jsx";
 import ImportModal from "./ImportModal.jsx";
 import NavBar from "./NavBar.jsx";
 import OTPage from "./OTPage.jsx";
-import PartPage from "./PartPage.jsx";
 import RobotStatsPage from "./RobotStatsPage.jsx";
 import KnowledgeHub from "./KnowledgeHub.jsx";
 import ProfilePage from "./ProfilePage.jsx";
@@ -46,7 +45,6 @@ export default function App({ currentUser, onSignOut }) {
   const [taskPage,setTaskPage]     = useState(false);
   const [knowledgePage,setKnowledgePage] = useState(false);
   const [otPage,setOtPage]         = useState(false);
-  const [partPage,setPartPage]     = useState(false);
   const [robotStatsPage,setRobotStatsPage] = useState(false);
   const [profilePage,setProfilePage] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
@@ -669,7 +667,6 @@ export default function App({ currentUser, onSignOut }) {
   if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
   if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
   if(knowledgePage) return <KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/>;
-  if(partPage) return <PartPage onBack={()=>setPartPage(false)} currentUser={currentUser}/>;
   if(robotStatsPage) return <RobotStatsPage onBack={()=>setRobotStatsPage(false)}/>;
   if(dashboardPage && isAdminOrDev) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
 
@@ -724,7 +721,6 @@ export default function App({ currentUser, onSignOut }) {
         setDashboardPage={setDashboardPage}
         setShiftPage={setShiftPage} setOnsitePage={setOnsitePage}
         setOtPage={setOtPage} setLeavePage={setLeavePage} setKnowledgePage={setKnowledgePage}
-        setPartPage={setPartPage}
         setRobotStatsPage={setRobotStatsPage}
         setAdminPage={setAdminPage} setProfilePage={setProfilePage}
         openAddProj={openAddProj}
