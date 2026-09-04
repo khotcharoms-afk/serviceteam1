@@ -460,7 +460,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       const res = await fetch(`/api/robot-stats?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
-      setRows(data.result || []);
+      const allResults = data.result || [];
+      setRows(allResults.filter((r) => !EXCLUDED_CODES.includes(r.project_name)));
     } catch (err) {
       setError(err.message);
       setRows([]);
