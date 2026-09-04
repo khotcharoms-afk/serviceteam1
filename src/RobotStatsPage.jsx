@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { db } from './firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 const PURPLE = '#6B21A8';
 const ORANGE = '#F97316';
@@ -390,7 +392,7 @@ function VehicleDetail({ vehicle, onBack }) {
   );
 }
 
-export default function RobotStatsPage({ onBack }) {
+export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
   const [rows, setRows] = useState([]);
@@ -402,17 +404,24 @@ export default function RobotStatsPage({ onBack }) {
   const [reportMode, setReportMode] = useState('morning'); // morning | evening
   const [copied, setCopied] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const IDLE_CASE_THRESHOLD = 3; // หยุดเกินกี่วันถึงจะให้ปุ่มสร้างเคสโผล่
+  const [caseModalFor, setCaseModalFor] = useState(null); // vehicle row ที่กำลังจะสร้างเคส
+  const [caseTitle, setCaseTitle] = useState('');
+  const [caseProjectId, setCaseProjectId] = useState('');
+  const [caseNote, setCaseNote] = useState('');
+  const [caseSaving, setCaseSaving] = useState(false);
+  const [caseCreatedFor, setCaseCreatedFor] = useState({}); // vin -> true หลังสร้างเคสแล้ว (กันกดซ้ำในหน้าเดียวกัน)
   const [idleDays, setIdleDays] = useState({});
   const [idleLoading, setIdleLoading] = useState(false);
   const isMobile = window.innerWidth < 720;
 
-  const IDLE_LOOKBACK = 14;
+  const IDLE_MAX_DAYS = 14; // ย้อนหลังกี่วัน — เกินนี้ถือว่า "14+ วัน"
 
   async function loadIdleDays() {
     setIdleLoading(true);
     try {
       const days = [];
-      for (let i = 0; i < IDLE_LOOKBACK; i++) days.push(todayStr(-i));
+      for (let i = 0; i < IDLE_MAX_DAYS; i++) days.push(todayStr(-i));
       const dayResults = await Promise.all(days.map(async (date) => {
         const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
         const res = await fetch(`/api/robot-stats?${params.toString()}`);
@@ -429,7 +438,7 @@ export default function RobotStatsPage({ onBack }) {
       const result = {};
       Object.keys(byVin).forEach((vin) => {
         let count = 0;
-        for (let i = 0; i < IDLE_LOOKBACK; i++) {
+        for (let i = 0; i < IDLE_MAX_DAYS; i++) {
           if (byVin[vin][todayStr(-i)]) break;
           count++;
         }
@@ -508,6 +517,46 @@ export default function RobotStatsPage({ onBack }) {
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
       alert('คัดลอกไม่สำเร็จ ลองกดค้างเพื่อเลือกข้อความเองแทน');
+    }
+  }
+
+  function openCreateCase(r) {
+    const days = idleDays[r.vin];
+    setCaseModalFor(r);
+    setCaseTitle(`หุ่นยนต์ ${r.vehicle_name} ไม่ได้ทำงาน${days ? ` ${days} วัน` : ''}`);
+    setCaseProjectId('');
+    setCaseNote(`ไซต์: ${siteName(r.project_name)} (${r.project_name})\nVIN: ${r.vin}`);
+  }
+
+  async function submitIdleCase() {
+    if (!caseTitle.trim() || caseSaving) return;
+    setCaseSaving(true);
+    try {
+      const now = new Date().toISOString();
+      const proj = projects.find((p) => p.id === caseProjectId);
+      await setDoc(doc(db, 'cases', Date.now().toString()), {
+        title: caseTitle.trim(),
+        projectId: caseProjectId,
+        warrantyEnd: proj?.warrantyEnd || null,
+        leaseEnd: proj?.leaseEnd || null,
+        site: siteName(caseModalFor.project_name),
+        type: 'หุ่นยนต์',
+        techs: currentUser?.name ? [currentUser.name] : [],
+        tech: currentUser?.name || '',
+        status: 'open',
+        note: caseNote,
+        date: todayStr(),
+        handoverLog: [],
+        updateLog: [],
+        updatedAt: now,
+        activityAt: now,
+      });
+      setCaseCreatedFor((prev) => ({ ...prev, [caseModalFor.vin]: true }));
+      setCaseModalFor(null);
+    } catch (e) {
+      alert('สร้างเคสไม่สำเร็จ ลองใหม่อีกครั้ง');
+    } finally {
+      setCaseSaving(false);
     }
   }
 
@@ -659,9 +708,9 @@ export default function RobotStatsPage({ onBack }) {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                       <StatusBadge worked={Number(r.task_num) > 0} />
-                      {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK) && (
+                      {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS) && (
                         <span style={{ fontSize: 10.5, fontWeight: 700, color: RED }}>
-                          ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)}
+                          ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}
                         </span>
                       )}
                     </div>
@@ -675,6 +724,16 @@ export default function RobotStatsPage({ onBack }) {
                     <span style={{ color: SLATE_400 }}>ทำแล้ว {Number(r.actual_clean_area).toLocaleString()} ตร.ม.</span>
                     <span style={{ color: SLATE_400 }}>ยังไม่ทำ {Number(r.uncleaned_area).toLocaleString()} ตร.ม.</span>
                   </div>
+                  {(idleDays[r.vin] || 0) >= IDLE_CASE_THRESHOLD && (
+                    caseCreatedFor[r.vin] ? (
+                      <div style={{ marginTop: 10, textAlign: 'center', fontSize: 12, color: GREEN, fontWeight: 700 }}>✓ สร้างเคสแล้ว</div>
+                    ) : (
+                      <button onClick={(e) => { e.stopPropagation(); openCreateCase(r); }}
+                        style={{ marginTop: 10, width: '100%', background: '#fff5f5', border: '1px solid #fecaca', color: RED, borderRadius: 8, padding: '8px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        🔧 สร้างเคส
+                      </button>
+                    )
+                  )}
                 </div>
               );
             })}
@@ -688,7 +747,7 @@ export default function RobotStatsPage({ onBack }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
-                    {['สถานะ', 'ไม่ทำงานมา', 'รถ', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
+                    {['สถานะ', 'ไม่ทำงานมา', 'รถ', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน', 'จัดการ'].map((h) => (
                       <th key={h} style={{ padding: '10px 10px', textAlign: 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -700,8 +759,8 @@ export default function RobotStatsPage({ onBack }) {
                       <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa', cursor: 'pointer' }}>
                         <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
-                          {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)
-                            ? <span style={{ color: RED, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)}</span>
+                          {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
+                            ? <span style={{ color: RED, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>
                             : (idleLoading ? <span style={{ color: SLATE_400, fontSize: 12 }}>…</span> : <span style={{ color: SLATE_400 }}>-</span>)}
                         </td>
                         <td style={{ padding: '10px 10px', fontWeight: 700, color: SLATE_900, whiteSpace: 'nowrap' }}>
@@ -717,6 +776,18 @@ export default function RobotStatsPage({ onBack }) {
                         <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{Number(r.actual_clean_area).toLocaleString()}</td>
                         <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{Number(r.uncleaned_area).toLocaleString()}</td>
                         <td style={{ padding: '10px 10px', minWidth: 110 }}><ProgressBar pct={pct} /></td>
+                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                          {(idleDays[r.vin] || 0) >= IDLE_CASE_THRESHOLD && (
+                            caseCreatedFor[r.vin] ? (
+                              <span style={{ fontSize: 12, color: GREEN, fontWeight: 700 }}>✓ สร้างแล้ว</span>
+                            ) : (
+                              <button onClick={(e) => { e.stopPropagation(); openCreateCase(r); }}
+                                style={{ background: '#fff5f5', border: '1px solid #fecaca', color: RED, borderRadius: 7, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                                🔧 สร้างเคส
+                              </button>
+                            )
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -730,6 +801,46 @@ export default function RobotStatsPage({ onBack }) {
           <div style={{ textAlign: 'center', padding: 32, color: SLATE_400, fontSize: 13.5 }}>ไม่พบรถที่ตรงกับเงื่อนไขที่เลือก</div>
         )}
       </div>
+
+      {/* Create-case modal */}
+      {caseModalFor && (
+        <div onClick={() => !caseSaving && setCaseModalFor(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif" }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: SLATE_900, marginBottom: 4 }}>🔧 สร้างเคส</div>
+            <div style={{ fontSize: 12, color: SLATE_400, marginBottom: 16 }}>{caseModalFor.vehicle_name} · {siteName(caseModalFor.project_name)}</div>
+
+            <label style={{ fontSize: 12.5, color: SLATE_500, fontWeight: 600 }}>หัวข้อเคส</label>
+            <input value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)}
+              style={{ width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none' }} />
+
+            <label style={{ fontSize: 12.5, color: SLATE_500, fontWeight: 600 }}>โครงการ (ServiceLog) — ไม่บังคับ</label>
+            <select value={caseProjectId} onChange={(e) => setCaseProjectId(e.target.value)}
+              style={{ width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}>
+              <option value="">-- ยังไม่ผูกโครงการ --</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+
+            <label style={{ fontSize: 12.5, color: SLATE_500, fontWeight: 600 }}>หมายเหตุ</label>
+            <textarea value={caseNote} onChange={(e) => setCaseNote(e.target.value)} rows={3}
+              style={{ width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 16, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setCaseModalFor(null)} disabled={caseSaving}
+                style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: SLATE_500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                ยกเลิก
+              </button>
+              <button onClick={submitIdleCase} disabled={!caseTitle.trim() || caseSaving}
+                style={{ flex: 1, background: !caseTitle.trim() ? '#fca5a5' : ORANGE, border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: !caseTitle.trim() ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                {caseSaving ? 'กำลังบันทึก…' : 'สร้างเคส'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
