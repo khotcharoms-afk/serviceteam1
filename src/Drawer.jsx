@@ -37,7 +37,7 @@ export default function Drawer({
   setDashboardPage,
   setShiftPage, setOnsitePage, setOtPage, setLeavePage,
   setAdminPage, setProfilePage, setKnowledgePage,
-  setPartPage, setRobotStatsPage,
+  setRobotStatsPage,
   openAddProj, handleImportFile, handleImportCaseFile,
 }) {
   if (!open) return null;
@@ -101,8 +101,6 @@ export default function Drawer({
           onClick={()=>{ setLeavePage(true); onClose(); }}/>
         <DrawerItem active={false} color="#6B21A8" icon="💡" label="Knowledge Hub" count={""}
           onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#F97316" icon="🔍" label="เปรียบเทียบอะไหล่" count={""}
-          onClick={()=>{ setPartPage(true); onClose(); }}/>
         <DrawerItem active={false} color="#6B21A8" icon="📊" label="สถิติหุ่นยนต์" count={""}
           onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
 
