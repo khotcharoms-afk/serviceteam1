@@ -140,6 +140,12 @@ function buildDailyReport(rows, mode = 'morning') {
   return lines.join('\n').trim();
 }
 
+function formatIdleDays(n, lookback) {
+  if (n === undefined || n === null) return null;
+  if (n === 0) return null;
+  return n >= lookback ? `${lookback}+ วัน` : `${n} วัน`;
+}
+
 function todayStr(offsetDays = 0) {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
@@ -396,7 +402,46 @@ export default function RobotStatsPage({ onBack }) {
   const [reportMode, setReportMode] = useState('morning'); // morning | evening
   const [copied, setCopied] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [idleDays, setIdleDays] = useState({});
+  const [idleLoading, setIdleLoading] = useState(false);
   const isMobile = window.innerWidth < 720;
+
+  const IDLE_LOOKBACK = 14;
+
+  async function loadIdleDays() {
+    setIdleLoading(true);
+    try {
+      const days = [];
+      for (let i = 0; i < IDLE_LOOKBACK; i++) days.push(todayStr(-i));
+      const dayResults = await Promise.all(days.map(async (date) => {
+        const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
+        const res = await fetch(`/api/robot-stats?${params.toString()}`);
+        const data = await res.json();
+        return { date, rows: data.result || [] };
+      }));
+      const byVin = {};
+      dayResults.forEach(({ date, rows: dayRows }) => {
+        dayRows.forEach((r) => {
+          if (!byVin[r.vin]) byVin[r.vin] = {};
+          byVin[r.vin][date] = Number(r.task_num) > 0;
+        });
+      });
+      const result = {};
+      Object.keys(byVin).forEach((vin) => {
+        let count = 0;
+        for (let i = 0; i < IDLE_LOOKBACK; i++) {
+          if (byVin[vin][todayStr(-i)]) break;
+          count++;
+        }
+        result[vin] = count;
+      });
+      setIdleDays(result);
+    } catch (e) {
+      // เงียบไว้ — ถ้าโหลดไม่สำเร็จแค่ไม่โชว์คอลัมน์นี้ ไม่ต้องขึ้น error รบกวนหน้าหลัก
+    } finally {
+      setIdleLoading(false);
+    }
+  }
 
   async function fetchData(from = startDate, to = endDate) {
     setLoading(true);
@@ -417,6 +462,7 @@ export default function RobotStatsPage({ onBack }) {
 
   useEffect(() => {
     fetchData();
+    loadIdleDays();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -611,7 +657,14 @@ export default function RobotStatsPage({ onBack }) {
                       <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>{r.project_name}</div>
                       <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
-                    <StatusBadge worked={Number(r.task_num) > 0} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <StatusBadge worked={Number(r.task_num) > 0} />
+                      {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK) && (
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: RED }}>
+                          ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: SLATE_500, marginBottom: 10 }}>
                     <span>{r.task_num} งาน</span>
@@ -635,7 +688,7 @@ export default function RobotStatsPage({ onBack }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
-                    {['สถานะ', 'รถ', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
+                    {['สถานะ', 'ไม่ทำงานมา', 'รถ', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน'].map((h) => (
                       <th key={h} style={{ padding: '10px 10px', textAlign: 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -646,6 +699,11 @@ export default function RobotStatsPage({ onBack }) {
                     return (
                       <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa', cursor: 'pointer' }}>
                         <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
+                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                          {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)
+                            ? <span style={{ color: RED, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_LOOKBACK)}</span>
+                            : (idleLoading ? <span style={{ color: SLATE_400, fontSize: 12 }}>…</span> : <span style={{ color: SLATE_400 }}>-</span>)}
+                        </td>
                         <td style={{ padding: '10px 10px', fontWeight: 700, color: SLATE_900, whiteSpace: 'nowrap' }}>
                           {r.vehicle_name}
                           <div style={{ fontSize: 10, color: SLATE_400, fontWeight: 400, fontFamily: 'monospace' }}>{r.vin}</div>
