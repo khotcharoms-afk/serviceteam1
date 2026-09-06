@@ -536,7 +536,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       const params = new URLSearchParams({ date: sheetSyncDate });
       const res = await fetch(`/api/sheet-sync?${params.toString()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'โหลดตัวอย่างไม่สำเร็จ');
+      if (!res.ok) throw new Error((data.error || 'โหลดตัวอย่างไม่สำเร็จ') + (data.detail ? ` — ${data.detail}` : ''));
       setSheetPreview(data);
     } catch (err) {
       setSheetSyncError(err.message);
@@ -552,7 +552,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       const params = new URLSearchParams({ date: sheetSyncDate, write: 'true' });
       const res = await fetch(`/api/sheet-sync?${params.toString()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'เขียนข้อมูลไม่สำเร็จ');
+      if (!res.ok) throw new Error((data.error || 'เขียนข้อมูลไม่สำเร็จ') + (data.detail ? ` — ${data.detail}` : ''));
       setSheetWriteDone(true);
     } catch (err) {
       setSheetSyncError(err.message);
