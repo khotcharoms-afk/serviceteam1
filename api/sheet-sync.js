@@ -20,6 +20,21 @@ const SHEET_SITE_MAP = {
   'VIBHA_BKK_SC50S': ['VBH_BKK'],
   'KKP_ASOKE': ['KKP_ASOK'],
   'RAM2_SC50S': ['RAM2'],
+  'RAV_CHM': ['RAV_CHM'],
+  'SCB_East': ['SCB_EAST'],
+  'SCB_West': ['SCB_WEST'],
+  'SCB_HQ': ['SCB_MID'],
+  'THAMC_FL1': ['THAMC_F1'],
+  'THAMC_FL2': ['THAMC_F2'],
+  'THAMC_FL4': ['THAMC_F4'],
+  'THAMC_FL5': ['THAMC_F5'],
+  'SP_Srinakarin': ['SP_SNK'],
+  'CP MEJI': ['CP-meiji'],
+  'SET Northpark1': ['CMA_1'],
+  'SET Northpark2': ['CMA_2'],
+  'AMATA': ['VBH_AMTA'],
+  'VIBHA_LCB': ['VBH_LEAM'],
+  // SET RatchadaA / RatchadaB / RatchadaC — รอ confirm ลำดับที่ตรงกับ SET_1/2/3 ก่อน
 };
 
 const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
