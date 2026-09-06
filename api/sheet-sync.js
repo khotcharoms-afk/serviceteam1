@@ -37,7 +37,9 @@ const SHEET_SITE_MAP = {
   'AOTGA_FL.B_East': ['AOTGA_TH_3'],
   'AOTGA_FL.B_West': ['AOTGA_TH_2'],
   'AOTGA_FL.2_West': ['AOTGA_TH_1'],
-  // SET RatchadaA / RatchadaB / RatchadaC — รอ confirm ลำดับที่ตรงกับ SET_1/2/3 ก่อน
+  'SET RatchadaA': ['SET_1'],
+  'SET RatchadaB': ['SET_2'],
+  'SET RatchadaC': ['SET_3'],
 };
 
 const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
