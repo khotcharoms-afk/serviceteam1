@@ -43,6 +43,7 @@ const SHEET_SITE_MAP = {
 };
 
 const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const MAX_SYNC_DAYS = 31; // กันเผลอเลือกช่วงกว้างเกินไปจนยิง request มหาศาล
 
 function getAuth() {
   const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64;
@@ -50,7 +51,6 @@ function getAuth() {
     const json = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
     return new google.auth.JWT(json.client_email, null, json.private_key, ['https://www.googleapis.com/auth/spreadsheets']);
   }
-  // fallback: ใช้ค่าที่แยกเป็น 2 ตัวแปร (เผื่อยังไม่ได้ตั้งค่าแบบ base64)
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   let key = (process.env.GOOGLE_PRIVATE_KEY || '').trim();
   if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
@@ -72,7 +72,6 @@ function colIndexToLetter(index) {
 function parseDateRangeHeader(text) {
   const t = (text || '').trim();
 
-  // รูปแบบใหม่: "DD/MM/YYYY-DD/MM/YYYY" เช่น "31/8/2569-6/9/2569"
   let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})-(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) {
     const startDate = new Date(parseInt(m[3], 10) - 543, parseInt(m[2], 10) - 1, parseInt(m[1], 10));
@@ -80,7 +79,6 @@ function parseDateRangeHeader(text) {
     return { startDate, endDate };
   }
 
-  // รูปแบบเก่า: "D1-D2/MM/YYYY" เช่น "15-21/09/2568" หรือ "27-2/10/2568" (ข้ามเดือน)
   m = t.match(/^(\d{1,2})-(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) {
     const d1 = parseInt(m[1], 10);
@@ -101,9 +99,47 @@ function parseDateRangeHeader(text) {
   return null;
 }
 
+function findBlockForDate(rows, targetDate) {
+  for (let i = 0; i < rows.length; i++) {
+    const parsed = parseDateRangeHeader(rows[i]?.[0]);
+    if (!parsed || !(targetDate >= parsed.startDate && targetDate <= parsed.endDate)) continue;
+    for (let r = i + 1; r < Math.min(i + 10, rows.length); r++) {
+      if ((rows[r]?.[0] || '').trim() === 'จันทร์') {
+        return { titleRow: i, headerRow: r - 1, dataStartRow: r };
+      }
+    }
+  }
+  return null;
+}
+
+function toISO(d) {
+  return d.toISOString().split('T')[0];
+}
+
+async function fetchViggoDay(dateStr, robotToken) {
+  const params = new URLSearchParams();
+  params.append('page', '1');
+  params.append('size', '100');
+  params.append('start_time', dateStr);
+  params.append('end_time', dateStr);
+  const viggoUrl = `https://wolfsburg.phpserver.idriverplus.com/basic/web/index.php/wv/statistics/cars-list?access-token=${robotToken}`;
+  const viggoRes = await fetch(viggoUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+  const viggoData = await viggoRes.json();
+  const byProject = {};
+  (viggoData.result || []).forEach((r) => {
+    byProject[r.project_name] = (byProject[r.project_name] || 0) + (Number(r.actual_clean_area) || 0);
+  });
+  return byProject;
+}
+
 export default async function handler(req, res) {
-  const dateParam = req.query.date || new Date().toISOString().split('T')[0];
-  const write = req.query.write === 'true'; // ต้องระบุ write=true ชัดเจนถึงจะเขียนจริง — ค่าเริ่มต้นคือแค่พรีวิว
+  const startParam = req.query.start_date || req.query.date || toISO(new Date());
+  const endParam = req.query.end_date || startParam;
+  const write = req.query.write === 'true';
 
   const hasBase64Creds = !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64;
   const hasSplitCreds = !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && !!process.env.GOOGLE_PRIVATE_KEY;
@@ -115,95 +151,106 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'ยังไม่ได้ตั้งค่า ROBOT_API_TOKEN บน Vercel' });
   }
 
+  const startDateObj = new Date(startParam + 'T00:00:00');
+  const endDateObj = new Date(endParam + 'T00:00:00');
+  if (endDateObj < startDateObj) {
+    return res.status(400).json({ error: 'วันที่สิ้นสุดต้องไม่มาก่อนวันที่เริ่ม' });
+  }
+  const dates = [];
+  for (let d = new Date(startDateObj); d <= endDateObj; d.setDate(d.getDate() + 1)) {
+    dates.push(toISO(d));
+  }
+  if (dates.length > MAX_SYNC_DAYS) {
+    return res.status(400).json({ error: `เลือกช่วงวันที่กว้างเกินไป (สูงสุด ${MAX_SYNC_DAYS} วันต่อครั้ง)` });
+  }
+
   try {
     const auth = getAuth();
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // 1) อ่านข้อมูลทั้งชีตที่เกี่ยวข้อง
     const range = `'${TAB_NAME}'!A1:CZ3000`;
     const readRes = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
     const rows = readRes.data.values || [];
 
-    // 2) หาบล็อกสัปดาห์ที่ตรงกับวันที่เป้าหมาย
-    const targetDate = new Date(dateParam + 'T00:00:00');
-    let block = null;
-    for (let i = 0; i < rows.length; i++) {
-      const parsed = parseDateRangeHeader(rows[i]?.[0]);
-      if (!parsed || !(targetDate >= parsed.startDate && targetDate <= parsed.endDate)) continue;
-      // หาแถว "จันทร์" ที่อยู่ถัดจากแถวหัวข้อนี้ — แล้วถือว่าแถวก่อนหน้ามันคือแถวหัวตาราง (ชื่อไซต์)
-      // วิธีนี้ทนทานต่อกรณีมีแถวแทรก (เช่น แถวบอกรุ่นรถ) ระหว่างแถวหัวข้อกับแถวข้อมูล
-      for (let r = i + 1; r < Math.min(i + 10, rows.length); r++) {
-        if ((rows[r]?.[0] || '').trim() === 'จันทร์') {
-          block = { titleRow: i, headerRow: r - 1, dataStartRow: r };
-          break;
-        }
+    const perDate = [];
+    const allUpdates = [];
+    const skippedColumnsSet = new Set();
+
+    for (const dateStr of dates) {
+      const targetDate = new Date(dateStr + 'T00:00:00');
+      const block = findBlockForDate(rows, targetDate);
+      if (!block) {
+        perDate.push({ date: dateStr, error: 'ไม่พบบล็อกสัปดาห์ที่ตรงกับวันที่นี้ใน Sheet' });
+        continue;
       }
-      if (block) break;
-    }
-    if (!block) {
-      return res.status(404).json({ error: `ไม่พบบล็อกสัปดาห์ที่ตรงกับวันที่ ${dateParam} ใน Sheet (อาจจะยังไม่ได้สร้างบล็อกของสัปดาห์นี้ไว้)` });
-    }
 
-    const headerRow = rows[block.headerRow] || [];
-    const weekdayName = THAI_WEEKDAYS[targetDate.getDay()];
-    let targetRowIndex = null;
-    for (let r = block.dataStartRow; r < block.dataStartRow + 8; r++) {
-      if ((rows[r]?.[0] || '').trim() === weekdayName) { targetRowIndex = r; break; }
-    }
-    if (targetRowIndex === null) {
-      return res.status(404).json({ error: `หาแถวของวัน "${weekdayName}" ในบล็อกสัปดาห์นี้ไม่เจอ` });
-    }
+      const headerRow = rows[block.headerRow] || [];
+      const weekdayName = THAI_WEEKDAYS[targetDate.getDay()];
+      let dayRowIndex = null;
+      for (let r = block.dataStartRow; r < block.dataStartRow + 8; r++) {
+        if ((rows[r]?.[0] || '').trim() === weekdayName) { dayRowIndex = r; break; }
+      }
+      if (dayRowIndex === null) {
+        perDate.push({ date: dateStr, error: `หาแถวของวัน "${weekdayName}" ในบล็อกสัปดาห์นี้ไม่เจอ` });
+        continue;
+      }
+      const targetRowIndex = block.dataStartRow + 7;
+      const isTargetRow = (rows[targetRowIndex]?.[0] || '').trim().toLowerCase() === 'target';
 
-    // 3) ดึงข้อมูลจริงจาก VIGGO สำหรับวันที่เป้าหมาย
-    const params = new URLSearchParams();
-    params.append('page', '1');
-    params.append('size', '100');
-    params.append('start_time', dateParam);
-    params.append('end_time', dateParam);
-    const viggoUrl = `https://wolfsburg.phpserver.idriverplus.com/basic/web/index.php/wv/statistics/cars-list?access-token=${robotToken}`;
-    const viggoRes = await fetch(viggoUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
-    const viggoData = await viggoRes.json();
-    const byProject = {};
-    (viggoData.result || []).forEach((r) => {
-      byProject[r.project_name] = (byProject[r.project_name] || 0) + (Number(r.actual_clean_area) || 0);
-    });
+      const byProject = await fetchViggoDay(dateStr, robotToken);
 
-    // 4) จับคู่หัวคอลัมน์กับไซต์ที่รู้จัก เตรียมค่าที่จะเขียน
-    const updates = [];
-    const skippedColumns = [];
-    headerRow.forEach((label, colIdx) => {
-      const key = (label || '').trim();
-      if (!key) return;
-      const codes = SHEET_SITE_MAP[key];
-      if (!codes) { skippedColumns.push(key); return; }
-      const value = codes.reduce((sum, c) => sum + (byProject[c] || 0), 0);
-      updates.push({
-        column: key,
-        cell: `${colIndexToLetter(colIdx)}${targetRowIndex + 1}`,
-        currentValue: rows[targetRowIndex]?.[colIdx] ?? '',
-        newValue: Math.round(value),
+      const updates = [];
+      headerRow.forEach((label, colIdx) => {
+        const key = (label || '').trim();
+        if (!key) return;
+        const codes = SHEET_SITE_MAP[key];
+        if (!codes) { skippedColumnsSet.add(key); return; }
+        const value = codes.reduce((sum, c) => sum + (byProject[c] || 0), 0);
+        const targetVal = isTargetRow ? Number(rows[targetRowIndex]?.[colIdx]) : null;
+        const update = {
+          date: dateStr,
+          column: key,
+          cell: `${colIndexToLetter(colIdx)}${dayRowIndex + 1}`,
+          currentValue: rows[dayRowIndex]?.[colIdx] ?? '',
+          newValue: Math.round(value),
+          target: (targetVal !== null && !isNaN(targetVal) && targetVal > 0) ? targetVal : null,
+        };
+        updates.push(update);
+        allUpdates.push(update);
       });
-    });
+
+      perDate.push({ date: dateStr, weekday: weekdayName, updates });
+    }
 
     if (!write) {
-      return res.status(200).json({ mode: 'preview', date: dateParam, weekday: weekdayName, updates, skippedColumns });
+      return res.status(200).json({
+        mode: 'preview',
+        startDate: startParam,
+        endDate: endParam,
+        perDate,
+        totalCells: allUpdates.length,
+        skippedColumns: Array.from(skippedColumnsSet),
+      });
     }
 
-    // 5) เขียนจริง
-    const data = updates.map((u) => ({
+    const data = allUpdates.map((u) => ({
       range: `'${TAB_NAME}'!${u.cell}`,
       values: [[u.newValue]],
     }));
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: SHEET_ID,
-      requestBody: { valueInputOption: 'USER_ENTERED', data },
-    });
+    if (data.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        requestBody: { valueInputOption: 'USER_ENTERED', data },
+      });
+    }
 
-    res.status(200).json({ mode: 'written', date: dateParam, weekday: weekdayName, updated: updates.length, updates });
+    res.status(200).json({
+      mode: 'written',
+      startDate: startParam,
+      endDate: endParam,
+      updated: allUpdates.length,
+      perDate,
+    });
   } catch (err) {
     res.status(500).json({ error: 'เกิดข้อผิดพลาด', detail: err.message });
   }
