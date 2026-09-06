@@ -34,6 +34,9 @@ const SHEET_SITE_MAP = {
   'SET Northpark2': ['CMA_2'],
   'AMATA': ['VBH_AMTA'],
   'VIBHA_LCB': ['VBH_LEAM'],
+  'AOTGA_FL.B_East': ['AOTGA_TH_3'],
+  'AOTGA_FL.B_West': ['AOTGA_TH_2'],
+  'AOTGA_FL.2_West': ['AOTGA_TH_1'],
   // SET RatchadaA / RatchadaB / RatchadaC — รอ confirm ลำดับที่ตรงกับ SET_1/2/3 ก่อน
 };
 
