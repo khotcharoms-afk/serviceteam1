@@ -120,7 +120,7 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: 'v4', auth });
 
     // 1) อ่านข้อมูลทั้งชีตที่เกี่ยวข้อง
-    const range = `'${TAB_NAME}'!A1:AH2000`;
+    const range = `'${TAB_NAME}'!A1:CZ3000`;
     const readRes = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
     const rows = readRes.data.values || [];
 
