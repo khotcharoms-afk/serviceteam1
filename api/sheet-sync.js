@@ -26,9 +26,16 @@ const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อัง
 
 function getAuth() {
   const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64;
-  if (!b64) return null;
-  const json = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
-  return new google.auth.JWT(json.client_email, null, json.private_key, ['https://www.googleapis.com/auth/spreadsheets']);
+  if (b64) {
+    const json = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+    return new google.auth.JWT(json.client_email, null, json.private_key, ['https://www.googleapis.com/auth/spreadsheets']);
+  }
+  // fallback: ใช้ค่าที่แยกเป็น 2 ตัวแปร (เผื่อยังไม่ได้ตั้งค่าแบบ base64)
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  let key = (process.env.GOOGLE_PRIVATE_KEY || '').trim();
+  if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
+  key = key.replace(/\\n/g, '\n').trim();
+  return new google.auth.JWT(email, null, key, ['https://www.googleapis.com/auth/spreadsheets']);
 }
 
 function colIndexToLetter(index) {
@@ -78,8 +85,10 @@ export default async function handler(req, res) {
   const dateParam = req.query.date || new Date().toISOString().split('T')[0];
   const write = req.query.write === 'true'; // ต้องระบุ write=true ชัดเจนถึงจะเขียนจริง — ค่าเริ่มต้นคือแค่พรีวิว
 
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64) {
-    return res.status(500).json({ error: 'ยังไม่ได้ตั้งค่า GOOGLE_SERVICE_ACCOUNT_KEY_BASE64 บน Vercel' });
+  const hasBase64Creds = !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64;
+  const hasSplitCreds = !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && !!process.env.GOOGLE_PRIVATE_KEY;
+  if (!hasBase64Creds && !hasSplitCreds) {
+    return res.status(500).json({ error: 'ยังไม่ได้ตั้งค่า Google credentials บน Vercel (GOOGLE_SERVICE_ACCOUNT_KEY_BASE64 หรือ GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY)' });
   }
   const robotToken = process.env.ROBOT_API_TOKEN;
   if (!robotToken) {
