@@ -25,11 +25,10 @@ const SHEET_SITE_MAP = {
 const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 
 function getAuth() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  let key = (process.env.GOOGLE_PRIVATE_KEY || '').trim();
-  if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
-  key = key.replace(/\\n/g, '\n').trim();
-  return new google.auth.JWT(email, null, key, ['https://www.googleapis.com/auth/spreadsheets']);
+  const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64;
+  if (!b64) return null;
+  const json = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+  return new google.auth.JWT(json.client_email, null, json.private_key, ['https://www.googleapis.com/auth/spreadsheets']);
 }
 
 function colIndexToLetter(index) {
@@ -44,34 +43,45 @@ function colIndexToLetter(index) {
 }
 
 function parseDateRangeHeader(text) {
-  // รูปแบบ "D1-D2/MM/YYYY" ปีพ.ศ. เช่น "15-21/09/2568" หรือ "27-2/10/2568" (ข้ามเดือน)
-  const m = (text || '').trim().match(/^(\d{1,2})-(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  const d1 = parseInt(m[1], 10);
-  const d2 = parseInt(m[2], 10);
-  const endMonth = parseInt(m[3], 10);
-  const yearCE = parseInt(m[4], 10) - 543;
-  const endDate = new Date(yearCE, endMonth - 1, d2);
-  let startMonth = endMonth;
-  let startYear = yearCE;
-  if (d1 > d2) {
-    startMonth -= 1;
-    if (startMonth < 1) { startMonth = 12; startYear -= 1; }
+  const t = (text || '').trim();
+
+  // รูปแบบใหม่: "DD/MM/YYYY-DD/MM/YYYY" เช่น "31/8/2569-6/9/2569"
+  let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})-(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const startDate = new Date(parseInt(m[3], 10) - 543, parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+    const endDate = new Date(parseInt(m[6], 10) - 543, parseInt(m[5], 10) - 1, parseInt(m[4], 10));
+    return { startDate, endDate };
   }
-  const startDate = new Date(startYear, startMonth - 1, d1);
-  return { startDate, endDate };
+
+  // รูปแบบเก่า: "D1-D2/MM/YYYY" เช่น "15-21/09/2568" หรือ "27-2/10/2568" (ข้ามเดือน)
+  m = t.match(/^(\d{1,2})-(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const d1 = parseInt(m[1], 10);
+    const d2 = parseInt(m[2], 10);
+    const endMonth = parseInt(m[3], 10);
+    const yearCE = parseInt(m[4], 10) - 543;
+    const endDate = new Date(yearCE, endMonth - 1, d2);
+    let startMonth = endMonth;
+    let startYear = yearCE;
+    if (d1 > d2) {
+      startMonth -= 1;
+      if (startMonth < 1) { startMonth = 12; startYear -= 1; }
+    }
+    const startDate = new Date(startYear, startMonth - 1, d1);
+    return { startDate, endDate };
+  }
+
+  return null;
 }
 
 export default async function handler(req, res) {
   const dateParam = req.query.date || new Date().toISOString().split('T')[0];
   const write = req.query.write === 'true'; // ต้องระบุ write=true ชัดเจนถึงจะเขียนจริง — ค่าเริ่มต้นคือแค่พรีวิว
 
-  const sheetsAuthEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const sheetsKey = process.env.GOOGLE_PRIVATE_KEY;
-  const robotToken = process.env.ROBOT_API_TOKEN;
-  if (!sheetsAuthEmail || !sheetsKey) {
-    return res.status(500).json({ error: 'ยังไม่ได้ตั้งค่า GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_PRIVATE_KEY บน Vercel' });
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64) {
+    return res.status(500).json({ error: 'ยังไม่ได้ตั้งค่า GOOGLE_SERVICE_ACCOUNT_KEY_BASE64 บน Vercel' });
   }
+  const robotToken = process.env.ROBOT_API_TOKEN;
   if (!robotToken) {
     return res.status(500).json({ error: 'ยังไม่ได้ตั้งค่า ROBOT_API_TOKEN บน Vercel' });
   }
@@ -90,10 +100,16 @@ export default async function handler(req, res) {
     let block = null;
     for (let i = 0; i < rows.length; i++) {
       const parsed = parseDateRangeHeader(rows[i]?.[0]);
-      if (parsed && targetDate >= parsed.startDate && targetDate <= parsed.endDate) {
-        block = { titleRow: i, headerRow: i + 1, dataStartRow: i + 2 };
-        break;
+      if (!parsed || !(targetDate >= parsed.startDate && targetDate <= parsed.endDate)) continue;
+      // หาแถว "จันทร์" ที่อยู่ถัดจากแถวหัวข้อนี้ — แล้วถือว่าแถวก่อนหน้ามันคือแถวหัวตาราง (ชื่อไซต์)
+      // วิธีนี้ทนทานต่อกรณีมีแถวแทรก (เช่น แถวบอกรุ่นรถ) ระหว่างแถวหัวข้อกับแถวข้อมูล
+      for (let r = i + 1; r < Math.min(i + 10, rows.length); r++) {
+        if ((rows[r]?.[0] || '').trim() === 'จันทร์') {
+          block = { titleRow: i, headerRow: r - 1, dataStartRow: r };
+          break;
+        }
       }
+      if (block) break;
     }
     if (!block) {
       return res.status(404).json({ error: `ไม่พบบล็อกสัปดาห์ที่ตรงกับวันที่ ${dateParam} ใน Sheet (อาจจะยังไม่ได้สร้างบล็อกของสัปดาห์นี้ไว้)` });
