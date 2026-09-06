@@ -404,7 +404,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const [reportMode, setReportMode] = useState('morning'); // morning | evening
   const [copied, setCopied] = useState(false);
   const [showSheetSync, setShowSheetSync] = useState(false);
-  const [sheetSyncDate, setSheetSyncDate] = useState(todayStr());
+  const [sheetSyncStart, setSheetSyncStart] = useState(todayStr());
+  const [sheetSyncEnd, setSheetSyncEnd] = useState(todayStr());
   const [sheetPreview, setSheetPreview] = useState(null);
   const [sheetSyncLoading, setSheetSyncLoading] = useState(false);
   const [sheetSyncError, setSheetSyncError] = useState(null);
@@ -533,7 +534,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
     setSheetPreview(null);
     setSheetWriteDone(false);
     try {
-      const params = new URLSearchParams({ date: sheetSyncDate });
+      const params = new URLSearchParams({ start_date: sheetSyncStart, end_date: sheetSyncEnd });
       const res = await fetch(`/api/sheet-sync?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error((data.error || 'โหลดตัวอย่างไม่สำเร็จ') + (data.detail ? ` — ${data.detail}` : ''));
@@ -549,7 +550,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
     setSheetSyncLoading(true);
     setSheetSyncError(null);
     try {
-      const params = new URLSearchParams({ date: sheetSyncDate, write: 'true' });
+      const params = new URLSearchParams({ start_date: sheetSyncStart, end_date: sheetSyncEnd, write: 'true' });
       const res = await fetch(`/api/sheet-sync?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error((data.error || 'เขียนข้อมูลไม่สำเร็จ') + (data.detail ? ` — ${data.detail}` : ''));
@@ -697,8 +698,11 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
           <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: SLATE_900, marginBottom: 10 }}>📤 ส่งข้อมูลเข้า Google Sheet (Weekly สรุป)</div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-              <span style={{ fontSize: 12, color: SLATE_500, fontWeight: 600 }}>วันที่:</span>
-              <input type="date" value={sheetSyncDate} onChange={(e) => { setSheetSyncDate(e.target.value); setSheetPreview(null); setSheetWriteDone(false); }}
+              <span style={{ fontSize: 12, color: SLATE_500, fontWeight: 600 }}>จาก:</span>
+              <input type="date" value={sheetSyncStart} onChange={(e) => { setSheetSyncStart(e.target.value); setSheetPreview(null); setSheetWriteDone(false); }}
+                style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+              <span style={{ fontSize: 12, color: SLATE_400 }}>ถึง</span>
+              <input type="date" value={sheetSyncEnd} onChange={(e) => { setSheetSyncEnd(e.target.value); setSheetPreview(null); setSheetWriteDone(false); }}
                 style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
               <button onClick={loadSheetPreview} disabled={sheetSyncLoading}
                 style={{ background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -714,45 +718,71 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
             {sheetWriteDone && (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: GREEN, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 13, fontWeight: 700 }}>
-                ✓ เขียนข้อมูลเข้า Google Sheet เรียบร้อยแล้ว
+                ✓ เขียนข้อมูลเข้า Google Sheet เรียบร้อยแล้ว ({sheetPreview?.totalCells || 0} ช่อง)
               </div>
             )}
 
             {sheetPreview && !sheetWriteDone && (
               <>
-                <div style={{ fontSize: 12.5, color: SLATE_500, marginBottom: 8 }}>
-                  พบแถวของวัน <strong>{sheetPreview.weekday}</strong> ({sheetPreview.date}) — จะเขียนทับ {sheetPreview.updates.length} ช่อง ตามนี้:
+                <div style={{ fontSize: 12.5, color: SLATE_500, marginBottom: 10 }}>
+                  รวม <strong>{sheetPreview.totalCells}</strong> ช่อง ใน {sheetPreview.perDate?.length || 0} วัน — จะเขียนทับตามนี้:
                 </div>
-                <div style={{ overflowX: 'auto', marginBottom: 12 }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
-                    <thead>
-                      <tr style={{ background: BG }}>
-                        <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ไซต์ (คอลัมน์)</th>
-                        <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ช่อง</th>
-                        <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ค่าเดิม</th>
-                        <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ค่าใหม่</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sheetPreview.updates.map((u) => (
-                        <tr key={u.cell} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '6px 10px', color: SLATE_900, fontWeight: 600 }}>{u.column}</td>
-                          <td style={{ padding: '6px 10px', color: SLATE_400, fontFamily: 'monospace' }}>{u.cell}</td>
-                          <td style={{ padding: '6px 10px', color: SLATE_500 }}>{u.currentValue || '-'}</td>
-                          <td style={{ padding: '6px 10px', color: GREEN, fontWeight: 700 }}>{u.newValue.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+
+                {sheetPreview.perDate?.map((day) => (
+                  <div key={day.date} style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: PURPLE, marginBottom: 6 }}>
+                      {day.date} {day.weekday ? `(${day.weekday})` : ''}
+                    </div>
+                    {day.error ? (
+                      <div style={{ fontSize: 12.5, color: '#b91c1c', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px' }}>
+                        ⚠️ {day.error}
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+                          <thead>
+                            <tr style={{ background: BG }}>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ไซต์ (คอลัมน์)</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ช่อง</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ค่าเดิม</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ค่าใหม่</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>Target</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>เทียบ Target</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {day.updates.map((u) => {
+                              const hasTarget = u.target !== null && u.target !== undefined;
+                              const pct = hasTarget ? (u.newValue / u.target) * 100 : null;
+                              const belowTarget = hasTarget && u.newValue < u.target;
+                              return (
+                                <tr key={u.cell} style={{ borderBottom: '1px solid #f1f5f9', background: belowTarget ? '#fffafa' : 'transparent' }}>
+                                  <td style={{ padding: '6px 10px', color: SLATE_900, fontWeight: 600 }}>{u.column}</td>
+                                  <td style={{ padding: '6px 10px', color: SLATE_400, fontFamily: 'monospace' }}>{u.cell}</td>
+                                  <td style={{ padding: '6px 10px', color: SLATE_500 }}>{u.currentValue || '-'}</td>
+                                  <td style={{ padding: '6px 10px', color: GREEN, fontWeight: 700 }}>{u.newValue.toLocaleString()}</td>
+                                  <td style={{ padding: '6px 10px', color: SLATE_400 }}>{hasTarget ? u.target.toLocaleString() : '-'}</td>
+                                  <td style={{ padding: '6px 10px', fontWeight: 700, color: hasTarget ? (belowTarget ? RED : GREEN) : SLATE_400 }}>
+                                    {hasTarget ? `${pct.toFixed(0)}%` : '-'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
                 {sheetPreview.skippedColumns?.length > 0 && (
                   <div style={{ fontSize: 11.5, color: SLATE_400, marginBottom: 12 }}>
                     ข้ามคอลัมน์ที่ยังไม่รู้จัก: {sheetPreview.skippedColumns.join(', ')}
                   </div>
                 )}
-                <button onClick={confirmSheetWrite} disabled={sheetSyncLoading}
+                <button onClick={confirmSheetWrite} disabled={sheetSyncLoading || sheetPreview.totalCells === 0}
                   style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  {sheetSyncLoading ? 'กำลังเขียน…' : '✓ ยืนยันเขียนข้อมูลจริง'}
+                  {sheetSyncLoading ? 'กำลังเขียน…' : `✓ ยืนยันเขียนข้อมูลจริง (${sheetPreview.totalCells} ช่อง)`}
                 </button>
               </>
             )}
