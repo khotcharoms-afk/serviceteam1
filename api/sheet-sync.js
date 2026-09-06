@@ -26,7 +26,9 @@ const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อัง
 
 function getAuth() {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  let key = (process.env.GOOGLE_PRIVATE_KEY || '').trim();
+  if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
+  key = key.replace(/\\n/g, '\n').trim();
   return new google.auth.JWT(email, null, key, ['https://www.googleapis.com/auth/spreadsheets']);
 }
 
