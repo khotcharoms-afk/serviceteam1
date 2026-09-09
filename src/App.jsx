@@ -830,7 +830,7 @@ export default function App({ currentUser, onSignOut }) {
             {label:"ใกล้หมด",     val:stats.expiringSoon, color:"#f59e0b", key:"__exp"},
           ].map(s=>(
             <div key={s.key} onClick={()=>setFilterStat(filterStat===s.key?"all":s.key)}
-              style={{ background:filterStat===s.key?s.color+"12":"#fff",
+              style={{ background:filterStat===s.key?s.color+"12":themeC.card,
                 border:`1.5px solid ${filterStat===s.key?s.color+"50":themeC.border}`,
                 borderRadius:12,padding:"12px 10px",cursor:"pointer",textAlign:"center" }}>
               <div style={{ fontSize:22,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
@@ -841,7 +841,7 @@ export default function App({ currentUser, onSignOut }) {
         <div style={{ position:"relative",marginBottom:14 }}>
           <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:themeC.text400,fontSize:16 }}>⌕</span>
           <input placeholder="ค้นหาเคส หรือโครงการ..." value={search} onChange={e=>setSearch(e.target.value)}
-            style={IS({ paddingLeft:36,borderRadius:10,fontSize:14 })}/>
+            style={{ ...IS({ paddingLeft:36,borderRadius:10,fontSize:14 }), background:themeC.card, borderColor:themeC.border, color:themeC.text900 }}/>
           {/* Dropdown ผลการค้นหาโครงการ */}
           {search.trim().length>=1 && (() => {
             const q = search.trim().toLowerCase();
@@ -899,9 +899,9 @@ export default function App({ currentUser, onSignOut }) {
               const isActive = p.active();
               return (
                 <button key={p.label} onClick={p.fn}
-                  style={{ background:isActive?"#2563eb":"#f1f5f9",
+                  style={{ background:isActive?"#2563eb":themeC.borderSoft,
                     border:`1px solid ${isActive?"#2563eb":themeC.border}`,
-                    color:isActive?"#fff":"#475569",
+                    color:isActive?"#fff":themeC.text500,
                     borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
                   {p.label}
                 </button>
