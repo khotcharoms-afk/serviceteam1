@@ -414,6 +414,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const redBg = redBgFor(dark);
   const IDLE_CASE_THRESHOLD = 3; // หยุดเกินกี่วันถึงจะให้ปุ่มสร้างเคสโผล่
   const [caseModalFor, setCaseModalFor] = useState(null); // vehicle row ที่กำลังจะสร้างเคส
+  const [projPickerOpen, setProjPickerOpen] = useState(false);
+  const [projSearch, setProjSearch] = useState('');
   const [caseTitle, setCaseTitle] = useState('');
   const [caseProjectId, setCaseProjectId] = useState('');
   const [caseNote, setCaseNote] = useState('');
@@ -961,32 +963,52 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
       {/* Create-case modal */}
       {caseModalFor && (
-        <div onClick={() => !caseSaving && setCaseModalFor(null)}
+        <div onClick={() => { if (!caseSaving) { setCaseModalFor(null); setProjPickerOpen(false); } }}
           style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: c.card, borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif" }}>
+            style={{ background: c.card, borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif", maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: c.text900, marginBottom: 4 }}>🔧 สร้างเคส</div>
             <div style={{ fontSize: 12, color: c.text400, marginBottom: 16 }}>{caseModalFor.vehicle_name} · {siteName(caseModalFor.project_name)}</div>
 
             <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>หัวข้อเคส</label>
             <input value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)}
-              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none' }} />
+              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none', background: c.bg, color: c.text900 }} />
 
             <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>โครงการ (ServiceLog) — ไม่บังคับ</label>
-            <select value={caseProjectId} onChange={(e) => setCaseProjectId(e.target.value)}
-              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none', background: c.card }}>
-              <option value="">-- ยังไม่ผูกโครงการ --</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <div style={{ position: 'relative', marginTop: 4, marginBottom: 12 }}>
+              <button type="button" onClick={() => { setProjPickerOpen((v) => !v); setProjSearch(''); }}
+                style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, fontFamily: 'inherit', outline: 'none', background: c.bg, color: caseProjectId ? c.text900 : c.text400, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {caseProjectId ? (projects.find((p) => p.id === caseProjectId)?.name || '') : '-- ยังไม่ผูกโครงการ --'}
+                </span>
+                <span style={{ fontSize: 11, color: c.text400, flexShrink: 0 }}>{projPickerOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {projPickerOpen && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 40, background: c.card, border: `1px solid ${c.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.28)', overflow: 'hidden' }}>
+                  <input autoFocus value={projSearch} onChange={(e) => setProjSearch(e.target.value)}
+                    placeholder="ค้นหาโครงการ…"
+                    style={{ width: '100%', border: 'none', borderBottom: `1px solid ${c.border}`, padding: '9px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: c.bg, color: c.text900 }} />
+                  <div style={{ maxHeight: 210, overflowY: 'auto' }}>
+                    {[{ id: '', name: '-- ยังไม่ผูกโครงการ --' }, ...projects]
+                      .filter((p) => !projSearch.trim() || p.name.toLowerCase().includes(projSearch.trim().toLowerCase()))
+                      .map((p) => (
+                        <div key={p.id || '__none'} onClick={() => { setCaseProjectId(p.id); setProjPickerOpen(false); }}
+                          style={{ padding: '9px 12px', fontSize: 13, cursor: 'pointer', color: p.id ? c.text900 : c.text400, background: caseProjectId === p.id ? `${c.orange}22` : 'transparent', borderBottom: `1px solid ${c.borderSoft}` }}>
+                          {p.name}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>หมายเหตุ</label>
             <textarea value={caseNote} onChange={(e) => setCaseNote(e.target.value)} rows={3}
-              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 16, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
+              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 16, fontFamily: 'inherit', outline: 'none', resize: 'vertical', background: c.bg, color: c.text900 }} />
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setCaseModalFor(null)} disabled={caseSaving}
+              <button onClick={() => { setCaseModalFor(null); setProjPickerOpen(false); }} disabled={caseSaving}
                 style={{ flex: 1, background: c.borderSoft, border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: c.text500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 ยกเลิก
               </button>
