@@ -1,3 +1,5 @@
+import { useTheme } from "./theme.js";
+
 export default function NavBar({
   onMenuOpen,
   view, activeProj,
@@ -8,29 +10,31 @@ export default function NavBar({
   onNewCase,
   onProfile,
   isMobile,
+  darkMode, onToggleDark,
 }) {
+  const { c } = useTheme();
   const taskBadge = (tasks||[]).filter(t =>
     t.status === "todo" && (t.assignees||[]).includes(currentUser?.name)
   ).length;
 
   return (
-    <header style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"0 16px",
+    <header style={{ background:c.card, borderBottom:`1px solid ${c.border}`, padding:"0 16px",
       display:"flex", alignItems:"center", justifyContent:"space-between", height:56,
       position:"sticky", top:0, zIndex:50 }}>
 
       {/* Left */}
       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
         <button onClick={onMenuOpen} style={{ background:"none", border:"none",
-          cursor:"pointer", padding:"6px", fontSize:18, color:"#475569", lineHeight:1 }}>☰</button>
+          cursor:"pointer", padding:"6px", fontSize:18, color:c.text500, lineHeight:1 }}>☰</button>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <div style={{ width:28, height:28, borderRadius:8,
             background:"linear-gradient(135deg,#2563eb,#7c3aed)",
             display:"flex", alignItems:"center", justifyContent:"center",
             color:"#fff", fontSize:13, fontWeight:700 }}>S</div>
           <div>
-            <div style={{ fontSize:13, fontWeight:800, color:"#0f172a", lineHeight:1 }}>ServiceLog</div>
+            <div style={{ fontSize:13, fontWeight:800, color:c.text900, lineHeight:1 }}>ServiceLog</div>
             {view !== "overview" && (
-              <div style={{ fontSize:10, color:activeProj?.color||"#94a3b8", fontWeight:600, lineHeight:1.2 }}>
+              <div style={{ fontSize:10, color:activeProj?.color||c.text400, fontWeight:600, lineHeight:1.2 }}>
                 {activeProj?.name}
               </div>
             )}
@@ -40,8 +44,15 @@ export default function NavBar({
 
       {/* Right */}
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+        {onToggleDark && (
+          <button onClick={onToggleDark} title="สลับโหมดมืด/สว่าง"
+            style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500,
+              borderRadius:8, padding:"7px 10px", fontSize:14,
+              cursor:"pointer", fontFamily:"inherit" }}>{darkMode ? "☀️" : "🌙"}</button>
+        )}
+
         <button onClick={onSearch}
-          style={{ background:"#f8fafc", border:"1px solid #e2e8f0", color:"#475569",
+          style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500,
             borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
             cursor:"pointer", fontFamily:"inherit" }}>🔍</button>
 
@@ -66,7 +77,7 @@ export default function NavBar({
 
         <div style={{ position:"relative" }}>
           <button onClick={onNotif}
-            style={{ background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8,
+            style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:8,
               padding:"8px 10px", fontSize:18, cursor:"pointer", lineHeight:1, position:"relative" }}>
             🔔
             {unreadCount > 0 && (
@@ -80,7 +91,7 @@ export default function NavBar({
         </div>
 
         <button onClick={onNewCase}
-          style={{ background:"#2563eb", border:"none", color:"#fff",
+          style={{ background:c.blue, border:"none", color:"#fff",
             borderRadius:8, padding:"8px 14px", fontSize:13, fontWeight:600,
             cursor:"pointer", fontFamily:"inherit" }}>
           + เคสใหม่
@@ -88,7 +99,7 @@ export default function NavBar({
 
         {!isMobile && (
           <button onClick={onProfile}
-            style={{ width:34, height:34, borderRadius:"50%", border:"2px solid #e2e8f0",
+            style={{ width:34, height:34, borderRadius:"50%", border:`2px solid ${c.border}`,
               background:"linear-gradient(135deg,#F97316,#6B21A8)",
               color:"#fff", fontSize:12, fontWeight:800, cursor:"pointer",
               display:"flex", alignItems:"center", justifyContent:"center" }}
