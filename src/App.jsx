@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db, auth, registerPushSubscription } from "./firebase";
-import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc, onSnapshot } from "firebase/firestore";
 import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS } from "./utils.js";
 import * as XLSX from "xlsx";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
@@ -50,6 +50,8 @@ export default function App({ currentUser, onSignOut }) {
   const [globalSearch, setGlobalSearch] = useState(false);
   const [globalQ, setGlobalQ]           = useState("");
   const [leavePage,setLeavePage]   = useState(false);
+  const [onlineUsers,setOnlineUsers] = useState([]);
+  const [showOnlineUsers,setShowOnlineUsers] = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
 
@@ -88,6 +90,37 @@ export default function App({ currentUser, onSignOut }) {
 
   // Reset pagination เมื่อ filter เปลี่ยน
   useEffect(()=>{ setPage(1); },[view,filterStat,filterTech,search,dateFrom,dateTo]);
+
+  // ส่งสัญญาณ "ยังออนไลน์อยู่" ทุก 30 วิ ตราบใดที่เปิดแอปอยู่
+  useEffect(()=>{
+    if(!currentUser?.id) return;
+    const beat = () => {
+      setDoc(doc(db,"presence",currentUser.id), {
+        name: currentUser.name||"", role: currentUser.role||"",
+        lastSeen: new Date().toISOString(),
+      }, { merge:true }).catch(()=>{});
+    };
+    beat();
+    const interval = setInterval(beat, 30000);
+    return ()=>clearInterval(interval);
+  },[currentUser?.id]);
+
+  // เฉพาะ dev เท่านั้นที่ subscribe รายชื่อคนออนไลน์ (คนอื่นไม่ต้องยิง request นี้)
+  useEffect(()=>{
+    if(currentUser?.role!=="dev") return;
+    const unsub = onSnapshot(collection(db,"presence"), (snap)=>{
+      const now = Date.now();
+      const list = [];
+      snap.forEach((d)=>{
+        const data = d.data();
+        const last = new Date(data.lastSeen).getTime();
+        if(now - last < 2*60*1000) list.push({ id:d.id, name:data.name, role:data.role, lastSeen:data.lastSeen });
+      });
+      list.sort((a,b)=> new Date(b.lastSeen)-new Date(a.lastSeen));
+      setOnlineUsers(list);
+    });
+    return ()=>unsub();
+  },[currentUser?.role]);
 
   // Re-register push subscription เมื่อ user กลับมาเปิดแอป (แก้ปัญหา iOS/Android kill subscription)
   useEffect(()=>{
@@ -722,6 +755,9 @@ export default function App({ currentUser, onSignOut }) {
         setShiftPage={setShiftPage} setOnsitePage={setOnsitePage}
         setOtPage={setOtPage} setLeavePage={setLeavePage} setKnowledgePage={setKnowledgePage}
         setRobotStatsPage={setRobotStatsPage}
+        isDev={currentUser?.role==="dev"}
+        onlineCount={onlineUsers.length}
+        setShowOnlineUsers={setShowOnlineUsers}
         setAdminPage={setAdminPage} setProfilePage={setProfilePage}
         openAddProj={openAddProj}
         handleImportFile={handleImportFile}
@@ -1224,6 +1260,20 @@ export default function App({ currentUser, onSignOut }) {
         caseData={updateCase} onSave={saveUpdate} currentUser={currentUser}/>
       <HandoverModal open={!!handoverCase} onClose={()=>setHandoverCase(null)}
         caseData={handoverCase} onSave={saveHandover} users={users} currentUser={currentUser}/>
+
+      <Modal open={showOnlineUsers} onClose={()=>setShowOnlineUsers(false)} title="🟢 ใครออนไลน์อยู่บ้าง">
+        {onlineUsers.length===0 ? (
+          <p style={{ color:"#94a3b8",fontSize:14,textAlign:"center",padding:"20px 0" }}>ไม่มีใครออนไลน์อยู่ตอนนี้</p>
+        ) : onlineUsers.map((u)=>(
+          <div key={u.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9" }}>
+            <span style={{ width:8,height:8,borderRadius:"50%",background:"#16a34a",flexShrink:0 }}/>
+            <div style={{ flex:1,minWidth:0 }}>
+              <div style={{ fontSize:14,fontWeight:600,color:"#0f172a" }}>{u.name}</div>
+              {u.role&&<div style={{ fontSize:11,color:"#94a3b8" }}>{u.role==="admin"?"Admin":u.role==="dev"?"Dev":u.role}</div>}
+            </div>
+          </div>
+        ))}
+      </Modal>
 
       {toast&&(
         <div style={{ position:"fixed",left:"50%",top:64,transform:"translateX(-50%)",zIndex:9999,maxWidth:"90vw",pointerEvents:"none" }}>
