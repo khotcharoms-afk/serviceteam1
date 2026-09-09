@@ -341,7 +341,7 @@ function VehicleDetail({ vehicle, onBack, dark }) {
 
   return (
     <ThemeContext.Provider value={{ dark, c }}>
-    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", overflowX: 'hidden' }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={onBack} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
@@ -622,7 +622,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
   return (
     <ThemeContext.Provider value={{ dark: darkMode, c }}>
-    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", overflowX: 'hidden' }}>
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: isMobile ? '10px 12px' : '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -895,9 +895,9 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                     <span>{formatHours(r.total_time)}</span>
                   </div>
                   <ProgressBar pct={pct} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11 }}>
-                    <span style={{ color: c.text400 }}>ทำแล้ว {Number(r.actual_clean_area).toLocaleString()} ตร.ม.</span>
-                    <span style={{ color: c.text400 }}>ยังไม่ทำ {Number(r.uncleaned_area).toLocaleString()} ตร.ม.</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10.5, flexWrap: 'wrap', gap: 4 }}>
+                    <span style={{ color: c.text400, whiteSpace: 'nowrap' }}>ทำแล้ว {Number(r.actual_clean_area).toLocaleString()} ตร.ม.</span>
+                    <span style={{ color: c.text400, whiteSpace: 'nowrap' }}>ยังไม่ทำ {Number(r.uncleaned_area).toLocaleString()} ตร.ม.</span>
                   </div>
                   {(idleDays[r.vin] || 0) >= IDLE_CASE_THRESHOLD && (
                     caseCreatedFor[r.vin] ? (
