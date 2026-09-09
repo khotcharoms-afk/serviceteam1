@@ -708,7 +708,7 @@ export default function App({ currentUser, onSignOut }) {
 
   return (
     <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>
-    <div style={{ minHeight:"100vh",background:themeC.bg,fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:themeC.text900 }}>
+    <div style={{ minHeight:"100vh",background:themeC.bg,fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:themeC.text900,overflowX:"hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -933,9 +933,9 @@ export default function App({ currentUser, onSignOut }) {
         <div style={{ display:"flex",gap:8,marginBottom:16,overflowX:"auto",paddingBottom:4 }}>
           {[{value:"all",label:"ทั้งหมด",color:"#2563eb"},...STATUS_OPTS].map(s=>(
             <button key={s.value} onClick={()=>setFilterStat(s.value)}
-              style={{ background:filterStat===s.value?s.color:"#fff",
+              style={{ background:filterStat===s.value?s.color:themeC.card,
                 border:`1.5px solid ${filterStat===s.value?s.color:themeC.border}`,
-                color:filterStat===s.value?"#fff":"#64748b",
+                color:filterStat===s.value?"#fff":themeC.text500,
                 borderRadius:20,padding:"6px 14px",fontSize:12,fontWeight:600,
                 cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap",flexShrink:0 }}>
               {s.label}
