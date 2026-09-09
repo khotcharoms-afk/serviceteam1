@@ -1,21 +1,10 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { useTheme } from './theme.js';
 
-const THEMES = {
-  light: {
-    purple: '#6B21A8', orange: '#F97316', text900: '#0f172a', text500: '#64748b',
-    text400: '#94a3b8', border: '#e2e8f0', bg: '#f8fafc', card: '#fff',
-    green: '#16a34a', amber: '#f59e0b', red: '#ef4444', redBg: '#fffafa',
-  },
-  dark: {
-    purple: '#c4b5fd', orange: '#fb923c', text900: '#f1f5f9', text500: '#cbd5e1',
-    text400: '#94a3b8', border: '#334155', bg: '#0f172a', card: '#1e293b',
-    green: '#4ade80', amber: '#fbbf24', red: '#f87171', redBg: '#3f1d1d',
-  },
-};
-const ThemeContext = createContext({ dark: false, c: THEMES.light });
-function useTheme() { return useContext(ThemeContext); }
+// พื้นหลังแถวที่ต่ำกว่าเป้า/ไม่ได้ทำงาน — อ่อนใน light, เข้มใน dark
+const redBgFor = (dark) => (dark ? '#3f1d1d' : '#fffafa');
 
 // ── ตั้งค่าชื่อไซต์ที่ใช้ในรายงาน ──
 // key = ชื่อโปรเจกต์จาก VIGGO (r.project_name)
@@ -199,7 +188,7 @@ function ProgressBar({ pct }) {
   const width = pct === null ? 0 : Math.min(100, Math.max(0, pct));
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ flex: 1, height: 7, borderRadius: 20, background: '#eef1f5', overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: 7, borderRadius: 20, background: c.borderSoft, overflow: 'hidden' }}>
         <div style={{ width: `${width}%`, height: '100%', background: color, borderRadius: 20, transition: 'width .3s' }} />
       </div>
       <span style={{ fontSize: 12.5, fontWeight: 700, color, minWidth: 40, textAlign: 'right' }}>
@@ -289,8 +278,8 @@ function WeekBarChart({ data, maxValue }) {
   );
 }
 
-function VehicleDetail({ vehicle, onBack, dark }) {
-  const c = THEMES[dark ? 'dark' : 'light'];
+function VehicleDetail({ vehicle, onBack }) {
+  const { c } = useTheme();
   const [weekData, setWeekData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -340,11 +329,10 @@ function VehicleDetail({ vehicle, onBack, dark }) {
   const daysWorked = weekData.filter((d) => d.task_num > 0).length;
 
   return (
-    <ThemeContext.Provider value={{ dark, c }}>
     <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", overflowX: 'hidden' }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={onBack} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
+          <button onClick={onBack} style={{ background: c.bg, border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>{vehicle.vehicle_name}</div>
             <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{siteName(vehicle.project_name)} · {vehicle.vin}</div>
@@ -385,7 +373,7 @@ function VehicleDetail({ vehicle, onBack, dark }) {
                 </thead>
                 <tbody>
                   {weekData.map((d) => (
-                    <tr key={d.date} style={{ borderBottom: '1px solid #f1f5f9', background: d.date === todayStr() ? '#fff7ed' : 'transparent' }}>
+                    <tr key={d.date} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: d.date === todayStr() ? `${c.orange}14` : 'transparent' }}>
                       <td style={{ padding: '10px 14px', fontWeight: 700, color: c.text900 }}>{d.dayLabel}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.dateShort}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.task_num}</td>
@@ -400,7 +388,6 @@ function VehicleDetail({ vehicle, onBack, dark }) {
         )}
       </div>
     </div>
-    </ThemeContext.Provider>
   );
 }
 
@@ -423,8 +410,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const [sheetSyncError, setSheetSyncError] = useState(null);
   const [sheetWriteDone, setSheetWriteDone] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const c = THEMES[darkMode ? 'dark' : 'light'];
+  const { dark, c } = useTheme();
+  const redBg = redBgFor(dark);
   const IDLE_CASE_THRESHOLD = 3; // หยุดเกินกี่วันถึงจะให้ปุ่มสร้างเคสโผล่
   const [caseModalFor, setCaseModalFor] = useState(null); // vehicle row ที่กำลังจะสร้างเคส
   const [caseTitle, setCaseTitle] = useState('');
@@ -617,11 +604,10 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   }
 
   if (selectedVehicle) {
-    return <VehicleDetail vehicle={selectedVehicle} onBack={() => setSelectedVehicle(null)} dark={darkMode} />;
+    return <VehicleDetail vehicle={selectedVehicle} onBack={() => setSelectedVehicle(null)} />;
   }
 
   return (
-    <ThemeContext.Provider value={{ dark: darkMode, c }}>
     <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", overflowX: 'hidden' }}>
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: isMobile ? '10px 12px' : '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -634,10 +620,6 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             </div>
             {!isMobile && <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>ข้อมูลจากระบบ VIGGO</div>}
           </div>
-          <button onClick={() => setDarkMode((v) => !v)} title="สลับโหมดมืด/สว่าง"
-            style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {darkMode ? '☀️' : '🌙'}
-          </button>
         </div>
       </div>
 
@@ -783,7 +765,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                               const pct = hasTarget ? (u.newValue / u.target) * 100 : null;
                               const belowTarget = hasTarget && u.newValue < u.target;
                               return (
-                                <tr key={u.cell} style={{ borderBottom: '1px solid #f1f5f9', background: belowTarget ? c.redBg : 'transparent' }}>
+                                <tr key={u.cell} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: belowTarget ? redBg : 'transparent' }}>
                                   <td style={{ padding: '6px 10px', color: c.text900, fontWeight: 600 }}>{u.column}</td>
                                   <td style={{ padding: '6px 10px', color: c.text400, fontFamily: 'monospace' }}>{u.cell}</td>
                                   <td style={{ padding: '6px 10px', color: c.text500 }}>{u.currentValue || '-'}</td>
@@ -931,7 +913,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                   {filteredRows.map((r) => {
                     const pct = pctOf(r);
                     return (
-                      <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : c.redBg, cursor: 'pointer' }}>
+                      <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: Number(r.task_num) > 0 ? 'transparent' : redBg, cursor: 'pointer' }}>
                         <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
@@ -1005,7 +987,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setCaseModalFor(null)} disabled={caseSaving}
-                style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: c.text500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, background: c.borderSoft, border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: c.text500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 ยกเลิก
               </button>
               <button onClick={submitIdleCase} disabled={!caseTitle.trim() || caseSaving}
@@ -1017,7 +999,6 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         </div>
       )}
     </div>
-    </ThemeContext.Provider>
   );
 }
 
