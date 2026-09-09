@@ -18,53 +18,57 @@ export default function NavBar({
   ).length;
 
   return (
-    <header style={{ background:c.card, borderBottom:`1px solid ${c.border}`, padding:"0 16px",
+    <header style={{ background:c.card, borderBottom:`1px solid ${c.border}`, padding: isMobile ? "0 8px" : "0 16px",
       display:"flex", alignItems:"center", justifyContent:"space-between", height:56,
-      position:"sticky", top:0, zIndex:50 }}>
+      position:"sticky", top:0, zIndex:50, overflow:"hidden" }}>
 
       {/* Left */}
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+      <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 6 : 10, flexShrink:0 }}>
         <button onClick={onMenuOpen} style={{ background:"none", border:"none",
-          cursor:"pointer", padding:"6px", fontSize:18, color:c.text500, lineHeight:1 }}>☰</button>
+          cursor:"pointer", padding:"6px", fontSize:18, color:c.text500, lineHeight:1, flexShrink:0 }}>☰</button>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <div style={{ width:28, height:28, borderRadius:8,
+          <div style={{ width:28, height:28, borderRadius:8, flexShrink:0,
             background:"linear-gradient(135deg,#2563eb,#7c3aed)",
             display:"flex", alignItems:"center", justifyContent:"center",
             color:"#fff", fontSize:13, fontWeight:700 }}>S</div>
-          <div>
-            <div style={{ fontSize:13, fontWeight:800, color:c.text900, lineHeight:1 }}>ServiceLog</div>
-            {view !== "overview" && (
-              <div style={{ fontSize:10, color:activeProj?.color||c.text400, fontWeight:600, lineHeight:1.2 }}>
-                {activeProj?.name}
-              </div>
-            )}
-          </div>
+          {!isMobile && (
+            <div>
+              <div style={{ fontSize:13, fontWeight:800, color:c.text900, lineHeight:1 }}>ServiceLog</div>
+              {view !== "overview" && (
+                <div style={{ fontSize:10, color:activeProj?.color||c.text400, fontWeight:600, lineHeight:1.2 }}>
+                  {activeProj?.name}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Right */}
-      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+      <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 4 : 8, overflowX:"auto", flexWrap:"nowrap" }}>
         {onToggleDark && (
           <button onClick={onToggleDark} title="สลับโหมดมืด/สว่าง"
-            style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500,
-              borderRadius:8, padding:"7px 10px", fontSize:14,
+            style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500, flexShrink:0,
+              borderRadius:8, padding: isMobile ? "6px 8px" : "7px 10px", fontSize:14,
               cursor:"pointer", fontFamily:"inherit" }}>{darkMode ? "☀️" : "🌙"}</button>
         )}
 
         <button onClick={onSearch}
-          style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500,
-            borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
+          style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500, flexShrink:0,
+            borderRadius:8, padding: isMobile ? "6px 9px" : "7px 12px", fontSize:12, fontWeight:600,
             cursor:"pointer", fontFamily:"inherit" }}>🔍</button>
 
-        <button onClick={onOnsite}
-          style={{ background:"#fff7ed", border:"1px solid #fed7aa", color:"#ea580c",
-            borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
-            cursor:"pointer", fontFamily:"inherit" }}>📍</button>
+        {!isMobile && (
+          <button onClick={onOnsite}
+            style={{ background:"#fff7ed", border:"1px solid #fed7aa", color:"#ea580c", flexShrink:0,
+              borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
+              cursor:"pointer", fontFamily:"inherit" }}>📍</button>
+        )}
 
-        <div style={{ position:"relative", display:"inline-flex" }}>
+        <div style={{ position:"relative", display:"inline-flex", flexShrink:0 }}>
           <button onClick={onTaskBoard}
             style={{ background:"#f5f3ff", border:"1px solid #ddd6fe", color:"#6B21A8",
-              borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
+              borderRadius:8, padding: isMobile ? "6px 9px" : "7px 12px", fontSize:12, fontWeight:600,
               cursor:"pointer", fontFamily:"inherit" }}>📋</button>
           {taskBadge > 0 && (
             <span style={{ position:"absolute", top:-4, right:-4, background:"#dc2626",
@@ -75,10 +79,10 @@ export default function NavBar({
           )}
         </div>
 
-        <div style={{ position:"relative" }}>
+        <div style={{ position:"relative", flexShrink:0 }}>
           <button onClick={onNotif}
             style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:8,
-              padding:"8px 10px", fontSize:18, cursor:"pointer", lineHeight:1, position:"relative" }}>
+              padding: isMobile ? "7px 8px" : "8px 10px", fontSize:18, cursor:"pointer", lineHeight:1, position:"relative" }}>
             🔔
             {unreadCount > 0 && (
               <span style={{ position:"absolute", top:-4, right:-4, background:"#ef4444",
@@ -91,15 +95,15 @@ export default function NavBar({
         </div>
 
         <button onClick={onNewCase}
-          style={{ background:c.blue, border:"none", color:"#fff",
-            borderRadius:8, padding:"8px 14px", fontSize:13, fontWeight:600,
-            cursor:"pointer", fontFamily:"inherit" }}>
-          + เคสใหม่
+          style={{ background:c.blue, border:"none", color:"#fff", flexShrink:0,
+            borderRadius:8, padding: isMobile ? "8px 10px" : "8px 14px", fontSize:13, fontWeight:600,
+            cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>
+          {isMobile ? "+" : "+ เคสใหม่"}
         </button>
 
         {!isMobile && (
           <button onClick={onProfile}
-            style={{ width:34, height:34, borderRadius:"50%", border:`2px solid ${c.border}`,
+            style={{ width:34, height:34, borderRadius:"50%", border:`2px solid ${c.border}`, flexShrink:0,
               background:"linear-gradient(135deg,#F97316,#6B21A8)",
               color:"#fff", fontSize:12, fontWeight:800, cursor:"pointer",
               display:"flex", alignItems:"center", justifyContent:"center" }}
