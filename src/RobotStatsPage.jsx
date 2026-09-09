@@ -6,12 +6,12 @@ const THEMES = {
   light: {
     purple: '#6B21A8', orange: '#F97316', text900: '#0f172a', text500: '#64748b',
     text400: '#94a3b8', border: '#e2e8f0', bg: '#f8fafc', card: '#fff',
-    green: '#16a34a', amber: '#f59e0b', red: '#ef4444',
+    green: '#16a34a', amber: '#f59e0b', red: '#ef4444', redBg: '#fffafa',
   },
   dark: {
     purple: '#c4b5fd', orange: '#fb923c', text900: '#f1f5f9', text500: '#cbd5e1',
     text400: '#94a3b8', border: '#334155', bg: '#0f172a', card: '#1e293b',
-    green: '#4ade80', amber: '#fbbf24', red: '#f87171',
+    green: '#4ade80', amber: '#fbbf24', red: '#f87171', redBg: '#3f1d1d',
   },
 };
 const ThemeContext = createContext({ dark: false, c: THEMES.light });
@@ -783,7 +783,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                               const pct = hasTarget ? (u.newValue / u.target) * 100 : null;
                               const belowTarget = hasTarget && u.newValue < u.target;
                               return (
-                                <tr key={u.cell} style={{ borderBottom: '1px solid #f1f5f9', background: belowTarget ? '#fffafa' : 'transparent' }}>
+                                <tr key={u.cell} style={{ borderBottom: '1px solid #f1f5f9', background: belowTarget ? c.redBg : 'transparent' }}>
                                   <td style={{ padding: '6px 10px', color: c.text900, fontWeight: 600 }}>{u.column}</td>
                                   <td style={{ padding: '6px 10px', color: c.text400, fontFamily: 'monospace' }}>{u.cell}</td>
                                   <td style={{ padding: '6px 10px', color: c.text500 }}>{u.currentValue || '-'}</td>
@@ -931,7 +931,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                   {filteredRows.map((r) => {
                     const pct = pctOf(r);
                     return (
-                      <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : '#fffafa', cursor: 'pointer' }}>
+                      <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid #f1f5f9`, background: Number(r.task_num) > 0 ? 'transparent' : c.redBg, cursor: 'pointer' }}>
                         <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
