@@ -1,6 +1,8 @@
 import { daysLeft } from "./utils.js";
+import { useTheme } from "./theme.js";
 
 function DrawerItem({ active, onClick, icon, label, count, color }) {
+  const { c } = useTheme();
   return (
     <button onClick={onClick} style={{
       display:"flex", alignItems:"center", justifyContent:"space-between",
@@ -13,14 +15,14 @@ function DrawerItem({ active, onClick, icon, label, count, color }) {
         borderRadius:"0 3px 3px 0", background:color }}/>}
       <span style={{ display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0,paddingLeft:active?6:0 }}>
         <span style={{ width:30,height:30,borderRadius:8,flexShrink:0,
-          background: active ? color+"20" : "#f1f5f9",
+          background: active ? color+"20" : c.borderSoft,
           display:"flex",alignItems:"center",justifyContent:"center",fontSize:15 }}>{icon}</span>
-        <span style={{ fontSize:13,color:active?"#0f172a":"#475569",fontWeight:active?700:500,
+        <span style={{ fontSize:13,color:active?c.text900:c.text500,fontWeight:active?700:500,
           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
       {count !== "" && count !== undefined && (
-        <span style={{ fontSize:11,background:active?color+"20":"#f1f5f9",borderRadius:20,
-          padding:"2px 9px",color:active?color:"#94a3b8",flexShrink:0,marginLeft:4,fontWeight:700 }}>
+        <span style={{ fontSize:11,background:active?color+"20":c.borderSoft,borderRadius:20,
+          padding:"2px 9px",color:active?color:c.text400,flexShrink:0,marginLeft:4,fontWeight:700 }}>
           {count}
         </span>
       )}
@@ -41,25 +43,26 @@ export default function Drawer({
   isDev, onlineCount, setShowOnlineUsers,
   openAddProj, handleImportFile, handleImportCaseFile,
 }) {
+  const { c } = useTheme();
   if (!open) return null;
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:200 }} onClick={onClose}>
       <div style={{ position:"absolute",inset:0,background:"rgba(15,23,42,.4)",backdropFilter:"blur(2px)" }}/>
-      <div style={{ position:"absolute",left:0,top:0,bottom:0,width:280,background:"#fff",
+      <div style={{ position:"absolute",left:0,top:0,bottom:0,width:280,background:c.card,
         boxShadow:"4px 0 24px rgba(0,0,0,.12)",padding:"20px 12px",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
 
         {/* Header */}
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,padding:"0 6px" }}>
-          <div style={{ fontSize:15,fontWeight:800,color:"#0f172a" }}>เมนู</div>
-          <button onClick={onClose} style={{ background:"none",border:"none",fontSize:18,color:"#94a3b8",cursor:"pointer" }}>✕</button>
+          <div style={{ fontSize:15,fontWeight:800,color:c.text900 }}>เมนู</div>
+          <button onClick={onClose} style={{ background:"none",border:"none",fontSize:18,color:c.text400,cursor:"pointer" }}>✕</button>
         </div>
 
         {/* User card */}
-        <div style={{ background:"#f8fafc",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"1px solid #e2e8f0" }}>
-          <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>{currentUser?.name}</div>
-          <div style={{ fontSize:11,color:"#94a3b8",marginTop:2 }}>{currentUser?.email}</div>
+        <div style={{ background:c.bg,borderRadius:10,padding:"10px 12px",marginBottom:12,border:`1px solid ${c.border}` }}>
+          <div style={{ fontSize:13,fontWeight:700,color:c.text900 }}>{currentUser?.name}</div>
+          <div style={{ fontSize:11,color:c.text400,marginTop:2 }}>{currentUser?.email}</div>
           <div style={{ display:"flex",gap:6,marginTop:8,flexWrap:"wrap" }}>
             {isAdminOrDev && (
               <button onClick={()=>{ setAdminPage(true); onClose(); }}
@@ -89,7 +92,7 @@ export default function Drawer({
         </div>
 
         {/* หน้าหลัก */}
-        <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"4px 8px 8px" }}>หน้าหลัก</div>
+        <div style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"4px 8px 8px" }}>หน้าหลัก</div>
         <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
           onClick={()=>{ setView("overview"); onClose(); setFilterStat("all"); }}/>
         {isAdminOrDev && (
@@ -98,7 +101,7 @@ export default function Drawer({
         )}
 
         {/* ปฏิบัติการ */}
-        <div style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>ปฏิบัติการ</div>
+        <div style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>ปฏิบัติการ</div>
         <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
           onClick={()=>{ setOnsitePage(true); onClose(); }}/>
         <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
@@ -114,8 +117,8 @@ export default function Drawer({
 
         {/* โครงการ */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 8px 8px" }}>
-          <span style={{ fontSize:10,color:"#94a3b8",letterSpacing:1.5,textTransform:"uppercase",fontWeight:700 }}>โครงการ</span>
-          <span style={{ fontSize:11,background:"#f1f5f9",color:"#64748b",borderRadius:20,padding:"2px 8px",fontWeight:700 }}>{projects.length}</span>
+          <span style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700 }}>โครงการ</span>
+          <span style={{ fontSize:11,background:c.borderSoft,color:c.text500,borderRadius:20,padding:"2px 8px",fontWeight:700 }}>{projects.length}</span>
         </div>
         <div style={{ overflowY:"auto",maxHeight:320,marginRight:-8,paddingRight:8 }}>
           {projects.map(p=>(
@@ -131,13 +134,13 @@ export default function Drawer({
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginTop:6 }}>
           <button onClick={()=>{ openAddProj(); onClose(); }}
             style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
-              border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
-              fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
+              border:`1.5px dashed ${c.border}`,borderRadius:8,padding:"10px 8px",cursor:"pointer",
+              fontFamily:"inherit",color:c.text400,fontSize:12 }}>
             <span style={{ fontSize:15,lineHeight:1 }}>+</span> เพิ่มโครงการ
           </button>
           <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
-            border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
-            fontFamily:"inherit",color:"#94a3b8",fontSize:12 }}>
+            border:`1.5px dashed ${c.border}`,borderRadius:8,padding:"10px 8px",cursor:"pointer",
+            fontFamily:"inherit",color:c.text400,fontSize:12 }}>
             <span style={{ fontSize:14 }}>📥</span> Import โครงการ
             <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
               onChange={e=>{ onClose(); handleImportFile(e); }}/>
@@ -145,8 +148,8 @@ export default function Drawer({
         </div>
         <div style={{ marginTop:6 }}>
           <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
-            border:"1.5px dashed #e2e8f0",borderRadius:8,padding:"10px 8px",cursor:"pointer",
-            fontFamily:"inherit",color:"#94a3b8",fontSize:12,width:"100%" }}>
+            border:`1.5px dashed ${c.border}`,borderRadius:8,padding:"10px 8px",cursor:"pointer",
+            fontFamily:"inherit",color:c.text400,fontSize:12,width:"100%" }}>
             <span style={{ fontSize:14 }}>📋</span> Import เคส
             <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
               onChange={e=>{ onClose(); handleImportCaseFile(e); }}/>
@@ -154,15 +157,15 @@ export default function Drawer({
         </div>
 
         {/* Stats */}
-        <div style={{ margin:"20px 0 10px",borderTop:"1px solid #f1f5f9",paddingTop:16 }}>
+        <div style={{ margin:"20px 0 10px",borderTop:`1px solid ${c.borderSoft}`,paddingTop:16 }}>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
             {[
               { label:"เคสทั้งหมด", val:cases.length, color:"#2563eb" },
               { label:"ใกล้หมดประกัน", val:cases.filter(c=>{ const d=daysLeft(c.warrantyEnd); return d!==null&&d>=0&&d<=90; }).length, color:"#f59e0b" },
             ].map(x=>(
-              <div key={x.label} style={{ background:"#f8fafc",borderRadius:10,padding:"10px 12px",border:`1px solid ${x.color}20` }}>
+              <div key={x.label} style={{ background:c.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${x.color}20` }}>
                 <div style={{ fontSize:22,fontWeight:800,color:x.color }}>{x.val}</div>
-                <div style={{ fontSize:10,color:"#94a3b8",marginTop:2 }}>{x.label}</div>
+                <div style={{ fontSize:10,color:c.text400,marginTop:2 }}>{x.label}</div>
               </div>
             ))}
           </div>
