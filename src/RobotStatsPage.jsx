@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
-const PURPLE = '#6B21A8';
-const ORANGE = '#F97316';
-const SLATE_900 = '#0f172a';
-const SLATE_500 = '#64748b';
-const SLATE_400 = '#94a3b8';
-const BORDER = '#e2e8f0';
-const BG = '#f8fafc';
-const GREEN = '#16a34a';
-const AMBER = '#f59e0b';
-const RED = '#ef4444';
+const THEMES = {
+  light: {
+    purple: '#6B21A8', orange: '#F97316', text900: '#0f172a', text500: '#64748b',
+    text400: '#94a3b8', border: '#e2e8f0', bg: '#f8fafc', card: '#fff',
+    green: '#16a34a', amber: '#f59e0b', red: '#ef4444',
+  },
+  dark: {
+    purple: '#c4b5fd', orange: '#fb923c', text900: '#f1f5f9', text500: '#cbd5e1',
+    text400: '#94a3b8', border: '#334155', bg: '#0f172a', card: '#1e293b',
+    green: '#4ade80', amber: '#fbbf24', red: '#f87171',
+  },
+};
+const ThemeContext = createContext({ dark: false, c: THEMES.light });
+function useTheme() { return useContext(ThemeContext); }
 
 // ── ตั้งค่าชื่อไซต์ที่ใช้ในรายงาน ──
 // key = ชื่อโปรเจกต์จาก VIGGO (r.project_name)
@@ -182,15 +186,16 @@ function pctOf(r) {
   return (actual / plan) * 100;
 }
 
-function performanceColor(pct) {
-  if (pct === null) return SLATE_400;
-  if (pct >= 90) return GREEN;
-  if (pct >= 70) return AMBER;
-  return RED;
+function performanceColor(pct, c) {
+  if (pct === null) return c.text400;
+  if (pct >= 90) return c.green;
+  if (pct >= 70) return c.amber;
+  return c.red;
 }
 
 function ProgressBar({ pct }) {
-  const color = performanceColor(pct);
+  const { c } = useTheme();
+  const color = performanceColor(pct, c);
   const width = pct === null ? 0 : Math.min(100, Math.max(0, pct));
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -205,11 +210,12 @@ function ProgressBar({ pct }) {
 }
 
 function StatusBadge({ worked }) {
+  const { c } = useTheme();
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       background: worked ? '#f0fdf4' : '#fff5f5',
-      color: worked ? GREEN : RED,
+      color: worked ? c.green : c.red,
       border: `1px solid ${worked ? '#bbf7d0' : '#fecaca'}`,
       borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
     }}>
@@ -219,13 +225,14 @@ function StatusBadge({ worked }) {
 }
 
 function QuickRangeBtn({ label, active, onClick }) {
+  const { c } = useTheme();
   return (
     <button
       onClick={onClick}
       style={{
-        background: active ? PURPLE : '#fff',
-        border: `1px solid ${active ? PURPLE : BORDER}`,
-        color: active ? '#fff' : SLATE_500,
+        background: active ? c.purple : '#fff',
+        border: `1px solid ${active ? c.purple : c.border}`,
+        color: active ? '#fff' : c.text500,
         borderRadius: 8,
         padding: '6px 13px',
         fontSize: 12.5,
@@ -241,19 +248,21 @@ function QuickRangeBtn({ label, active, onClick }) {
 }
 
 function StatCard({ label, value, sub, color }) {
+  const { c } = useTheme();
   return (
     <div style={{
-      background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14,
+      background: c.card, border: `1px solid ${c.border}`, borderRadius: 14,
       padding: '14px 16px', flex: 1, minWidth: 130, borderLeft: `4px solid ${color}`,
     }}>
-      <div style={{ fontSize: 22, fontWeight: 800, color: SLATE_900, lineHeight: 1.15 }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: SLATE_500, marginTop: 3, fontWeight: 600 }}>{label}</div>
-      {sub && <div style={{ fontSize: 10.5, color: SLATE_400, marginTop: 2 }}>{sub}</div>}
+      <div style={{ fontSize: 22, fontWeight: 800, color: c.text900, lineHeight: 1.15 }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: c.text500, marginTop: 3, fontWeight: 600 }}>{label}</div>
+      {sub && <div style={{ fontSize: 10.5, color: c.text400, marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
 
 function WeekBarChart({ data, maxValue }) {
+  const { c } = useTheme();
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 170, padding: '0 4px' }}>
       {data.map((d) => {
@@ -261,18 +270,18 @@ function WeekBarChart({ data, maxValue }) {
         const isToday = d.date === todayStr();
         return (
           <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: SLATE_500, whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: c.text500, whiteSpace: 'nowrap' }}>
               {d.actual_clean_area > 0 ? d.actual_clean_area.toLocaleString() : '-'}
             </div>
             <div style={{ width: '100%', height: 110, display: 'flex', alignItems: 'flex-end' }}>
               <div style={{
                 width: '100%', height: `${d.actual_clean_area > 0 ? Math.max(h, 4) : 0}%`,
-                background: isToday ? ORANGE : PURPLE, borderRadius: '6px 6px 0 0',
+                background: isToday ? c.orange : c.purple, borderRadius: '6px 6px 0 0',
                 transition: 'height .3s',
               }} />
             </div>
-            <div style={{ fontSize: 12, fontWeight: isToday ? 800 : 600, color: isToday ? ORANGE : SLATE_500 }}>{d.dayLabel}</div>
-            <div style={{ fontSize: 9.5, color: SLATE_400 }}>{d.dateShort}</div>
+            <div style={{ fontSize: 12, fontWeight: isToday ? 800 : 600, color: isToday ? c.orange : c.text500 }}>{d.dayLabel}</div>
+            <div style={{ fontSize: 9.5, color: c.text400 }}>{d.dateShort}</div>
           </div>
         );
       })}
@@ -280,7 +289,8 @@ function WeekBarChart({ data, maxValue }) {
   );
 }
 
-function VehicleDetail({ vehicle, onBack }) {
+function VehicleDetail({ vehicle, onBack, dark }) {
+  const c = THEMES[dark ? 'dark' : 'light'];
   const [weekData, setWeekData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -330,13 +340,14 @@ function VehicleDetail({ vehicle, onBack }) {
   const daysWorked = weekData.filter((d) => d.task_num > 0).length;
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
-      <div style={{ background: '#fff', borderBottom: `1px solid ${BORDER}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
+    <ThemeContext.Provider value={{ dark, c }}>
+    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+      <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={onBack} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: SLATE_500, flexShrink: 0 }}>←</button>
+          <button onClick={onBack} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: SLATE_900 }}>{vehicle.vehicle_name}</div>
-            <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>{siteName(vehicle.project_name)} · {vehicle.vin}</div>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>{vehicle.vehicle_name}</div>
+            <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{siteName(vehicle.project_name)} · {vehicle.vin}</div>
           </div>
         </div>
       </div>
@@ -349,37 +360,37 @@ function VehicleDetail({ vehicle, onBack }) {
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 48, color: SLATE_400 }}>กำลังโหลดข้อมูล 7 วันล่าสุด…</div>
+          <div style={{ textAlign: 'center', padding: 48, color: c.text400 }}>กำลังโหลดข้อมูล 7 วันล่าสุด…</div>
         ) : (
           <>
             <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-              <StatCard label="พื้นที่รวม 7 วัน" value={weekTotalArea.toLocaleString()} color={ORANGE} sub="ตร.ม." />
+              <StatCard label="พื้นที่รวม 7 วัน" value={weekTotalArea.toLocaleString()} color={c.orange} sub="ตร.ม." />
               <StatCard label="งานรวม 7 วัน" value={weekTotalTask.toLocaleString()} color="#2563eb" sub="งาน" />
-              <StatCard label="วันที่ทำงาน" value={`${daysWorked}/7`} color={GREEN} sub="วัน" />
+              <StatCard label="วันที่ทำงาน" value={`${daysWorked}/7`} color={c.green} sub="วัน" />
             </div>
 
-            <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: SLATE_900, marginBottom: 14 }}>พื้นที่ทำความสะอาดรายวัน (ตร.ม.)</div>
+            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, marginBottom: 14 }}>พื้นที่ทำความสะอาดรายวัน (ตร.ม.)</div>
               <WeekBarChart data={weekData} maxValue={maxArea} />
             </div>
 
-            <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
-                  <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
+                  <tr style={{ background: c.bg, borderBottom: `1px solid ${c.border}` }}>
                     {['วัน', 'วันที่', 'งาน', 'เวลาทำงาน', 'พื้นที่ (ตร.ม.)'].map((h) => (
-                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700 }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, color: c.text500, fontWeight: 700 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {weekData.map((d) => (
                     <tr key={d.date} style={{ borderBottom: '1px solid #f1f5f9', background: d.date === todayStr() ? '#fff7ed' : 'transparent' }}>
-                      <td style={{ padding: '10px 14px', fontWeight: 700, color: SLATE_900 }}>{d.dayLabel}</td>
-                      <td style={{ padding: '10px 14px', color: SLATE_500 }}>{d.dateShort}</td>
-                      <td style={{ padding: '10px 14px', color: SLATE_500 }}>{d.task_num}</td>
-                      <td style={{ padding: '10px 14px', color: SLATE_500 }}>{formatHours(d.total_time)}</td>
-                      <td style={{ padding: '10px 14px', color: SLATE_900, fontWeight: 600 }}>{d.actual_clean_area.toLocaleString()}</td>
+                      <td style={{ padding: '10px 14px', fontWeight: 700, color: c.text900 }}>{d.dayLabel}</td>
+                      <td style={{ padding: '10px 14px', color: c.text500 }}>{d.dateShort}</td>
+                      <td style={{ padding: '10px 14px', color: c.text500 }}>{d.task_num}</td>
+                      <td style={{ padding: '10px 14px', color: c.text500 }}>{formatHours(d.total_time)}</td>
+                      <td style={{ padding: '10px 14px', color: c.text900, fontWeight: 600 }}>{d.actual_clean_area.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -389,6 +400,7 @@ function VehicleDetail({ vehicle, onBack }) {
         )}
       </div>
     </div>
+    </ThemeContext.Provider>
   );
 }
 
@@ -411,6 +423,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const [sheetSyncError, setSheetSyncError] = useState(null);
   const [sheetWriteDone, setSheetWriteDone] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const c = THEMES[darkMode ? 'dark' : 'light'];
   const IDLE_CASE_THRESHOLD = 3; // หยุดเกินกี่วันถึงจะให้ปุ่มสร้างเคสโผล่
   const [caseModalFor, setCaseModalFor] = useState(null); // vehicle row ที่กำลังจะสร้างเคส
   const [caseTitle, setCaseTitle] = useState('');
@@ -603,36 +617,41 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   }
 
   if (selectedVehicle) {
-    return <VehicleDetail vehicle={selectedVehicle} onBack={() => setSelectedVehicle(null)} />;
+    return <VehicleDetail vehicle={selectedVehicle} onBack={() => setSelectedVehicle(null)} dark={darkMode} />;
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <ThemeContext.Provider value={{ dark: darkMode, c }}>
+    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
       {/* Header */}
-      <div style={{ background: '#fff', borderBottom: `1px solid ${BORDER}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={onBack} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: SLATE_500, flexShrink: 0 }}>←</button>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: SLATE_900, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <button onClick={onBack} style={{ background: c.bg, border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900, display: 'flex', alignItems: 'center', gap: 7 }}>
               <span style={{ fontSize: 17 }}>📊</span> สถิติการทำงานหุ่นยนต์
             </div>
-            <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>ข้อมูลจากระบบ VIGGO</div>
+            <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>ข้อมูลจากระบบ VIGGO</div>
           </div>
+          <button onClick={() => setDarkMode((v) => !v)} title="สลับโหมดมืด/สว่าง"
+            style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {darkMode ? '☀️' : '🌙'}
+          </button>
         </div>
       </div>
 
       <div style={{ padding: 16, maxWidth: 1400, margin: '0 auto' }}>
         {/* Date filter */}
-        <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+        <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: SLATE_500, fontWeight: 600 }}>📅 ช่วงวันที่:</span>
+            <span style={{ fontSize: 12, color: c.text500, fontWeight: 600 }}>📅 ช่วงวันที่:</span>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-              style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-            <span style={{ fontSize: 12, color: SLATE_400 }}>ถึง</span>
+              style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+            <span style={{ fontSize: 12, color: c.text400 }}>ถึง</span>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-              style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+              style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
             <button onClick={() => fetchData()} disabled={loading}
-              style={{ background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               {loading ? 'กำลังโหลด…' : 'ค้นหา'}
             </button>
           </div>
@@ -653,13 +672,13 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         {rows.length > 0 && (
           <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
             <div onClick={() => setStatusFilter(statusFilter === 'worked' ? 'all' : 'worked')} style={{ cursor: 'pointer', flex: 1, minWidth: 130 }}>
-              <StatCard label="รถที่ทำงาน" value={activeCount} color={GREEN} sub={`จากทั้งหมด ${rows.length} คัน`} />
+              <StatCard label="รถที่ทำงาน" value={activeCount} color={c.green} sub={`จากทั้งหมด ${rows.length} คัน`} />
             </div>
             <div onClick={() => setStatusFilter(statusFilter === 'notworked' ? 'all' : 'notworked')} style={{ cursor: 'pointer', flex: 1, minWidth: 130 }}>
-              <StatCard label="รถที่ไม่ได้ทำงาน" value={notWorkedCount} color={RED} sub="กดดูรายการ" />
+              <StatCard label="รถที่ไม่ได้ทำงาน" value={notWorkedCount} color={c.red} sub="กดดูรายการ" />
             </div>
             <StatCard label="งานทั้งหมด" value={totalTask.toLocaleString()} color="#2563eb" sub="งาน" />
-            <StatCard label="พื้นที่ทำสำเร็จ" value={`${Math.round(totalActual).toLocaleString()}`} color={ORANGE} sub="ตร.ม." />
+            <StatCard label="พื้นที่ทำสำเร็จ" value={`${Math.round(totalActual).toLocaleString()}`} color={c.orange} sub="ตร.ม." />
           </div>
         )}
 
@@ -673,8 +692,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             <button
               onClick={() => setShowReport((v) => !v)}
               style={{
-                background: showReport ? PURPLE : '#fff', color: showReport ? '#fff' : PURPLE,
-                border: `1px solid ${PURPLE}`, borderRadius: 8, padding: '6px 13px',
+                background: showReport ? c.purple : '#fff', color: showReport ? '#fff' : c.purple,
+                border: `1px solid ${c.purple}`, borderRadius: 8, padding: '6px 13px',
                 fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
               }}
             >
@@ -683,8 +702,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             <button
               onClick={() => { setShowSheetSync((v) => !v); setSheetPreview(null); setSheetWriteDone(false); setSheetSyncError(null); }}
               style={{
-                background: showSheetSync ? GREEN : '#fff', color: showSheetSync ? '#fff' : GREEN,
-                border: `1px solid ${GREEN}`, borderRadius: 8, padding: '6px 13px',
+                background: showSheetSync ? c.green : '#fff', color: showSheetSync ? '#fff' : c.green,
+                border: `1px solid ${c.green}`, borderRadius: 8, padding: '6px 13px',
                 fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
               }}
             >
@@ -695,17 +714,17 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
         {/* Google Sheet sync panel */}
         {showSheetSync && (
-          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: SLATE_900, marginBottom: 10 }}>📤 ส่งข้อมูลเข้า Google Sheet (Weekly สรุป)</div>
+          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, marginBottom: 10 }}>📤 ส่งข้อมูลเข้า Google Sheet (Weekly สรุป)</div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-              <span style={{ fontSize: 12, color: SLATE_500, fontWeight: 600 }}>จาก:</span>
+              <span style={{ fontSize: 12, color: c.text500, fontWeight: 600 }}>จาก:</span>
               <input type="date" value={sheetSyncStart} onChange={(e) => { setSheetSyncStart(e.target.value); setSheetPreview(null); setSheetWriteDone(false); }}
-                style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-              <span style={{ fontSize: 12, color: SLATE_400 }}>ถึง</span>
+                style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+              <span style={{ fontSize: 12, color: c.text400 }}>ถึง</span>
               <input type="date" value={sheetSyncEnd} onChange={(e) => { setSheetSyncEnd(e.target.value); setSheetPreview(null); setSheetWriteDone(false); }}
-                style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, color: SLATE_900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+                style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
               <button onClick={loadSheetPreview} disabled={sheetSyncLoading}
-                style={{ background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {sheetSyncLoading ? 'กำลังโหลด…' : 'ดูตัวอย่าง'}
               </button>
             </div>
@@ -717,20 +736,20 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             )}
 
             {sheetWriteDone && (
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: GREEN, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 13, fontWeight: 700 }}>
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: c.green, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 13, fontWeight: 700 }}>
                 ✓ เขียนข้อมูลเข้า Google Sheet เรียบร้อยแล้ว ({sheetPreview?.totalCells || 0} ช่อง)
               </div>
             )}
 
             {sheetPreview && !sheetWriteDone && (
               <>
-                <div style={{ fontSize: 12.5, color: SLATE_500, marginBottom: 10 }}>
+                <div style={{ fontSize: 12.5, color: c.text500, marginBottom: 10 }}>
                   รวม <strong>{sheetPreview.totalCells}</strong> ช่อง ใน {sheetPreview.perDate?.length || 0} วัน — จะเขียนทับตามนี้:
                 </div>
 
                 {sheetPreview.perDate?.map((day) => (
                   <div key={day.date} style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: PURPLE, marginBottom: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: c.purple, marginBottom: 6 }}>
                       {day.date} {day.weekday ? `(${day.weekday})` : ''}
                     </div>
                     {day.error ? (
@@ -741,13 +760,13 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
                           <thead>
-                            <tr style={{ background: BG }}>
-                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ไซต์ (คอลัมน์)</th>
-                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ช่อง</th>
-                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ค่าเดิม</th>
-                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>ค่าใหม่</th>
-                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>Target</th>
-                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: SLATE_500 }}>เทียบ Target</th>
+                            <tr style={{ background: c.bg }}>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: c.text500 }}>ไซต์ (คอลัมน์)</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: c.text500 }}>ช่อง</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: c.text500 }}>ค่าเดิม</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: c.text500 }}>ค่าใหม่</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: c.text500 }}>Target</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', fontSize: 11, color: c.text500 }}>เทียบ Target</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -757,12 +776,12 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                               const belowTarget = hasTarget && u.newValue < u.target;
                               return (
                                 <tr key={u.cell} style={{ borderBottom: '1px solid #f1f5f9', background: belowTarget ? '#fffafa' : 'transparent' }}>
-                                  <td style={{ padding: '6px 10px', color: SLATE_900, fontWeight: 600 }}>{u.column}</td>
-                                  <td style={{ padding: '6px 10px', color: SLATE_400, fontFamily: 'monospace' }}>{u.cell}</td>
-                                  <td style={{ padding: '6px 10px', color: SLATE_500 }}>{u.currentValue || '-'}</td>
-                                  <td style={{ padding: '6px 10px', color: GREEN, fontWeight: 700 }}>{u.newValue.toLocaleString()}</td>
-                                  <td style={{ padding: '6px 10px', color: SLATE_400 }}>{hasTarget ? u.target.toLocaleString() : '-'}</td>
-                                  <td style={{ padding: '6px 10px', fontWeight: 700, color: hasTarget ? (belowTarget ? RED : GREEN) : SLATE_400 }}>
+                                  <td style={{ padding: '6px 10px', color: c.text900, fontWeight: 600 }}>{u.column}</td>
+                                  <td style={{ padding: '6px 10px', color: c.text400, fontFamily: 'monospace' }}>{u.cell}</td>
+                                  <td style={{ padding: '6px 10px', color: c.text500 }}>{u.currentValue || '-'}</td>
+                                  <td style={{ padding: '6px 10px', color: c.green, fontWeight: 700 }}>{u.newValue.toLocaleString()}</td>
+                                  <td style={{ padding: '6px 10px', color: c.text400 }}>{hasTarget ? u.target.toLocaleString() : '-'}</td>
+                                  <td style={{ padding: '6px 10px', fontWeight: 700, color: hasTarget ? (belowTarget ? c.red : c.green) : c.text400 }}>
                                     {hasTarget ? `${pct.toFixed(0)}%` : '-'}
                                   </td>
                                 </tr>
@@ -776,12 +795,12 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 ))}
 
                 {sheetPreview.skippedColumns?.length > 0 && (
-                  <div style={{ fontSize: 11.5, color: SLATE_400, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11.5, color: c.text400, marginBottom: 12 }}>
                     ข้ามคอลัมน์ที่ยังไม่รู้จัก: {sheetPreview.skippedColumns.join(', ')}
                   </div>
                 )}
                 <button onClick={confirmSheetWrite} disabled={sheetSyncLoading || sheetPreview.totalCells === 0}
-                  style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ background: c.green, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {sheetSyncLoading ? 'กำลังเขียน…' : `✓ ยืนยันเขียนข้อมูลจริง (${sheetPreview.totalCells} ช่อง)`}
                 </button>
               </>
@@ -791,26 +810,26 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
         {/* Daily report panel */}
         {showReport && rows.length > 0 && (
-          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: SLATE_900 }}>รายงานประจำวัน · {endDate}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: c.text900 }}>รายงานประจำวัน · {endDate}</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <QuickRangeBtn label="🌅 เช้า" active={reportMode === 'morning'} onClick={() => setReportMode('morning')} />
                 <QuickRangeBtn label="🌙 เย็น" active={reportMode === 'evening'} onClick={() => setReportMode('evening')} />
                 <button onClick={copyReport}
-                  style={{ background: copied ? GREEN : ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ background: copied ? c.green : c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {copied ? '✓ คัดลอกแล้ว' : '📋 คัดลอกข้อความ'}
                 </button>
               </div>
             </div>
             <pre style={{
               whiteSpace: 'pre-wrap', fontFamily: "'Noto Sans Thai',sans-serif", fontSize: 13.5,
-              color: SLATE_900, background: BG, borderRadius: 10, padding: 14, margin: 0, lineHeight: 1.7,
+              color: c.text900, background: c.bg, borderRadius: 10, padding: 14, margin: 0, lineHeight: 1.7,
               maxHeight: 420, overflowY: 'auto',
             }}>
               {reportText}
             </pre>
-            <div style={{ fontSize: 11, color: SLATE_400, marginTop: 8 }}>
+            <div style={{ fontSize: 11, color: c.text400, marginTop: 8 }}>
               💡 ถ้ามีไซต์ใหม่เพิ่มใน VIGGO ที่ยังไม่มีในรายงาน ให้เพิ่มโค้ดในไฟล์ RobotStatsPage.jsx ตรง SITE_CONFIG และ SITE_ORDER ด้านบนไฟล์
             </div>
           </div>
@@ -820,21 +839,21 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         {rows.length > 0 && (
           <div style={{ marginBottom: 14 }}>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: SLATE_400, fontSize: 15 }}>⌕</span>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: c.text400, fontSize: 15 }}>⌕</span>
               <input
                 placeholder="ค้นหารถ, VIN หรือโปรเจกต์..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                style={{ width: '100%', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, color: SLATE_900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
+                style={{ width: '100%', background: c.card, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
               />
             </div>
-            <div style={{ fontSize: 11, color: SLATE_400, marginTop: 6 }}>💡 กดที่รถแต่ละคันเพื่อดูผลงานย้อนหลัง 7 วัน</div>
+            <div style={{ fontSize: 11, color: c.text400, marginTop: 6 }}>💡 กดที่รถแต่ละคันเพื่อดูผลงานย้อนหลัง 7 วัน</div>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && rows.length === 0 && !error && (
-          <div style={{ background: '#fff', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '48px 20px', textAlign: 'center', color: SLATE_400 }}>
+          <div style={{ background: c.card, border: `1.5px solid ${c.border}`, borderRadius: 14, padding: '48px 20px', textAlign: 'center', color: c.text400 }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
             <div style={{ fontSize: 14 }}>ไม่พบข้อมูลในช่วงวันที่นี้</div>
           </div>
@@ -846,38 +865,38 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             {filteredRows.map((r) => {
               const pct = pctOf(r);
               return (
-                <div key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, cursor: 'pointer' }}>
+                <div key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
-                      <div style={{ fontSize: 14.5, fontWeight: 800, color: SLATE_900 }}>{r.vehicle_name}</div>
-                      <div style={{ fontSize: 12, color: SLATE_500, marginTop: 1, fontWeight: 600 }}>{siteName(r.project_name)}</div>
-                      <div style={{ fontSize: 11.5, color: SLATE_400, marginTop: 1 }}>{r.project_name}</div>
+                      <div style={{ fontSize: 14.5, fontWeight: 800, color: c.text900 }}>{r.vehicle_name}</div>
+                      <div style={{ fontSize: 12, color: c.text500, marginTop: 1, fontWeight: 600 }}>{siteName(r.project_name)}</div>
+                      <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{r.project_name}</div>
                       <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                       <StatusBadge worked={Number(r.task_num) > 0} />
                       {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS) && (
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: RED }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: c.red }}>
                           ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: SLATE_500, marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: c.text500, marginBottom: 10 }}>
                     <span>{r.task_num} งาน</span>
                     <span>{formatHours(r.total_time)}</span>
                   </div>
                   <ProgressBar pct={pct} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11 }}>
-                    <span style={{ color: SLATE_400 }}>ทำแล้ว {Number(r.actual_clean_area).toLocaleString()} ตร.ม.</span>
-                    <span style={{ color: SLATE_400 }}>ยังไม่ทำ {Number(r.uncleaned_area).toLocaleString()} ตร.ม.</span>
+                    <span style={{ color: c.text400 }}>ทำแล้ว {Number(r.actual_clean_area).toLocaleString()} ตร.ม.</span>
+                    <span style={{ color: c.text400 }}>ยังไม่ทำ {Number(r.uncleaned_area).toLocaleString()} ตร.ม.</span>
                   </div>
                   {(idleDays[r.vin] || 0) >= IDLE_CASE_THRESHOLD && (
                     caseCreatedFor[r.vin] ? (
-                      <div style={{ marginTop: 10, textAlign: 'center', fontSize: 12, color: GREEN, fontWeight: 700 }}>✓ สร้างเคสแล้ว</div>
+                      <div style={{ marginTop: 10, textAlign: 'center', fontSize: 12, color: c.green, fontWeight: 700 }}>✓ สร้างเคสแล้ว</div>
                     ) : (
                       <button onClick={(e) => { e.stopPropagation(); openCreateCase(r); }}
-                        style={{ marginTop: 10, width: '100%', background: '#fff5f5', border: '1px solid #fecaca', color: RED, borderRadius: 8, padding: '8px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        style={{ marginTop: 10, width: '100%', background: '#fff5f5', border: '1px solid #fecaca', color: c.red, borderRadius: 8, padding: '8px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                         🔧 สร้างเคส
                       </button>
                     )
@@ -890,13 +909,13 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
         {/* Desktop: table */}
         {!isMobile && filteredRows.length > 0 && (
-          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
-                  <tr style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
+                  <tr style={{ background: c.bg, borderBottom: `1px solid ${c.border}` }}>
                     {['สถานะ', 'ไม่ทำงานมา', 'รถ', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน', 'จัดการ'].map((h) => (
-                      <th key={h} style={{ padding: '10px 10px', textAlign: 'left', fontSize: 11.5, color: SLATE_500, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 10px', textAlign: 'left', fontSize: 11.5, color: c.text500, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -908,29 +927,29 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                         <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
-                            ? <span style={{ color: RED, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>
-                            : (idleLoading ? <span style={{ color: SLATE_400, fontSize: 12 }}>…</span> : <span style={{ color: SLATE_400 }}>-</span>)}
+                            ? <span style={{ color: c.red, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>
+                            : (idleLoading ? <span style={{ color: c.text400, fontSize: 12 }}>…</span> : <span style={{ color: c.text400 }}>-</span>)}
                         </td>
-                        <td style={{ padding: '10px 10px', fontWeight: 700, color: SLATE_900, whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '10px 10px', fontWeight: 700, color: c.text900, whiteSpace: 'nowrap' }}>
                           {r.vehicle_name}
-                          <div style={{ fontSize: 10, color: SLATE_400, fontWeight: 400, fontFamily: 'monospace' }}>{r.vin}</div>
+                          <div style={{ fontSize: 10, color: c.text400, fontWeight: 400, fontFamily: 'monospace' }}>{r.vin}</div>
                         </td>
-                        <td style={{ padding: '10px 10px', color: SLATE_900, fontWeight: 600 }}>
+                        <td style={{ padding: '10px 10px', color: c.text900, fontWeight: 600 }}>
                           {siteName(r.project_name)}
-                          <div style={{ fontSize: 10, color: SLATE_400, fontWeight: 400 }}>{r.project_name}</div>
+                          <div style={{ fontSize: 10, color: c.text400, fontWeight: 400 }}>{r.project_name}</div>
                         </td>
-                        <td style={{ padding: '10px 10px', color: SLATE_500 }}>{r.task_num}</td>
-                        <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{formatHours(r.total_time)}</td>
-                        <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{Number(r.actual_clean_area).toLocaleString()}</td>
-                        <td style={{ padding: '10px 10px', color: SLATE_500, whiteSpace: 'nowrap' }}>{Number(r.uncleaned_area).toLocaleString()}</td>
+                        <td style={{ padding: '10px 10px', color: c.text500 }}>{r.task_num}</td>
+                        <td style={{ padding: '10px 10px', color: c.text500, whiteSpace: 'nowrap' }}>{formatHours(r.total_time)}</td>
+                        <td style={{ padding: '10px 10px', color: c.text500, whiteSpace: 'nowrap' }}>{Number(r.actual_clean_area).toLocaleString()}</td>
+                        <td style={{ padding: '10px 10px', color: c.text500, whiteSpace: 'nowrap' }}>{Number(r.uncleaned_area).toLocaleString()}</td>
                         <td style={{ padding: '10px 10px', minWidth: 110 }}><ProgressBar pct={pct} /></td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {(idleDays[r.vin] || 0) >= IDLE_CASE_THRESHOLD && (
                             caseCreatedFor[r.vin] ? (
-                              <span style={{ fontSize: 12, color: GREEN, fontWeight: 700 }}>✓ สร้างแล้ว</span>
+                              <span style={{ fontSize: 12, color: c.green, fontWeight: 700 }}>✓ สร้างแล้ว</span>
                             ) : (
                               <button onClick={(e) => { e.stopPropagation(); openCreateCase(r); }}
-                                style={{ background: '#fff5f5', border: '1px solid #fecaca', color: RED, borderRadius: 7, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                                style={{ background: '#fff5f5', border: '1px solid #fecaca', color: c.red, borderRadius: 7, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                                 🔧 สร้างเคส
                               </button>
                             )
@@ -946,7 +965,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         )}
 
         {rows.length > 0 && filteredRows.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 32, color: SLATE_400, fontSize: 13.5 }}>ไม่พบรถที่ตรงกับเงื่อนไขที่เลือก</div>
+          <div style={{ textAlign: 'center', padding: 32, color: c.text400, fontSize: 13.5 }}>ไม่พบรถที่ตรงกับเงื่อนไขที่เลือก</div>
         )}
       </div>
 
@@ -955,34 +974,34 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         <div onClick={() => !caseSaving && setCaseModalFor(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif" }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: SLATE_900, marginBottom: 4 }}>🔧 สร้างเคส</div>
-            <div style={{ fontSize: 12, color: SLATE_400, marginBottom: 16 }}>{caseModalFor.vehicle_name} · {siteName(caseModalFor.project_name)}</div>
+            style={{ background: c.card, borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif" }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: c.text900, marginBottom: 4 }}>🔧 สร้างเคส</div>
+            <div style={{ fontSize: 12, color: c.text400, marginBottom: 16 }}>{caseModalFor.vehicle_name} · {siteName(caseModalFor.project_name)}</div>
 
-            <label style={{ fontSize: 12.5, color: SLATE_500, fontWeight: 600 }}>หัวข้อเคส</label>
+            <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>หัวข้อเคส</label>
             <input value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)}
-              style={{ width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none' }} />
+              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none' }} />
 
-            <label style={{ fontSize: 12.5, color: SLATE_500, fontWeight: 600 }}>โครงการ (ServiceLog) — ไม่บังคับ</label>
+            <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>โครงการ (ServiceLog) — ไม่บังคับ</label>
             <select value={caseProjectId} onChange={(e) => setCaseProjectId(e.target.value)}
-              style={{ width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}>
+              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 12, fontFamily: 'inherit', outline: 'none', background: c.card }}>
               <option value="">-- ยังไม่ผูกโครงการ --</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
 
-            <label style={{ fontSize: 12.5, color: SLATE_500, fontWeight: 600 }}>หมายเหตุ</label>
+            <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>หมายเหตุ</label>
             <textarea value={caseNote} onChange={(e) => setCaseNote(e.target.value)} rows={3}
-              style={{ width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 16, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
+              style={{ width: '100%', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13.5, marginTop: 4, marginBottom: 16, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setCaseModalFor(null)} disabled={caseSaving}
-                style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: SLATE_500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: c.text500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 ยกเลิก
               </button>
               <button onClick={submitIdleCase} disabled={!caseTitle.trim() || caseSaving}
-                style={{ flex: 1, background: !caseTitle.trim() ? '#fca5a5' : ORANGE, border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: !caseTitle.trim() ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, background: !caseTitle.trim() ? '#fca5a5' : c.orange, border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: !caseTitle.trim() ? 'default' : 'pointer', fontFamily: 'inherit' }}>
                 {caseSaving ? 'กำลังบันทึก…' : 'สร้างเคส'}
               </button>
             </div>
@@ -990,6 +1009,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         </div>
       )}
     </div>
+    </ThemeContext.Provider>
   );
 }
 
