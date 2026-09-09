@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
 import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc, onSnapshot } from "firebase/firestore";
 import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS } from "./utils.js";
@@ -51,6 +52,8 @@ export default function App({ currentUser, onSignOut }) {
   const [globalQ, setGlobalQ]           = useState("");
   const [leavePage,setLeavePage]   = useState(false);
   const [onlineUsers,setOnlineUsers] = useState([]);
+  const [darkMode,setDarkMode] = useState(false);
+  const themeC = THEMES[darkMode ? "dark" : "light"];
   const [showOnlineUsers,setShowOnlineUsers] = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
@@ -620,8 +623,8 @@ export default function App({ currentUser, onSignOut }) {
   };
 
   if(loading) return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",display:"flex",alignItems:"center",
-      justifyContent:"center",fontFamily:"'Noto Sans Thai',sans-serif",color:"#94a3b8",fontSize:14 }}>
+    <div style={{ minHeight:"100vh",background:themeC.bg,display:"flex",alignItems:"center",
+      justifyContent:"center",fontFamily:"'Noto Sans Thai',sans-serif",color:themeC.text400,fontSize:14 }}>
       <div style={{ textAlign:"center" }}>
         <div style={{ fontSize:32,color:"#2563eb",marginBottom:10 }}>◈</div>
         กำลังโหลด...
@@ -704,29 +707,30 @@ export default function App({ currentUser, onSignOut }) {
   if(dashboardPage && isAdminOrDev) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
 
   return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:"#1e293b" }}>
+    <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>
+    <div style={{ minHeight:"100vh",background:themeC.bg,fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:themeC.text900 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        ::-webkit-scrollbar{width:4px;background:#f1f5f9}
+        ::-webkit-scrollbar{width:4px;background:${themeC.borderSoft}}
         ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
         input::placeholder,textarea::placeholder{color:#cbd5e1}
-        select option{background:var(--select-bg,#fff)}
+        select option{background:var(--select-bg,${themeC.card})}
         input:focus,select:focus,textarea:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #dbeafe !important;outline:none}
         .notif-backdrop{ position:fixed; inset:0; z-index:500; }
         .notif-handle{ display:none; }
         @media (min-width: 768px){
           .notif-backdrop{ background:transparent; }
           .notif-panel{ position:absolute; top:64px; right:16px; width:360px; max-height:70vh;
-            background:#fff; border:1px solid #e2e8f0; border-radius:14px;
+            background:${themeC.card}; border:1px solid ${themeC.border}; border-radius:14px;
             box-shadow:0 12px 40px rgba(0,0,0,.15); display:flex; flex-direction:column; overflow:hidden; }
         }
         @media (max-width: 767px){
           .notif-backdrop{ background:rgba(15,23,42,.55); backdrop-filter:blur(4px);
             display:flex; align-items:flex-end; justify-content:center; }
-          .notif-panel{ background:#fff; border-radius:20px 20px 0 0; width:100%;
+          .notif-panel{ background:${themeC.card}; border-radius:20px 20px 0 0; width:100%;
             height:75vh; display:flex; flex-direction:column; box-shadow:0 -8px 40px rgba(0,0,0,.2); }
-          .notif-handle{ display:block; width:40px; height:4px; background:#e2e8f0;
+          .notif-handle{ display:block; width:40px; height:4px; background:${themeC.border};
             border-radius:2px; margin:12px auto 0; }
         }
       `}</style>
@@ -742,6 +746,7 @@ export default function App({ currentUser, onSignOut }) {
         onNewCase={openAddCase}
         onProfile={()=>setProfilePage(true)}
         isMobile={isMobile}
+        darkMode={darkMode} onToggleDark={()=>setDarkMode(v=>!v)}
       />
 
       {/* DRAWER */}
@@ -769,13 +774,13 @@ export default function App({ currentUser, onSignOut }) {
         {view!=="overview" && (
           <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:14 }}>
             <button onClick={()=>setView("overview")} style={{ background:"none",border:"none",
-              color:"#94a3b8",cursor:"pointer",fontFamily:"inherit",fontSize:13,padding:0 }}>ภาพรวม</button>
-            <span style={{ color:"#cbd5e1" }}>›</span>
+              color:themeC.text400,cursor:"pointer",fontFamily:"inherit",fontSize:13,padding:0 }}>ภาพรวม</button>
+            <span style={{ color:themeC.text400 }}>›</span>
             <span style={{ fontSize:13,fontWeight:700,color:activeProj?.color||"#0f172a",flex:1,
               overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{activeProj?.name}</span>
             {activeProj && (<>
               <button onClick={()=>openEditProj(activeProj)}
-                style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:7,
+                style={{ background:themeC.borderSoft,border:"1px solid #e2e8f0",borderRadius:7,
                   padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",
                   color:"#475569",fontWeight:600,whiteSpace:"nowrap" }}>✏️ แก้ไข</button>
               <button onClick={()=>setDelProj(activeProj.id)}
@@ -826,15 +831,15 @@ export default function App({ currentUser, onSignOut }) {
           ].map(s=>(
             <div key={s.key} onClick={()=>setFilterStat(filterStat===s.key?"all":s.key)}
               style={{ background:filterStat===s.key?s.color+"12":"#fff",
-                border:`1.5px solid ${filterStat===s.key?s.color+"50":"#e2e8f0"}`,
+                border:`1.5px solid ${filterStat===s.key?s.color+"50":themeC.border}`,
                 borderRadius:12,padding:"12px 10px",cursor:"pointer",textAlign:"center" }}>
               <div style={{ fontSize:22,fontWeight:800,color:s.color,lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:9,color:"#94a3b8",marginTop:4,fontWeight:600,letterSpacing:.3 }}>{s.label}</div>
+              <div style={{ fontSize:9,color:themeC.text400,marginTop:4,fontWeight:600,letterSpacing:.3 }}>{s.label}</div>
             </div>
           ))}
         </div>
         <div style={{ position:"relative",marginBottom:14 }}>
-          <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:"#cbd5e1",fontSize:16 }}>⌕</span>
+          <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:themeC.text400,fontSize:16 }}>⌕</span>
           <input placeholder="ค้นหาเคส หรือโครงการ..." value={search} onChange={e=>setSearch(e.target.value)}
             style={IS({ paddingLeft:36,borderRadius:10,fontSize:14 })}/>
           {/* Dropdown ผลการค้นหาโครงการ */}
@@ -846,9 +851,9 @@ export default function App({ currentUser, onSignOut }) {
             if (matchProjs.length===0) return null;
             return (
               <div style={{ position:"absolute",top:"100%",left:0,right:0,zIndex:50,
-                background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,
+                background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:10,
                 boxShadow:"0 8px 24px rgba(0,0,0,.12)",marginTop:4,overflow:"hidden" }}>
-                <div style={{ padding:"6px 12px",fontSize:10,color:"#94a3b8",fontWeight:700,
+                <div style={{ padding:"6px 12px",fontSize:10,color:themeC.text400,fontWeight:700,
                   textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #f1f5f9" }}>
                   โครงการที่ตรงกัน
                 </div>
@@ -860,11 +865,11 @@ export default function App({ currentUser, onSignOut }) {
                     onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                     <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
                     <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
+                      <div style={{ fontSize:13,fontWeight:600,color:themeC.text900,
                         overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
-                      {p.code&&<div style={{ fontSize:11,color:"#94a3b8" }}>{p.code}</div>}
+                      {p.code&&<div style={{ fontSize:11,color:themeC.text400 }}>{p.code}</div>}
                     </div>
-                    <span style={{ fontSize:11,color:"#94a3b8",flexShrink:0 }}>
+                    <span style={{ fontSize:11,color:themeC.text400,flexShrink:0 }}>
                       {cases.filter(c=>c.projectId===p.id).length} เคส
                     </span>
                   </div>
@@ -874,12 +879,12 @@ export default function App({ currentUser, onSignOut }) {
           })()}
         </div>
         <div style={{ display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center" }}>
-          <span style={{ fontSize:12,color:"#94a3b8",fontWeight:600,whiteSpace:"nowrap" }}>📅 ช่วงวันที่:</span>
+          <span style={{ fontSize:12,color:themeC.text400,fontWeight:600,whiteSpace:"nowrap" }}>📅 ช่วงวันที่:</span>
           <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
-            style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" }}/>
-          <span style={{ fontSize:12,color:"#94a3b8" }}>ถึง</span>
+            style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,color:themeC.text900,padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" }}/>
+          <span style={{ fontSize:12,color:themeC.text400 }}>ถึง</span>
           <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
-            style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" }}/>
+            style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,color:themeC.text900,padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" }}/>
           <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
             {[
               { label:"วันนี้",    fn:()=>{ const t=today(); setDateFrom(t); setDateTo(t); },
@@ -895,7 +900,7 @@ export default function App({ currentUser, onSignOut }) {
               return (
                 <button key={p.label} onClick={p.fn}
                   style={{ background:isActive?"#2563eb":"#f1f5f9",
-                    border:`1px solid ${isActive?"#2563eb":"#e2e8f0"}`,
+                    border:`1px solid ${isActive?"#2563eb":themeC.border}`,
                     color:isActive?"#fff":"#475569",
                     borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
                   {p.label}
@@ -910,9 +915,9 @@ export default function App({ currentUser, onSignOut }) {
           </div>
         </div>
         <div style={{ display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap" }}>
-          <span style={{ fontSize:12,color:"#94a3b8",fontWeight:600,whiteSpace:"nowrap" }}>👤 ผู้ดำเนินการ:</span>
+          <span style={{ fontSize:12,color:themeC.text400,fontWeight:600,whiteSpace:"nowrap" }}>👤 ผู้ดำเนินการ:</span>
           <select value={filterTech} onChange={e=>setFilterTech(e.target.value)}
-            style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,color:"#1e293b",padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer",minWidth:160 }}>
+            style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,color:themeC.text900,padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer",minWidth:160 }}>
             <option value="all">ทั้งหมด</option>
             {users.filter(u=>u.role!=="pending").sort((a,b)=>a.name.localeCompare(b.name)).map(u=>(
               <option key={u.id} value={u.name}>{u.name}{u.role==="admin"?" (Admin)":""}</option>
@@ -929,7 +934,7 @@ export default function App({ currentUser, onSignOut }) {
           {[{value:"all",label:"ทั้งหมด",color:"#2563eb"},...STATUS_OPTS].map(s=>(
             <button key={s.value} onClick={()=>setFilterStat(s.value)}
               style={{ background:filterStat===s.value?s.color:"#fff",
-                border:`1.5px solid ${filterStat===s.value?s.color:"#e2e8f0"}`,
+                border:`1.5px solid ${filterStat===s.value?s.color:themeC.border}`,
                 color:filterStat===s.value?"#fff":"#64748b",
                 borderRadius:20,padding:"6px 14px",fontSize:12,fontWeight:600,
                 cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap",flexShrink:0 }}>
@@ -939,23 +944,23 @@ export default function App({ currentUser, onSignOut }) {
         </div>
         {view==="overview" && projects.length>0 && (
           <div style={{ marginBottom:16 }}>
-            <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>โครงการทั้งหมด</div>
+            <div style={{ fontSize:11,color:themeC.text400,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>โครงการทั้งหมด</div>
             <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
               {projects.map(p=>{
                 const pl=cases.filter(c=>c.projectId===p.id);
                 return (
                   <div key={p.id} onClick={()=>setView(p.id)}
-                    style={{ background:"#fff",border:`1.5px solid ${p.color}30`,borderRadius:12,
+                    style={{ background:themeC.card,border:`1.5px solid ${p.color}30`,borderRadius:12,
                       padding:"14px 16px",cursor:"pointer",flexShrink:0,width:160,height:100,
                       borderLeft:`4px solid ${p.color}`,boxShadow:"0 1px 3px rgba(0,0,0,.04)",
                       display:"flex",flexDirection:"column",justifyContent:"space-between" }}>
-                    <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",lineHeight:1.3,
+                    <div style={{ fontSize:13,fontWeight:700,color:themeC.text900,lineHeight:1.3,
                       overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical" }}>{p.name}</div>
                     <div style={{ display:"flex",gap:12 }}>
                       {[{l:"ทั้งหมด",v:pl.length,c:p.color},{l:"เสร็จ",v:pl.filter(x=>x.status==="done").length,c:"#10b981"}].map(x=>(
                         <div key={x.l}>
                           <div style={{ fontSize:20,fontWeight:800,color:x.c,lineHeight:1 }}>{x.v}</div>
-                          <div style={{ fontSize:9,color:"#94a3b8",marginTop:1 }}>{x.l}</div>
+                          <div style={{ fontSize:9,color:themeC.text400,marginTop:1 }}>{x.l}</div>
                         </div>
                       ))}
                     </div>
@@ -966,7 +971,7 @@ export default function App({ currentUser, onSignOut }) {
           </div>
         )}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10 }}>
-          <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,textTransform:"uppercase" }}>
+          <div style={{ fontSize:11,color:themeC.text400,fontWeight:700,letterSpacing:1,textTransform:"uppercase" }}>
             เคส ({visibleCases.length})
           </div>
           {visibleCases.length>0&&(
@@ -979,7 +984,7 @@ export default function App({ currentUser, onSignOut }) {
           )}
         </div>
         {visibleCases.length===0 ? (
-          <div style={{ background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:14,padding:"48px 20px",textAlign:"center",color:"#cbd5e1" }}>
+          <div style={{ background:themeC.card,border:`1.5px solid ${themeC.border}`,borderRadius:14,padding:"48px 20px",textAlign:"center",color:"#cbd5e1" }}>
             <div style={{ fontSize:32,marginBottom:8 }}>📋</div>
             <div style={{ fontSize:14,marginBottom:12 }}>ยังไม่มีเคส</div>
             <button onClick={openAddCase} style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,padding:"10px 20px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>+ บันทึกเคสแรก</button>
@@ -1002,22 +1007,22 @@ export default function App({ currentUser, onSignOut }) {
             {totalPages > 1 && (
               <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:16,flexWrap:"wrap" }}>
                 <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                  style={{ background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:8,
+                  style={{ background:themeC.card,border:`1.5px solid ${themeC.border}`,borderRadius:8,
                     padding:"8px 14px",fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",
-                    color:page===1?"#cbd5e1":"#475569",fontFamily:"inherit" }}>←</button>
+                    color:page===1?themeC.text400:themeC.text500,fontFamily:"inherit" }}>←</button>
                 {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
                   <button key={p} onClick={()=>setPage(p)}
                     style={{ background:page===p?"#2563eb":"#fff",
-                      border:`1.5px solid ${page===p?"#2563eb":"#e2e8f0"}`,
+                      border:`1.5px solid ${page===p?"#2563eb":themeC.border}`,
                       borderRadius:8,padding:"8px 13px",fontSize:13,fontWeight:600,
                       cursor:"pointer",color:page===p?"#fff":"#475569",fontFamily:"inherit",
                       minWidth:38 }}>{p}</button>
                 ))}
                 <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                  style={{ background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:8,
+                  style={{ background:themeC.card,border:`1.5px solid ${themeC.border}`,borderRadius:8,
                     padding:"8px 14px",fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",
-                    color:page===totalPages?"#cbd5e1":"#475569",fontFamily:"inherit" }}>→</button>
-                <span style={{ fontSize:12,color:"#94a3b8",marginLeft:4 }}>หน้า {page}/{totalPages}</span>
+                    color:page===totalPages?themeC.text400:themeC.text500,fontFamily:"inherit" }}>→</button>
+                <span style={{ fontSize:12,color:themeC.text400,marginLeft:4 }}>หน้า {page}/{totalPages}</span>
               </div>
             )}
           </>
@@ -1051,7 +1056,7 @@ export default function App({ currentUser, onSignOut }) {
         <div style={{ position:"fixed",inset:0,zIndex:800,background:"rgba(15,23,42,.6)",
           display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"60px 16px 16px" }}
           onClick={()=>setGlobalSearch(false)}>
-          <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:620,
+          <div style={{ background:themeC.card,borderRadius:16,width:"100%",maxWidth:620,
             maxHeight:"80vh",display:"flex",flexDirection:"column",
             boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
             onClick={e=>e.stopPropagation()}>
@@ -1061,17 +1066,17 @@ export default function App({ currentUser, onSignOut }) {
               <input autoFocus value={globalQ} onChange={e=>setGlobalQ(e.target.value)}
                 placeholder="ค้นหาเคส งาน Onsite โครงการ..."
                 style={{ flex:1,border:"none",outline:"none",fontSize:15,fontFamily:"inherit",
-                  color:"#0f172a",background:"transparent" }}/>
+                  color:themeC.text900,background:"transparent" }}/>
               {globalQ && <button onClick={()=>setGlobalQ("")}
-                style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:16 }}>✕</button>}
+                style={{ background:"none",border:"none",color:themeC.text400,cursor:"pointer",fontSize:16 }}>✕</button>}
               <button onClick={()=>setGlobalSearch(false)}
-                style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+                style={{ background:themeC.borderSoft,border:"none",color:themeC.text500,cursor:"pointer",
                   fontSize:12,padding:"4px 10px",borderRadius:6,fontFamily:"inherit" }}>Esc</button>
             </div>
             {/* Results */}
             <div style={{ overflowY:"auto",flex:1,padding:"8px 0" }}>
               {globalQ.trim().length < 2 ? (
-                <div style={{ padding:"32px",textAlign:"center",color:"#94a3b8",fontSize:13 }}>
+                <div style={{ padding:"32px",textAlign:"center",color:themeC.text400,fontSize:13 }}>
                   พิมพ์อย่างน้อย 2 ตัวอักษร
                 </div>
               ) : (()=>{
@@ -1082,11 +1087,11 @@ export default function App({ currentUser, onSignOut }) {
                 const matchProjs = projects.filter(p=>[p.name,p.code,p.customer].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
                 const total = matchCases.length+matchTasks.length+matchOnsite.length+matchProjs.length;
                 if(total===0) return (
-                  <div style={{ padding:"32px",textAlign:"center",color:"#94a3b8",fontSize:13 }}>ไม่พบผลลัพธ์</div>
+                  <div style={{ padding:"32px",textAlign:"center",color:themeC.text400,fontSize:13 }}>ไม่พบผลลัพธ์</div>
                 );
                 const Section = ({icon,label,items,render})=>items.length===0?null:(
                   <div>
-                    <div style={{ padding:"8px 16px 4px",fontSize:10,color:"#94a3b8",fontWeight:700,
+                    <div style={{ padding:"8px 16px 4px",fontSize:10,color:themeC.text400,fontWeight:700,
                       textTransform:"uppercase",letterSpacing:.5 }}>{icon} {label} ({items.length})</div>
                     {items.map(render)}
                   </div>
@@ -1101,8 +1106,8 @@ export default function App({ currentUser, onSignOut }) {
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
                         <div>
-                          <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{p.name}</div>
-                          {p.customer&&<div style={{ fontSize:11,color:"#64748b" }}>👤 {p.customer}</div>}
+                          <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{p.name}</div>
+                          {p.customer&&<div style={{ fontSize:11,color:themeC.text500 }}>👤 {p.customer}</div>}
                         </div>
                       </div>
                     )}/>
@@ -1113,8 +1118,8 @@ export default function App({ currentUser, onSignOut }) {
                         style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
                         onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{c.title}</div>
-                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
+                        <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{c.title}</div>
+                        <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
                           {proj&&<><span style={{ color:proj.color,marginRight:4 }}>◆</span>{proj.name} · </>}{c.site||""} · {c.date||""}
                         </div>
                       </div>
@@ -1126,8 +1131,8 @@ export default function App({ currentUser, onSignOut }) {
                         style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
                         onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{t.title}</div>
-                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
+                        <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{t.title}</div>
+                        <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
                           {proj&&<>{proj.name} · </>}{t.site||""} {t.dueDate&&`· ${t.dueDate}`}
                         </div>
                       </div>
@@ -1137,8 +1142,8 @@ export default function App({ currentUser, onSignOut }) {
                         style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
                         onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{r.projectName||r.projectId}</div>
-                        <div style={{ fontSize:11,color:"#64748b",marginTop:2 }}>
+                        <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{r.projectName||r.projectId}</div>
+                        <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
                           {r.site&&`📍 ${r.site} · `}{r.date||""} · {r.scope||""}
                         </div>
                       </div>
@@ -1180,7 +1185,7 @@ export default function App({ currentUser, onSignOut }) {
             <div className="notif-handle"/>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
               padding:"14px 18px 12px",borderBottom:"1px solid #f1f5f9",flexShrink:0 }}>
-              <span style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>🔔 การแจ้งเตือน
+              <span style={{ fontSize:15,fontWeight:700,color:themeC.text900 }}>🔔 การแจ้งเตือน
                 {unreadCount>0&&<span style={{ background:"#ef4444",color:"#fff",borderRadius:20,
                   padding:"1px 7px",fontSize:11,fontWeight:700,marginLeft:8 }}>{unreadCount}</span>}
               </span>
@@ -1189,12 +1194,12 @@ export default function App({ currentUser, onSignOut }) {
                   <button onClick={markAllRead} style={{ background:"none",border:"none",color:"#2563eb",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>อ่านทั้งหมด</button>
                 )}
                 <button onClick={()=>setNotifOpen(false)}
-                  style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",width:28,height:28,borderRadius:8,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
+                  style={{ background:themeC.borderSoft,border:"none",color:themeC.text500,cursor:"pointer",width:28,height:28,borderRadius:8,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
               </div>
             </div>
             <div style={{ overflowY:"auto",flex:1 }}>
               {notifications.length===0?(
-                <div style={{ padding:"48px 18px",textAlign:"center",color:"#cbd5e1",fontSize:14 }}>
+                <div style={{ padding:"48px 18px",textAlign:"center",color:themeC.text400,fontSize:14 }}>
                   <div style={{ fontSize:32,marginBottom:8 }}>🔔</div>ไม่มีการแจ้งเตือน
                 </div>
               ):notifications.map(n=>(
@@ -1207,7 +1212,7 @@ export default function App({ currentUser, onSignOut }) {
                       {n.type==="handover"?"📤":n.type==="leave"?"📋":n.type==="onsite"?"📍":n.type==="task"?"📋":"👤"}
                     </div>
                     <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:14,fontWeight:n.read?400:700,color:"#0f172a",lineHeight:1.5 }}>
+                      <div style={{ fontSize:14,fontWeight:n.read?400:700,color:themeC.text900,lineHeight:1.5 }}>
                         {n.type==="handover"
                           ? <>{n.fromName} ส่งงาน <span style={{ color:"#2563eb" }}>"{n.caseTitle}"</span> ให้คุณ</>
                           : n.type==="leave"
@@ -1218,8 +1223,8 @@ export default function App({ currentUser, onSignOut }) {
                           ? <>{n.message||`มีงานใหม่มอบหมายให้คุณ`}</>
                           : <>มีผู้ใช้ใหม่: <span style={{ color:"#7c3aed",fontWeight:700 }}>{n.toName}</span></>}
                       </div>
-                      {n.note&&<div style={{ fontSize:12,color:"#64748b",marginTop:3,background:"#f8fafc",borderRadius:6,padding:"3px 8px",display:"inline-block" }}>"{n.note}"</div>}
-                      <div style={{ fontSize:11,color:"#94a3b8",marginTop:4 }}>
+                      {n.note&&<div style={{ fontSize:12,color:themeC.text500,marginTop:3,background:themeC.bg,borderRadius:6,padding:"3px 8px",display:"inline-block" }}>"{n.note}"</div>}
+                      <div style={{ fontSize:11,color:themeC.text400,marginTop:4 }}>
                         {n.createdAt?new Date(n.createdAt).toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"}):""}
                       </div>
                     </div>
@@ -1236,11 +1241,11 @@ export default function App({ currentUser, onSignOut }) {
         {delCase&&(()=>{ const c=cases.find(x=>x.id===delCase); return c&&(
           <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:10,
             padding:"10px 14px",marginBottom:14 }}>
-            <div style={{ fontSize:11,color:"#94a3b8",marginBottom:3 }}>เคสที่จะลบ</div>
+            <div style={{ fontSize:11,color:themeC.text400,marginBottom:3 }}>เคสที่จะลบ</div>
             <div style={{ fontSize:14,fontWeight:700,color:"#b91c1c" }}>"{c.title}"</div>
           </div>
         ); })()}
-        <p style={{ color:"#64748b",fontSize:14,marginBottom:20 }}>เคสนี้จะถูกลบถาวร ยืนยันหรือไม่?</p>
+        <p style={{ color:themeC.text500,fontSize:14,marginBottom:20 }}>เคสนี้จะถูกลบถาวร ยืนยันหรือไม่?</p>
         <div style={{ display:"flex",gap:10 }}>
           <GhostBtn onClick={()=>setDelCase(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
           <button onClick={()=>deleteCase(delCase)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14 }}>ลบ</button>
@@ -1248,7 +1253,7 @@ export default function App({ currentUser, onSignOut }) {
       </Modal>
 
       <Modal open={!!delProj} onClose={()=>setDelProj(null)} title="ลบโครงการ?">
-        <p style={{ color:"#64748b",fontSize:14,marginBottom:4 }}>โครงการและเคสทั้งหมดจะถูกลบถาวร</p>
+        <p style={{ color:themeC.text500,fontSize:14,marginBottom:4 }}>โครงการและเคสทั้งหมดจะถูกลบถาวร</p>
         <p style={{ color:"#ef4444",fontSize:13,marginBottom:20 }}>⚠ ไม่สามารถกู้คืนได้</p>
         <div style={{ display:"flex",gap:10 }}>
           <GhostBtn onClick={()=>setDelProj(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
@@ -1263,13 +1268,13 @@ export default function App({ currentUser, onSignOut }) {
 
       <Modal open={showOnlineUsers} onClose={()=>setShowOnlineUsers(false)} title="🟢 ใครออนไลน์อยู่บ้าง">
         {onlineUsers.length===0 ? (
-          <p style={{ color:"#94a3b8",fontSize:14,textAlign:"center",padding:"20px 0" }}>ไม่มีใครออนไลน์อยู่ตอนนี้</p>
+          <p style={{ color:themeC.text400,fontSize:14,textAlign:"center",padding:"20px 0" }}>ไม่มีใครออนไลน์อยู่ตอนนี้</p>
         ) : onlineUsers.map((u)=>(
           <div key={u.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9" }}>
             <span style={{ width:8,height:8,borderRadius:"50%",background:"#16a34a",flexShrink:0 }}/>
             <div style={{ flex:1,minWidth:0 }}>
-              <div style={{ fontSize:14,fontWeight:600,color:"#0f172a" }}>{u.name}</div>
-              {u.role&&<div style={{ fontSize:11,color:"#94a3b8" }}>{u.role==="admin"?"Admin":u.role==="dev"?"Dev":u.role}</div>}
+              <div style={{ fontSize:14,fontWeight:600,color:themeC.text900 }}>{u.name}</div>
+              {u.role&&<div style={{ fontSize:11,color:themeC.text400 }}>{u.role==="admin"?"Admin":u.role==="dev"?"Dev":u.role}</div>}
             </div>
           </div>
         ))}
@@ -1289,6 +1294,7 @@ export default function App({ currentUser, onSignOut }) {
         </div>
       )}
     </div>
+    </ThemeContext.Provider>
   );
 }
 
