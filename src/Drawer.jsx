@@ -60,7 +60,7 @@ export default function Drawer({
         <div style={{ background:"#f8fafc",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"1px solid #e2e8f0" }}>
           <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>{currentUser?.name}</div>
           <div style={{ fontSize:11,color:"#94a3b8",marginTop:2 }}>{currentUser?.email}</div>
-          <div style={{ display:"flex",gap:6,marginTop:8 }}>
+          <div style={{ display:"flex",gap:6,marginTop:8,flexWrap:"wrap" }}>
             {isAdminOrDev && (
               <button onClick={()=>{ setAdminPage(true); onClose(); }}
                 style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",
@@ -73,6 +73,13 @@ export default function Drawer({
                 borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
               👤 โปรไฟล์
             </button>
+            {isDev && (
+              <button onClick={()=>{ setShowOnlineUsers(true); onClose(); }}
+                style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
+                  borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
+                🟢 Online{onlineCount > 0 ? ` (${onlineCount})` : ""}
+              </button>
+            )}
             <button onClick={onSignOut}
               style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
                 borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
@@ -104,10 +111,6 @@ export default function Drawer({
           onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
         <DrawerItem active={false} color="#6B21A8" icon="📊" label="สถิติหุ่นยนต์" count={""}
           onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
-        {isDev && (
-          <DrawerItem active={false} color="#16a34a" icon="🟢" label="ใครออนไลน์" count={onlineCount}
-            onClick={()=>{ setShowOnlineUsers(true); onClose(); }}/>
-        )}
 
         {/* โครงการ */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 8px 8px" }}>
