@@ -632,12 +632,12 @@ export default function App({ currentUser, onSignOut }) {
     </div>
   );
 
-  if(adminPage) return <AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} />;
-  if(leavePage) return <LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/>;
-  if(profilePage) return <ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/>;
-  if(otPage) return <OTPage onBack={()=>setOtPage(false)}
-    projects={projects} users={users} currentUser={currentUser}/>;
-  if(taskPage) return <TaskBoard onBack={()=>setTaskPage(false)}
+  if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></ThemeContext.Provider>;
+  if(leavePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></ThemeContext.Provider>;
+  if(profilePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/></ThemeContext.Provider>;
+  if(otPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><OTPage onBack={()=>setOtPage(false)}
+    projects={projects} users={users} currentUser={currentUser}/></ThemeContext.Provider>;
+  if(taskPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><TaskBoard onBack={()=>setTaskPage(false)}
     projects={projects} users={users} cases={cases} currentUser={currentUser}
     tasks={tasks} saving={saving}
     onSaveTask={async(data,id)=>{
@@ -699,12 +699,12 @@ export default function App({ currentUser, onSignOut }) {
       });
       await setDoc(doc(db,"tasks",task.id),{caseId:cid,updatedAt:now},{merge:true});
       showToast("📁 สร้างเคสจากงานแล้ว","success");
-    }}/>;
-  if(onsitePage) return <OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/>;
-  if(shiftPage) return <ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/>;
-  if(knowledgePage) return <KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/>;
-  if(robotStatsPage) return <RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/>;
-  if(dashboardPage && isAdminOrDev) return <Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/>;
+    }}/></ThemeContext.Provider>;
+  if(onsitePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></ThemeContext.Provider>;
+  if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></ThemeContext.Provider>;
+  if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></ThemeContext.Provider>;
+  if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></ThemeContext.Provider>;
+  if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></ThemeContext.Provider>;
 
   return (
     <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>
