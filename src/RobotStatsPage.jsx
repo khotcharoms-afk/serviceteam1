@@ -230,11 +230,11 @@ function QuickRangeBtn({ label, active, onClick }) {
     <button
       onClick={onClick}
       style={{
-        background: active ? c.purple : '#fff',
+        background: active ? c.purple : c.card,
         border: `1px solid ${active ? c.purple : c.border}`,
         color: active ? '#fff' : c.text500,
         borderRadius: 8,
-        padding: '6px 13px',
+        padding: '7px 13px',
         fontSize: 12.5,
         fontWeight: 600,
         cursor: 'pointer',
@@ -624,34 +624,37 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
     <ThemeContext.Provider value={{ dark: darkMode, c }}>
     <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
       {/* Header */}
-      <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={onBack} style={{ background: c.bg, border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900, display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 17 }}>📊</span> สถิติการทำงานหุ่นยนต์
+      <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: isMobile ? '10px 12px' : '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={onBack} style={{ background: c.bg, border: 'none', borderRadius: 8, width: 30, height: 30, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
+          <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+            <div style={{ fontSize: isMobile ? 14 : 15.5, fontWeight: 800, color: c.text900, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: isMobile ? 15 : 17, flexShrink: 0 }}>📊</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>สถิติการทำงานหุ่นยนต์</span>
             </div>
-            <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>ข้อมูลจากระบบ VIGGO</div>
+            {!isMobile && <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>ข้อมูลจากระบบ VIGGO</div>}
           </div>
           <button onClick={() => setDarkMode((v) => !v)} title="สลับโหมดมืด/สว่าง"
-            style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             {darkMode ? '☀️' : '🌙'}
           </button>
         </div>
       </div>
 
-      <div style={{ padding: 16, maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ padding: isMobile ? 12 : 16, maxWidth: 1400, margin: '0 auto' }}>
         {/* Date filter */}
         <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: isMobile ? 'stretch' : 'center', flexWrap: 'wrap', marginBottom: 10, flexDirection: isMobile ? 'column' : 'row' }}>
             <span style={{ fontSize: 12, color: c.text500, fontWeight: 600 }}>📅 ช่วงวันที่:</span>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-              style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-            <span style={{ fontSize: 12, color: c.text400 }}>ถึง</span>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-              style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: isMobile ? '100%' : 'auto' }}>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '9px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit', flex: isMobile ? 1 : 'none', minWidth: 0 }} />
+              <span style={{ fontSize: 12, color: c.text400, flexShrink: 0 }}>ถึง</span>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '9px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit', flex: isMobile ? 1 : 'none', minWidth: 0 }} />
+            </div>
             <button onClick={() => fetchData()} disabled={loading}
-              style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: isMobile ? '100%' : 'auto' }}>
               {loading ? 'กำลังโหลด…' : 'ค้นหา'}
             </button>
           </div>
@@ -684,31 +687,36 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
         {/* Status filter chips */}
         {rows.length > 0 && (
-          <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-            <QuickRangeBtn label={`ทั้งหมด (${rows.length})`} active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
-            <QuickRangeBtn label={`ทำงาน (${activeCount})`} active={statusFilter === 'worked'} onClick={() => setStatusFilter('worked')} />
-            <QuickRangeBtn label={`ไม่ได้ทำงาน (${notWorkedCount})`} active={statusFilter === 'notworked'} onClick={() => setStatusFilter('notworked')} />
-            <div style={{ flex: 1 }} />
-            <button
-              onClick={() => setShowReport((v) => !v)}
-              style={{
-                background: showReport ? c.purple : '#fff', color: showReport ? '#fff' : c.purple,
-                border: `1px solid ${c.purple}`, borderRadius: 8, padding: '6px 13px',
-                fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-              }}
-            >
-              📋 {showReport ? 'ซ่อนรายงาน' : 'สร้างรายงานประจำวัน'}
-            </button>
-            <button
-              onClick={() => { setShowSheetSync((v) => !v); setSheetPreview(null); setSheetWriteDone(false); setSheetSyncError(null); }}
-              style={{
-                background: showSheetSync ? c.green : '#fff', color: showSheetSync ? '#fff' : c.green,
-                border: `1px solid ${c.green}`, borderRadius: 8, padding: '6px 13px',
-                fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-              }}
-            >
-              📤 {showSheetSync ? 'ซ่อน Sheet Sync' : 'ส่งเข้า Google Sheet'}
-            </button>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 8, marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+              <QuickRangeBtn label={`ทั้งหมด (${rows.length})`} active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+              <QuickRangeBtn label={`ทำงาน (${activeCount})`} active={statusFilter === 'worked'} onClick={() => setStatusFilter('worked')} />
+              <QuickRangeBtn label={`ไม่ได้ทำงาน (${notWorkedCount})`} active={statusFilter === 'notworked'} onClick={() => setStatusFilter('notworked')} />
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setShowReport((v) => !v)}
+                style={{
+                  background: showReport ? c.purple : c.card, color: showReport ? '#fff' : c.purple,
+                  border: `1px solid ${c.purple}`, borderRadius: 8, padding: '8px 13px',
+                  fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  flex: isMobile ? 1 : 'none',
+                }}
+              >
+                📋 {showReport ? 'ซ่อนรายงาน' : (isMobile ? 'รายงาน' : 'สร้างรายงานประจำวัน')}
+              </button>
+              <button
+                onClick={() => { setShowSheetSync((v) => !v); setSheetPreview(null); setSheetWriteDone(false); setSheetSyncError(null); }}
+                style={{
+                  background: showSheetSync ? c.green : c.card, color: showSheetSync ? '#fff' : c.green,
+                  border: `1px solid ${c.green}`, borderRadius: 8, padding: '8px 13px',
+                  fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  flex: isMobile ? 1 : 'none',
+                }}
+              >
+                📤 {showSheetSync ? 'ซ่อน Sheet Sync' : (isMobile ? 'Sheet Sync' : 'ส่งเข้า Google Sheet')}
+              </button>
+            </div>
           </div>
         )}
 
