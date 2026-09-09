@@ -1,10 +1,14 @@
 import { daysLeft, fmtDate, STATUS_OPTS } from "./utils.js";
+import { useTheme } from "./theme.js";
 
 // ── Pills ─────────────────────────────────────────────────────
+// สถานะเร่งด่วน (สีของ pill พวกนี้มีความหมายอยู่แล้ว เช่น แดง=หมดแล้ว) เลยคงสีเดิมไว้ไม่ผูกกับธีม
+// แต่ปรับพื้นหลัง "ไม่มีข้อมูล" ให้ผูกกับธีมแทน
 export function WarrantyPill({ warrantyEnd }) {
+  const { c } = useTheme();
   if (!warrantyEnd) return (
     <span style={{ display:"inline-flex",alignItems:"center",gap:4,
-      background:"#f1f5f9",color:"#94a3b8",borderRadius:20,
+      background:c.borderSoft,color:c.text400,borderRadius:20,
       padding:"3px 9px",fontSize:11,fontWeight:700 }}>ไม่มีประกัน</span>
   );
   const days = daysLeft(warrantyEnd);
@@ -69,26 +73,24 @@ export function StatusPill({ value }) {
 
 // ── Buttons ───────────────────────────────────────────────────
 export function PrimaryBtn({ onClick, children, full, style = {} }) {
+  const { c } = useTheme();
   return (
     <button onClick={onClick}
-      style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
+      style={{ background:c.blue,border:"none",color:"#fff",borderRadius:10,
         padding:"12px 22px",fontSize:14,fontWeight:600,cursor:"pointer",
-        fontFamily:"inherit",width:full?"100%":"auto",transition:"background .15s",...style }}
-      onMouseEnter={e=>e.currentTarget.style.background="#1d4ed8"}
-      onMouseLeave={e=>e.currentTarget.style.background="#2563eb"}>
+        fontFamily:"inherit",width:full?"100%":"auto",transition:"background .15s",...style }}>
       {children}
     </button>
   );
 }
 
 export function GhostBtn({ onClick, children, full, style = {} }) {
+  const { c } = useTheme();
   return (
     <button onClick={onClick}
-      style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+      style={{ background:c.bg,border:`1px solid ${c.border}`,color:c.text500,
         borderRadius:10,padding:"12px 20px",fontSize:14,fontWeight:600,
-        cursor:"pointer",fontFamily:"inherit",width:full?"100%":"auto",...style }}
-      onMouseEnter={e=>e.currentTarget.style.background="#f1f5f9"}
-      onMouseLeave={e=>e.currentTarget.style.background="#f8fafc"}>
+        cursor:"pointer",fontFamily:"inherit",width:full?"100%":"auto",...style }}>
       {children}
     </button>
   );
@@ -96,21 +98,22 @@ export function GhostBtn({ onClick, children, full, style = {} }) {
 
 // ── Modal wrapper ─────────────────────────────────────────────
 export function Modal({ open, onClose, title, headerRight, children }) {
+  const { c } = useTheme();
   if (!open) return null;
   return (
     <div style={{ position:"fixed",inset:0,zIndex:300,background:"rgba(15,23,42,.5)",
       backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:560,
+      <div style={{ background:c.card,borderRadius:16,width:"100%",maxWidth:560,
         maxHeight:"92vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",
         padding:"24px 24px 28px" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>{title}</h2>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:c.text900 }}>{title}</h2>
           <div style={{ display:"flex",alignItems:"center",gap:8 }}>
             {headerRight}
             <button onClick={onClose}
-              style={{ background:"#f1f5f9",border:"none",color:"#64748b",cursor:"pointer",
+              style={{ background:c.bg,border:"none",color:c.text500,cursor:"pointer",
                 fontSize:14,width:30,height:30,borderRadius:8,display:"flex",
                 alignItems:"center",justifyContent:"center" }}>✕</button>
           </div>
@@ -123,9 +126,10 @@ export function Modal({ open, onClose, title, headerRight, children }) {
 
 // ── Field ─────────────────────────────────────────────────────
 export function Field({ label, children }) {
+  const { c } = useTheme();
   return (
     <div style={{ marginBottom:14 }}>
-      <div style={{ fontSize:11,color:"#64748b",fontWeight:600,marginBottom:5 }}>{label}</div>
+      <div style={{ fontSize:11,color:c.text500,fontWeight:600,marginBottom:5 }}>{label}</div>
       {children}
     </div>
   );
