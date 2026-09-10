@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 
 const ROLE_OPTS = [
   { value:"dev",     label:"Dev",        color:"#0f766e", bg:"#f0fdfa" },
   { value:"admin",   label:"Admin",      color:"#7c3aed", bg:"#f5f3ff" },
   { value:"user",    label:"User",       color:"#2563eb", bg:"#eff6ff" },
   { value:"pending", label:"รออนุมัติ",  color:"#f59e0b", bg:"#fef3c7" },
+  { value:"disabled",label:"ระงับใช้งาน", color:"#64748b", bg:"#f1f5f9" },
 ];
 
 export default function AdminUsers({ onBack, currentUser }) {
@@ -31,9 +32,20 @@ export default function AdminUsers({ onBack, currentUser }) {
     await updateDoc(doc(db,"users",uid), { role });
   }
 
-  async function removeUser(uid) {
-    if (!confirm("ลบผู้ใช้นี้ออกจากระบบ?")) return;
-    await deleteDoc(doc(db,"users",uid));
+  // ไม่ลบ doc ทิ้ง เพราะบัญชีใน Firebase Authentication ลบจากฝั่ง client ไม่ได้
+  // ถ้าลบแต่ doc อีเมลจะยังถูกจอง สมัครใหม่ไม่ได้ และบัญชีนั้นยังล็อกอินค้างได้
+  async function disableUser(uid) {
+    const target = users.find(u => u.id === uid);
+    if (currentUser?.role !== "dev" && target?.role === "dev") return;
+    if (uid === currentUser?.id) return alert("ระงับบัญชีตัวเองไม่ได้");
+    if (!confirm(`ระงับการใช้งานของ "${target?.name || "ผู้ใช้นี้"}"?\n\nผู้ใช้จะเข้าระบบไม่ได้ แต่ข้อมูลและประวัติเคสยังอยู่ครบ\nคืนสิทธิ์ภายหลังได้`)) return;
+    await updateDoc(doc(db,"users",uid), { role:"disabled", disabledAt:new Date().toISOString() });
+  }
+
+  async function restoreUser(uid) {
+    const target = users.find(u => u.id === uid);
+    if (!confirm(`คืนสิทธิ์ให้ "${target?.name || "ผู้ใช้นี้"}"?`)) return;
+    await updateDoc(doc(db,"users",uid), { role:"user", disabledAt:null });
   }
 
   async function cleanNotifications(days) {
@@ -65,8 +77,9 @@ export default function AdminUsers({ onBack, currentUser }) {
     setEditUser(null);
   }
 
-  const pending = users.filter(u=>u.role==="pending");
-  const active  = users.filter(u=>u.role!=="pending").sort((a,b)=>{
+  const pending  = users.filter(u=>u.role==="pending");
+  const disabled = users.filter(u=>u.role==="disabled");
+  const active   = users.filter(u=>u.role!=="pending" && u.role!=="disabled").sort((a,b)=>{
     const order = { dev:0, admin:1, user:2 };
     return (order[a.role]??1) - (order[b.role]??1);
   });
@@ -96,7 +109,7 @@ export default function AdminUsers({ onBack, currentUser }) {
               <span style={{ background:"#fef3c7",color:"#f59e0b",borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700 }}>{pending.length}</span>
             </div>
             {pending.map(u=>(
-              <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onEdit={setEditUser} currentUser={currentUser}/>
+              <UserCard key={u.id} user={u} onRole={changeRole} onDisable={disableUser} onRestore={restoreUser} onEdit={setEditUser} currentUser={currentUser}/>
             ))}
           </div>
         )}
@@ -107,12 +120,28 @@ export default function AdminUsers({ onBack, currentUser }) {
             textTransform:"uppercase",marginBottom:12 }}>ผู้ใช้ทั้งหมด ({active.length})</div>
           {loading && <div style={{ textAlign:"center",color:"#94a3b8",padding:32 }}>กำลังโหลด...</div>}
           {active.map(u=>(
-            <UserCard key={u.id} user={u} onRole={changeRole} onRemove={removeUser} onEdit={setEditUser} currentUser={currentUser}/>
+            <UserCard key={u.id} user={u} onRole={changeRole} onDisable={disableUser} onRestore={restoreUser} onEdit={setEditUser} currentUser={currentUser}/>
           ))}
           {!loading && active.length===0 && (
             <div style={{ textAlign:"center",color:"#cbd5e1",padding:32,fontSize:14 }}>ยังไม่มีผู้ใช้</div>
           )}
         </div>
+
+        {/* ถูกระงับ */}
+        {disabled.length>0 && (
+          <div style={{ marginTop:24 }}>
+            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12 }}>
+              <div style={{ fontSize:12,color:"#64748b",fontWeight:700,letterSpacing:1,textTransform:"uppercase" }}>ระงับใช้งาน</div>
+              <span style={{ background:"#f1f5f9",color:"#64748b",borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700 }}>{disabled.length}</span>
+            </div>
+            <div style={{ fontSize:11,color:"#94a3b8",marginBottom:10,lineHeight:1.6 }}>
+              อีเมลเหล่านี้ยังถูกจองอยู่ใน Firebase Authentication — ถ้าต้องการปล่อยอีเมลให้สมัครใหม่ได้ ต้องลบบัญชีใน Firebase Console → Authentication
+            </div>
+            {disabled.map(u=>(
+              <UserCard key={u.id} user={u} onRole={changeRole} onDisable={disableUser} onRestore={restoreUser} onEdit={setEditUser} currentUser={currentUser}/>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* บำรุงรักษาระบบ */}
@@ -158,12 +187,13 @@ export default function AdminUsers({ onBack, currentUser }) {
   );
 }
 
-function UserCard({ user, onRole, onRemove, onEdit, currentUser }) {
+function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
   const roleOpt = ROLE_OPTS.find(r=>r.value===user.role)||ROLE_OPTS[2];
+  const isDisabled = user.role === "disabled";
   const visibleOpts = currentUser?.role==="dev" ? ROLE_OPTS : ROLE_OPTS.filter(r=>r.value!=="dev");
   return (
     <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
-      padding:"14px 16px",marginBottom:10 }}>
+      padding:"14px 16px",marginBottom:10,opacity:isDisabled?0.65:1 }}>
       <div style={{ display:"flex",alignItems:"center",gap:12 }}>
         <div style={{ width:40,height:40,borderRadius:"50%",flexShrink:0,
           background:`hsl(${user.name?.charCodeAt(0)*7%360},60%,70%)`,
@@ -182,21 +212,29 @@ function UserCard({ user, onRole, onRemove, onEdit, currentUser }) {
             fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none" }}>
           {visibleOpts.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
-        {user.role !== "pending" && (
+        {user.role !== "pending" && !isDisabled && (
           <button onClick={()=>onEdit(user)}
             style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
               borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:600 }}>
             ✏️
           </button>
         )}
-        <button onClick={()=>onRemove(user.id)}
-          style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-            borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>
-          ✕
-        </button>
+        {isDisabled ? (
+          <button onClick={()=>onRestore(user.id)} title="คืนสิทธิ์การใช้งาน"
+            style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
+              borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:600 }}>
+            ↩ คืนสิทธิ์
+          </button>
+        ) : (
+          <button onClick={()=>onDisable(user.id)} title="ระงับการใช้งาน"
+            style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
+              borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>
+            🚫
+          </button>
+        )}
       </div>
       {/* แสดง summary เล็กๆ */}
-      {user.role !== "pending" && (
+      {user.role !== "pending" && !isDisabled && (
         <div style={{ marginTop:8,display:"flex",gap:12,flexWrap:"wrap" }}>
           {user.onsiteRate > 0 && (
             <span style={{ fontSize:11,color:"#16a34a" }}>💰 {user.onsiteRate.toLocaleString()} บ./ครั้ง</span>
