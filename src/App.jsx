@@ -54,6 +54,17 @@ export default function App({ currentUser, onSignOut }) {
   const [onlineUsers,setOnlineUsers] = useState([]);
   const [darkMode,setDarkMode] = useState(false);
   const themeC = THEMES[darkMode ? "dark" : "light"];
+
+  // ตั้งสีให้ input/select/textarea ทั้งแอป (utils.js IS() อ่านตัวแปรพวกนี้)
+  // และบอกเบราว์เซอร์ว่าหน้านี้โหมดไหน — คุมป๊อปอัป <select>, ปฏิทิน date picker, scrollbar
+  useEffect(() => {
+    const r = document.documentElement;
+    r.style.setProperty("--input-bg", darkMode ? "#0f172a" : "#fff");
+    r.style.setProperty("--input-text", themeC.text900);
+    r.style.setProperty("--input-border", themeC.border);
+    r.style.colorScheme = darkMode ? "dark" : "light";
+  }, [darkMode, themeC]);
+
   const [showOnlineUsers,setShowOnlineUsers] = useState(false);
   const [notifOpen,setNotifOpen]   = useState(false);
   const [lastSeen,setLastSeen]     = useState(()=>localStorage.getItem("notif-seen")||"");
