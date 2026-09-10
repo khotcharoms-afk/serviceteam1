@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Modal, Field, PrimaryBtn, GhostBtn } from "../UI.jsx";
 import { IS, SERVICE_TYPES, STATUS_OPTS, fmtDate, daysLeft } from "../utils.js";
+import { useTheme } from "../theme.js";
 
 export default function CaseModal({
   open, onClose, editCase, caseForm, setCaseForm,
   projects, users, currentUser, saving, onSubmit
 }) {
+  const { c } = useTheme();
   const [errors, setErrors] = useState({});
   const [projSearch, setProjSearch] = useState("");
   const [projDropdown, setProjDropdown] = useState(false);
@@ -29,7 +31,7 @@ export default function CaseModal({
 
   function Err({ field }) {
     if (!errors[field]) return null;
-    return <div style={{ color:"#ef4444",fontSize:12,marginTop:4,fontWeight:500 }}>⚠ {errors[field]}</div>;
+    return <div style={{ color:c.red,fontSize:12,marginTop:4,fontWeight:500 }}>⚠ {errors[field]}</div>;
   }
 
   return (
@@ -44,11 +46,11 @@ export default function CaseModal({
           return (
             <div style={{ position:"relative" }}>
               <div style={{ display:"flex",alignItems:"center",
-                border:`1px solid ${errors.projectId?"#ef4444":"#e2e8f0"}`,
-                borderRadius:8,background:"#f8fafc",overflow:"hidden" }}>
+                border:`1px solid ${errors.projectId?c.red:c.border}`,
+                borderRadius:8,background:c.bg,overflow:"hidden" }}>
                 <input
                   style={{ flex:1,border:"none",background:"transparent",padding:"9px 12px",
-                    fontSize:14,fontFamily:"inherit",outline:"none",color:"#1e293b" }}
+                    fontSize:14,fontFamily:"inherit",outline:"none",color:c.text900 }}
                   placeholder="ค้นหาโครงการ..."
                   value={projDropdown ? projSearch : (selProj?.name||"")}
                   onFocus={()=>{ setProjDropdown(true); setProjSearch(""); }}
@@ -56,31 +58,31 @@ export default function CaseModal({
                 />
                 {selProj && !projDropdown && (
                   <button type="button" onClick={()=>{ setCaseForm(f=>({...f,projectId:""})); setProjSearch(""); }}
-                    style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",
+                    style={{ background:"none",border:"none",color:c.text400,cursor:"pointer",
                       padding:"0 10px",fontSize:14 }}>✕</button>
                 )}
               </div>
               {projDropdown && (
                 <div style={{ position:"absolute",top:"100%",left:0,right:0,zIndex:100,
-                  background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
-                  boxShadow:"0 8px 24px rgba(0,0,0,.12)",maxHeight:220,overflowY:"auto",marginTop:4 }}>
+                  background:c.card,border:`1px solid ${c.border}`,borderRadius:8,
+                  boxShadow:"0 8px 24px rgba(0,0,0,.28)",maxHeight:220,overflowY:"auto",marginTop:4 }}>
                   {filteredProjs.length===0 ? (
-                    <div style={{ padding:"12px 14px",fontSize:13,color:"#94a3b8",textAlign:"center" }}>ไม่พบโครงการ</div>
+                    <div style={{ padding:"12px 14px",fontSize:13,color:c.text400,textAlign:"center" }}>ไม่พบโครงการ</div>
                   ) : filteredProjs.map(p=>(
                     <div key={p.id}
                       onMouseDown={()=>{ setCaseForm(f=>({...f,projectId:p.id})); setProjDropdown(false); setProjSearch(""); }}
                       style={{ padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
-                        background:caseForm.projectId===p.id?"#eff6ff":"transparent",
-                        borderBottom:"1px solid #f8fafc" }}
-                      onMouseEnter={e=>{ if(caseForm.projectId!==p.id) e.currentTarget.style.background="#f8fafc"; }}
+                        background:caseForm.projectId===p.id?`${c.blue}22`:"transparent",
+                        borderBottom:`1px solid ${c.borderSoft}` }}
+                      onMouseEnter={e=>{ if(caseForm.projectId!==p.id) e.currentTarget.style.background=c.borderSoft; }}
                       onMouseLeave={e=>{ if(caseForm.projectId!==p.id) e.currentTarget.style.background="transparent"; }}>
-                      <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                      <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||c.text400,flexShrink:0 }}/>
                       <div style={{ flex:1,minWidth:0 }}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
+                        <div style={{ fontSize:13,fontWeight:600,color:c.text900,
                           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
-                        {p.code&&<div style={{ fontSize:11,color:"#94a3b8" }}>{p.code}</div>}
+                        {p.code&&<div style={{ fontSize:11,color:c.text400 }}>{p.code}</div>}
                       </div>
-                      {caseForm.projectId===p.id && <span style={{ color:"#2563eb",fontSize:14 }}>✓</span>}
+                      {caseForm.projectId===p.id && <span style={{ color:c.blue,fontSize:14 }}>✓</span>}
                     </div>
                   ))}
                 </div>
@@ -141,7 +143,7 @@ export default function CaseModal({
         </select>
       </Field>
       <Field label="ผู้ดำเนินการ">
-        <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"10px 13px" }}>
+        <div style={{ background:c.bg,border:`1px solid ${c.border}`,borderRadius:8,padding:"10px 13px" }}>
           {users.filter(u => u.role !== "pending").sort((a,b) => a.name.localeCompare(b.name)).map(u => {
             const isSelf = u.name === (currentUser?.name||"");
             const checked = (caseForm.techs||[]).includes(u.name);
@@ -156,10 +158,10 @@ export default function CaseModal({
                       return { ...f, techs: checked ? cur.filter(x => x !== u.name) : [...cur, u.name] };
                     });
                   }}
-                  style={{ width:16,height:16,accentColor:"#2563eb",cursor:isSelf?"default":"pointer" }}/>
-                <span style={{ fontSize:14,color:"#1e293b",fontWeight:checked?600:400 }}>{u.name}</span>
-                {isSelf && <span style={{ fontSize:11,color:"#94a3b8",marginLeft:4 }}>(คุณ)</span>}
-                {u.role === "admin" && <span style={{ fontSize:10,color:"#7c3aed",marginLeft:4 }}>Admin</span>}
+                  style={{ width:16,height:16,accentColor:c.blue,cursor:isSelf?"default":"pointer" }}/>
+                <span style={{ fontSize:14,color:c.text900,fontWeight:checked?600:400 }}>{u.name}</span>
+                {isSelf && <span style={{ fontSize:11,color:c.text400,marginLeft:4 }}>(คุณ)</span>}
+                {u.role === "admin" && <span style={{ fontSize:10,color:c.purple,marginLeft:4 }}>Admin</span>}
               </label>
             );
           })}
@@ -177,28 +179,28 @@ export default function CaseModal({
         const wd = daysLeft(proj.warrantyEnd);
         const ld = daysLeft(proj.leaseEnd);
         return (
-          <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
+          <div style={{ background:c.bg,border:`1px solid ${c.border}`,borderRadius:10,
             padding:"12px 14px",marginBottom:14 }}>
-            <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,
+            <div style={{ fontSize:10,color:c.text400,fontWeight:700,letterSpacing:1,
               textTransform:"uppercase",marginBottom:8 }}>ข้อมูลจากโครงการ (อัตโนมัติ)</div>
             <div style={{ display:"flex",gap:16,flexWrap:"wrap" }}>
               <div>
-                <div style={{ fontSize:10,color:"#94a3b8",marginBottom:2 }}>🛡 ประกัน</div>
+                <div style={{ fontSize:10,color:c.text400,marginBottom:2 }}>🛡 ประกัน</div>
                 {proj.warrantyEnd ? (
                   <div style={{ fontSize:12,fontWeight:600,
-                    color:wd<0?"#ef4444":wd<=90?"#f59e0b":"#3b82f6" }}>
+                    color:wd<0?c.red:wd<=90?c.amber:c.blue }}>
                     {fmtDate(proj.warrantyEnd)} {wd<0?"(หมดแล้ว)":`(เหลือ ${wd} วัน)`}
                   </div>
-                ) : <div style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มี</div>}
+                ) : <div style={{ fontSize:12,color:c.text400 }}>ไม่มี</div>}
               </div>
               <div>
-                <div style={{ fontSize:10,color:"#94a3b8",marginBottom:2 }}>📋 สัญญาเช่า</div>
+                <div style={{ fontSize:10,color:c.text400,marginBottom:2 }}>📋 สัญญาเช่า</div>
                 {proj.leaseEnd ? (
                   <div style={{ fontSize:12,fontWeight:600,
-                    color:ld<0?"#ef4444":ld<=90?"#f59e0b":"#8b5cf6" }}>
+                    color:ld<0?c.red:ld<=90?c.amber:c.purple }}>
                     {fmtDate(proj.leaseEnd)} {ld<0?"(หมดแล้ว)":`(เหลือ ${ld} วัน)`}
                   </div>
-                ) : <div style={{ fontSize:12,color:"#cbd5e1" }}>ไม่มี</div>}
+                ) : <div style={{ fontSize:12,color:c.text400 }}>ไม่มี</div>}
               </div>
             </div>
           </div>
