@@ -37,9 +37,15 @@ export const fmtDate = (s) => {
   return `${d}/${m}/${y}`;
 };
 
+// สีอ่านจาก CSS variable ที่ App.jsx ตั้งไว้ตามธีม
+// ค่าหลังคอมมาคือ fallback = สีเดิม (ถ้าตัวแปรยังไม่ถูกตั้ง)
 export const IS = (x = {}) => ({
-  width: "100%", background: "#fff", border: "1px solid #e2e8f0",
-  borderRadius: 8, color: "#1e293b", padding: "10px 13px", fontSize: 14,
+  width: "100%",
+  background: "var(--input-bg, #fff)",
+  border: "1px solid var(--input-border, #e2e8f0)",
+  borderRadius: 8,
+  color: "var(--input-text, #1e293b)",
+  padding: "10px 13px", fontSize: 14,
   outline: "none", fontFamily: "inherit", boxSizing: "border-box", ...x,
 });
 
