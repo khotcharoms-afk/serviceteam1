@@ -112,7 +112,10 @@ export default function App({ currentUser, onSignOut }) {
       setDoc(doc(db,"presence",currentUser.id), {
         name: currentUser.name||"", role: currentUser.role||"",
         lastSeen: new Date().toISOString(),
-      }, { merge:true }).catch(()=>{});
+      }, { merge:true }).catch((e)=>{
+        // อย่ากลืน error เงียบๆ — ถ้า Security Rules บล็อก presence จะไม่มีใครรู้เลย
+        console.error("presence heartbeat failed:", e?.code || e);
+      });
     };
     beat();
     const interval = setInterval(beat, 30000);
@@ -122,7 +125,7 @@ export default function App({ currentUser, onSignOut }) {
   // เฉพาะ dev เท่านั้นที่ subscribe รายชื่อคนออนไลน์ (คนอื่นไม่ต้องยิง request นี้)
   useEffect(()=>{
     if(currentUser?.role!=="dev") return;
-    const unsub = onSnapshot(collection(db,"presence"), (snap)=>{
+    const unsub = onSnapshot(collection(db,"presence"), { includeMetadataChanges:false }, (snap)=>{
       const now = Date.now();
       const list = [];
       snap.forEach((d)=>{
@@ -132,6 +135,8 @@ export default function App({ currentUser, onSignOut }) {
       });
       list.sort((a,b)=> new Date(b.lastSeen)-new Date(a.lastSeen));
       setOnlineUsers(list);
+    }, (e)=>{
+      console.error("presence subscribe failed:", e?.code || e);
     });
     return ()=>unsub();
   },[currentUser?.role]);
