@@ -28,7 +28,10 @@ export default function AdminUsers({ onBack, currentUser }) {
   async function changeRole(uid, role) {
     const target = users.find(u=>u.id===uid);
     // ห้าม non-dev เปลี่ยน role ของ dev หรือเปลี่ยนเป็น dev
-    if (currentUser?.role !== "dev" && (target?.role === "dev" || role === "dev")) return;
+    if (currentUser?.role !== "dev" && (target?.role === "dev" || role === "dev")) {
+      return alert("เฉพาะ Dev เท่านั้นที่จัดการสิทธิ์ระดับ Dev ได้");
+    }
+    if (uid === currentUser?.id) return alert("เปลี่ยนสิทธิ์ของตัวเองไม่ได้");
     await updateDoc(doc(db,"users",uid), { role });
   }
 
@@ -36,16 +39,26 @@ export default function AdminUsers({ onBack, currentUser }) {
   // ถ้าลบแต่ doc อีเมลจะยังถูกจอง สมัครใหม่ไม่ได้ และบัญชีนั้นยังล็อกอินค้างได้
   async function disableUser(uid) {
     const target = users.find(u => u.id === uid);
-    if (currentUser?.role !== "dev" && target?.role === "dev") return;
+    if (currentUser?.role !== "dev" && target?.role === "dev") {
+      return alert("เฉพาะ Dev เท่านั้นที่ระงับบัญชี Dev ได้");
+    }
     if (uid === currentUser?.id) return alert("ระงับบัญชีตัวเองไม่ได้");
     if (!confirm(`ระงับการใช้งานของ "${target?.name || "ผู้ใช้นี้"}"?\n\nผู้ใช้จะเข้าระบบไม่ได้ แต่ข้อมูลและประวัติเคสยังอยู่ครบ\nคืนสิทธิ์ภายหลังได้`)) return;
-    await updateDoc(doc(db,"users",uid), { role:"disabled", disabledAt:new Date().toISOString() });
+    await updateDoc(doc(db,"users",uid), {
+      role:"disabled", prevRole:target?.role || "user", disabledAt:new Date().toISOString(),
+    });
   }
 
   async function restoreUser(uid) {
     const target = users.find(u => u.id === uid);
-    if (!confirm(`คืนสิทธิ์ให้ "${target?.name || "ผู้ใช้นี้"}"?`)) return;
-    await updateDoc(doc(db,"users",uid), { role:"user", disabledAt:null });
+    // คืน role เดิมที่เก็บไว้ตอนระงับ — ถ้าเดิมเป็น dev ต้องเป็น dev เท่านั้นที่คืนได้
+    const back = target?.prevRole || "user";
+    if (currentUser?.role !== "dev" && back === "dev") {
+      return alert("เฉพาะ Dev เท่านั้นที่คืนสิทธิ์ระดับ Dev ได้");
+    }
+    const roleLabel = ROLE_OPTS.find(r=>r.value===back)?.label || back;
+    if (!confirm(`คืนสิทธิ์ให้ "${target?.name || "ผู้ใช้นี้"}" เป็น ${roleLabel}?`)) return;
+    await updateDoc(doc(db,"users",uid), { role:back, prevRole:null, disabledAt:null });
   }
 
   async function cleanNotifications(days) {
@@ -190,6 +203,10 @@ export default function AdminUsers({ onBack, currentUser }) {
 function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
   const roleOpt = ROLE_OPTS.find(r=>r.value===user.role)||ROLE_OPTS[2];
   const isDisabled = user.role === "disabled";
+  // non-dev แตะบัญชี dev ไม่ได้ (รวมถึง dev ที่ถูกระงับไว้)
+  const targetIsDev = user.role === "dev" || (isDisabled && user.prevRole === "dev");
+  const locked = currentUser?.role !== "dev" && targetIsDev;
+  const isSelf = user.id === currentUser?.id;
   const visibleOpts = currentUser?.role==="dev" ? ROLE_OPTS : ROLE_OPTS.filter(r=>r.value!=="dev");
   return (
     <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
@@ -207,24 +224,33 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
             overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{user.email}</div>
         </div>
         <select value={user.role} onChange={e=>onRole(user.id,e.target.value)}
+          disabled={locked || isSelf}
+          title={locked ? "เฉพาะ Dev เท่านั้นที่จัดการสิทธิ์ Dev ได้" : isSelf ? "เปลี่ยนสิทธิ์ตัวเองไม่ได้" : ""}
           style={{ background:roleOpt.bg,border:`1px solid ${roleOpt.color}30`,
             color:roleOpt.color,borderRadius:8,padding:"5px 10px",fontSize:12,
-            fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none" }}>
-          {visibleOpts.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
+            fontWeight:700,cursor:(locked||isSelf)?"not-allowed":"pointer",
+            fontFamily:"inherit",outline:"none",opacity:(locked||isSelf)?0.55:1 }}>
+          {(locked ? ROLE_OPTS : visibleOpts).map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
-        {user.role !== "pending" && !isDisabled && (
+        {user.role !== "pending" && !isDisabled && !locked && (
           <button onClick={()=>onEdit(user)}
             style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
               borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:600 }}>
             ✏️
           </button>
         )}
-        {isDisabled ? (
+        {locked ? (
+          <span title="เฉพาะ Dev เท่านั้นที่จัดการบัญชี Dev ได้"
+            style={{ fontSize:14, color:"#cbd5e1", padding:"6px 10px" }}>🔒</span>
+        ) : isDisabled ? (
           <button onClick={()=>onRestore(user.id)} title="คืนสิทธิ์การใช้งาน"
             style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
               borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:600 }}>
             ↩ คืนสิทธิ์
           </button>
+        ) : isSelf ? (
+          <span title="ระงับบัญชีตัวเองไม่ได้"
+            style={{ fontSize:11, color:"#cbd5e1", padding:"6px 10px" }}>(คุณ)</span>
         ) : (
           <button onClick={()=>onDisable(user.id)} title="ระงับการใช้งาน"
             style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
