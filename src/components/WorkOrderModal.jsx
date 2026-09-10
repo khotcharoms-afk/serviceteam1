@@ -1,4 +1,5 @@
 import { fmtDate } from "../utils.js";
+import { useTheme } from "../theme.js";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
@@ -160,6 +161,7 @@ function buildWorkOrderHTML(c, proj) {
 }
 
 export default function WorkOrderModal({ c, proj, onClose }) {
+  const { c: t } = useTheme();   // c ถูกใช้เป็นชื่อ prop ของเคสแล้ว จึงรับ theme เป็น t
   if (!c) return null;
 
   function openWorkOrder() {
@@ -176,18 +178,18 @@ export default function WorkOrderModal({ c, proj, onClose }) {
     <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(15,23,42,.6)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,maxWidth:360,width:"100%",
-        boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
+      <div style={{ background:t.card,borderRadius:16,padding:24,maxWidth:360,width:"100%",
+        boxShadow:"0 20px 60px rgba(0,0,0,.35)" }}
         onClick={e=>e.stopPropagation()}>
-        <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:8 }}>🖨 พิมพ์ใบงาน</div>
-        <div style={{ fontSize:13,color:"#64748b",marginBottom:20,lineHeight:1.6 }}>
+        <div style={{ fontSize:15,fontWeight:700,color:t.text900,marginBottom:8 }}>🖨 พิมพ์ใบงาน</div>
+        <div style={{ fontSize:13,color:t.text500,marginBottom:20,lineHeight:1.6 }}>
           ระบบจะเปิดแท็บใหม่แสดงใบงาน กดพิมพ์หรือ Save PDF ได้เลย
         </div>
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+          <button onClick={onClose} style={{ flex:1,background:t.bg,border:`1px solid ${t.border}`,
+            color:t.text500,borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
-          <button onClick={openWorkOrder} style={{ flex:2,background:PURPLE,border:"none",
+          <button onClick={openWorkOrder} style={{ flex:2,background:t.purple,border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
             เปิดใบงาน →
