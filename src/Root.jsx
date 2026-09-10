@@ -20,7 +20,7 @@ export default function Root() {
     setChecking(true); setDocErr("");
     try {
       const snap = await getDocFromServer(doc(db, "users", user.uid));
-      setUserDoc(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+      setUserDoc(snap.exists() ? { id: snap.id, ...snap.data() } : "missing");
     } catch (e) {
       console.error("getDocFromServer error:", e);
       setDocErr("เชื่อมต่อฐานข้อมูลไม่สำเร็จ — ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
@@ -68,7 +68,7 @@ export default function Root() {
             doc(db, "users", user.uid),
             (snap) => {
               if (!mounted) return;
-              setUserDoc(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+              setUserDoc(snap.exists() ? { id: snap.id, ...snap.data() } : "missing");
             },
             (err) => {
               console.error("Firestore error:", err);
@@ -79,7 +79,8 @@ export default function Root() {
           // กันกรณีแคชในเครื่องค้างค่าเก่า: บังคับอ่านจาก server หนึ่งรอบ
           getDocFromServer(doc(db, "users", user.uid))
             .then((snap) => {
-              if (mounted && snap.exists()) setUserDoc({ id: snap.id, ...snap.data() });
+              if (!mounted) return;
+              setUserDoc(snap.exists() ? { id: snap.id, ...snap.data() } : "missing");
             })
             .catch((e) => console.error("initial server read failed:", e));
         } catch(e) {
@@ -134,6 +135,40 @@ export default function Root() {
       </div>
     </div>
   );
+
+  // บัญชีถูกระงับ หรือไม่มีข้อมูลผู้ใช้ในระบบแล้ว
+  if (userDoc === "missing" || userDoc.role === "disabled") {
+    const isMissing = userDoc === "missing";
+    return (
+      <div style={{ minHeight:"100vh", background:"#f8fafc", display:"flex",
+        alignItems:"center", justifyContent:"center",
+        fontFamily:"'Noto Sans Thai',sans-serif", padding:20 }}>
+        <div style={{ background:"#fff", borderRadius:16, padding:"32px 28px",
+          maxWidth:400, width:"100%", textAlign:"center",
+          boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e2e8f0" }}>
+          <div style={{ fontSize:40, marginBottom:16 }}>🚫</div>
+          <div style={{ fontSize:18, fontWeight:800, color:"#0f172a", marginBottom:8 }}>
+            {isMissing ? "ไม่พบข้อมูลผู้ใช้" : "บัญชีถูกระงับการใช้งาน"}
+          </div>
+          <div style={{ fontSize:14, color:"#64748b", lineHeight:1.7, marginBottom:20 }}>
+            {isMissing
+              ? <>บัญชีนี้ไม่มีข้อมูลผู้ใช้ในระบบแล้ว<br/>กรุณาติดต่อ Admin</>
+              : <>บัญชีนี้ถูกระงับโดยผู้ดูแลระบบ<br/>ติดต่อ Admin หากต้องการใช้งานต่อ</>}
+          </div>
+          <div style={{ background:"#f8fafc", borderRadius:10, padding:"10px 14px",
+            marginBottom:20, fontSize:13, color:"#475569" }}>
+            {authUser.email}
+          </div>
+          <button onClick={() => signOut(auth)}
+            style={{ background:"#f1f5f9", border:"1px solid #e2e8f0", color:"#64748b",
+              borderRadius:10, padding:"10px 24px", fontSize:14, fontWeight:600,
+              cursor:"pointer", fontFamily:"inherit" }}>
+            ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Pending approval
   if (userDoc.role === "pending") return (
