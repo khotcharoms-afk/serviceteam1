@@ -29,8 +29,9 @@ export default function TaskBoard({ onBack, projects, users, cases, currentUser,
   const [sending,    setSending]    = useState(false);
   const [isMobile] = useState(typeof window!=="undefined" && window.innerWidth < 640);
 
-  const isAdmin    = currentUser?.role === "admin";
-  const canCreate  = isAdmin; // admin + หัวหน้าทีม (role:"leader" ถ้ามีในอนาคต)
+  // dev มีสิทธิ์เท่า admin ทุกอย่าง — ตัวแปรนี้คุมทั้งปุ่มสร้างงาน, แก้ไข/ลบ, แปลงเป็นเคส และการลากวาง
+  const isAdmin    = ["admin","dev"].includes(currentUser?.role);
+  const canCreate  = isAdmin;
 
   const filteredTasks = (tasks||[]).filter(t =>
     !myOnly || (t.assignees||[]).includes(currentUser?.name)
@@ -371,7 +372,6 @@ function TaskCard({ task, col, projects, currentUser, isAdmin, onMove, onEdit, o
             <button onClick={()=>onMove(task,nextStatus)}
               style={{ flex:1,background:nextStyle.bg,border:"none",color:nextStyle.color,
                 borderRadius:7,padding:"6px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
-                borderRadius:7,padding:"5px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
               {NEXT_LABEL[task.status]}
             </button>
           )}
