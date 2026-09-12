@@ -350,7 +350,8 @@ export default function App({ currentUser, onSignOut }) {
     if (saving) return;
     setSaving(true);
     try {
-      const isAdmin = currentUser?.role === "admin";
+      // dev อนุมัติ Onsite ได้เหมือน admin — อย่าเช็คแค่ "admin"
+      const isAdmin = isAdminOrDev;
       const id = recordId || Date.now().toString();
       const payload = {
         ...data,
@@ -363,7 +364,7 @@ export default function App({ currentUser, onSignOut }) {
 
       // แจ้ง admin ถ้าเป็น user บันทึก (สถานะ pending)
       if (!isAdmin && payload.status === "pending") {
-        const admins = users.filter(u => u.role === "admin");
+        const admins = users.filter(u => ["admin","dev"].includes(u.role));
         const batch = writeBatch(db);
         admins.forEach(a => {
           batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)), {
