@@ -1,30 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
 import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc, onSnapshot } from "firebase/firestore";
 import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS } from "./utils.js";
-import * as XLSX from "xlsx";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
 import HandoverModal from "./HandoverModal.jsx";
-import LeavePage from "./LeavePage.jsx";
 import UpdateLogModal from "./UpdateLogModal.jsx";
-import AdminUsers from "./AdminUsers.jsx";
 import { useFirestore } from "./hooks/useFirestore.js";
+
+// โหลดเมื่อเปิดหน้านั้นจริง — ลดขนาดไฟล์ที่ต้องดาวน์โหลดตอนเข้าแอปครั้งแรก
+const LeavePage = lazy(() => import("./LeavePage.jsx"));
+const AdminUsers = lazy(() => import("./AdminUsers.jsx"));
+const Dashboard = lazy(() => import("./Dashboard.jsx"));
+const ShiftCalendar = lazy(() => import("./ShiftCalendar.jsx"));
+const OnsitePage = lazy(() => import("./OnsitePage.jsx"));
+const OTPage = lazy(() => import("./OTPage.jsx"));
+const RobotStatsPage = lazy(() => import("./RobotStatsPage.jsx"));
+const KnowledgeHub = lazy(() => import("./KnowledgeHub.jsx"));
+const ProfilePage = lazy(() => import("./ProfilePage.jsx"));
+const TaskBoard = lazy(() => import("./TaskBoard.jsx"));
 import CaseModal from "./components/CaseModal.jsx";
 import ProjectModal from "./components/ProjectModal.jsx";
 import DetailModal from "./components/DetailModal.jsx";
-import Dashboard from "./Dashboard.jsx";
-import ShiftCalendar from "./ShiftCalendar.jsx";
-import OnsitePage from "./OnsitePage.jsx";
 import Drawer from "./Drawer.jsx";
 import ImportModal from "./ImportModal.jsx";
 import NavBar from "./NavBar.jsx";
-import OTPage from "./OTPage.jsx";
-import RobotStatsPage from "./RobotStatsPage.jsx";
-import KnowledgeHub from "./KnowledgeHub.jsx";
-import ProfilePage from "./ProfilePage.jsx";
-import TaskBoard from "./TaskBoard.jsx";
 
 export default function App({ currentUser, onSignOut }) {
   const { projects, cases, users, notifications, deletedCases, shifts, shiftTypes, userSchedules, shiftMembers, onsiteRecords, tasks, loading, refreshProjects, refreshShifts, refreshSchedules, refreshShiftTypes, refreshShiftMembers } = useFirestore();
@@ -54,6 +55,7 @@ export default function App({ currentUser, onSignOut }) {
   const [onlineUsers,setOnlineUsers] = useState([]);
   const [darkMode,setDarkMode] = useState(false);
   const themeC = THEMES[darkMode ? "dark" : "light"];
+  const PageLoader = () => (<div style={{ minHeight:"100vh",background:themeC.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Sans Thai',sans-serif",color:themeC.text400,fontSize:14 }}><div style={{ textAlign:"center" }}><div style={{ fontSize:32,color:themeC.blue,marginBottom:10 }}>◈</div>กำลังโหลด...</div></div>);
 
   // ตั้งสีให้ input/select/textarea ทั้งแอป (utils.js IS() อ่านตัวแปรพวกนี้)
   // และบอกเบราว์เซอร์ว่าหน้านี้โหมดไหน — คุมป๊อปอัป <select>, ปฏิทิน date picker, scrollbar
@@ -208,7 +210,7 @@ export default function App({ currentUser, onSignOut }) {
 
   const activeProj = projects.find(p=>p.id===view)||null;
   // ── Export Excel ──
-  function exportToExcel() {
+  async function exportToExcel() {
     const STATUS_LABEL = { open:"เปิด", done:"ปิด", hold:"รอดำเนินการ", pending:"รอ" };
     const rows = visibleCases.map(c => {
       const proj = projects.find(p=>p.id===c.projectId);
@@ -225,6 +227,7 @@ export default function App({ currentUser, onSignOut }) {
         "หมายเหตุ":    c.note||"",
       };
     });
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(rows);
     const colWidths = [14,30,20,16,14,14,20,12,12,30];
     ws["!cols"] = colWidths.map(w=>({wch:w}));
@@ -447,7 +450,8 @@ export default function App({ currentUser, onSignOut }) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
+      const XLSX = await import("xlsx");
       const wb = XLSX.read(evt.target.result, { type:"binary" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       // ลองอ่านแบบปกติก่อน ถ้าไม่เจอชื่อโครงการ ให้ข้าม header แถวแรก
@@ -502,7 +506,8 @@ export default function App({ currentUser, onSignOut }) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
+      const XLSX = await import("xlsx");
       const wb = XLSX.read(evt.target.result, { type:"binary" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
@@ -649,12 +654,12 @@ export default function App({ currentUser, onSignOut }) {
     </div>
   );
 
-  if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></ThemeContext.Provider>;
-  if(leavePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></ThemeContext.Provider>;
-  if(profilePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/></ThemeContext.Provider>;
-  if(otPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><OTPage onBack={()=>setOtPage(false)}
-    projects={projects} users={users} currentUser={currentUser}/></ThemeContext.Provider>;
-  if(taskPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><TaskBoard onBack={()=>setTaskPage(false)}
+  if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></Suspense></ThemeContext.Provider>;
+  if(leavePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></Suspense></ThemeContext.Provider>;
+  if(profilePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/></Suspense></ThemeContext.Provider>;
+  if(otPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OTPage onBack={()=>setOtPage(false)}
+    projects={projects} users={users} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(taskPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><TaskBoard onBack={()=>setTaskPage(false)}
     projects={projects} users={users} cases={cases} currentUser={currentUser}
     tasks={tasks} saving={saving}
     onSaveTask={async(data,id)=>{
@@ -716,12 +721,12 @@ export default function App({ currentUser, onSignOut }) {
       });
       await setDoc(doc(db,"tasks",task.id),{caseId:cid,updatedAt:now},{merge:true});
       showToast("📁 สร้างเคสจากงานแล้ว","success");
-    }}/></ThemeContext.Provider>;
-  if(onsitePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></ThemeContext.Provider>;
-  if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></ThemeContext.Provider>;
-  if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></ThemeContext.Provider>;
-  if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></ThemeContext.Provider>;
-  if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></ThemeContext.Provider>;
+    }}/></Suspense></ThemeContext.Provider>;
+  if(onsitePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></Suspense></ThemeContext.Provider>;
+  if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></Suspense></ThemeContext.Provider>;
+  if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></Suspense></ThemeContext.Provider>;
 
   return (
     <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>
