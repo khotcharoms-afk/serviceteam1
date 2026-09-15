@@ -256,7 +256,10 @@ export default function RobotIssuesPage({ onBack }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+      `}</style>
       <div style={{
         display: "flex", alignItems: "center", gap: 12, padding: "16px 20px",
         borderBottom: `1px solid ${c.border}`, background: c.card,
