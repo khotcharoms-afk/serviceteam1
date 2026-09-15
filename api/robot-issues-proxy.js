@@ -23,6 +23,43 @@ function getBotDb() {
   return getFirestore(app);
 }
 
+// ── แจ้งเตือนกลับไปหาผู้แจ้งผ่าน LINE เมื่อสถานะเคสเปลี่ยน ──
+// ใช้ raw fetch ยิง LINE Messaging API ตรงๆ ไม่ต้องพึ่ง @line/bot-sdk
+// (ServiceLog เป็นคนละ Vercel project กับบอท เลยต้องมี LINE_CHANNEL_ACCESS_TOKEN
+// เป็นของตัวเองแยกต่างหาก — token คนละตัวกับที่บอทใช้ก็ได้ เพราะ token ผูกกับ
+// channel เดียวกัน ใช้ยิง push message แทนกันได้)
+const STATUS_LABEL_TH = {
+  acknowledged: "รับทราบแล้ว",
+  in_progress: "กำลังดำเนินการ",
+  resolved: "เสร็จสิ้น",
+  cancelled: "ยกเลิก",
+};
+
+async function notifyReporter(lineUserId, ticketNo, newStatus) {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  if (!token || !lineUserId) return; // ยังไม่ได้ตั้งค่า token หรือเคสไม่มี lineUserId ก็ข้ามไปเงียบๆ
+
+  const statusText = STATUS_LABEL_TH[newStatus] || newStatus;
+  const text = `📢 อัปเดตสถานะเคส #${ticketNo}\n\nสถานะล่าสุด: ${statusText}`;
+
+  try {
+    await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        to: lineUserId,
+        messages: [{ type: "text", text }],
+      }),
+    });
+  } catch (err) {
+    // แจ้งเตือนไม่สำเร็จไม่ควรทำให้การอัปเดตสถานะ fail ไปด้วย แค่ log ไว้เฉยๆ
+    console.error("notifyReporter error:", err);
+  }
+}
+
 export default async function handler(req, res) {
   const db = getBotDb();
 
@@ -61,6 +98,15 @@ export default async function handler(req, res) {
         return;
       }
       const ref = db.collection("robotIssues").doc(issueId);
+
+      // ดึงข้อมูลเคสก่อนอัปเดต เพื่อเอา lineUserId/ticketNo ไปใช้แจ้งเตือนกลับ
+      const snap = await ref.get();
+      if (!snap.exists) {
+        res.status(404).json({ error: "not-found" });
+        return;
+      }
+      const issueData = snap.data();
+
       await ref.update({
         status: newStatus,
         updatedAt: FieldValue.serverTimestamp(),
@@ -71,6 +117,10 @@ export default async function handler(req, res) {
           note: note || "",
         }),
       });
+
+      // แจ้งเตือนกลับไปหาผู้แจ้งผ่าน LINE (ไม่ block response หลักถ้าแจ้งไม่สำเร็จ)
+      await notifyReporter(issueData.lineUserId, issueData.ticketNo, newStatus);
+
       res.status(200).json({ ok: true });
     } catch (err) {
       console.error("robot-issues-proxy POST error:", err);
