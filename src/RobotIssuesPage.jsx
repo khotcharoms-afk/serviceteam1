@@ -142,12 +142,24 @@ function StatusSteps({ status, onChange, c, updating }) {
   );
 }
 
-function IssueCard({ issue, onUpdateStatus, c }) {
+function IssueCard({ issue, onUpdateStatus, onDelete, canDelete, c }) {
   const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   async function handleStatusChange(newStatus) {
     setUpdating(true);
     await onUpdateStatus(issue.id, newStatus);
     setUpdating(false);
+  }
+
+  async function handleDelete() {
+    const ok = window.confirm(
+      `ยืนยันลบเคส #${issue.ticketNo}?\n\nการลบนี้ถาวร กู้คืนไม่ได้ (รูป/วิดีโอที่แนบไว้จะยังอยู่ใน Storage แต่จะหาเคสนี้ไม่เจออีก)`
+    );
+    if (!ok) return;
+    setDeleting(true);
+    await onDelete(issue.id);
+    // ไม่ต้อง setDeleting(false) เพราะการ์ดนี้จะหายไปจากลิสต์หลัง reload สำเร็จอยู่แล้ว
   }
 
   const createdLabel = issue.createdAt
@@ -181,7 +193,19 @@ function IssueCard({ issue, onUpdateStatus, c }) {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5, flexShrink: 0 }}>
-          <Pill color={statusMeta.color} filled>{statusMeta.label}</Pill>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Pill color={statusMeta.color} filled>{statusMeta.label}</Pill>
+            {canDelete && (
+              <button onClick={handleDelete} disabled={deleting} title="ลบเคสนี้"
+                style={{
+                  border: "none", background: "transparent", cursor: deleting ? "default" : "pointer",
+                  color: c.text400, fontSize: 14, padding: 3, lineHeight: 1,
+                  opacity: deleting ? 0.4 : 1,
+                }}>
+                🗑️
+              </button>
+            )}
+          </div>
           {issue.priority && (
             <Pill color={isUrgent ? RED : GREEN}>{isUrgent ? "🔴 ด่วน" : "ปกติ"}</Pill>
           )}
@@ -205,8 +229,9 @@ function IssueCard({ issue, onUpdateStatus, c }) {
   );
 }
 
-export default function RobotIssuesPage({ onBack }) {
+export default function RobotIssuesPage({ onBack, currentUser }) {
   const { c } = useTheme();
+  const canDelete = ["admin", "dev"].includes(currentUser?.role);
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -246,6 +271,19 @@ export default function RobotIssuesPage({ onBack }) {
     } catch (err) {
       console.error(err);
       alert("อัปเดตสถานะไม่สำเร็จ");
+    }
+  }
+
+  async function handleDelete(issueId) {
+    try {
+      const res = await fetch(`/api/robot-issues-proxy?issueId=${encodeURIComponent(issueId)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("delete-failed");
+      await load();
+    } catch (err) {
+      console.error(err);
+      alert("ลบเคสไม่สำเร็จ");
     }
   }
 
@@ -312,7 +350,8 @@ export default function RobotIssuesPage({ onBack }) {
         )}
 
         {issues.map((issue) => (
-          <IssueCard key={issue.id} issue={issue} onUpdateStatus={handleUpdateStatus} c={c} />
+          <IssueCard key={issue.id} issue={issue} onUpdateStatus={handleUpdateStatus}
+            onDelete={handleDelete} canDelete={canDelete} c={c} />
         ))}
       </div>
     </div>
