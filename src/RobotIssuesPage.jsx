@@ -28,6 +28,23 @@ const CATEGORY_LABEL = {
   exception: "📋 แจ้งเหตุ",
 };
 
+// map รหัสอาการ/สาเหตุ → ข้อความไทย ต้อง sync กับ ISSUE_TYPES ใน lib/repairFlow.js
+// และ REASON_OPTIONS ใน lib/exceptionFlow.js ของฝั่งบอทเสมอ (คนละ repo กัน)
+const ISSUE_TYPE_LABEL = {
+  // จาก repairFlow.js (แจ้งซ่อม)
+  stopped: "🔴 หยุดทำงาน/ไม่วิ่ง",
+  error: "🟡 Error/มีเสียงเตือน",
+  not_clean: "🟠 ทำความสะอาดไม่สะอาด",
+  battery: "🔵 แบตเตอรี่/ชาร์จมีปัญหา",
+  part_damage: "⚙️ อะไหล่ชำรุด",
+  // จาก exceptionFlow.js (แจ้งเหตุ)
+  event: "🎪 มีอีเว้นต์ในพื้นที่",
+  rain: "🌧️ ฝนตก/พื้นเปียก",
+  closed: "🚧 พื้นที่ปิด/ปรับปรุง",
+  // ใช้ร่วมกันทั้ง 2 flow
+  other: "⚪ อื่นๆ",
+};
+
 function StatusBadge({ status }) {
   const color = STATUS_COLOR[status] || "#6B7280";
   return (
@@ -118,7 +135,7 @@ function IssueCard({ issue, onUpdateStatus, c }) {
 
       <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6, color: c.text500 }}>
         <div>🏢 <b style={{ color: c.text900 }}>สาขา:</b> {issue.branch || "-"}</div>
-        <div>❗ <b style={{ color: c.text900 }}>อาการ/สาเหตุ:</b> {issue.issueType || "-"}</div>
+        <div>❗ <b style={{ color: c.text900 }}>อาการ/สาเหตุ:</b> {ISSUE_TYPE_LABEL[issue.issueType] || issue.issueType || "-"}</div>
         {issue.description && <div>📝 <b style={{ color: c.text900 }}>รายละเอียด:</b> {issue.description}</div>}
         {issue.incidentDate && <div>📅 <b style={{ color: c.text900 }}>วันที่เกิดเหตุ:</b> {issue.incidentDate}</div>}
         <div>👤 <b style={{ color: c.text900 }}>แจ้งโดย:</b> {issue.displayName || "-"}</div>
