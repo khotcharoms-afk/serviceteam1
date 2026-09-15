@@ -40,6 +40,7 @@ export default function Drawer({
   setShiftPage, setOnsitePage, setOtPage, setLeavePage,
   setAdminPage, setProfilePage, setKnowledgePage,
   setRobotStatsPage,
+  setRobotIssuesPage,
   isDev, onlineCount, setShowOnlineUsers,
   openAddProj, handleImportFile, handleImportCaseFile,
 }) {
@@ -114,6 +115,8 @@ export default function Drawer({
           onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
         <DrawerItem active={false} color="#6B21A8" icon="📊" label="สถิติหุ่นยนต์" count={""}
           onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
+        <DrawerItem active={false} color="#DC2626" icon="🛠️" label="แจ้งเหตุ/แจ้งซ่อม" count={""}
+          onClick={()=>{ setRobotIssuesPage(true); onClose(); }}/>
 
         {/* โครงการ */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 8px 8px" }}>
