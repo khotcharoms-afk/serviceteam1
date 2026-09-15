@@ -129,5 +129,21 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (req.method === "DELETE") {
+    try {
+      const { issueId } = req.query;
+      if (!issueId) {
+        res.status(400).json({ error: "missing-fields" });
+        return;
+      }
+      await db.collection("robotIssues").doc(issueId).delete();
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error("robot-issues-proxy DELETE error:", err);
+      res.status(500).json({ error: "delete-failed" });
+    }
+    return;
+  }
+
   res.status(405).json({ error: "method-not-allowed" });
 }
