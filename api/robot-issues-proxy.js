@@ -66,13 +66,22 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const { status, category, limit } = req.query;
-      let ref = db.collection("robotIssues").orderBy("createdAt", "desc");
-      if (status) ref = ref.where("status", "==", status);
-      if (category) ref = ref.where("category", "==", category);
-      ref = ref.limit(limit ? parseInt(limit, 10) : 50);
+      const wantLimit = limit ? parseInt(limit, 10) : 50;
 
-      const snap = await ref.get();
-      const issues = snap.docs.map((d) => {
+      // สำคัญ: ไม่ใช้ .where(...) ร่วมกับ .orderBy(...) ที่ field ต่างกัน
+      // เพราะ Firestore จะต้องมี composite index ถึงจะ query แบบนั้นได้
+      // (ตอนไม่ filter อะไรเลยมันผ่านเพราะเป็น orderBy เดี่ยวๆ ไม่ต้องมี index)
+      // แก้โดยดึงข้อมูลแบบเรียงลำดับอย่างเดียว (query เดียว ไม่ต้อง index เพิ่ม)
+      // แล้วมากรอง status/category ด้วยโค้ดเองแทน
+      const fetchLimit = status || category ? Math.max(wantLimit * 5, 200) : wantLimit;
+
+      const snap = await db
+        .collection("robotIssues")
+        .orderBy("createdAt", "desc")
+        .limit(fetchLimit)
+        .get();
+
+      let issues = snap.docs.map((d) => {
         const data = d.data();
         return {
           id: d.id,
@@ -81,6 +90,12 @@ export default async function handler(req, res) {
           updatedAt: data.updatedAt?.toDate?.().toISOString() || null,
         };
       });
+
+      if (status) issues = issues.filter((i) => i.status === status);
+      if (category) issues = issues.filter((i) => i.category === category);
+
+      issues = issues.slice(0, wantLimit);
+
       res.status(200).json({ issues });
     } catch (err) {
       console.error("robot-issues-proxy GET error:", err);
