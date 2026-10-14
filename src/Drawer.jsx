@@ -41,6 +41,7 @@ export default function Drawer({
   setAdminPage, setProfilePage, setKnowledgePage,
   setRobotStatsPage,
   setRobotIssuesPage,
+  setCaseLogPage,
   isDev, onlineCount, setShowOnlineUsers,
   openAddProj, handleImportFile, handleImportCaseFile,
 }) {
@@ -103,6 +104,8 @@ export default function Drawer({
 
         {/* ปฏิบัติการ */}
         <div style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>ปฏิบัติการ</div>
+        <DrawerItem active={false} color="#0f766e" icon="🗂️" label="บันทึกการรับเคส" count={""}
+          onClick={()=>{ setCaseLogPage(true); onClose(); }}/>
         <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
           onClick={()=>{ setOnsitePage(true); onClose(); }}/>
         <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}

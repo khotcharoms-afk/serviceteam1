@@ -18,6 +18,7 @@ const OnsitePage = lazy(() => import("./OnsitePage.jsx"));
 const OTPage = lazy(() => import("./OTPage.jsx"));
 const RobotStatsPage = lazy(() => import("./RobotStatsPage.jsx"));
 const RobotIssuesPage = lazy(() => import("./RobotIssuesPage.jsx"));
+const CaseLogPage = lazy(() => import("./CaseLogPage.jsx"));
 const KnowledgeHub = lazy(() => import("./KnowledgeHub.jsx"));
 const ProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const TaskBoard = lazy(() => import("./TaskBoard.jsx"));
@@ -50,6 +51,7 @@ export default function App({ currentUser, onSignOut }) {
   const [otPage,setOtPage]         = useState(false);
   const [robotStatsPage,setRobotStatsPage] = useState(false);
   const [robotIssuesPage,setRobotIssuesPage] = useState(false);
+  const [caseLogPage,setCaseLogPage] = useState(false);
   const [profilePage,setProfilePage] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
   const [globalQ, setGlobalQ]           = useState("");
@@ -728,6 +730,7 @@ export default function App({ currentUser, onSignOut }) {
   if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></Suspense></ThemeContext.Provider>;
   if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(caseLogPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><CaseLogPage onBack={()=>setCaseLogPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(robotIssuesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotIssuesPage onBack={()=>setRobotIssuesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></Suspense></ThemeContext.Provider>;
 
@@ -786,6 +789,7 @@ export default function App({ currentUser, onSignOut }) {
         setOtPage={setOtPage} setLeavePage={setLeavePage} setKnowledgePage={setKnowledgePage}
         setRobotStatsPage={setRobotStatsPage}
         setRobotIssuesPage={setRobotIssuesPage}
+        setCaseLogPage={setCaseLogPage}
         isDev={currentUser?.role==="dev"}
         onlineCount={onlineUsers.length}
         setShowOnlineUsers={setShowOnlineUsers}
