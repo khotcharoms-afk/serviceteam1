@@ -13,7 +13,10 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
   const [editIndex, setEditIndex] = useState(null);
   const [editText, setEditText] = useState("");
   const [editStatus, setEditStatus] = useState("");
+  const [resolution, setResolution] = useState("");
   if (!open || !caseData) return null;
+  // กำลังปิดเคสในรอบนี้ → ให้กรอกสรุปการแก้ไข
+  const closing = status === "done" && caseData.status !== "done";
 
   function startEdit(realIndex, u) {
     setEditIndex(realIndex);
@@ -47,8 +50,9 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
       time:   new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}),
     };
     const log = [...(caseData.updateLog||[]), entry];
-    onSave({ ...caseData, updateLog:log, status:status||caseData.status });
-    setText(""); setStatus(""); setError(""); onClose();
+    onSave({ ...caseData, updateLog:log, status:status||caseData.status,
+      ...(closing && resolution.trim() && { resolution: resolution.trim() }) });
+    setText(""); setStatus(""); setResolution(""); setError(""); onClose();
   }
 
   return (
@@ -74,7 +78,7 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
         {/* Status update */}
         <div style={{ marginBottom:14 }}>
           <div style={{ fontSize:11,color:c.text500,fontWeight:600,marginBottom:5 }}>เปลี่ยนสถานะ (ถ้ามี)</div>
-          <select value={status} onChange={e=>setStatus(e.target.value)}
+          <select value={status} onChange={e=>{ setStatus(e.target.value); if(e.target.value==="done") setResolution(caseData.resolution||""); }}
             style={IS({ cursor:"pointer" })}>
             <option value="">— คงสถานะเดิม —</option>
             {[
@@ -85,6 +89,15 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
             ].map(s=><option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
+
+        {closing && (
+          <div style={{ marginBottom:14 }}>
+            <div style={{ fontSize:11,color:c.text500,fontWeight:600,marginBottom:5 }}>สรุปการแก้ไข (แสดงในบันทึกการรับเคส)</div>
+            <textarea value={resolution} onChange={e=>setResolution(e.target.value)}
+              placeholder="แก้อะไรไป เช่น เปลี่ยนล้อขับเคลื่อน, รีเซ็ตระบบนำทาง... (ถ้าเว้นว่าง จะใช้ข้อความอัปเดตแทน)"
+              style={IS({ resize:"vertical", minHeight:70, lineHeight:1.6 })}/>
+          </div>
+        )}
 
         {/* Update text */}
         <div style={{ marginBottom:16 }}>

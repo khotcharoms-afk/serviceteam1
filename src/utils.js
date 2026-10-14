@@ -54,3 +54,47 @@ export const emptyCase = {
   tech: "", techs: [], date: today(), status: "open", note: "",
   handoverLog: [], updateLog: [],
 };
+
+// ── บันทึกการรับเคส ───────────────────────────────────────────
+// เวลารับ / เวลาปิด / สรุปการแก้ไข
+// เคสใหม่มี receivedAt + closedAt + resolution เก็บจริง
+// เคสเก่าที่สร้างก่อนมีฟีเจอร์นี้ → คำนวณย้อนจากข้อมูลที่มีอยู่
+
+// ใช้ตอนบันทึกเคส: จดเวลาปิดเมื่อเพิ่งเปลี่ยนเป็น "เสร็จสิ้น" / ล้างเมื่อเปิดเคสกลับ
+export function applyCloseInfo(next, prev, now) {
+  if (next.status !== "done") return { ...next, closedAt: null };
+  if (next.closedAt) return next;
+  // ปิดไว้ตั้งแต่ก่อนมีระบบนี้ → ไม่จดเวลาใหม่ ให้ getClosedAt ดึงจากประวัติอัปเดตแทน
+  if (prev?.status === "done") return next;
+  return { ...next, closedAt: now };
+}
+
+export function getReceivedAt(cs) {
+  if (cs?.receivedAt) return cs.receivedAt;
+  // id ของเคสคือ Date.now() ตอนกดสร้าง
+  if (/^\d{12,14}$/.test(cs?.id || "")) return new Date(Number(cs.id)).toISOString();
+  return cs?.activityAt || (cs?.date ? `${cs.date}T00:00:00` : null);
+}
+
+function lastDoneEntry(cs) {
+  return [...(cs?.updateLog || [])].reverse().find(u => u.status === "done") || null;
+}
+
+export function getClosedAt(cs) {
+  if (cs?.status !== "done") return null;
+  if (cs.closedAt) return cs.closedAt;
+  const u = lastDoneEntry(cs);
+  if (u?.date) return /^\d{1,2}:\d{2}$/.test(u.time || "") ? `${u.date}T${u.time.padStart(5,"0")}:00` : `${u.date}T00:00:00`;
+  return null;
+}
+
+export function getResolution(cs) {
+  return cs?.resolution || lastDoneEntry(cs)?.text || "";
+}
+
+export const fmtDateTime = (s) => {
+  if (!s) return "";
+  const d = new Date(s);
+  if (isNaN(d)) return "";
+  return d.toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
+};

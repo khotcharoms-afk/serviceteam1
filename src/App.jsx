@@ -2,7 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
 import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc, onSnapshot } from "firebase/firestore";
-import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS } from "./utils.js";
+import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS, applyCloseInfo } from "./utils.js";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
 import HandoverModal from "./HandoverModal.jsx";
@@ -18,6 +18,7 @@ const OnsitePage = lazy(() => import("./OnsitePage.jsx"));
 const OTPage = lazy(() => import("./OTPage.jsx"));
 const RobotStatsPage = lazy(() => import("./RobotStatsPage.jsx"));
 const RobotIssuesPage = lazy(() => import("./RobotIssuesPage.jsx"));
+const CaseLogPage = lazy(() => import("./CaseLogPage.jsx"));
 const KnowledgeHub = lazy(() => import("./KnowledgeHub.jsx"));
 const ProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const TaskBoard = lazy(() => import("./TaskBoard.jsx"));
@@ -50,6 +51,7 @@ export default function App({ currentUser, onSignOut }) {
   const [otPage,setOtPage]         = useState(false);
   const [robotStatsPage,setRobotStatsPage] = useState(false);
   const [robotIssuesPage,setRobotIssuesPage] = useState(false);
+  const [caseLogPage,setCaseLogPage] = useState(false);
   const [profilePage,setProfilePage] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
   const [globalQ, setGlobalQ]           = useState("");
@@ -291,11 +293,12 @@ export default function App({ currentUser, onSignOut }) {
       leaseEnd:    proj?.leaseEnd||null,
       site: caseForm.site==="__other__" ? "" : caseForm.site,
       updatedAt: now,
-      // activityAt เฉพาะตอนสร้างเคสใหม่ ไม่ใช่แก้ไข
-      ...(!editCase && { activityAt: now }),
+      // activityAt + receivedAt เฉพาะตอนสร้างเคสใหม่ ไม่ใช่แก้ไข
+      ...(!editCase && { activityAt: now, receivedAt: now }),
     };
+    const prevCase = editCase ? cases.find(x=>x.id===editCase) : null;
     const ok = await commitWrite(
-      setDoc(doc(db,"cases",editCase||Date.now().toString()), payload),
+      setDoc(doc(db,"cases",editCase||Date.now().toString()), applyCloseInfo(payload, prevCase, now)),
       editCase?"แก้ไขเคสเรียบร้อย":"บันทึกเคสเรียบร้อย"
     );
     if(ok){ setCaseModal(false); setEditCase(null); }
@@ -339,7 +342,8 @@ export default function App({ currentUser, onSignOut }) {
     if(saving) return;
     setSaving(true);
     const now = new Date().toISOString();
-    const ok = await commitWrite(setDoc(doc(db,"cases",updated.id), {...updated, updatedAt: now, activityAt: now}), "อัปเดตความคืบหน้าแล้ว");
+    const prevCase = cases.find(x=>x.id===updated.id);
+    const ok = await commitWrite(setDoc(doc(db,"cases",updated.id), applyCloseInfo({...updated, updatedAt: now, activityAt: now}, prevCase, now)), "อัปเดตความคืบหน้าแล้ว");
     if(ok) setUpdateCase(null);
     setSaving(false);
   }
@@ -420,7 +424,7 @@ export default function App({ currentUser, onSignOut }) {
     setSaving(true);
     const batch = writeBatch(db);
     const now = new Date().toISOString();
-    batch.set(doc(db,"cases",updated.id), {...updated, updatedAt: now, activityAt: now});
+    batch.set(doc(db,"cases",updated.id), applyCloseInfo({...updated, updatedAt: now, activityAt: now}, cases.find(x=>x.id===updated.id), now));
     const log = updated.handoverLog||[];
     const latest = log[log.length-1];
     let toUser = null;
@@ -728,6 +732,7 @@ export default function App({ currentUser, onSignOut }) {
   if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></Suspense></ThemeContext.Provider>;
   if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(caseLogPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><CaseLogPage onBack={()=>setCaseLogPage(false)} cases={cases} projects={projects}/></Suspense></ThemeContext.Provider>;
   if(robotIssuesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotIssuesPage onBack={()=>setRobotIssuesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></Suspense></ThemeContext.Provider>;
 
@@ -786,6 +791,7 @@ export default function App({ currentUser, onSignOut }) {
         setOtPage={setOtPage} setLeavePage={setLeavePage} setKnowledgePage={setKnowledgePage}
         setRobotStatsPage={setRobotStatsPage}
         setRobotIssuesPage={setRobotIssuesPage}
+        setCaseLogPage={setCaseLogPage}
         isDev={currentUser?.role==="dev"}
         onlineCount={onlineUsers.length}
         setShowOnlineUsers={setShowOnlineUsers}

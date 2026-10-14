@@ -212,6 +212,13 @@ export default function CaseModal({
           {STATUS_OPTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </Field>
+      {caseForm.status === "done" && (
+        <Field label="สรุปการแก้ไข (แสดงในบันทึกการรับเคส)">
+          <textarea style={IS({ resize:"vertical",minHeight:70,lineHeight:1.6 })}
+            value={caseForm.resolution||""} placeholder="แก้อะไรไป เช่น เปลี่ยนล้อขับเคลื่อน, รีเซ็ตระบบนำทาง..."
+            onChange={e => setCaseForm(f => ({ ...f, resolution:e.target.value }))}/>
+        </Field>
+      )}
       <Field label="หมายเหตุ / รายละเอียด">
         <textarea style={IS({ resize:"vertical",minHeight:80,lineHeight:1.7 })}
           value={caseForm.note} placeholder="รายละเอียดงาน, อุปกรณ์ที่ใช้..."
