@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { auth, db } from "./firebase";
+import { useTheme } from "./theme.js";
+import { IS as inputBase } from "./utils.js";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 
 export default function ProfilePage({ onBack, currentUser, onSignOut }) {
+  const { c } = useTheme();
   const [tab, setTab] = useState("info");
 
   // Info
@@ -28,9 +31,8 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
   const [pwError, setPwError]       = useState("");
   const [showPw, setShowPw]         = useState(false);
 
-  const IS = { width:"100%", border:"1px solid #e2e8f0", borderRadius:8,
-    padding:"10px 12px", fontSize:14, fontFamily:"inherit", outline:"none", background:"#f8fafc" };
-  const LB = { fontSize:11, color:"#94a3b8", fontWeight:700, textTransform:"uppercase",
+  const IS = inputBase({ padding:"10px 12px" });
+  const LB = { fontSize:11, color:c.text400, fontWeight:700, textTransform:"uppercase",
     letterSpacing:.5, marginBottom:4, display:"block" };
 
   useEffect(() => {
@@ -107,14 +109,14 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
   const initials = (currentUser?.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f8fafc", fontFamily:"'Noto Sans Thai','Sora',sans-serif" }}>
-      <header style={{ background:"#fff", borderBottom:"1px solid #e2e8f0",
+    <div style={{ minHeight:"100vh", background:c.bg, fontFamily:"'Noto Sans Thai','Sora',sans-serif" }}>
+      <header style={{ background:c.card, borderBottom:`1px solid ${c.border}`,
         padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
-        <button onClick={onBack} style={{ background:"#f1f5f9", border:"none", borderRadius:8,
-          padding:"6px 12px", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:"#475569" }}>
+        <button onClick={onBack} style={{ background:c.borderSoft, border:"none", borderRadius:8,
+          padding:"6px 12px", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:c.text500 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:15, fontWeight:700, color:"#0f172a" }}>โปรไฟล์</div>
+        <div style={{ fontSize:15, fontWeight:700, color:c.text900 }}>โปรไฟล์</div>
       </header>
 
       <div style={{ maxWidth:520, margin:"32px auto", padding:"0 16px" }}>
@@ -126,19 +128,19 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
             fontSize:28, color:"#fff", fontWeight:800, marginBottom:8 }}>
             {initials}
           </div>
-          <div style={{ fontSize:18, fontWeight:700, color:"#0f172a" }}>{currentUser?.name}</div>
-          <div style={{ fontSize:13, color:"#94a3b8" }}>{auth.currentUser?.email}</div>
+          <div style={{ fontSize:18, fontWeight:700, color:c.text900 }}>{currentUser?.name}</div>
+          <div style={{ fontSize:13, color:c.text400 }}>{auth.currentUser?.email}</div>
           <div style={{ display:"inline-block", marginTop:6, padding:"2px 10px",
-            background: currentUser?.role==="dev"?"#f0fdfa":currentUser?.role==="admin"?"#f5f3ff":"#eff6ff",
-            border:`1px solid ${currentUser?.role==="dev"?"#99f6e4":currentUser?.role==="admin"?"#e9d5ff":"#bfdbfe"}`,
+            background: currentUser?.role==="dev"?`${c.teal}1a`:currentUser?.role==="admin"?`${c.purple}1a`:`${c.blue}1a`,
+            border:`1px solid ${currentUser?.role==="dev"?`${c.teal}55`:currentUser?.role==="admin"?`${c.purple}55`:`${c.blue}55`}`,
             borderRadius:20, fontSize:11, fontWeight:700,
-            color: currentUser?.role==="dev"?"#0f766e":currentUser?.role==="admin"?"#7c3aed":"#2563eb" }}>
+            color: currentUser?.role==="dev"?c.teal:currentUser?.role==="admin"?c.purple:c.blue }}>
             {currentUser?.role==="dev"?"Dev":currentUser?.role==="admin"?"Admin":"User"}
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display:"flex", background:"#f1f5f9", borderRadius:10,
+        <div style={{ display:"flex", background:c.borderSoft, borderRadius:10,
           padding:4, marginBottom:20, gap:4 }}>
           {[
             {v:"info",l:"ข้อมูลส่วนตัว"},
@@ -147,8 +149,8 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           ].map(t=>(
             <button key={t.v} onClick={()=>{ setTab(t.v); setInfoMsg(""); setPwMsg(""); setPwError(""); setOtMsg(""); }}
               style={{ flex:1, padding:"8px 0", borderRadius:8, border:"none",
-                background:tab===t.v?"#fff":"transparent",
-                color:tab===t.v?"#0f172a":"#94a3b8",
+                background:tab===t.v?c.card:"transparent",
+                color:tab===t.v?c.text900:c.text400,
                 fontWeight:tab===t.v?700:500, fontSize:12, cursor:"pointer",
                 fontFamily:"inherit", boxShadow:tab===t.v?"0 1px 4px rgba(0,0,0,.08)":"none" }}>
               {t.l}
@@ -156,8 +158,8 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           ))}
         </div>
 
-        <div style={{ background:"#fff", borderRadius:16, padding:24,
-          boxShadow:"0 4px 24px rgba(0,0,0,.06)", border:"1px solid #e2e8f0" }}>
+        <div style={{ background:c.card, borderRadius:16, padding:24,
+          boxShadow:"0 4px 24px rgba(0,0,0,.06)", border:`1px solid ${c.border}` }}>
 
           {/* Tab: ข้อมูลส่วนตัว */}
           {tab === "info" && (
@@ -170,10 +172,10 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
               <div style={{ marginBottom:20 }}>
                 <label style={LB}>อีเมล</label>
                 <input value={auth.currentUser?.email||""} disabled
-                  style={{ ...IS, background:"#f1f5f9", color:"#94a3b8" }}/>
+                  style={{ ...IS, background:c.borderSoft, color:c.text400 }}/>
               </div>
               {infoMsg && <div style={{ marginBottom:12, fontSize:13,
-                color:infoMsg.startsWith("✅")?"#16a34a":"#ef4444" }}>{infoMsg}</div>}
+                color:infoMsg.startsWith("✅")?c.green:c.red }}>{infoMsg}</div>}
               <button onClick={saveInfo} disabled={infoSaving||!displayName.trim()}
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
                   borderRadius:10, padding:12, fontSize:14, fontWeight:600,
@@ -186,8 +188,8 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           {/* Tab: ข้อมูล OT */}
           {tab === "ot" && (
             <>
-              <div style={{ fontSize:12, color:"#64748b", marginBottom:16,
-                background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:8, padding:"8px 12px" }}>
+              <div style={{ fontSize:12, color:c.text500, marginBottom:16,
+                background:`${c.orange}1a`, border:`1px solid ${c.orange}55`, borderRadius:8, padding:"8px 12px" }}>
                 ℹ️ ข้อมูลนี้จะถูกใส่ใน Excel หน้าปก OT และใบ OR อัตโนมัติ
               </div>
               {[
@@ -208,7 +210,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 </div>
               ))}
               {otMsg && <div style={{ marginBottom:12, fontSize:13,
-                color:otMsg.startsWith("✅")?"#16a34a":"#ef4444" }}>{otMsg}</div>}
+                color:otMsg.startsWith("✅")?c.green:c.red }}>{otMsg}</div>}
               <button onClick={saveOT} disabled={otSaving}
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
                   borderRadius:10, padding:12, fontSize:14, fontWeight:600,
@@ -240,16 +242,16 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                   placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง"/>
               </div>
               <label style={{ display:"flex", alignItems:"center", gap:6,
-                fontSize:12, color:"#64748b", marginBottom:16, cursor:"pointer" }}>
+                fontSize:12, color:c.text500, marginBottom:16, cursor:"pointer" }}>
                 <input type="checkbox" checked={showPw} onChange={e=>setShowPw(e.target.checked)}
                   style={{ accentColor:"#F97316" }}/>
                 แสดงรหัสผ่าน
               </label>
-              {pwError && <div style={{ marginBottom:12, fontSize:13, color:"#ef4444",
-                background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8,
+              {pwError && <div style={{ marginBottom:12, fontSize:13, color:c.red,
+                background:`${c.red}1a`, border:`1px solid ${c.red}55`, borderRadius:8,
                 padding:"8px 12px" }}>⚠ {pwError}</div>}
-              {pwMsg && <div style={{ marginBottom:12, fontSize:13, color:"#16a34a",
-                background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8,
+              {pwMsg && <div style={{ marginBottom:12, fontSize:13, color:c.green,
+                background:`${c.green}1a`, border:`1px solid ${c.green}55`, borderRadius:8,
                 padding:"8px 12px" }}>{pwMsg}</div>}
               <button onClick={changePassword} disabled={pwSaving}
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
@@ -262,8 +264,8 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
         </div>
 
         <button onClick={onSignOut}
-          style={{ width:"100%", marginTop:16, background:"#fff",
-            border:"1px solid #fecaca", color:"#ef4444", borderRadius:10,
+          style={{ width:"100%", marginTop:16, background:c.card,
+            border:`1px solid ${c.red}55`, color:c.red, borderRadius:10,
             padding:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
           🚪 ออกจากระบบ
         </button>
