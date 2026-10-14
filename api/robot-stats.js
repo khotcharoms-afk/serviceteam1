@@ -25,10 +25,24 @@ export default async function handler(req, res) {
       body: params.toString(),
     });
 
-    const data = await upstream.json();
+    const text = await upstream.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch {
+      // ต้นทางไม่ได้ตอบเป็น JSON (เช่น หน้า error ของเซิร์ฟเวอร์)
+      return res.status(502).json({
+        error: `API ต้นทางตอบกลับผิดรูปแบบ (HTTP ${upstream.status})`,
+        detail: text.slice(0, 300),
+      });
+    }
 
     if (data.err_no !== 200) {
-      return res.status(502).json({ error: 'API ต้นทางตอบ error', detail: data });
+      // ใส่รหัสและข้อความจาก VIGGO ลงใน error ให้หน้าเว็บแสดงได้เลย
+      const msg = data.err_msg || data.msg || data.message || data.error || '';
+      return res.status(502).json({
+        error: `API ต้นทางตอบ error (err_no ${data.err_no ?? '-'}${msg ? `: ${msg}` : ''})`,
+        detail: data,
+      });
     }
 
     res.status(200).json(data);
