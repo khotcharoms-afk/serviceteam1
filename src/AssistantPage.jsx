@@ -150,12 +150,16 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
   useEffect(() => () => onChatChange?.(false), []);
 
   // ช่องพิมพ์ขยายตามข้อความ (สูงสุด ~5 บรรทัด)
+  // scrollHeight ไม่รวมเส้นขอบ (box-sizing: border-box) → ต้องบวกขอบเข้าไป ไม่งั้นช่องจะเตี้ยไปและมีแถบเลื่อน
+  // คำนวณเฉพาะตอนแผงเปิดอยู่ (ตอนซ่อน display:none ค่าความสูงเป็น 0)
   useEffect(() => {
     const el = inputRef.current;
-    if (!el) return;
+    if (!el || !open) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 132) + "px";
-  }, [input]);
+    const full = el.scrollHeight + (el.offsetHeight - el.clientHeight);
+    el.style.height = Math.min(full, 132) + "px";
+    el.style.overflowY = full > 132 ? "auto" : "hidden";
+  }, [input, open, isMobile]);
 
   useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [history, activity, open, vv?.height]);
 
@@ -347,7 +351,11 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         )}
         <button onClick={handleClose} title="พับเก็บ (บทสนทนายังอยู่)" aria-label="พับผู้ช่วย AI"
           style={{ background: "none", border: "none", fontSize: 22, color: c.text400, cursor: "pointer",
-            width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>⌄</button>
+            width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
         <button onClick={handleEnd} title={busy ? "พับเก็บ" : "ปิดและล้างแชท"} aria-label="ปิดผู้ช่วย AI"
           style={{ background: "none", border: "none", fontSize: 20, color: c.text400, cursor: "pointer",
             width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>✕</button>
@@ -439,10 +447,10 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         <form onSubmit={(e) => { e.preventDefault(); send(); }}
           style={{ maxWidth: 720, margin: "0 auto", display: "flex", gap: 8, alignItems: "flex-end" }}>
           <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} rows={1} maxLength={2000}
-            placeholder={isMobile ? "พิมพ์คำถาม…" : "พิมพ์คำถาม เช่น งานค้างของฉันมีอะไรบ้าง"}
+            placeholder="พิมพ์คำถาม…"
             enterKeyHint="send"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
-            style={{ flex: 1, resize: "none", maxHeight: 132, padding: "10px 14px", borderRadius: 12, lineHeight: 1.5,
+            style={{ flex: 1, resize: "none", minHeight: 44, maxHeight: 132, overflowY: "hidden", padding: "10px 14px", borderRadius: 12, lineHeight: 1.5,
               fontSize: isMobile ? 16 : 14, // ต่ำกว่า 16px iOS จะซูมหน้าจอตอนแตะช่องพิมพ์
               background: "var(--input-bg, #fff)", color: "var(--input-text, #1e293b)", border: "1px solid var(--input-border, #e2e8f0)",
               outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
