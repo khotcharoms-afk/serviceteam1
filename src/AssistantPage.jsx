@@ -9,23 +9,18 @@ import { useTheme } from "./theme.js";
 import { auth, db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { runAssistantTool, TOOL_LABELS } from "./assistantTools.js";
+import { quickActionsFor, runQuickAction } from "./assistantQuick.js";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
 const RED = "#DC2626";
 const MAX_TOOL_ROUNDS = 6;
 
-const SUGGESTIONS_USER = [
-  "งานของฉันที่ยังค้างอยู่มีอะไรบ้าง",
-  "เคสที่ค้างนานเกิน 14 วัน",
-  "โครงการไหนประกันจะหมดใน 60 วัน",
-  "สรุปเคสล่าสุดของโครงการ…",
-];
-const SUGGESTIONS_ADMIN = [
-  "สรุปงานค้างแยกตามช่าง",
-  "เดือนนี้เปิดเคสไปกี่เคส แยกตามประเภท",
-  "ประกันหรือสัญญาเช่าที่จะหมดใน 90 วัน",
-  "เคสที่ค้างนานเกิน 14 วัน",
+// ตัวอย่างคำถามที่ต้องใช้ AI (กดแล้วใส่ในช่องพิมพ์ให้แก้ต่อ)
+const AI_EXAMPLES = [
+  "สรุปเคสล่าสุดของโครงการ ",
+  "เบอร์ผู้ติดต่อของลูกค้า ",
+  "วิธีแก้ปัญหา ",
 ];
 
 // แสดง markdown แบบง่าย (ตัวหนา, รายการ, หัวข้อ) โดยไม่ใช้ innerHTML
@@ -44,6 +39,10 @@ function MarkdownLite({ text, c }) {
       {lines.map((line, i) => {
         const t = line.trim();
         if (!t) return <div key={i} style={{ height: 6 }} />;
+        // บรรทัดย่อยใต้รายการ (ขึ้นต้นด้วยช่องว่าง) → ย่อหน้าเข้าและสีจางลง
+        if (/^\s{2,}\S/.test(line) && !/^\s*([-*•]|\d+[.)])\s/.test(line)) {
+          return <div key={i} style={{ paddingLeft: 20, fontSize: "0.92em", color: c.text500 }}>{renderInline(t, i)}</div>;
+        }
         const h = /^#{1,4}\s+(.*)$/.exec(t);
         if (h) return <div key={i} style={{ fontWeight: 800, marginTop: 4, color: c.text900 }}>{renderInline(h[1], i)}</div>;
         const li = /^([-*•]|\d+[.)])\s+(.*)$/.exec(t);
@@ -174,6 +173,18 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
     return data;
   }
 
+  // ⚡ ถามด่วน — ตอบทันทีจากข้อมูลในเครื่อง ไม่เรียก AI
+  function quick(action) {
+    if (busy) return;
+    setError("");
+    const answer = runQuickAction(action.key, { ...dataRef.current, currentUser, role: currentUser?.role });
+    setHistory((h) => [
+      ...h,
+      { role: "user", content: [{ type: "text", text: action.label }] },
+      { role: "assistant", content: [{ type: "text", text: answer }], quick: true },
+    ]);
+  }
+
   async function send(text) {
     const q = (text ?? input).trim();
     if (!q || busy) return;
@@ -253,7 +264,14 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
     }
   });
 
-  const suggestions = isAdminOrDev ? SUGGESTIONS_ADMIN : SUGGESTIONS_USER;
+  const quickActions = quickActionsFor(currentUser?.role);
+  const chipStyle = (primary) => ({
+    border: `1px solid ${primary ? ORANGE + "55" : PURPLE + "33"}`,
+    background: primary ? ORANGE + "12" : PURPLE + "0d",
+    color: primary ? "#c2410c" : c.purple, borderRadius: 999, whiteSpace: "nowrap", flexShrink: 0,
+    padding: isMobile ? "9px 14px" : "7px 13px", fontSize: isMobile ? 14 : 13, cursor: busy ? "default" : "pointer",
+    fontFamily: "inherit", opacity: busy ? 0.55 : 1,
+  });
 
   // ข้อความล่าสุดของ AI ไว้โชว์บนแถบตอนพับ
   const lastAi = [...bubbles].reverse().find((b) => b.who === "ai")?.text?.replace(/[*#\n]+/g, " ").trim() || "";
@@ -346,14 +364,22 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
               <div style={{ fontSize: 13, color: c.text400, marginTop: 4 }}>
                 ถามเรื่องเคส {cases.length} เคส และ {projects.length} โครงการในระบบได้เลย
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 18 }}>
-                {suggestions.map((s) => (
-                  <button key={s} onClick={() => (s.endsWith("…") ? setInput(s.replace("…", "")) : send(s))}
-                    style={{ border: `1px solid ${PURPLE}33`, background: PURPLE + "0d", color: c.purple, borderRadius: 999,
-                      padding: isMobile ? "10px 14px" : "8px 14px", fontSize: isMobile ? 14 : 13, cursor: "pointer", fontFamily: "inherit",
-                      ...(isMobile ? { width: "100%" } : {}) }}>
-                    {s}
-                  </button>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#c2410c", marginTop: 18, marginBottom: 8 }}>
+                ⚡ ถามด่วน — ตอบทันที ไม่ใช้โควต้า AI
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                {quickActions.map((a) => (
+                  <button key={a.key} onClick={() => quick(a)} disabled={busy}
+                    style={{ ...chipStyle(true), ...(isMobile ? { width: "100%" } : {}) }}>⚡ {a.label}</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: c.text400, marginTop: 18, marginBottom: 8 }}>
+                🤖 หรือพิมพ์ถาม AI เช่น
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                {AI_EXAMPLES.map((t) => (
+                  <button key={t} onClick={() => { setInput(t); inputRef.current?.focus(); }}
+                    style={chipStyle(false)}>{t.trim()}…</button>
                 ))}
               </div>
             </div>
@@ -401,6 +427,15 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       {/* Input */}
       <div style={{ borderTop: `1px solid ${c.border}`, background: c.card, flexShrink: 0,
         padding: isMobile ? "8px 10px calc(8px + env(safe-area-inset-bottom))" : "10px 12px calc(10px + env(safe-area-inset-bottom))" }}>
+        {bubbles.length > 0 && (
+          <div style={{ maxWidth: 720, margin: "0 auto 8px", display: "flex", gap: 6, overflowX: "auto",
+            scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+            {quickActions.map((a) => (
+              <button key={a.key} onClick={() => quick(a)} disabled={busy}
+                style={{ ...chipStyle(true), padding: "5px 11px", fontSize: 12.5 }}>⚡ {a.label}</button>
+            ))}
+          </div>
+        )}
         <form onSubmit={(e) => { e.preventDefault(); send(); }}
           style={{ maxWidth: 720, margin: "0 auto", display: "flex", gap: 8, alignItems: "flex-end" }}>
           <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} rows={1} maxLength={2000}
