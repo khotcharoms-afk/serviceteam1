@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Field, PrimaryBtn, GhostBtn } from "../UI.jsx";
-import { IS, COLOR_OPTS, fmtDate, daysLeft } from "../utils.js";
+import { IS, COLOR_OPTS, fmtDate, daysLeft, mapsUrl } from "../utils.js";
 
 export default function ProjectModal({
   open, onClose, editProjId,
@@ -11,6 +11,7 @@ export default function ProjectModal({
   newProjLease, setNewProjLease,
   newProjHirePurchase, setNewProjHirePurchase,
   newProjCustomer, setNewProjCustomer,
+  newProjContact = {}, setNewProjContact = () => {},
   newProjContractType, setNewProjContractType,
   newProjContractStart, setNewProjContractStart,
   newProjProjectStatus, setNewProjProjectStatus,
@@ -136,6 +137,26 @@ export default function ProjectModal({
       <Field label="ลูกค้า">
         <input style={IS()} value={newProjCustomer} placeholder="ชื่อลูกค้า"
           onChange={e => setNewProjCustomer(e.target.value)}/>
+      </Field>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+        <Field label="ชื่อผู้ติดต่อ (ถ้ามี)">
+          <input style={IS()} value={newProjContact.contactName||""} placeholder="เช่น คุณสมชาย (ฝ่ายอาคาร)"
+            onChange={e => setNewProjContact(c => ({ ...c, contactName: e.target.value }))}/>
+        </Field>
+        <Field label="เบอร์โทร (ถ้ามี)">
+          <input type="tel" inputMode="tel" style={IS()} value={newProjContact.contactPhone||""} placeholder="08x-xxx-xxxx"
+            onChange={e => setNewProjContact(c => ({ ...c, contactPhone: e.target.value }))}/>
+        </Field>
+      </div>
+      <Field label="Location (ถ้ามี)">
+        <input style={IS()} value={newProjContact.location||""} placeholder="ที่อยู่ หรือวางลิงก์ Google Maps"
+          onChange={e => setNewProjContact(c => ({ ...c, location: e.target.value }))}/>
+        {mapsUrl(newProjContact.location) && (
+          <a href={mapsUrl(newProjContact.location)} target="_blank" rel="noopener noreferrer"
+            style={{ display:"inline-block",fontSize:11,color:"#2563eb",marginTop:4,fontWeight:600 }}>
+            📍 ทดลองเปิดแผนที่
+          </a>
+        )}
       </Field>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
         <Field label="ประเภทสัญญา">

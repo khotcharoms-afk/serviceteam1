@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
+import { FEATURE_SHIFT } from "../utils.js";
 import { collection, onSnapshot, query, where, getDocs } from "firebase/firestore";
 
 export function useFirestore() {
@@ -46,7 +47,7 @@ export function useFirestore() {
       setLoading(false);
     }).catch(errHandler);
 
-    getDocs(collection(db,"shifts")).then(snap => {
+    if (FEATURE_SHIFT) getDocs(collection(db,"shifts")).then(snap => {
       setShifts(snap.docs.map(d=>({id:d.id,...d.data()})));
     }).catch(errHandler);
 
@@ -57,16 +58,16 @@ export function useFirestore() {
       setDeletedCases(all);
     }).catch(errHandler);
 
-    getDocs(collection(db,"shiftTypes")).then(snap => {
+    if (FEATURE_SHIFT) getDocs(collection(db,"shiftTypes")).then(snap => {
       setShiftTypes(snap.docs.map(d=>({id:d.id,...d.data()}))
         .sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||"")));
     }).catch(errHandler);
 
-    getDocs(collection(db,"userSchedules")).then(snap => {
+    if (FEATURE_SHIFT) getDocs(collection(db,"userSchedules")).then(snap => {
       setUserSchedules(snap.docs.map(d=>({id:d.id,...d.data()})));
     }).catch(errHandler);
 
-    getDocs(collection(db,"shiftMembers")).then(snap => {
+    if (FEATURE_SHIFT) getDocs(collection(db,"shiftMembers")).then(snap => {
       setShiftMembers(snap.docs.map(d=>({id:d.id,...d.data()})));
     }).catch(errHandler);
 

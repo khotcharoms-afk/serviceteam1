@@ -6,7 +6,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "./theme.js";
-import { auth } from "./firebase";
+import { auth, db } from "./firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { runAssistantTool, TOOL_LABELS } from "./assistantTools.js";
 
 const ORANGE = "#F97316";
@@ -76,7 +77,71 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
   const dataRef = useRef({ cases, projects });
   dataRef.current = { cases, projects };
 
-  useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [history, activity, open]);
+  // Knowledge Hub โหลดครั้งแรกที่ AI ต้องค้น แล้วเก็บไว้ (อายุ 10 นาที) ไม่เพิ่ม reads ถ้าไม่มีใครถามเรื่องนี้
+  const knowledgeRef = useRef({ list: null, at: 0 });
+  async function loadKnowledge() {
+    const k = knowledgeRef.current;
+    if (k.list && Date.now() - k.at < 10 * 60 * 1000) return k.list;
+    const snap = await getDocs(collection(db, "knowledge"));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    knowledgeRef.current = { list, at: Date.now() };
+    return list;
+  }
+
+  const inputRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // ── มือถือ ───────────────────────────────────────────────
+  // จอแคบ = แผงเต็มจอ และตามขนาด visualViewport เพื่อให้ช่องพิมพ์อยู่เหนือคีย์บอร์ดเสมอ (iOS ไม่ย่อ layout ให้เอง)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 600px)").matches);
+  const [vv, setVv] = useState(null); // { top, height } ของพื้นที่ที่มองเห็นจริง
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    const onMq = () => setIsMobile(mq.matches);
+    mq.addEventListener?.("change", onMq);
+    const v = window.visualViewport;
+    const onVv = () => v && setVv({ top: v.offsetTop, height: v.height });
+    onVv();
+    v?.addEventListener("resize", onVv);
+    v?.addEventListener("scroll", onVv);
+    return () => {
+      mq.removeEventListener?.("change", onMq);
+      v?.removeEventListener("resize", onVv);
+      v?.removeEventListener("scroll", onVv);
+    };
+  }, []);
+
+  // ล็อกการเลื่อนหน้าหลังแผงบนมือถือ
+  useEffect(() => {
+    if (!open || !isMobile) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open, isMobile]);
+
+  // ปุ่มย้อนกลับของมือถือ/เบราว์เซอร์ = ปิดแผง (ไม่ออกจากแอป)
+  useEffect(() => {
+    if (!open) return;
+    window.history.pushState({ aiPanel: true }, "");
+    const onPop = () => onCloseRef.current?.();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [open]);
+  function handleClose() {
+    if (window.history.state?.aiPanel) window.history.back(); // popstate จะเรียก onClose ให้
+    else onClose?.();
+  }
+
+  // ช่องพิมพ์ขยายตามข้อความ (สูงสุด ~5 บรรทัด)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 132) + "px";
+  }, [input]);
+
+  useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [history, activity, open, vv?.height]);
 
   async function callServer(messages) {
     const user = auth.currentUser;
@@ -130,9 +195,13 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
         }
 
         setActivity(toolUses.map((t) => TOOL_LABELS[t.name] || t.name).join(" · ") + "…");
+        let knowledge = [];
+        if (toolUses.some((t) => t.name === "search_knowledge")) {
+          try { knowledge = await loadKnowledge(); } catch (e) { console.error("load knowledge:", e); }
+        }
         const results = toolUses.map((t) => {
           const r = runAssistantTool(t.name, t.input, {
-            ...dataRef.current, currentUser, role: data.role, // role จาก server ที่ตรวจแล้ว
+            ...dataRef.current, knowledge, currentUser, role: data.role, // role จาก server ที่ตรวจแล้ว
           });
           return { type: "tool_result", tool_use_id: t.id, content: r.content, ...(r.isError ? { is_error: true } : {}) };
         });
@@ -170,10 +239,15 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
 
   return (
     <div style={{
-      position: "fixed", left: 0, top: 0, bottom: 0, width: "min(420px, 100vw)", zIndex: 150,
+      position: "fixed", left: 0, zIndex: 150,
+      ...(isMobile && vv
+        ? { top: vv.top, height: vv.height, width: "100vw" }
+        : { top: 0, bottom: 0, width: isMobile ? "100vw" : "min(420px, 100vw)" }),
       display: open ? "flex" : "none", flexDirection: "column", background: c.bg,
-      borderRight: `1px solid ${c.border}`, boxShadow: "6px 0 28px rgba(15,23,42,.18)",
+      borderRight: isMobile ? "none" : `1px solid ${c.border}`,
+      boxShadow: isMobile ? "none" : "6px 0 28px rgba(15,23,42,.18)",
       fontFamily: "'Noto Sans Thai','Sora',sans-serif", animation: "aiSlide .18s ease-out",
+      overscrollBehavior: "contain",
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
@@ -182,28 +256,33 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
       `}</style>
 
       {/* Header — แบบเดียวกับ RobotIssuesPage */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: `1px solid ${c.border}`, background: c.card, flexShrink: 0 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: PURPLE + "16", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🤖</div>
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 12,
+        padding: isMobile ? "calc(8px + env(safe-area-inset-top)) 8px 8px 12px" : "14px 16px",
+        borderBottom: `1px solid ${c.border}`, background: c.card, flexShrink: 0 }}>
+        <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: 10, background: PURPLE + "16", display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 15 : 17, flexShrink: 0 }}>🤖</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>ผู้ช่วย AI</div>
-          <div style={{ fontSize: 11.5, color: c.text400 }}>ถามข้อมูลเคส โครงการ งานค้าง และประกันใกล้หมด</div>
+          {!isMobile && <div style={{ fontSize: 11.5, color: c.text400 }}>ถามข้อมูลเคส โครงการ งานค้าง และประกันใกล้หมด</div>}
         </div>
         {history.length > 0 && (
           <button onClick={() => { if (!busy) { setHistory([]); setError(""); } }} disabled={busy}
             style={{ border: `1px solid ${c.border}`, background: "transparent", color: c.text500, borderRadius: 999,
-              padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: busy ? "default" : "pointer", fontFamily: "inherit" }}>
-            ＋ แชทใหม่
+              padding: isMobile ? "8px 12px" : "6px 12px", fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0,
+              cursor: busy ? "default" : "pointer", fontFamily: "inherit" }}>
+            {isMobile ? "＋ ใหม่" : "＋ แชทใหม่"}
           </button>
         )}
-        <button onClick={onClose} title="ปิด"
-          style={{ background: "none", border: "none", fontSize: 18, color: c.text400, cursor: "pointer", padding: 4, lineHeight: 1 }}>✕</button>
+        <button onClick={handleClose} title="ปิด" aria-label="ปิดผู้ช่วย AI"
+          style={{ background: "none", border: "none", fontSize: 20, color: c.text400, cursor: "pointer",
+            width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>✕</button>
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "18px 16px" }}>
+      <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain",
+        padding: isMobile ? "14px 12px" : "18px 16px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
           {bubbles.length === 0 && (
-            <div style={{ textAlign: "center", padding: "28px 8px 8px" }}>
+            <div style={{ textAlign: "center", padding: isMobile ? "16px 4px 8px" : "28px 8px 8px" }}>
               <div style={{ fontSize: 34 }}>🤖</div>
               <div style={{ fontSize: 15, fontWeight: 800, color: c.text900, marginTop: 6 }}>สวัสดี {currentUser?.name || ""}</div>
               <div style={{ fontSize: 13, color: c.text400, marginTop: 4 }}>
@@ -213,7 +292,8 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
                 {suggestions.map((s) => (
                   <button key={s} onClick={() => (s.endsWith("…") ? setInput(s.replace("…", "")) : send(s))}
                     style={{ border: `1px solid ${PURPLE}33`, background: PURPLE + "0d", color: c.purple, borderRadius: 999,
-                      padding: "8px 14px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                      padding: isMobile ? "10px 14px" : "8px 14px", fontSize: isMobile ? 14 : 13, cursor: "pointer", fontFamily: "inherit",
+                      ...(isMobile ? { width: "100%" } : {}) }}>
                     {s}
                   </button>
                 ))}
@@ -227,7 +307,7 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
             ) : (
               <div key={b.key} style={{ display: "flex", justifyContent: b.who === "me" ? "flex-end" : "flex-start" }}>
                 <div style={{
-                  maxWidth: "86%", padding: "10px 14px", borderRadius: 14, fontSize: 14, lineHeight: 1.65,
+                  maxWidth: isMobile ? "90%" : "86%", padding: "10px 14px", borderRadius: 14, fontSize: isMobile ? 15 : 14, lineHeight: 1.65,
                   whiteSpace: b.who === "me" ? "pre-wrap" : "normal", wordBreak: "break-word",
                   background: b.who === "me" ? ORANGE : c.card,
                   color: b.who === "me" ? "#fff" : c.text900,
@@ -261,24 +341,30 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
       </div>
 
       {/* Input */}
-      <div style={{ borderTop: `1px solid ${c.border}`, background: c.card, padding: "10px 12px calc(10px + env(safe-area-inset-bottom))", flexShrink: 0 }}>
+      <div style={{ borderTop: `1px solid ${c.border}`, background: c.card, flexShrink: 0,
+        padding: isMobile ? "8px 10px calc(8px + env(safe-area-inset-bottom))" : "10px 12px calc(10px + env(safe-area-inset-bottom))" }}>
         <form onSubmit={(e) => { e.preventDefault(); send(); }}
           style={{ maxWidth: 720, margin: "0 auto", display: "flex", gap: 8, alignItems: "flex-end" }}>
-          <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} maxLength={2000}
-            placeholder="พิมพ์คำถาม เช่น งานค้างของฉันมีอะไรบ้าง"
+          <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} rows={1} maxLength={2000}
+            placeholder={isMobile ? "พิมพ์คำถาม…" : "พิมพ์คำถาม เช่น งานค้างของฉันมีอะไรบ้าง"}
+            enterKeyHint="send"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
-            style={{ flex: 1, resize: "none", maxHeight: 120, padding: "10px 14px", borderRadius: 12, fontSize: 14, lineHeight: 1.5,
+            style={{ flex: 1, resize: "none", maxHeight: 132, padding: "10px 14px", borderRadius: 12, lineHeight: 1.5,
+              fontSize: isMobile ? 16 : 14, // ต่ำกว่า 16px iOS จะซูมหน้าจอตอนแตะช่องพิมพ์
               background: "var(--input-bg, #fff)", color: "var(--input-text, #1e293b)", border: "1px solid var(--input-border, #e2e8f0)",
               outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
           <button type="submit" disabled={busy || !input.trim()}
             style={{ background: busy || !input.trim() ? c.border : PURPLE, color: "#fff", border: "none", borderRadius: 12,
-              padding: "10px 16px", fontSize: 14, fontWeight: 700, cursor: busy || !input.trim() ? "default" : "pointer", fontFamily: "inherit", flexShrink: 0 }}>
+              padding: "10px 16px", minHeight: 44, minWidth: 56, fontSize: 15, fontWeight: 700,
+              cursor: busy || !input.trim() ? "default" : "pointer", fontFamily: "inherit", flexShrink: 0 }}>
             ส่ง
           </button>
         </form>
-        <div style={{ maxWidth: 720, margin: "6px auto 0", fontSize: 10.5, color: c.text400, textAlign: "center" }}>
-          AI อาจตอบผิดได้ ตรวจสอบกับข้อมูลในหน้าเคสก่อนนำไปใช้
-        </div>
+        {!(isMobile && vv && vv.height < window.innerHeight * 0.75) && ( // ซ่อนตอนคีย์บอร์ดเปิดบนมือถือ ให้มีที่อ่านแชทมากขึ้น
+          <div style={{ maxWidth: 720, margin: "6px auto 0", fontSize: 10.5, color: c.text400, textAlign: "center" }}>
+            AI อาจตอบผิดได้ ตรวจสอบกับข้อมูลในหน้าเคสก่อนนำไปใช้
+          </div>
+        )}
       </div>
     </div>
   );

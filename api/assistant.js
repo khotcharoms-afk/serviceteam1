@@ -77,10 +77,10 @@ const TOOL_DEFS = {
   },
   list_projects: {
     name: "list_projects",
-    description: "รายชื่อโครงการ พร้อมลูกค้า สถานะโครงการ ไซต์ วันหมดประกัน และจำนวนเคส (ทั้งหมด/ค้าง)",
+    description: "รายชื่อโครงการ พร้อมลูกค้า ผู้ติดต่อ เบอร์โทร location สถานะโครงการ ไซต์ วันหมดประกัน และจำนวนเคส (ทั้งหมด/ค้าง) — ใช้ตอบคำถามเรื่องผู้ติดต่อ/เบอร์ลูกค้าด้วย",
     input_schema: {
       type: "object",
-      properties: { query: { type: "string", description: "กรองด้วยชื่อ/รหัส/ลูกค้า" } },
+      properties: { query: { type: "string", description: "กรองด้วยชื่อ/รหัสโครงการ ชื่อลูกค้า หรือชื่อผู้ติดต่อ" } },
     },
   },
   pending_work: {
@@ -111,6 +111,20 @@ const TOOL_DEFS = {
       },
     },
   },
+  search_knowledge: {
+    name: "search_knowledge",
+    description:
+      "ค้นบทความใน Knowledge Hub (คู่มือ/วิธีแก้ปัญหาที่ทีมบันทึกไว้: ชื่อเรื่อง ปัญหา วิธีแก้ แท็ก) " +
+      "ใช้เมื่อถูกถามวิธีแก้ปัญหา ขั้นตอน คู่มือ หรือความรู้ทางเทคนิค ถ้าไม่พบ ผลลัพธ์จะมีรายชื่อบทความทั้งหมดให้ลองค้นด้วยคำอื่น",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "คำค้น เช่น ชื่ออุปกรณ์ อาการ หรือรหัส error (เว้นวรรคได้หลายคำ)" },
+        tag: { type: "string", description: "กรองด้วยแท็ก (ถ้ามี)" },
+        limit: { type: "integer", minimum: 1, maximum: 10, description: "ค่าเริ่มต้น 5" },
+      },
+    },
+  },
   case_stats: {
     name: "case_stats",
     description: "สถิติเคสแบบ Dashboard: นับจำนวนเคสแยกตาม status / tech / project / type / month ในช่วงวันที่ที่กำหนด",
@@ -133,9 +147,9 @@ const TOOL_DEFS = {
 //              และดูสัญญาเช่า/เช่าซื้อได้ใน expiring_contracts
 //  pending/disabled/ไม่มี users doc : ใช้ไม่ได้
 const ROLE_TOOLS = {
-  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts"],
-  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "case_stats"],
-  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "case_stats"],
+  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge"],
+  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
+  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
 };
 
 export function toolsForRole(role) {
@@ -310,7 +324,7 @@ function systemPrompt(user) {
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" }); // YYYY-MM-DD
   const roleLabel = user.role === "admin" ? "Admin" : user.role === "dev" ? "Dev" : "ช่าง/ผู้ใช้ทั่วไป";
   return [
-    "คุณคือ \"ผู้ช่วย AI\" ของระบบ ServiceLog ของบริษัท เมทเธียร์ (Metthier) ซึ่งทีมบริการใช้บันทึกเคสงานซ่อม/ติดตั้ง และโครงการลูกค้า",
+    "คุณคือ \"ผู้ช่วย AI\" ของระบบ ServiceLog ของบริษัท เมทเธียร์ (Metthier) ซึ่งทีมบริการใช้บันทึกเคสงานซ่อม/ติดตั้ง โครงการลูกค้า และ Knowledge Hub (คลังวิธีแก้ปัญหาของทีม)",
     `วันนี้คือ ${today} (เวลาไทย) ผู้ถามคือ ${user.name || "ผู้ใช้"} บทบาท ${roleLabel}`,
     "",
     "กติกา:",
@@ -318,6 +332,8 @@ function systemPrompt(user) {
     "- ข้อมูลในระบบต้องมาจากผลของเครื่องมือเท่านั้น ห้ามเดาหรือแต่งตัวเลข/ชื่อเคส/วันที่ ถ้าไม่พบให้บอกตรงๆ",
     "- เรียกเครื่องมือได้หลายครั้งถ้าจำเป็น เช่น ค้นหาก่อนแล้วค่อยดูรายละเอียดเคส",
     "- ถ้าผู้ถามพูดถึง \"งานของฉัน\" ให้ใช้ assignedToMe=true",
+    "- คำถามเรื่องวิธีแก้ปัญหา ขั้นตอน คู่มือ หรือความรู้ทางเทคนิค ให้ค้น search_knowledge ก่อน (ลองทั้งคำไทยและอังกฤษ หรือรหัส error ถ้าครั้งแรกไม่พบ) และค้นเคสเก่าที่คล้ายกันด้วย search_cases ได้ ตอบโดยอ้างชื่อบทความ ถ้าไม่พบจริงจึงบอกว่ายังไม่มีใน Knowledge Hub",
+    "- ถามหาผู้ติดต่อ/เบอร์/ที่ตั้งลูกค้า ให้ใช้ list_projects ค้นด้วยชื่อลูกค้าหรือโครงการ ถ้าช่องนั้นว่างให้บอกว่ายังไม่ได้บันทึกไว้ในโครงการ",
     "- ถ้าผลลัพธ์ถูกตัด (truncated) ให้บอกจำนวนทั้งหมดและแนะนำให้ระบุเงื่อนไขเพิ่ม",
     "- อ้างถึงเคสด้วยชื่อเคส + โครงการ/ไซต์ และวันที่ แสดงวันที่เป็น วว/ดด/ปปปป",
     "- คุณดูข้อมูลได้อย่างเดียว แก้ไข/สร้าง/ลบเคสไม่ได้ ถ้าถูกขอให้แก้ไข ให้แนะนำให้ทำในหน้าเคสของแอป",

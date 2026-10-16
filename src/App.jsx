@@ -2,7 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
 import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc, onSnapshot } from "firebase/firestore";
-import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS } from "./utils.js";
+import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS, mapsUrl } from "./utils.js";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
 import HandoverModal from "./HandoverModal.jsx";
@@ -103,6 +103,7 @@ export default function App({ currentUser, onSignOut }) {
   const [newProjLease,setNewProjLease]       = useState("");
   const [newProjHirePurchase,setNewProjHirePurchase] = useState("");
   const [newProjCustomer,setNewProjCustomer]         = useState("");
+  const [newProjContact,setNewProjContact]           = useState({}); // { contactName, contactPhone, location }
   const [newProjContractType,setNewProjContractType] = useState("");
   const [newProjContractStart,setNewProjContractStart] = useState("");
   const [newProjProjectStatus,setNewProjProjectStatus] = useState("");
@@ -610,8 +611,8 @@ export default function App({ currentUser, onSignOut }) {
     setSaving(false);
   }
 
-  function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setProjModal(true); }
-  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjCustomer(p.customer||""); setNewProjContractType(p.contractType||""); setNewProjContractStart(p.contractStart||""); setNewProjProjectStatus(p.projectStatus||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
+  function openAddProj(){ setEditProjId(null); setNewProjCode(""); setNewProjName(""); setNewProjColor(COLOR_OPTS[0]); setNewProjWarranty(""); setNewProjLease(""); setNewProjSites([]); setNewProjContact({}); setProjModal(true); }
+  function openEditProj(p){ setEditProjId(p.id); setNewProjCode(p.code||""); setNewProjName(p.name); setNewProjColor(p.color); setNewProjWarranty(p.warrantyEnd||""); setNewProjLease(p.leaseEnd||""); setNewProjHirePurchase(p.hirePurchaseEnd||""); setNewProjCustomer(p.customer||""); setNewProjContact({ contactName:p.contactName||"", contactPhone:p.contactPhone||"", location:p.location||"" }); setNewProjContractType(p.contractType||""); setNewProjContractStart(p.contractStart||""); setNewProjProjectStatus(p.projectStatus||""); setNewProjSites((p.sites||[]).map(s=>typeof s==="object"?s:{name:s,refCode:"",travelRate:0})); setProjModal(true); }
   async function submitProj(){
     const name=newProjName.trim(); if(!name||saving) return;
     setSaving(true);
@@ -620,12 +621,15 @@ export default function App({ currentUser, onSignOut }) {
     const leaseEnd        = newProjLease||null;
     const hirePurchaseEnd = newProjHirePurchase||null;
     const customer      = newProjCustomer.trim()||null;
+    const contactName   = (newProjContact.contactName||"").trim()||null;
+    const contactPhone  = (newProjContact.contactPhone||"").trim()||null;
+    const location      = (newProjContact.location||"").trim()||null;
     const contractType  = newProjContractType||null;
     const contractStart = newProjContractStart||null;
     const projectStatus = newProjProjectStatus||null;
     const batch = writeBatch(db);
     const code = newProjCode.trim();
-    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, customer, contractType, contractStart, projectStatus, sites:newProjSites });
+    batch.set(doc(db,"projects",pid),{ code, name, color:newProjColor, warrantyEnd, leaseEnd, hirePurchaseEnd, customer, contactName, contactPhone, location, contractType, contractStart, projectStatus, sites:newProjSites });
     if(editProjId){
       cases.filter(c=>c.projectId===editProjId).forEach(c=>{
         batch.set(doc(db,"cases",c.id),{ warrantyEnd, leaseEnd, hirePurchaseEnd },{ merge:true });
@@ -824,6 +828,20 @@ export default function App({ currentUser, onSignOut }) {
                   padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",
                   color:"#ef4444",fontWeight:600,whiteSpace:"nowrap" }}>🗑 ลบ</button>
             </>)}
+          </div>
+        )}
+        {view!=="overview" && activeProj && (activeProj.contactName||activeProj.contactPhone||activeProj.location) && (
+          <div style={{ display:"flex",flexWrap:"wrap",gap:"6px 14px",alignItems:"center",marginTop:-6,marginBottom:14,
+            fontSize:12.5,color:themeC.text500 }}>
+            {activeProj.contactName && <span>👤 {activeProj.contactName}</span>}
+            {activeProj.contactPhone && (
+              <a href={`tel:${activeProj.contactPhone.replace(/[^\d+]/g,"")}`}
+                style={{ color:themeC.blue,textDecoration:"none",fontWeight:600 }}>📞 {activeProj.contactPhone}</a>
+            )}
+            {activeProj.location && (
+              <a href={mapsUrl(activeProj.location)} target="_blank" rel="noopener noreferrer"
+                style={{ color:themeC.blue,textDecoration:"none",fontWeight:600 }}>📍 เปิดแผนที่</a>
+            )}
           </div>
         )}
         {view==="overview" && (()=>{
@@ -1067,7 +1085,7 @@ export default function App({ currentUser, onSignOut }) {
 
       {/* ผู้ช่วย AI — ปุ่มลอยมุมซ้ายล่าง + แผงแชทด้านซ้าย */}
       {!assistantOpen && (
-        <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:24,left:20,
+        <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:20,
           background:"linear-gradient(135deg,#6B21A8,#F97316)",border:"none",color:"#fff",
           width:52,height:52,borderRadius:"50%",fontSize:24,cursor:"pointer",
           boxShadow:"0 6px 20px rgba(107,33,168,.4)",zIndex:40,display:"flex",
@@ -1224,6 +1242,7 @@ export default function App({ currentUser, onSignOut }) {
         newProjLease={newProjLease} setNewProjLease={setNewProjLease}
         newProjHirePurchase={newProjHirePurchase} setNewProjHirePurchase={setNewProjHirePurchase}
         newProjCustomer={newProjCustomer} setNewProjCustomer={setNewProjCustomer}
+        newProjContact={newProjContact} setNewProjContact={setNewProjContact}
         newProjContractType={newProjContractType} setNewProjContractType={setNewProjContractType}
         newProjContractStart={newProjContractStart} setNewProjContractStart={setNewProjContractStart}
         newProjProjectStatus={newProjProjectStatus} setNewProjProjectStatus={setNewProjProjectStatus}

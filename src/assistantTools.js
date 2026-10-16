@@ -8,9 +8,9 @@ const STATUS_LABEL = { open: "เปิดเคส", inprogress: "กำลั�
 const ACTIVE = new Set(["open", "inprogress", "hold"]);
 
 const ROLE_TOOLS = {
-  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts"],
-  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "case_stats"],
-  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "case_stats"],
+  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge"],
+  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
+  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
 };
 
 const lc = (s) => (s == null ? "" : String(s)).toLowerCase();
@@ -33,7 +33,8 @@ function makeCtx({ cases, projects, currentUser, role }) {
   function findProjects(q) {
     const s = lc(q).trim();
     if (!s) return null;
-    return projects.filter((p) => p.id === q || lc(p.code) === s || lc(p.name).includes(s) || lc(p.code).includes(s));
+    return projects.filter((p) => p.id === q || lc(p.code) === s ||
+      [p.name, p.code, p.customer, p.contactName].some((x) => lc(x).includes(s)));
   }
 
   function caseSummary(c) {
@@ -124,6 +125,7 @@ const TOOLS = {
         const pc = cases.filter((c) => c.projectId === p.id);
         const row = {
           id: p.id, code: p.code || "", name: p.name || "", customer: p.customer || "",
+          contactName: p.contactName || "", contactPhone: p.contactPhone || "", location: p.location || "",
           projectStatus: p.projectStatus || "",
           sites: (p.sites || []).map((s) => (typeof s === "object" ? s.name : s)).filter(Boolean),
           warrantyEnd: p.warrantyEnd || null,
@@ -190,6 +192,44 @@ const TOOLS = {
     return { withinDays: within, total: rows.length, items: rows.slice(0, 100) };
   },
 
+  // knowledge = บทความจาก Firestore "knowledge" (AssistantPage โหลดให้ครั้งแรกที่ใช้เครื่องมือนี้)
+  search_knowledge(input, { knowledge = [] }) {
+    const limit = Math.max(1, Math.min(10, input.limit || 5));
+    const q = lc(input.query).trim();
+    const words = q.split(/[\s,]+/).filter((w) => w.length >= 2);
+    let list = knowledge;
+    if (input.tag) list = list.filter((a) => (a.tags || []).some((t) => lc(t).includes(lc(input.tag))));
+
+    const scored = list.map((a) => {
+      const title = lc(a.title), tags = lc((a.tags || []).join(" ")), body = lc(`${a.problem || ""} ${a.solution || ""}`);
+      let score = 0;
+      if (q && (title.includes(q))) score += 10;
+      if (q && body.includes(q)) score += 4;
+      for (const w of words) {
+        if (title.includes(w)) score += 3;
+        if (tags.includes(w)) score += 2;
+        if (body.includes(w)) score += 1;
+      }
+      return { a, score: q ? score : 1 };
+    }).filter((x) => x.score > 0).sort((x, y) => y.score - x.score);
+
+    const out = {
+      totalArticles: knowledge.length,
+      found: scored.length,
+      articles: scored.slice(0, limit).map(({ a }) => ({
+        id: a.id, title: a.title || "", tags: a.tags || [],
+        problem: (a.problem || "").slice(0, 800), solution: (a.solution || "").slice(0, 2500),
+        by: a.createdBy || "", date: (a.updatedAt || a.createdAt || "").slice(0, 10),
+      })),
+    };
+    if (!scored.length) {
+      // ไม่พบ → ส่งรายชื่อบทความ/แท็กทั้งหมด ให้ AI เลือกคำค้นใหม่หรือบทความที่ใกล้เคียง
+      out.allTitles = knowledge.slice(0, 80).map((a) => a.title).filter(Boolean);
+      out.allTags = [...new Set(knowledge.flatMap((a) => a.tags || []))].slice(0, 40);
+    }
+    return out;
+  },
+
   case_stats(input, { cases }, ctx) {
     const list = ctx.applyCommonFilters(cases, input);
     const keyOf = {
@@ -217,12 +257,12 @@ const TOOLS = {
 };
 
 // รันเครื่องมือหนึ่งตัว → คืน string JSON สำหรับ tool_result
-export function runAssistantTool(name, input, { cases = [], projects = [], currentUser, role }) {
+export function runAssistantTool(name, input, { cases = [], projects = [], knowledge = [], currentUser, role }) {
   if (!(ROLE_TOOLS[role] || []).includes(name) || !TOOLS[name]) {
     return { content: JSON.stringify({ error: "ไม่มีสิทธิ์ใช้เครื่องมือนี้" }), isError: true };
   }
   try {
-    const data = { cases, projects };
+    const data = { cases, projects, knowledge };
     const ctx = makeCtx({ cases, projects, currentUser, role });
     const result = TOOLS[name](input || {}, data, ctx);
     return { content: JSON.stringify(result), isError: !!result?.error };
@@ -239,4 +279,5 @@ export const TOOL_LABELS = {
   pending_work: "ดูงานที่ค้าง",
   expiring_contracts: "ตรวจประกัน/สัญญาใกล้หมด",
   case_stats: "สรุปสถิติเคส",
+  search_knowledge: "ค้น Knowledge Hub",
 };

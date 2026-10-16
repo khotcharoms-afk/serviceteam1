@@ -23,6 +23,11 @@ export const COLOR_OPTS = [
   "#ef4444","#06b6d4","#84cc16","#f43f5e","#a855f7","#14b8a6",
 ];
 
+// ── ฟีเจอร์ที่ปิดไว้ ──────────────────────────────────────────
+// ตารางกะ (ShiftCalendar) ไม่มีคนใช้ → ซ่อนเมนู/สิทธิ์ใน AdminUsers และไม่โหลดข้อมูลกะตอนเปิดแอป
+// อยากเปิดกลับ: เปลี่ยนเป็น true ที่บรรทัดนี้บรรทัดเดียว (โค้ดและข้อมูลใน Firestore ยังอยู่ครบ)
+export const FEATURE_SHIFT = false;
+
 // ── Helpers ───────────────────────────────────────────────────
 export const today = () => new Date().toISOString().slice(0, 10);
 
@@ -53,4 +58,13 @@ export const emptyCase = {
   projectId: "", site: "", siteOther: false, title: "", type: SERVICE_TYPES[0],
   tech: "", techs: [], date: today(), status: "open", note: "",
   handoverLog: [], updateLog: [],
+};
+
+// ลิงก์แผนที่จากช่อง location ของโครงการ — ถ้าเป็นลิงก์อยู่แล้ว (เช่น Google Maps) ใช้ตามนั้น
+// ถ้าเป็นที่อยู่/พิกัด ให้ค้นใน Google Maps
+export const mapsUrl = (loc) => {
+  const s = (loc || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s)}`;
 };
