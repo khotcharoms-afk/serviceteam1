@@ -52,7 +52,10 @@ export default function App({ currentUser, onSignOut }) {
   const [otPage,setOtPage]         = useState(false);
   const [robotStatsPage,setRobotStatsPage] = useState(false);
   const [robotIssuesPage,setRobotIssuesPage] = useState(false);
-  const [assistantPage,setAssistantPage] = useState(false);
+  // ผู้ช่วย AI เป็นแผงด้านซ้าย ไม่ใช่หน้าแยก — mount ครั้งแรกที่เปิด แล้วค้างไว้ให้แชทไม่หาย
+  const [assistantOpen,setAssistantOpen] = useState(false);
+  const [assistantMounted,setAssistantMounted] = useState(false);
+  const openAssistant = () => { setAssistantMounted(true); setAssistantOpen(true); };
   const [caseLogPage,setCaseLogPage] = useState(false);
   const [profilePage,setProfilePage] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
@@ -734,7 +737,6 @@ export default function App({ currentUser, onSignOut }) {
   if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(caseLogPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><CaseLogPage onBack={()=>setCaseLogPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(robotIssuesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotIssuesPage onBack={()=>setRobotIssuesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
-  if(assistantPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><AssistantPage onBack={()=>setAssistantPage(false)} currentUser={currentUser} cases={cases} projects={projects}/></Suspense></ThemeContext.Provider>;
   if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></Suspense></ThemeContext.Provider>;
 
   return (
@@ -792,7 +794,7 @@ export default function App({ currentUser, onSignOut }) {
         setOtPage={setOtPage} setLeavePage={setLeavePage} setKnowledgePage={setKnowledgePage}
         setRobotStatsPage={setRobotStatsPage}
         setRobotIssuesPage={setRobotIssuesPage}
-        setAssistantPage={setAssistantPage}
+        setAssistantPage={openAssistant}
         setCaseLogPage={setCaseLogPage}
         isDev={currentUser?.role==="dev"}
         onlineCount={onlineUsers.length}
@@ -1062,6 +1064,21 @@ export default function App({ currentUser, onSignOut }) {
           </>
         )}
       </div>
+
+      {/* ผู้ช่วย AI — ปุ่มลอยมุมซ้ายล่าง + แผงแชทด้านซ้าย */}
+      {!assistantOpen && (
+        <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:24,left:20,
+          background:"linear-gradient(135deg,#6B21A8,#F97316)",border:"none",color:"#fff",
+          width:52,height:52,borderRadius:"50%",fontSize:24,cursor:"pointer",
+          boxShadow:"0 6px 20px rgba(107,33,168,.4)",zIndex:40,display:"flex",
+          alignItems:"center",justifyContent:"center",lineHeight:1 }}>🤖</button>
+      )}
+      {assistantMounted && (
+        <Suspense fallback={null}>
+          <AssistantPage open={assistantOpen} onClose={()=>setAssistantOpen(false)}
+            currentUser={currentUser} cases={cases} projects={projects}/>
+        </Suspense>
+      )}
 
       {/* FAB */}
       <button onClick={openAddCase} style={{ position:"fixed",bottom:24,right:20,

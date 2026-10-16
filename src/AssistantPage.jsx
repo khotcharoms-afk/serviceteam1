@@ -1,4 +1,6 @@
-// src/AssistantPage.jsx — หน้า "ผู้ช่วย AI" แชทถามข้อมูลเคส/โครงการ/งานค้าง/ประกันใกล้หมด
+// src/AssistantPage.jsx — "ผู้ช่วย AI" แชทถามข้อมูลเคส/โครงการ/งานค้าง/ประกันใกล้หมด
+// แสดงเป็นแผงด้านซ้าย เปิดจากปุ่มลอย 🤖 มุมซ้ายล่าง (หรือเมนูใน Drawer)
+// ซ่อนด้วย open=false แทนการ unmount เพื่อให้บทสนทนายังอยู่เมื่อปิดแล้วเปิดใหม่
 // เรียก api/assistant.js (Gemini) ส่วนการค้นข้อมูลรันในเบราว์เซอร์ผ่าน src/assistantTools.js
 // กับ cases/projects ที่แอปโหลดไว้แล้ว
 
@@ -59,7 +61,7 @@ function MarkdownLite({ text, c }) {
   );
 }
 
-export default function AssistantPage({ onBack, currentUser, cases = [], projects = [] }) {
+export default function AssistantPage({ open = true, onClose, currentUser, cases = [], projects = [] }) {
   const { c } = useTheme();
   const isAdminOrDev = ["admin", "dev"].includes(currentUser?.role);
   // history = ข้อความรูปแบบ Anthropic Messages API ที่ส่งไป server
@@ -74,7 +76,7 @@ export default function AssistantPage({ onBack, currentUser, cases = [], project
   const dataRef = useRef({ cases, projects });
   dataRef.current = { cases, projects };
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [history, activity]);
+  useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [history, activity, open]);
 
   async function callServer(messages) {
     const user = auth.currentUser;
@@ -163,15 +165,20 @@ export default function AssistantPage({ onBack, currentUser, cases = [], project
   const suggestions = isAdminOrDev ? SUGGESTIONS_ADMIN : SUGGESTIONS_USER;
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{
+      position: "fixed", left: 0, top: 0, bottom: 0, width: "min(420px, 100vw)", zIndex: 150,
+      display: open ? "flex" : "none", flexDirection: "column", background: c.bg,
+      borderRight: `1px solid ${c.border}`, boxShadow: "6px 0 28px rgba(15,23,42,.18)",
+      fontFamily: "'Noto Sans Thai','Sora',sans-serif", animation: "aiSlide .18s ease-out",
+    }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
         @keyframes aiDot { 0%,80%,100% { opacity:.25 } 40% { opacity:1 } }
+        @keyframes aiSlide { from { transform: translateX(-24px); opacity: 0 } to { transform: none; opacity: 1 } }
       `}</style>
 
       {/* Header — แบบเดียวกับ RobotIssuesPage */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: `1px solid ${c.border}`, background: c.card, flexShrink: 0 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer", padding: 4, lineHeight: 1 }}>←</button>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: `1px solid ${c.border}`, background: c.card, flexShrink: 0 }}>
         <div style={{ width: 36, height: 36, borderRadius: 10, background: PURPLE + "16", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🤖</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>ผู้ช่วย AI</div>
@@ -184,6 +191,8 @@ export default function AssistantPage({ onBack, currentUser, cases = [], project
             ＋ แชทใหม่
           </button>
         )}
+        <button onClick={onClose} title="ปิด"
+          style={{ background: "none", border: "none", fontSize: 18, color: c.text400, cursor: "pointer", padding: 4, lineHeight: 1 }}>✕</button>
       </div>
 
       {/* Messages */}
