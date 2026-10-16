@@ -41,6 +41,7 @@ export default function Drawer({
   setAdminPage, setProfilePage, setKnowledgePage,
   setRobotStatsPage,
   setRobotIssuesPage,
+  setAssistantPage,
   setCaseLogPage,
   isDev, onlineCount, setShowOnlineUsers,
   openAddProj, handleImportFile, handleImportCaseFile,
@@ -120,6 +121,8 @@ export default function Drawer({
           onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
         <DrawerItem active={false} color="#DC2626" icon="🛠️" label="แจ้งเหตุ/แจ้งซ่อม" count={""}
           onClick={()=>{ setRobotIssuesPage(true); onClose(); }}/>
+        <DrawerItem active={false} color="#6B21A8" icon="🤖" label="ผู้ช่วย AI" count={""}
+          onClick={()=>{ setAssistantPage(true); onClose(); }}/>
 
         {/* โครงการ */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 8px 8px" }}>
