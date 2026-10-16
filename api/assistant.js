@@ -11,6 +11,8 @@
 //   GEMINI_API_KEY           (จำเป็น — สร้างฟรีที่ aistudio.google.com → Get API key)
 //   FIREBASE_SERVICE_ACCOUNT (มีอยู่แล้ว — ตัวเดียวกับ send-notification.js)
 //   GEMINI_MODEL             (ไม่บังคับ — ค่าเริ่มต้น gemini-3.8-flash)
+//   GEMINI_FALLBACK_MODELS   (ไม่บังคับ — โมเดลสำรองคั่นด้วย , ใช้เมื่อตัวหลักไม่ว่าง
+//                             ค่าเริ่มต้น gemini-3.6-flash,gemini-3.5-flash-lite)
 //
 // หมายเหตุ: แพ็กเกจฟรีของ Gemini API ระบุว่า Google อาจนำข้อมูลที่ส่งไปใช้ปรับปรุงผลิตภัณฑ์
 //
@@ -29,7 +31,12 @@ function getAdminApp() {
   return initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
 }
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const PRIMARY_MODEL = (process.env.GEMINI_MODEL || "gemini-3.8-flash").trim();
+const MODELS = [...new Set([
+  PRIMARY_MODEL,
+  ...(process.env.GEMINI_FALLBACK_MODELS ?? "gemini-3.6-flash,gemini-3.5-flash-lite")
+    .split(",").map((x) => x.trim()).filter(Boolean),
+])];
 const MAX_MESSAGES = 40;          // จำกัดความยาวประวัติแชทต่อคำขอ
 const MAX_BODY_CHARS = 300_000;   // กันคำขอใหญ่ผิดปกติ
 const MAX_TOOL_RESULT_CHARS = 30_000;
@@ -214,6 +221,7 @@ export function sanitizeMessages(raw, allowedTools) {
     });
     const entry = { role: msg.role, content: clean };
     if (msg.role === "assistant" && Array.isArray(msg.raw)) entry.raw = sanitizeRawParts(msg.raw, allowed);
+    if (msg.role === "assistant" && MODELS.includes(msg.model)) entry.model = msg.model;
     out.push(entry);
   }
 
@@ -261,7 +269,9 @@ export function toGeminiTools(tools) {
   }];
 }
 
-export function toGeminiContents(messages) {
+// ใช้ parts ดิบ (มี thoughtSignature) เฉพาะข้อความที่มาจากโมเดลเดียวกับที่กำลังเรียก
+// ข้อความจากโมเดลอื่นสร้าง parts ใหม่จาก block (signature ของโมเดลหนึ่งใช้กับอีกโมเดลไม่ได้)
+export function toGeminiContents(messages, model) {
   const nameById = new Map(); // tool_use id → ชื่อเครื่องมือ (functionResponse ต้องมี name)
   const geminiIdById = new Map(); // tool_use id → id ที่ Gemini ให้มา (ถ้ามี)
   return messages.map((m) => {
@@ -272,7 +282,8 @@ export function toGeminiContents(messages) {
           if (b.geminiId) geminiIdById.set(b.id, b.geminiId);
         }
       }
-      const parts = m.raw?.length ? m.raw : m.content.map((b) =>
+      const useRaw = m.raw?.length && (!m.model || m.model === model);
+      const parts = useRaw ? m.raw : m.content.map((b) =>
         b.type === "text" ? { text: b.text } : { functionCall: { name: b.name, args: b.input } });
       return { role: "model", parts };
     }
@@ -312,6 +323,45 @@ function systemPrompt(user) {
   ].join("\n");
 }
 
+// เรียก Gemini ตามลำดับโมเดล (ตัวหลัก → ตัวสำรอง) คืน { r, data, model }
+export async function callGeminiChain({ messages, tools, user, apiKey, fetchFn = fetch, sleep = (ms) => new Promise((ok) => setTimeout(ok, ms)) }) {
+  // กลางคำถาม (ข้อความสุดท้ายเป็นผลเครื่องมือ) ต้องใช้โมเดลเดิมต่อ เพราะ signature ผูกกับโมเดล
+  // ต้นคำถามใหม่ลองตัวหลักก่อน ถ้าไม่ว่างค่อยสลับไปตัวสำรอง
+  const last = messages[messages.length - 1];
+  const midQuestion = last.content.some((b) => b.type === "tool_result");
+  const prevModel = [...messages].reverse().find((m) => m.role === "assistant")?.model;
+  const chain = midQuestion && prevModel ? [prevModel] : MODELS;
+
+  const BUSY = [500, 502, 503, 504];
+  let r, data, model;
+  outer: for (const m of chain) {
+    model = m;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`;
+    const payload = JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt(user) }] },
+      contents: toGeminiContents(messages, m),
+      tools: toGeminiTools(tools),
+      generationConfig: { maxOutputTokens: 2048 },
+    });
+    // ตัวหลักลอง 2 ครั้ง ตัวสำรองครั้งเดียว (ถ้าใช้โมเดลเดียวลอง 3 ครั้ง)
+    const waits = chain.length === 1 ? [0, 1000, 2500] : m === chain[0] ? [0, 800] : [0];
+    for (const wait of waits) {
+      if (wait) await sleep(wait);
+      r = await fetchFn(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+        body: payload,
+      });
+      data = await r.json().catch(() => ({}));
+      if (r.ok) break outer;
+      if (BUSY.includes(r.status)) { console.warn(`Gemini ${m} busy:`, r.status); continue; }
+      if (r.status === 404 || r.status === 429) { console.warn(`Gemini ${m} unavailable:`, r.status); continue outer; }
+      break outer; // error อื่น (เช่น key ผิด) ไม่ต้องลองตัวอื่น
+    }
+  }
+  return { r, data, model };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   // trim กันช่องว่าง/ขึ้นบรรทัดใหม่ที่ติดมาตอนวาง key (ทำให้ header ไม่ถูกต้องแล้ว fetch พัง)
@@ -343,39 +393,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`;
-    const payload = JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt(user) }] },
-      contents: toGeminiContents(messages),
-      tools: toGeminiTools(tools),
-      generationConfig: { maxOutputTokens: 2048 },
-    });
-    // แพ็กเกจฟรีของ Gemini ตอบ 500/503 บ่อยตอนเซิร์ฟเวอร์คนใช้เยอะ → ลองใหม่สูงสุด 2 ครั้ง (รอ 1 และ 2.5 วินาที)
-    let r;
-    for (const wait of [0, 1000, 2500]) {
-      if (wait) await new Promise((ok) => setTimeout(ok, wait));
-      r = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-        body: payload,
-      });
-      if (![500, 502, 503, 504].includes(r.status)) break;
-      console.warn("Gemini busy, retrying:", r.status);
-    }
+    const { r, data, model } = await callGeminiChain({ messages, tools, user, apiKey });
 
-    const data = await r.json().catch(() => ({}));
     if (!r.ok) {
-      console.error("Gemini API error:", r.status, data?.error);
+      console.error("Gemini API error:", model, r.status, data?.error);
       const reason = JSON.stringify(data?.error || "");
       const msg =
         r.status === 429 ? "โควต้าฟรีของผู้ช่วย AI เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่"
         : /API_KEY_INVALID|API key not valid/i.test(reason) || r.status === 403 ? "GEMINI_API_KEY ไม่ถูกต้อง"
-        : r.status === 404 ? `ไม่พบโมเดล ${MODEL} — ตรวจค่า GEMINI_MODEL`
+        : r.status === 404 ? `ไม่พบโมเดล ${model} — ตรวจค่า GEMINI_MODEL / GEMINI_FALLBACK_MODELS`
         : r.status >= 500 ? "ผู้ช่วย AI ไม่ว่างชั่วคราว กรุณาลองใหม่"
         : "เรียกผู้ช่วย AI ไม่สำเร็จ";
       // admin/dev เห็นรหัสและข้อความจาก Gemini ไว้แก้ปัญหา
       const detail = user.role === "admin" || user.role === "dev"
-        ? ` (Gemini ${r.status}${data?.error?.message ? ": " + String(data.error.message).slice(0, 160) : ""})` : "";
+        ? ` (${model} ${r.status}${data?.error?.message ? ": " + String(data.error.message).slice(0, 160) : ""})` : "";
       return res.status(502).json({ error: msg + detail });
     }
 
@@ -385,7 +416,7 @@ export default async function handler(req, res) {
       const blocked = data.promptFeedback?.blockReason || cand?.finishReason;
       return res.status(200).json({
         content: [{ type: "text", text: blocked === "SAFETY" ? "ขออภัย ตอบคำถามนี้ไม่ได้" : "ไม่มีคำตอบ ลองถามใหม่อีกครั้ง" }],
-        stop_reason: "end_turn", role: user.role,
+        stop_reason: "end_turn", role: user.role, model,
       });
     }
 
@@ -412,6 +443,7 @@ export default async function handler(req, res) {
       raw: sanitizeRawParts(rawParts, allowed, false), // หน้าเว็บต้องส่งคืนมากับข้อความนี้ในรอบถัดไป
       stop_reason: hasTool ? "tool_use" : "end_turn",
       role: user.role, // ให้หน้าเว็บใช้ role ที่ server ยืนยันแล้วตอนรันเครื่องมือ
+      model, // หน้าเว็บเก็บไว้กับข้อความ เพื่อรู้ว่า raw/signature มาจากโมเดลไหน
     });
   } catch (err) {
     console.error("assistant error:", err);
