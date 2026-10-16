@@ -1,5 +1,5 @@
 // src/AssistantPage.jsx — หน้า "ผู้ช่วย AI" แชทถามข้อมูลเคส/โครงการ/งานค้าง/ประกันใกล้หมด
-// เรียก api/assistant.js (Claude) ส่วนการค้นข้อมูลรันในเบราว์เซอร์ผ่าน src/assistantTools.js
+// เรียก api/assistant.js (Gemini) ส่วนการค้นข้อมูลรันในเบราว์เซอร์ผ่าน src/assistantTools.js
 // กับ cases/projects ที่แอปโหลดไว้แล้ว
 
 import React, { useEffect, useRef, useState } from "react";
@@ -105,7 +105,8 @@ export default function AssistantPage({ onBack, currentUser, cases = [], project
         setActivity(round === 0 ? "กำลังคิด…" : "กำลังสรุปคำตอบ…");
         const data = await callServer(msgs);
         const content = data.content?.length ? data.content : [{ type: "text", text: "(ไม่มีคำตอบ)" }];
-        msgs = [...msgs, { role: "assistant", content }];
+        // raw = parts ดิบของ Gemini ต้องเก็บไว้ส่งคืนในรอบถัดไป (มี thoughtSignature)
+        msgs = [...msgs, { role: "assistant", content, ...(data.raw?.length ? { raw: data.raw } : {}) }];
         setHistory(msgs);
 
         const toolUses = content.filter((b) => b.type === "tool_use");

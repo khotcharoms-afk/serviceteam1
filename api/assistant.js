@@ -1,16 +1,22 @@
-// api/assistant.js — ผู้ช่วย AI (Claude) สำหรับถามข้อมูลในระบบ ServiceLog
+// api/assistant.js — ผู้ช่วย AI (Google Gemini, แพ็กเกจฟรี) สำหรับถามข้อมูลในระบบ ServiceLog
 //
 // วิธีทำงาน (ข้อมูลไม่ได้ส่งขึ้นมาทั้งก้อน):
 //   1) หน้า AssistantPage ส่งประวัติแชทมา พร้อม Firebase ID token ใน header
 //   2) ฟังก์ชันนี้ตรวจ token + อ่าน role จาก users/{uid} ใน Firestore (ไม่เชื่อ role ที่ client ส่งมา)
-//   3) เรียก Claude โดยให้เห็นเฉพาะเครื่องมือที่ role นั้นใช้ได้
-//   4) ถ้า Claude ขอเรียกเครื่องมือ → ส่ง tool_use กลับไปให้หน้าเว็บรันกับ cases/projects
+//   3) เรียก Gemini โดยให้เห็นเฉพาะเครื่องมือที่ role นั้นใช้ได้
+//   4) ถ้า Gemini ขอเรียกเครื่องมือ → ส่ง tool_use กลับไปให้หน้าเว็บรันกับ cases/projects
 //      ที่แอปโหลดไว้แล้ว (ไม่เพิ่ม Firestore reads) แล้วหน้าเว็บส่ง tool_result กลับมารอบถัดไป
 //
 // Env บน Vercel:
-//   ANTHROPIC_API_KEY        (จำเป็น)
+//   GEMINI_API_KEY           (จำเป็น — สร้างฟรีที่ aistudio.google.com → Get API key)
 //   FIREBASE_SERVICE_ACCOUNT (มีอยู่แล้ว — ตัวเดียวกับ send-notification.js)
-//   ANTHROPIC_MODEL          (ไม่บังคับ — ค่าเริ่มต้น claude-sonnet-5-5)
+//   GEMINI_MODEL             (ไม่บังคับ — ค่าเริ่มต้น gemini-3.8-flash)
+//
+// หมายเหตุ: แพ็กเกจฟรีของ Gemini API ระบุว่า Google อาจนำข้อมูลที่ส่งไปใช้ปรับปรุงผลิตภัณฑ์
+//
+// รูปแบบข้อความระหว่างหน้าเว็บ ↔ ฟังก์ชันนี้ใช้ block แบบ text / tool_use / tool_result
+// ส่วนข้อความของโมเดลจะแนบ parts ดิบของ Gemini (field "raw") ไว้ด้วย เพื่อส่งกลับไปตามเดิม
+// (Gemini รุ่นใหม่ต้องได้ thoughtSignature คืนครบ ไม่งั้นรอบเรียกเครื่องมือจะ error)
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
@@ -23,7 +29,7 @@ function getAdminApp() {
   return initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
 }
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const MAX_MESSAGES = 40;          // จำกัดความยาวประวัติแชทต่อคำขอ
 const MAX_BODY_CHARS = 300_000;   // กันคำขอใหญ่ผิดปกติ
 const MAX_TOOL_RESULT_CHARS = 30_000;
@@ -189,7 +195,11 @@ export function sanitizeMessages(raw, allowedTools) {
       }
       if (msg.role === "assistant" && b?.type === "tool_use") {
         if (!allowed.has(b.name)) throw new Error(`ไม่มีสิทธิ์ใช้เครื่องมือ ${b.name}`);
-        return { type: "tool_use", id: String(b.id), name: b.name, input: b.input && typeof b.input === "object" ? b.input : {} };
+        return {
+          type: "tool_use", id: String(b.id), name: b.name,
+          input: b.input && typeof b.input === "object" ? b.input : {},
+          ...(b.geminiId ? { geminiId: String(b.geminiId) } : {}),
+        };
       }
       if (msg.role === "user" && b?.type === "tool_result") {
         const content = typeof b.content === "string" ? b.content : JSON.stringify(b.content ?? "");
@@ -202,12 +212,84 @@ export function sanitizeMessages(raw, allowedTools) {
       }
       throw new Error("ชนิดข้อความไม่รองรับ");
     });
-    out.push({ role: msg.role, content: clean });
+    const entry = { role: msg.role, content: clean };
+    if (msg.role === "assistant" && Array.isArray(msg.raw)) entry.raw = sanitizeRawParts(msg.raw, allowed);
+    out.push(entry);
   }
 
   if (out[0].role !== "user") throw new Error("ข้อความแรกต้องมาจากผู้ใช้");
   if (out[out.length - 1].role !== "user") throw new Error("ข้อความสุดท้ายต้องมาจากผู้ใช้");
   return out;
+}
+
+// parts ดิบของ Gemini ที่หน้าเว็บส่งคืนมา — เก็บเฉพาะ field ที่รู้จัก และเครื่องมือที่มีสิทธิ์
+// strict=true (ข้อมูลจากหน้าเว็บ) → ปฏิเสธทั้งคำขอ, false (คำตอบจาก Gemini) → ตัดทิ้งเงียบๆ
+export function sanitizeRawParts(parts, allowed, strict = true) {
+  return parts.slice(0, 20).map((p) => {
+    const o = {};
+    if (typeof p?.text === "string") o.text = p.text.slice(0, 20_000);
+    if (p?.thought === true) o.thought = true;
+    if (typeof p?.thoughtSignature === "string") o.thoughtSignature = p.thoughtSignature;
+    if (p?.functionCall) {
+      if (!allowed.has(p.functionCall.name)) {
+        if (strict) throw new Error(`ไม่มีสิทธิ์ใช้เครื่องมือ ${p.functionCall.name}`);
+        return {};
+      }
+      o.functionCall = { name: p.functionCall.name, args: p.functionCall.args || {} };
+      if (p.functionCall.id) o.functionCall.id = String(p.functionCall.id);
+    }
+    return o;
+  }).filter((o) => Object.keys(o).length > 0);
+}
+
+// ── แปลงรูปแบบ ↔ Gemini ─────────────────────────────────────
+// Gemini รับ schema แบบ OpenAPI subset — ตัด minimum/maximum ออกกันรุ่นที่ไม่รองรับ
+function toGeminiSchema(schema) {
+  if (!schema || typeof schema !== "object") return schema;
+  const { minimum, maximum, ...rest } = schema;
+  if (rest.properties) {
+    rest.properties = Object.fromEntries(Object.entries(rest.properties).map(([k, v]) => [k, toGeminiSchema(v)]));
+  }
+  return rest;
+}
+
+export function toGeminiTools(tools) {
+  return [{
+    functionDeclarations: tools.map((t) => ({
+      name: t.name, description: t.description, parameters: toGeminiSchema(t.input_schema),
+    })),
+  }];
+}
+
+export function toGeminiContents(messages) {
+  const nameById = new Map(); // tool_use id → ชื่อเครื่องมือ (functionResponse ต้องมี name)
+  const geminiIdById = new Map(); // tool_use id → id ที่ Gemini ให้มา (ถ้ามี)
+  return messages.map((m) => {
+    if (m.role === "assistant") {
+      for (const b of m.content) {
+        if (b.type === "tool_use") {
+          nameById.set(b.id, b.name);
+          if (b.geminiId) geminiIdById.set(b.id, b.geminiId);
+        }
+      }
+      const parts = m.raw?.length ? m.raw : m.content.map((b) =>
+        b.type === "text" ? { text: b.text } : { functionCall: { name: b.name, args: b.input } });
+      return { role: "model", parts };
+    }
+    return {
+      role: "user",
+      parts: m.content.map((b) => {
+        if (b.type === "text") return { text: b.text };
+        let response;
+        try { response = JSON.parse(b.content); } catch { response = { result: b.content }; }
+        if (!response || typeof response !== "object" || Array.isArray(response)) response = { result: response };
+        const fr = { name: nameById.get(b.tool_use_id) || "unknown", response };
+        const gid = geminiIdById.get(b.tool_use_id);
+        if (gid) fr.id = gid;
+        return { functionResponse: fr };
+      }),
+    };
+  });
 }
 
 function systemPrompt(user) {
@@ -232,7 +314,7 @@ function systemPrompt(user) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: "ยังไม่ได้ตั้งค่า ANTHROPIC_API_KEY บน Vercel" });
+  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "ยังไม่ได้ตั้งค่า GEMINI_API_KEY บน Vercel" });
 
   let user;
   try {
@@ -255,41 +337,63 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`;
+    const r = await fetch(url, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
+      headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 2048,
-        system: systemPrompt(user),
-        tools,
-        messages,
+        systemInstruction: { parts: [{ text: systemPrompt(user) }] },
+        contents: toGeminiContents(messages),
+        tools: toGeminiTools(tools),
+        generationConfig: { maxOutputTokens: 2048 },
       }),
     });
 
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
-      console.error("Anthropic API error:", r.status, data?.error);
+      console.error("Gemini API error:", r.status, data?.error);
+      const reason = JSON.stringify(data?.error || "");
       const msg =
-        r.status === 429 || r.status === 529 ? "ผู้ช่วย AI มีผู้ใช้งานมาก กรุณาลองใหม่อีกครั้ง"
-        : r.status === 401 ? "ANTHROPIC_API_KEY ไม่ถูกต้อง"
+        r.status === 429 ? "โควต้าฟรีของผู้ช่วย AI เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่"
+        : /API_KEY_INVALID|API key not valid/i.test(reason) || r.status === 403 ? "GEMINI_API_KEY ไม่ถูกต้อง"
+        : r.status === 404 ? `ไม่พบโมเดล ${MODEL} — ตรวจค่า GEMINI_MODEL`
+        : r.status >= 500 ? "ผู้ช่วย AI ไม่ว่างชั่วคราว กรุณาลองใหม่"
         : "เรียกผู้ช่วย AI ไม่สำเร็จ";
       return res.status(502).json({ error: msg });
     }
 
-    // ส่งกลับเฉพาะ block ที่หน้าเว็บใช้ และกรอง tool_use ที่ role นี้ไม่มีสิทธิ์อีกชั้น
+    const cand = data.candidates?.[0];
+    const rawParts = cand?.content?.parts || [];
+    if (!rawParts.length) {
+      const blocked = data.promptFeedback?.blockReason || cand?.finishReason;
+      return res.status(200).json({
+        content: [{ type: "text", text: blocked === "SAFETY" ? "ขออภัย ตอบคำถามนี้ไม่ได้" : "ไม่มีคำตอบ ลองถามใหม่อีกครั้ง" }],
+        stop_reason: "end_turn", role: user.role,
+      });
+    }
+
+    // แปลงเป็น block ให้หน้าเว็บ — ไม่แสดงส่วน "thought" และกรอง function call ที่ไม่มีสิทธิ์อีกชั้น
     const allowed = new Set(tools.map((t) => t.name));
-    const content = (data.content || [])
-      .filter((b) => b.type === "text" || (b.type === "tool_use" && allowed.has(b.name)))
-      .map((b) => (b.type === "text" ? { type: "text", text: b.text } : { type: "tool_use", id: b.id, name: b.name, input: b.input }));
+    const content = [];
+    rawParts.forEach((p, i) => {
+      if (p.thought) return;
+      if (typeof p.text === "string" && p.text.trim()) content.push({ type: "text", text: p.text });
+      if (p.functionCall && allowed.has(p.functionCall.name)) {
+        content.push({
+          type: "tool_use",
+          id: `call_${Date.now().toString(36)}_${i}`,
+          name: p.functionCall.name,
+          input: p.functionCall.args || {},
+          ...(p.functionCall.id ? { geminiId: String(p.functionCall.id) } : {}),
+        });
+      }
+    });
+    const hasTool = content.some((b) => b.type === "tool_use");
 
     return res.status(200).json({
       content,
-      stop_reason: data.stop_reason,
+      raw: sanitizeRawParts(rawParts, allowed, false), // หน้าเว็บต้องส่งคืนมากับข้อความนี้ในรอบถัดไป
+      stop_reason: hasTool ? "tool_use" : "end_turn",
       role: user.role, // ให้หน้าเว็บใช้ role ที่ server ยืนยันแล้วตอนรันเครื่องมือ
     });
   } catch (err) {
