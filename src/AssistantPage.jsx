@@ -108,7 +108,11 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
         const data = await callServer(msgs);
         const content = data.content?.length ? data.content : [{ type: "text", text: "(ไม่มีคำตอบ)" }];
         // raw = parts ดิบของ Gemini ต้องเก็บไว้ส่งคืนในรอบถัดไป (มี thoughtSignature)
-        msgs = [...msgs, { role: "assistant", content, ...(data.raw?.length ? { raw: data.raw } : {}) }];
+        msgs = [...msgs, {
+          role: "assistant", content,
+          ...(data.raw?.length ? { raw: data.raw } : {}),
+          ...(data.model ? { model: data.model } : {}),
+        }];
         setHistory(msgs);
 
         const toolUses = content.filter((b) => b.type === "tool_use");
