@@ -269,34 +269,37 @@ export function toGeminiTools(tools) {
   }];
 }
 
-// ใช้ parts ดิบ (มี thoughtSignature) เฉพาะข้อความที่มาจากโมเดลเดียวกับที่กำลังเรียก
-// ข้อความจากโมเดลอื่นสร้าง parts ใหม่จาก block (signature ของโมเดลหนึ่งใช้กับอีกโมเดลไม่ได้)
+// สร้าง contents สำหรับโมเดลที่กำลังเรียก
+// - ข้อความจากโมเดลเดียวกัน (หรือไม่ระบุโมเดล) → ใช้ parts ดิบที่มี thoughtSignature ตามเดิม
+// - ข้อความจากโมเดลอื่น → แปลงการเรียกเครื่องมือ/ผลลัพธ์เป็นข้อความธรรมดา เพราะ signature ใช้ข้ามโมเดลไม่ได้
+//   ทำให้สลับไปโมเดลสำรองได้แม้อยู่กลางคำถาม
 export function toGeminiContents(messages, model) {
-  const nameById = new Map(); // tool_use id → ชื่อเครื่องมือ (functionResponse ต้องมี name)
-  const geminiIdById = new Map(); // tool_use id → id ที่ Gemini ให้มา (ถ้ามี)
+  const toolById = new Map(); // tool_use id → { name, geminiId, foreign }
   return messages.map((m) => {
     if (m.role === "assistant") {
+      const foreign = !!m.model && m.model !== model;
       for (const b of m.content) {
-        if (b.type === "tool_use") {
-          nameById.set(b.id, b.name);
-          if (b.geminiId) geminiIdById.set(b.id, b.geminiId);
-        }
+        if (b.type === "tool_use") toolById.set(b.id, { name: b.name, geminiId: b.geminiId, foreign });
       }
-      const useRaw = m.raw?.length && (!m.model || m.model === model);
-      const parts = useRaw ? m.raw : m.content.map((b) =>
-        b.type === "text" ? { text: b.text } : { functionCall: { name: b.name, args: b.input } });
+      if (!foreign && m.raw?.length) return { role: "model", parts: m.raw };
+      const parts = m.content.map((b) => b.type === "text"
+        ? { text: b.text }
+        : foreign
+          ? { text: `(ค้นข้อมูลด้วยเครื่องมือ ${b.name} เงื่อนไข ${JSON.stringify(b.input)})` }
+          : { functionCall: { name: b.name, args: b.input } });
       return { role: "model", parts };
     }
     return {
       role: "user",
       parts: m.content.map((b) => {
         if (b.type === "text") return { text: b.text };
+        const t = toolById.get(b.tool_use_id) || { name: "unknown" };
+        if (t.foreign) return { text: `ผลจากเครื่องมือ ${t.name}: ${b.content}` };
         let response;
         try { response = JSON.parse(b.content); } catch { response = { result: b.content }; }
         if (!response || typeof response !== "object" || Array.isArray(response)) response = { result: response };
-        const fr = { name: nameById.get(b.tool_use_id) || "unknown", response };
-        const gid = geminiIdById.get(b.tool_use_id);
-        if (gid) fr.id = gid;
+        const fr = { name: t.name, response };
+        if (t.geminiId) fr.id = t.geminiId;
         return { functionResponse: fr };
       }),
     };
@@ -325,12 +328,12 @@ function systemPrompt(user) {
 
 // เรียก Gemini ตามลำดับโมเดล (ตัวหลัก → ตัวสำรอง) คืน { r, data, model }
 export async function callGeminiChain({ messages, tools, user, apiKey, fetchFn = fetch, sleep = (ms) => new Promise((ok) => setTimeout(ok, ms)) }) {
-  // กลางคำถาม (ข้อความสุดท้ายเป็นผลเครื่องมือ) ต้องใช้โมเดลเดิมต่อ เพราะ signature ผูกกับโมเดล
-  // ต้นคำถามใหม่ลองตัวหลักก่อน ถ้าไม่ว่างค่อยสลับไปตัวสำรอง
+  // กลางคำถาม (ข้อความสุดท้ายเป็นผลเครื่องมือ) ลองโมเดลเดิมก่อน แล้วค่อยสลับตัวอื่น
+  // ต้นคำถามใหม่ลองตัวหลักก่อน ถ้าไม่ว่าง/โควต้าหมดค่อยสลับไปตัวสำรอง
   const last = messages[messages.length - 1];
   const midQuestion = last.content.some((b) => b.type === "tool_result");
   const prevModel = [...messages].reverse().find((m) => m.role === "assistant")?.model;
-  const chain = midQuestion && prevModel ? [prevModel] : MODELS;
+  const chain = midQuestion && prevModel ? [prevModel, ...MODELS.filter((x) => x !== prevModel)] : MODELS;
 
   const BUSY = [500, 502, 503, 504];
   let r, data, model;
