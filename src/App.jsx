@@ -1085,7 +1085,7 @@ export default function App({ currentUser, onSignOut }) {
 
       {/* ผู้ช่วย AI — ปุ่มลอยมุมซ้ายล่าง + แผงแชทด้านซ้าย */}
       {!assistantOpen && (
-        <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:24,left:20,
+        <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:20,
           background:"linear-gradient(135deg,#6B21A8,#F97316)",border:"none",color:"#fff",
           width:52,height:52,borderRadius:"50%",fontSize:24,cursor:"pointer",
           boxShadow:"0 6px 20px rgba(107,33,168,.4)",zIndex:40,display:"flex",
