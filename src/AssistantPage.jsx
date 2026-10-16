@@ -9,7 +9,7 @@ import { useTheme } from "./theme.js";
 import { auth, db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { runAssistantTool, TOOL_LABELS } from "./assistantTools.js";
-import { quickActionsFor, runQuickAction } from "./assistantQuick.js";
+import { quickActionsFor, runQuickAction, localSearchAnswer } from "./assistantQuick.js";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
@@ -25,12 +25,16 @@ const AI_EXAMPLES = [
 
 // แสดง markdown แบบง่าย (ตัวหนา, รายการ, หัวข้อ) โดยไม่ใช้ innerHTML
 function renderInline(text, keyBase) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((p, i) =>
-    p.startsWith("**") && p.endsWith("**") && p.length > 4
-      ? <strong key={`${keyBase}-${i}`}>{p.slice(2, -2)}</strong>
-      : <React.Fragment key={`${keyBase}-${i}`}>{p}</React.Fragment>
-  );
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((p, i) => {
+    const key = `${keyBase}-${i}`;
+    if (p.startsWith("**") && p.endsWith("**") && p.length > 4) return <strong key={key}>{p.slice(2, -2)}</strong>;
+    if (p.startsWith("`") && p.endsWith("`") && p.length > 2) {
+      return <code key={key} style={{ fontFamily: "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace", fontSize: "0.88em",
+        background: "rgba(107,33,168,.08)", padding: "1px 5px", borderRadius: 5, wordBreak: "break-all" }}>{p.slice(1, -1)}</code>;
+    }
+    return <React.Fragment key={key}>{p}</React.Fragment>;
+  });
 }
 function MarkdownLite({ text, c }) {
   const lines = text.split("\n");
@@ -173,7 +177,11 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       body: JSON.stringify({ messages }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || "เรียกผู้ช่วย AI ไม่สำเร็จ");
+    if (!res.ok) {
+      const err = new Error(data.error || "เรียกผู้ช่วย AI ไม่สำเร็จ");
+      err.code = data.code;
+      throw err;
+    }
     return data;
   }
 
@@ -242,13 +250,26 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       }
     } catch (e) {
       console.error(e);
-      setError(e.message || "เกิดข้อผิดพลาด");
-      // ตัดประวัติกลับไปก่อนคำถามที่ล้มเหลว เพื่อให้ถามใหม่ได้
-      setHistory((h) => {
+      // ตัดประวัติกลับไปก่อนคำถามที่ล้มเหลว (รวมรอบเรียกเครื่องมือที่ค้างอยู่)
+      const rollback = (h) => {
         const idx = h.length - 1 - [...h].reverse().findIndex((m) => m.role === "user" && m.content.some((b) => b.type === "text"));
         return idx >= 0 && idx < h.length ? h.slice(0, idx) : h;
-      });
-      setInput(q);
+      };
+      if (e.code === "busy") {
+        // AI ไม่ว่าง/โควต้าหมด → ค้น Knowledge Hub + เคสเองจากคำถาม แล้วตอบแทน
+        let knowledge = [];
+        try { knowledge = await loadKnowledge(); } catch (err) { console.error("load knowledge:", err); }
+        const answer = localSearchAnswer(q, { ...dataRef.current, knowledge, currentUser, role: currentUser?.role });
+        setHistory((h) => [
+          ...rollback(h),
+          { role: "user", content: [{ type: "text", text: q }] },
+          { role: "assistant", content: [{ type: "text", text: answer }], quick: true },
+        ]);
+      } else {
+        setError(e.message || "เกิดข้อผิดพลาด");
+        setHistory(rollback);
+        setInput(q);
+      }
     } finally {
       setBusy(false);
       setActivity("");
