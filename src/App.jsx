@@ -55,6 +55,7 @@ export default function App({ currentUser, onSignOut }) {
   // ผู้ช่วย AI เป็นแผงด้านซ้าย ไม่ใช่หน้าแยก — mount ครั้งแรกที่เปิด แล้วค้างไว้ให้แชทไม่หาย
   const [assistantOpen,setAssistantOpen] = useState(false);
   const [assistantMounted,setAssistantMounted] = useState(false);
+  const [assistantHasChat,setAssistantHasChat] = useState(false); // มีแชทค้างอยู่ → แผงแสดงแถบพับเองแทนปุ่ม 🤖
   const openAssistant = () => { setAssistantMounted(true); setAssistantOpen(true); };
   const [caseLogPage,setCaseLogPage] = useState(false);
   const [profilePage,setProfilePage] = useState(false);
@@ -1084,7 +1085,7 @@ export default function App({ currentUser, onSignOut }) {
       </div>
 
       {/* ผู้ช่วย AI — ปุ่มลอยมุมซ้ายล่าง + แผงแชทด้านซ้าย */}
-      {!assistantOpen && (
+      {!assistantOpen && !assistantHasChat && (
         <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:20,
           background:"linear-gradient(135deg,#6B21A8,#F97316)",border:"none",color:"#fff",
           width:52,height:52,borderRadius:"50%",fontSize:24,cursor:"pointer",
@@ -1094,6 +1095,7 @@ export default function App({ currentUser, onSignOut }) {
       {assistantMounted && (
         <Suspense fallback={null}>
           <AssistantPage open={assistantOpen} onClose={()=>setAssistantOpen(false)}
+            onExpand={openAssistant} onChatChange={setAssistantHasChat}
             currentUser={currentUser} cases={cases} projects={projects}/>
         </Suspense>
       )}
