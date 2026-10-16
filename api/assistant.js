@@ -314,7 +314,9 @@ function systemPrompt(user) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "ยังไม่ได้ตั้งค่า GEMINI_API_KEY บน Vercel" });
+  // trim กันช่องว่าง/ขึ้นบรรทัดใหม่ที่ติดมาตอนวาง key (ทำให้ header ไม่ถูกต้องแล้ว fetch พัง)
+  const apiKey = (process.env.GEMINI_API_KEY || "").trim();
+  if (!apiKey) return res.status(500).json({ error: "ยังไม่ได้ตั้งค่า GEMINI_API_KEY บน Vercel" });
 
   let user;
   try {
@@ -340,7 +342,7 @@ export default async function handler(req, res) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`;
     const r = await fetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+      headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt(user) }] },
         contents: toGeminiContents(messages),
@@ -398,6 +400,8 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("assistant error:", err);
-    return res.status(500).json({ error: "เกิดข้อผิดพลาด กรุณาลองใหม่" });
+    // admin/dev เห็นสาเหตุจริงไว้แก้ปัญหา ผู้ใช้ทั่วไปเห็นข้อความกลางๆ
+    const detail = user.role === "admin" || user.role === "dev" ? ` (${err?.cause?.message || err?.message || err})` : "";
+    return res.status(500).json({ error: `เกิดข้อผิดพลาด กรุณาลองใหม่${detail}` });
   }
 }
