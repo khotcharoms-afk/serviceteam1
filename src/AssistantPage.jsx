@@ -6,7 +6,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "./theme.js";
-import { auth } from "./firebase";
+import { auth, db } from "./firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { runAssistantTool, TOOL_LABELS } from "./assistantTools.js";
 
 const ORANGE = "#F97316";
@@ -75,6 +76,17 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
   // เก็บ cases/projects ล่าสุดไว้ใน ref เผื่อข้อมูลอัปเดตระหว่างที่ AI กำลังทำงาน
   const dataRef = useRef({ cases, projects });
   dataRef.current = { cases, projects };
+
+  // Knowledge Hub โหลดครั้งแรกที่ AI ต้องค้น แล้วเก็บไว้ (อายุ 10 นาที) ไม่เพิ่ม reads ถ้าไม่มีใครถามเรื่องนี้
+  const knowledgeRef = useRef({ list: null, at: 0 });
+  async function loadKnowledge() {
+    const k = knowledgeRef.current;
+    if (k.list && Date.now() - k.at < 10 * 60 * 1000) return k.list;
+    const snap = await getDocs(collection(db, "knowledge"));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    knowledgeRef.current = { list, at: Date.now() };
+    return list;
+  }
 
   const inputRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -183,9 +195,13 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
         }
 
         setActivity(toolUses.map((t) => TOOL_LABELS[t.name] || t.name).join(" · ") + "…");
+        let knowledge = [];
+        if (toolUses.some((t) => t.name === "search_knowledge")) {
+          try { knowledge = await loadKnowledge(); } catch (e) { console.error("load knowledge:", e); }
+        }
         const results = toolUses.map((t) => {
           const r = runAssistantTool(t.name, t.input, {
-            ...dataRef.current, currentUser, role: data.role, // role จาก server ที่ตรวจแล้ว
+            ...dataRef.current, knowledge, currentUser, role: data.role, // role จาก server ที่ตรวจแล้ว
           });
           return { type: "tool_result", tool_use_id: t.id, content: r.content, ...(r.isError ? { is_error: true } : {}) };
         });
