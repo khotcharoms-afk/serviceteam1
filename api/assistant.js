@@ -337,6 +337,7 @@ export async function callGeminiChain({ messages, tools, user, apiKey, fetchFn =
 
   const BUSY = [500, 502, 503, 504];
   let r, data, model;
+  const attempts = []; // บันทึกผลแต่ละครั้ง เช่น "gemini-3.5-flash-lite 404" ไว้แสดงให้ admin/dev
   outer: for (const m of chain) {
     model = m;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`;
@@ -356,13 +357,14 @@ export async function callGeminiChain({ messages, tools, user, apiKey, fetchFn =
         body: payload,
       });
       data = await r.json().catch(() => ({}));
+      attempts.push(`${m} ${r.status}`);
       if (r.ok) break outer;
       if (BUSY.includes(r.status)) { console.warn(`Gemini ${m} busy:`, r.status); continue; }
       if (r.status === 404 || r.status === 429) { console.warn(`Gemini ${m} unavailable:`, r.status); continue outer; }
       break outer; // error อื่น (เช่น key ผิด) ไม่ต้องลองตัวอื่น
     }
   }
-  return { r, data, model };
+  return { r, data, model, attempts };
 }
 
 export default async function handler(req, res) {
@@ -396,10 +398,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { r, data, model } = await callGeminiChain({ messages, tools, user, apiKey });
+    const { r, data, model, attempts } = await callGeminiChain({ messages, tools, user, apiKey });
 
     if (!r.ok) {
-      console.error("Gemini API error:", model, r.status, data?.error);
+      console.error("Gemini API error:", attempts.join(", "), data?.error);
       const reason = JSON.stringify(data?.error || "");
       const msg =
         r.status === 429 ? "โควต้าฟรีของผู้ช่วย AI เต็มชั่วคราว กรุณารอสักครู่แล้วลองใหม่"
@@ -409,7 +411,7 @@ export default async function handler(req, res) {
         : "เรียกผู้ช่วย AI ไม่สำเร็จ";
       // admin/dev เห็นรหัสและข้อความจาก Gemini ไว้แก้ปัญหา
       const detail = user.role === "admin" || user.role === "dev"
-        ? ` (${model} ${r.status}${data?.error?.message ? ": " + String(data.error.message).slice(0, 160) : ""})` : "";
+        ? ` (ลองแล้ว: ${attempts.join(", ")}${data?.error?.message ? " — " + String(data.error.message).slice(0, 160) : ""})` : "";
       return res.status(502).json({ error: msg + detail });
     }
 
