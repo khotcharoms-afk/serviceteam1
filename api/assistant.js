@@ -344,16 +344,24 @@ export default async function handler(req, res) {
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt(user) }] },
-        contents: toGeminiContents(messages),
-        tools: toGeminiTools(tools),
-        generationConfig: { maxOutputTokens: 2048 },
-      }),
+    const payload = JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt(user) }] },
+      contents: toGeminiContents(messages),
+      tools: toGeminiTools(tools),
+      generationConfig: { maxOutputTokens: 2048 },
     });
+    // แพ็กเกจฟรีของ Gemini ตอบ 500/503 บ่อยตอนเซิร์ฟเวอร์คนใช้เยอะ → ลองใหม่สูงสุด 2 ครั้ง (รอ 1 และ 2.5 วินาที)
+    let r;
+    for (const wait of [0, 1000, 2500]) {
+      if (wait) await new Promise((ok) => setTimeout(ok, wait));
+      r = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+        body: payload,
+      });
+      if (![500, 502, 503, 504].includes(r.status)) break;
+      console.warn("Gemini busy, retrying:", r.status);
+    }
 
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
@@ -365,7 +373,10 @@ export default async function handler(req, res) {
         : r.status === 404 ? `ไม่พบโมเดล ${MODEL} — ตรวจค่า GEMINI_MODEL`
         : r.status >= 500 ? "ผู้ช่วย AI ไม่ว่างชั่วคราว กรุณาลองใหม่"
         : "เรียกผู้ช่วย AI ไม่สำเร็จ";
-      return res.status(502).json({ error: msg });
+      // admin/dev เห็นรหัสและข้อความจาก Gemini ไว้แก้ปัญหา
+      const detail = user.role === "admin" || user.role === "dev"
+        ? ` (Gemini ${r.status}${data?.error?.message ? ": " + String(data.error.message).slice(0, 160) : ""})` : "";
+      return res.status(502).json({ error: msg + detail });
     }
 
     const cand = data.candidates?.[0];
