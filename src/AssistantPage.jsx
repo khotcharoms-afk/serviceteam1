@@ -62,7 +62,7 @@ function MarkdownLite({ text, c }) {
   );
 }
 
-export default function AssistantPage({ open = true, onClose, currentUser, cases = [], projects = [] }) {
+export default function AssistantPage({ open = true, onClose, onExpand, onChatChange, currentUser, cases = [], projects = [] }) {
   const { c } = useTheme();
   const isAdminOrDev = ["admin", "dev"].includes(currentUser?.role);
   // history = ข้อความรูปแบบ Anthropic Messages API ที่ส่งไป server
@@ -128,10 +128,27 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [open]);
+  // พับ = ซ่อนแผงแต่เก็บบทสนทนาไว้ (แสดงเป็นแถบเล็กมุมซ้ายล่าง)
   function handleClose() {
     if (window.history.state?.aiPanel) window.history.back(); // popstate จะเรียก onClose ให้
     else onClose?.();
   }
+  // ปิด = จบแชทนี้ (ล้างบทสนทนา) — ถ้ากำลังตอบอยู่ให้แค่พับไว้ก่อน
+  function handleEnd() {
+    if (!busy) { setHistory([]); setError(""); setUnread(false); }
+    handleClose();
+  }
+
+  // ตอบเสร็จตอนพับอยู่ → จุดแจ้งเตือนบนแถบ
+  const [unread, setUnread] = useState(false);
+  const openRef = useRef(open);
+  openRef.current = open;
+  useEffect(() => { if (open) setUnread(false); }, [open]);
+
+  const hasChat = history.length > 0 || busy;
+  useEffect(() => { onChatChange?.(hasChat); }, [hasChat]);
+  // แผงถูกถอดออก (เช่นไปหน้าอื่นจากเมนู) → แชทหาย ให้ App กลับไปแสดงปุ่ม 🤖
+  useEffect(() => () => onChatChange?.(false), []);
 
   // ช่องพิมพ์ขยายตามข้อความ (สูงสุด ~5 บรรทัด)
   useEffect(() => {
@@ -220,6 +237,7 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
     } finally {
       setBusy(false);
       setActivity("");
+      if (!openRef.current) setUnread(true);
     }
   }
 
@@ -237,7 +255,44 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
 
   const suggestions = isAdminOrDev ? SUGGESTIONS_ADMIN : SUGGESTIONS_USER;
 
+  // ข้อความล่าสุดของ AI ไว้โชว์บนแถบตอนพับ
+  const lastAi = [...bubbles].reverse().find((b) => b.who === "ai")?.text?.replace(/[*#\n]+/g, " ").trim() || "";
+  const pillStatus = busy ? (activity || "กำลังตอบ…") : unread ? "มีคำตอบใหม่ — แตะเพื่อดู" : error ? "เกิดข้อผิดพลาด — แตะเพื่อดู" : lastAi || "แตะเพื่อเปิดแชทต่อ";
+
   return (
+    <>
+    {!open && hasChat && (
+      <div style={{ position: "fixed", left: 16, bottom: "calc(20px + env(safe-area-inset-bottom))", zIndex: 40,
+        display: "flex", alignItems: "center", maxWidth: "min(340px, calc(100vw - 110px))",
+        background: c.card, border: `1px solid ${PURPLE}33`, borderRadius: 999,
+        boxShadow: "0 6px 20px rgba(107,33,168,.25)", fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+        <button onClick={onExpand} aria-label="เปิดผู้ช่วย AI"
+          style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1, background: "none", border: "none",
+            padding: "8px 6px 8px 8px", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+          <span style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+            background: "linear-gradient(135deg,#6B21A8,#F97316)", color: "#fff", fontSize: 18,
+            display: "flex", alignItems: "center", justifyContent: "center" }}>
+            🤖
+            {(unread || busy) && (
+              <span style={{ position: "absolute", top: -1, right: -1, width: 11, height: 11, borderRadius: "50%",
+                background: busy ? "#f59e0b" : "#22c55e", border: `2px solid ${c.card}`,
+                animation: busy ? "aiDot 1.2s infinite" : "none" }} />
+            )}
+          </span>
+          <span style={{ minWidth: 0 }}>
+            <span style={{ display: "block", fontSize: 13, fontWeight: 800, color: c.text900 }}>ผู้ช่วย AI</span>
+            <span style={{ display: "block", fontSize: 11.5, color: unread ? "#16a34a" : c.text400, fontWeight: unread ? 700 : 400,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pillStatus}</span>
+          </span>
+        </button>
+        {!busy && (
+          <button onClick={handleEnd} title="ปิดและล้างแชท" aria-label="ปิดและล้างแชท"
+            style={{ background: "none", border: "none", color: c.text400, fontSize: 15, cursor: "pointer",
+              width: 36, height: 36, marginRight: 4, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+        )}
+        <style>{`@keyframes aiDot { 0%,80%,100% { opacity:.25 } 40% { opacity:1 } }`}</style>
+      </div>
+    )}
     <div style={{
       position: "fixed", left: 0, zIndex: 150,
       ...(isMobile && vv
@@ -272,7 +327,10 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
             {isMobile ? "＋ ใหม่" : "＋ แชทใหม่"}
           </button>
         )}
-        <button onClick={handleClose} title="ปิด" aria-label="ปิดผู้ช่วย AI"
+        <button onClick={handleClose} title="พับเก็บ (บทสนทนายังอยู่)" aria-label="พับผู้ช่วย AI"
+          style={{ background: "none", border: "none", fontSize: 22, color: c.text400, cursor: "pointer",
+            width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>⌄</button>
+        <button onClick={handleEnd} title={busy ? "พับเก็บ" : "ปิดและล้างแชท"} aria-label="ปิดผู้ช่วย AI"
           style={{ background: "none", border: "none", fontSize: 20, color: c.text400, cursor: "pointer",
             width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>✕</button>
       </div>
@@ -367,5 +425,6 @@ export default function AssistantPage({ open = true, onClose, currentUser, cases
         )}
       </div>
     </div>
+    </>
   );
 }
