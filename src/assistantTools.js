@@ -33,7 +33,8 @@ function makeCtx({ cases, projects, currentUser, role }) {
   function findProjects(q) {
     const s = lc(q).trim();
     if (!s) return null;
-    return projects.filter((p) => p.id === q || lc(p.code) === s || lc(p.name).includes(s) || lc(p.code).includes(s));
+    return projects.filter((p) => p.id === q || lc(p.code) === s ||
+      [p.name, p.code, p.customer, p.contactName].some((x) => lc(x).includes(s)));
   }
 
   function caseSummary(c) {
@@ -124,6 +125,7 @@ const TOOLS = {
         const pc = cases.filter((c) => c.projectId === p.id);
         const row = {
           id: p.id, code: p.code || "", name: p.name || "", customer: p.customer || "",
+          contactName: p.contactName || "", contactPhone: p.contactPhone || "", location: p.location || "",
           projectStatus: p.projectStatus || "",
           sites: (p.sites || []).map((s) => (typeof s === "object" ? s.name : s)).filter(Boolean),
           warrantyEnd: p.warrantyEnd || null,

@@ -54,3 +54,12 @@ export const emptyCase = {
   tech: "", techs: [], date: today(), status: "open", note: "",
   handoverLog: [], updateLog: [],
 };
+
+// ลิงก์แผนที่จากช่อง location ของโครงการ — ถ้าเป็นลิงก์อยู่แล้ว (เช่น Google Maps) ใช้ตามนั้น
+// ถ้าเป็นที่อยู่/พิกัด ให้ค้นใน Google Maps
+export const mapsUrl = (loc) => {
+  const s = (loc || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s)}`;
+};
