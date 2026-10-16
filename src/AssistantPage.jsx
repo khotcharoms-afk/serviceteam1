@@ -9,7 +9,7 @@ import { useTheme } from "./theme.js";
 import { auth, db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { runAssistantTool, TOOL_LABELS } from "./assistantTools.js";
-import { quickActionsFor, runQuickAction } from "./assistantQuick.js";
+import { quickActionsFor, runQuickAction, localSearchAnswer } from "./assistantQuick.js";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
@@ -25,12 +25,16 @@ const AI_EXAMPLES = [
 
 // แสดง markdown แบบง่าย (ตัวหนา, รายการ, หัวข้อ) โดยไม่ใช้ innerHTML
 function renderInline(text, keyBase) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((p, i) =>
-    p.startsWith("**") && p.endsWith("**") && p.length > 4
-      ? <strong key={`${keyBase}-${i}`}>{p.slice(2, -2)}</strong>
-      : <React.Fragment key={`${keyBase}-${i}`}>{p}</React.Fragment>
-  );
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((p, i) => {
+    const key = `${keyBase}-${i}`;
+    if (p.startsWith("**") && p.endsWith("**") && p.length > 4) return <strong key={key}>{p.slice(2, -2)}</strong>;
+    if (p.startsWith("`") && p.endsWith("`") && p.length > 2) {
+      return <code key={key} style={{ fontFamily: "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace", fontSize: "0.88em",
+        background: "rgba(107,33,168,.08)", padding: "1px 5px", borderRadius: 5, wordBreak: "break-all" }}>{p.slice(1, -1)}</code>;
+    }
+    return <React.Fragment key={key}>{p}</React.Fragment>;
+  });
 }
 function MarkdownLite({ text, c }) {
   const lines = text.split("\n");
@@ -150,12 +154,16 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
   useEffect(() => () => onChatChange?.(false), []);
 
   // ช่องพิมพ์ขยายตามข้อความ (สูงสุด ~5 บรรทัด)
+  // scrollHeight ไม่รวมเส้นขอบ (box-sizing: border-box) → ต้องบวกขอบเข้าไป ไม่งั้นช่องจะเตี้ยไปและมีแถบเลื่อน
+  // คำนวณเฉพาะตอนแผงเปิดอยู่ (ตอนซ่อน display:none ค่าความสูงเป็น 0)
   useEffect(() => {
     const el = inputRef.current;
-    if (!el) return;
+    if (!el || !open) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 132) + "px";
-  }, [input]);
+    const full = el.scrollHeight + (el.offsetHeight - el.clientHeight);
+    el.style.height = Math.min(full, 132) + "px";
+    el.style.overflowY = full > 132 ? "auto" : "hidden";
+  }, [input, open, isMobile]);
 
   useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [history, activity, open, vv?.height]);
 
@@ -169,7 +177,11 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       body: JSON.stringify({ messages }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || "เรียกผู้ช่วย AI ไม่สำเร็จ");
+    if (!res.ok) {
+      const err = new Error(data.error || "เรียกผู้ช่วย AI ไม่สำเร็จ");
+      err.code = data.code;
+      throw err;
+    }
     return data;
   }
 
@@ -238,13 +250,26 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       }
     } catch (e) {
       console.error(e);
-      setError(e.message || "เกิดข้อผิดพลาด");
-      // ตัดประวัติกลับไปก่อนคำถามที่ล้มเหลว เพื่อให้ถามใหม่ได้
-      setHistory((h) => {
+      // ตัดประวัติกลับไปก่อนคำถามที่ล้มเหลว (รวมรอบเรียกเครื่องมือที่ค้างอยู่)
+      const rollback = (h) => {
         const idx = h.length - 1 - [...h].reverse().findIndex((m) => m.role === "user" && m.content.some((b) => b.type === "text"));
         return idx >= 0 && idx < h.length ? h.slice(0, idx) : h;
-      });
-      setInput(q);
+      };
+      if (e.code === "busy") {
+        // AI ไม่ว่าง/โควต้าหมด → ค้น Knowledge Hub + เคสเองจากคำถาม แล้วตอบแทน
+        let knowledge = [];
+        try { knowledge = await loadKnowledge(); } catch (err) { console.error("load knowledge:", err); }
+        const answer = localSearchAnswer(q, { ...dataRef.current, knowledge, currentUser, role: currentUser?.role });
+        setHistory((h) => [
+          ...rollback(h),
+          { role: "user", content: [{ type: "text", text: q }] },
+          { role: "assistant", content: [{ type: "text", text: answer }], quick: true },
+        ]);
+      } else {
+        setError(e.message || "เกิดข้อผิดพลาด");
+        setHistory(rollback);
+        setInput(q);
+      }
     } finally {
       setBusy(false);
       setActivity("");
@@ -347,7 +372,11 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         )}
         <button onClick={handleClose} title="พับเก็บ (บทสนทนายังอยู่)" aria-label="พับผู้ช่วย AI"
           style={{ background: "none", border: "none", fontSize: 22, color: c.text400, cursor: "pointer",
-            width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>⌄</button>
+            width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
         <button onClick={handleEnd} title={busy ? "พับเก็บ" : "ปิดและล้างแชท"} aria-label="ปิดผู้ช่วย AI"
           style={{ background: "none", border: "none", fontSize: 20, color: c.text400, cursor: "pointer",
             width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>✕</button>
@@ -439,10 +468,10 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         <form onSubmit={(e) => { e.preventDefault(); send(); }}
           style={{ maxWidth: 720, margin: "0 auto", display: "flex", gap: 8, alignItems: "flex-end" }}>
           <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} rows={1} maxLength={2000}
-            placeholder={isMobile ? "พิมพ์คำถาม…" : "พิมพ์คำถาม เช่น งานค้างของฉันมีอะไรบ้าง"}
+            placeholder="พิมพ์คำถาม…"
             enterKeyHint="send"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
-            style={{ flex: 1, resize: "none", maxHeight: 132, padding: "10px 14px", borderRadius: 12, lineHeight: 1.5,
+            style={{ flex: 1, resize: "none", minHeight: 44, maxHeight: 132, overflowY: "hidden", padding: "10px 14px", borderRadius: 12, lineHeight: 1.5,
               fontSize: isMobile ? 16 : 14, // ต่ำกว่า 16px iOS จะซูมหน้าจอตอนแตะช่องพิมพ์
               background: "var(--input-bg, #fff)", color: "var(--input-text, #1e293b)", border: "1px solid var(--input-border, #e2e8f0)",
               outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />

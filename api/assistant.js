@@ -428,7 +428,9 @@ export default async function handler(req, res) {
       // admin/dev เห็นรหัสและข้อความจาก Gemini ไว้แก้ปัญหา
       const detail = user.role === "admin" || user.role === "dev"
         ? ` (ลองแล้ว: ${attempts.join(", ")}${data?.error?.message ? " — " + String(data.error.message).slice(0, 160) : ""})` : "";
-      return res.status(502).json({ error: msg + detail });
+      // busy = โควต้าหมด/คนใช้เต็ม → หน้าเว็บจะค้นข้อมูลเองแทน (ไม่ใช้ AI)
+      const busy = r.status === 429 || r.status >= 500;
+      return res.status(502).json({ error: msg + detail, ...(busy ? { code: "busy" } : {}) });
     }
 
     const cand = data.candidates?.[0];
