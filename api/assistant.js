@@ -317,6 +317,10 @@ export default async function handler(req, res) {
   // trim กันช่องว่าง/ขึ้นบรรทัดใหม่ที่ติดมาตอนวาง key (ทำให้ header ไม่ถูกต้องแล้ว fetch พัง)
   const apiKey = (process.env.GEMINI_API_KEY || "").trim();
   if (!apiKey) return res.status(500).json({ error: "ยังไม่ได้ตั้งค่า GEMINI_API_KEY บน Vercel" });
+  if (!/^[\x21-\x7E]+$/.test(apiKey)) {
+    // เช่น วางจุดปิดบัง •••• มาแทน key จริง
+    return res.status(500).json({ error: "GEMINI_API_KEY บน Vercel ไม่ใช่ key จริง (มีอักขระแปลก เช่น •) กรุณาคัดลอก key ใหม่ด้วยปุ่มคัดลอกใน AI Studio" });
+  }
 
   let user;
   try {
