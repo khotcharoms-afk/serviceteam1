@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { useTheme } from "./theme.js";
-import { IS as inputBase } from "./utils.js";
+import { IS as inputBase, FEATURE_SHIFT } from "./utils.js";
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 
 // tone = ชื่อสีใน theme.js — แปลงเป็นสีจริงตอนเรนเดอร์ ให้เปลี่ยนตามโหมดมืด/สว่าง
@@ -271,7 +271,7 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
           {user.onsiteRate > 0 && (
             <span style={{ fontSize:11,color:c.green }}>💰 {user.onsiteRate.toLocaleString()} บ./ครั้ง</span>
           )}
-          {user.role==="user" && (
+          {FEATURE_SHIFT && user.role==="user" && (
             <span style={{ fontSize:11,color:user.canEditShift?c.blue:c.text400 }}>
               📅 {user.canEditShift?"แก้ตารางกะได้":"ไม่สามารถแก้ตารางกะ"}
             </span>
@@ -350,8 +350,8 @@ function EditUserModal({ user, onClose, onSave }) {
             onChange={e=>setOnsiteRate(e.target.value)} style={IS} placeholder="0"/>
         </div>
 
-        {/* สิทธิ์ตารางกะ (เฉพาะ user) */}
-        {user.role === "user" && (
+        {/* สิทธิ์ตารางกะ (เฉพาะ user) — ซ่อนเมื่อปิดฟีเจอร์ตารางกะ */}
+        {FEATURE_SHIFT && user.role === "user" && (
           <div style={{ marginBottom:16,padding:"12px 14px",background:c.bg,
             border:`1px solid ${c.border}`,borderRadius:10,
             display:"flex",alignItems:"center",justifyContent:"space-between" }}>

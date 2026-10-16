@@ -1,4 +1,4 @@
-import { daysLeft } from "./utils.js";
+import { daysLeft, FEATURE_SHIFT } from "./utils.js";
 import { useTheme } from "./theme.js";
 
 function DrawerItem({ active, onClick, icon, label, count, color }) {
@@ -111,8 +111,10 @@ export default function Drawer({
           onClick={()=>{ setOnsitePage(true); onClose(); }}/>
         <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
           onClick={()=>{ setOtPage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
-          onClick={()=>{ setShiftPage(true); onClose(); }}/>
+        {FEATURE_SHIFT && (
+          <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
+            onClick={()=>{ setShiftPage(true); onClose(); }}/>
+        )}
         <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
           onClick={()=>{ setLeavePage(true); onClose(); }}/>
         <DrawerItem active={false} color="#6B21A8" icon="💡" label="Knowledge Hub" count={""}
