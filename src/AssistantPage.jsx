@@ -10,6 +10,7 @@ import { auth, db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { runAssistantTool, TOOL_LABELS } from "./assistantTools.js";
 import { quickActionsFor, runQuickAction, localSearchAnswer } from "./assistantQuick.js";
+import { fixThaiText } from "./thaiText.js";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
@@ -283,7 +284,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
     const texts = m.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
     if (m.role === "user" && texts) bubbles.push({ key: i, who: "me", text: texts });
     if (m.role === "assistant") {
-      if (texts) bubbles.push({ key: i, who: "ai", text: texts });
+      if (texts) bubbles.push({ key: i, who: "ai", text: fixThaiText(texts) });
       const tools = m.content.filter((b) => b.type === "tool_use");
       if (tools.length) bubbles.push({ key: `${i}-t`, who: "tool", text: tools.map((t) => TOOL_LABELS[t.name] || t.name).join(" · ") });
     }
