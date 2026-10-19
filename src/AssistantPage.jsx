@@ -9,7 +9,7 @@ import { useTheme } from "./theme.js";
 import { auth, db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { runAssistantTool, TOOL_LABELS } from "./assistantTools.js";
-import { quickActionsFor, runQuickAction, localSearchAnswer } from "./assistantQuick.js";
+import { quickActionsFor, runQuickAction, localSearchAnswer, isDeviceQuestion, localDeviceAnswer } from "./assistantQuick.js";
 import { fixThaiText } from "./thaiText.js";
 
 const ORANGE = "#F97316";
@@ -209,12 +209,30 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
     ]);
   }
 
-  async function send(text) {
+  async function send(text, { forceAI = false } = {}) {
     const q = (text ?? input).trim();
     if (!q || busy) return;
     setInput("");
     setError("");
     setBusy(true);
+
+    // ถามเรื่องอุปกรณ์/หุ่นยนต์ (เบอร์หน้างาน AnyDesk IP รุ่น ...) → ตอบจากหน้าอุปกรณ์/รีโมททันที ไม่เรียก AI
+    if (!forceAI && isDeviceQuestion(q)) {
+      try {
+        setActivity("ค้นในหน้าอุปกรณ์/รีโมท…");
+        const answer = localDeviceAnswer(q, await loadDevices());
+        if (answer) {
+          setHistory((h) => [
+            ...h,
+            { role: "user", content: [{ type: "text", text: q }] },
+            { role: "assistant", content: [{ type: "text", text: answer }], quick: true, askAI: q },
+          ]);
+          setBusy(false);
+          setActivity("");
+          return;
+        }
+      } catch (e) { console.error("local device answer:", e); }
+    }
 
     let msgs = [...history, { role: "user", content: [{ type: "text", text: q }] }];
     setHistory(msgs);
@@ -299,7 +317,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
     const texts = m.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
     if (m.role === "user" && texts) bubbles.push({ key: i, who: "me", text: texts });
     if (m.role === "assistant") {
-      if (texts) bubbles.push({ key: i, who: "ai", text: fixThaiText(texts) });
+      if (texts) bubbles.push({ key: i, who: "ai", text: fixThaiText(texts), askAI: m.askAI });
       const tools = m.content.filter((b) => b.type === "tool_use");
       if (tools.length) bubbles.push({ key: `${i}-t`, who: "tool", text: tools.map((t) => TOOL_LABELS[t.name] || t.name).join(" · ") });
     }
@@ -445,6 +463,13 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
                   borderBottomLeftRadius: b.who === "me" ? 14 : 4,
                 }}>
                   {b.who === "me" ? b.text : <MarkdownLite text={b.text} c={c} />}
+                  {b.askAI && (
+                    <button onClick={() => send(b.askAI, { forceAI: true })} disabled={busy}
+                      style={{ marginTop: 8, border: `1px solid ${PURPLE}33`, background: PURPLE + "0d", color: c.purple, borderRadius: 999,
+                        padding: "5px 12px", fontSize: 12.5, cursor: busy ? "default" : "pointer", fontFamily: "inherit" }}>
+                      🤖 ไม่ใช่ที่ต้องการ? ให้ AI ค้นแทน
+                    </button>
+                  )}
                 </div>
               </div>
             )

@@ -178,3 +178,112 @@ export function localSearchAnswer(question, ctx) {
   }
   return parts.join("\n");
 }
+
+// ── ถามเรื่องอุปกรณ์/หุ่นยนต์ → ตอบทันทีจากหน้าอุปกรณ์/รีโมท ไม่เรียก AI ─────────────
+// ทำงานเมื่อคำถามมีคำบ่งบอกว่าถามเรื่องอุปกรณ์ (เบอร์ ติดต่อ AnyDesk IP หุ่นยนต์ รุ่น ฯลฯ)
+// หรือมีเลข AnyDesk/IP/VIN ตรงๆ และหาอุปกรณ์ที่ตรงเจอ ไม่งั้นคืน null ให้ไปถาม AI ตามปกติ
+const DEVICE_INTENT = ["เบอร์", "โทร", "ติดต่อ", "anydesk", "rustdesk", "รีโมท", "remote", "ip", "vin", "s/n", "serial",
+  "หุ่น", "robot", "อุปกรณ์", "เครื่อง", "รุ่น", "sim", "ซิม", "nvr", "router", "กล้อง", "cctv", "รหัส", "พาส", "password", "user",
+  "sc50", "sc80", "mix1"];
+// คำในคำถามที่ไม่ใช้จับคู่ชื่อไซต์ (บางส่วนของชื่อ)
+const DEVICE_Q_STOP = new Set(["เบอร์", "โทร", "ติดต่อ", "ผู้ติดต่อ", "ลูกค้า", "หุ่นยนต์", "หุ่น", "ยนต์", "robot", "anydesk", "rustdesk",
+  "รีโมท", "อุปกรณ์", "เครื่อง", "รุ่น", "ไหน", "อยู่", "กี่", "ตัว", "ทั้งหมด", "หน้างาน", "ไซต์", "site", "สาขา", "โรงพยาบาล", "ศูนย์"]);
+const normDev = (s) => String(s || "").toLowerCase().replace(/[\s_\-()/.,:]+/g, "");
+// คำทั่วไปที่ไม่ใช้จับคู่ชื่อไซต์/เครื่อง
+const DEVICE_GENERIC = new Set(["router", "server", "switch", "camera", "นvr", "nvr", "cctv", "pc", "nuc", "web", "vpn",
+  "bkk", "plan", "เครื่อง", "อุปกรณ์", "ไม่ระบุชื่อ"].map(normDev));
+
+function deviceTokens(d) {
+  const out = new Set();
+  const add = (t) => { const n = normDev(t); if (n.length >= 3 && !DEVICE_GENERIC.has(n) && !/^\d{1,3}$/.test(n)) out.add(n); };
+  [d.site, d.name].forEach((v) => {
+    if (!v) return;
+    add(v);
+    String(v).split(/[\s()/]+/).forEach(add);
+  });
+  return out;
+}
+
+export function isDeviceQuestion(question) {
+  const q = String(question || "").toLowerCase();
+  return DEVICE_INTENT.some((w) => q.includes(w)) || /\b\d{9,10}\b|\b\d{1,3}(\.\d{1,3}){3}\b|IDPW/i.test(q);
+}
+
+export function localDeviceAnswer(question, devices = []) {
+  if (!devices.length || !isDeviceQuestion(question)) return null;
+  const raw = String(question || "").toLowerCase();
+  const q = normDev(raw);
+
+  // เลข AnyDesk / IP / VIN ที่พิมพ์มาตรงๆ
+  const exact = devices.filter((d) => [d.anydesk, d.rustdesk, d.ip, d.publicIp, d.serial]
+    .some((v) => v && String(v).length >= 6 && q.includes(normDev(v))));
+
+  // รุ่น/ประเภทที่พูดถึง เช่น SC80, Mix1, NVR
+  const typesAll = [...new Set(devices.map((d) => d.type).filter(Boolean))];
+  const typesHit = typesAll.filter((t) => {
+    const n = normDev(t);
+    if (n === "robot") return false; // คำว่า robot/หุ่นยนต์ ใช้บอกว่าถามเรื่องอุปกรณ์ ไม่ใช่กรองประเภท
+    if (n.length < 2 || !q.includes(n)) return false;
+    // "sc50" ไม่นับถ้าที่ถามคือ "sc50plus"
+    return !typesAll.some((o) => o !== t && normDev(o).startsWith(n) && q.includes(normDev(o)));
+  });
+  let pool = typesHit.length ? devices.filter((d) => typesHit.includes(d.type)) : devices;
+
+  // คำในคำถาม (ตัดคำไทย) ไว้จับคู่บางส่วนของชื่อไซต์ เช่น "ธรรมศาสตร์" ↔ "ศูนย์การแพทย์ธรรมศาสตร์"
+  const cleaned = raw.replace(/[,?!]+/g, " ");
+  const qWords = [...new Set([...splitWords(cleaned), ...cleaned.split(/\s+/)].map(normDev))]
+    .filter((w) => w.length >= 5 && !STOPWORDS.has(w) && !DEVICE_Q_STOP.has(w) && !DEVICE_INTENT.some((x) => w.includes(x)) &&
+      !typesAll.some((t) => normDev(t).includes(w) || w.includes(normDev(t))));
+
+  let list = exact;
+  if (!list.length) {
+    const scored = pool.map((d) => {
+      let score = 0;
+      deviceTokens(d).forEach((t) => {
+        if (q.includes(t)) score = Math.max(score, t.length);
+        qWords.forEach((w) => { if (t.includes(w)) score = Math.max(score, w.length); });
+      });
+      if (d.project && q.includes(normDev(d.project))) score += normDev(d.project).length;
+      return { d, score };
+    }).filter((x) => x.score > 0);
+    const best = Math.max(0, ...scored.map((x) => x.score));
+    list = scored.filter((x) => x.score === best).map((x) => x.d);
+    if (!list.length && typesHit.length) list = pool; // เช่น "SC80 มีกี่ตัว"
+  }
+  if (!list.length) return null;
+
+  const wantContact = /เบอร์|โทร|ติดต่อ/.test(raw);
+  // หลายเครื่อง (เช่น "SC50 มีกี่ตัว") → แสดงบรรทัดเดียวต่อเครื่อง
+  const compact = list.length > 5;
+  const shown = list.slice(0, compact ? 30 : 5);
+  const lines = [];
+  const where = (d) => [d.project, d.site].filter(Boolean).join(" / ");
+  if (list.length > 1) {
+    const byType = {};
+    list.forEach((d) => { byType[d.type || "อุปกรณ์"] = (byType[d.type || "อุปกรณ์"] || 0) + 1; });
+    lines.push(`พบ **${list.length} เครื่อง** (${Object.entries(byType).map(([t, n]) => `${t} ${n}`).join(" · ")})\n`);
+  }
+  for (const d of shown) {
+    if (compact) {
+      lines.push(`- **${d.name}**${d.type ? ` · ${d.type}` : ""}${where(d) ? ` — ${where(d)}` : ""}` +
+        (d.anydesk ? ` · AnyDesk ${d.anydesk}` : d.ip ? ` · IP ${d.ip}` : ""));
+      continue;
+    }
+    lines.push(`- **${d.name}**${d.type ? ` · ${d.type}` : ""}${where(d) ? ` — ${where(d)}` : ""}`);
+    const notes = String(d.note || "").split(" · ").filter(Boolean);
+    const contact = notes.filter((n) => n.startsWith("ติดต่อหน้างาน:"));
+    const other = notes.filter((n) => !n.startsWith("ติดต่อหน้างาน:"));
+    if (contact.length) lines.push(`  📞 ${contact.join(" · ").replace("ติดต่อหน้างาน: ", "ติดต่อหน้างาน: ")}`);
+    else if (wantContact) lines.push("  📞 ยังไม่ได้บันทึกเบอร์ติดต่อหน้างานของเครื่องนี้");
+    const ids = [
+      d.anydesk && `AnyDesk ${d.anydesk}`, d.rustdesk && `RustDesk ${d.rustdesk}`,
+      d.ip && `IP ${d.ip}${d.port ? ":" + d.port : ""}`, d.publicIp && `Public ${d.publicIp}${d.publicPort ? ":" + d.publicPort : ""}`,
+      d.serial && `S/N ${d.serial}`,
+    ].filter(Boolean);
+    if (ids.length) lines.push(`  ${ids.join(" · ")}`);
+    if (other.length) lines.push(`  📝 ${other.join(" · ")}`);
+  }
+  if (list.length > shown.length) lines.push(`\nแสดง ${shown.length} จาก ${list.length} เครื่อง — ดูทั้งหมดในหน้า "อุปกรณ์/รีโมท"`);
+  lines.push(`\n⚡ ตอบจากหน้าอุปกรณ์/รีโมททันที (ไม่ได้ใช้ AI) · รหัสผ่านดูได้ในหน้าอุปกรณ์/รีโมท`);
+  return lines.join("\n");
+}
