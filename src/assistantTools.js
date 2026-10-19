@@ -3,14 +3,15 @@
 // ชื่อเครื่องมือ/สิทธิ์ต้องตรงกับ TOOL_DEFS/ROLE_TOOLS ใน api/assistant.js
 
 import { daysLeft } from "./utils.js";
+import { deviceSearchText, sortDevices } from "./deviceImport.js";
 
 const STATUS_LABEL = { open: "เปิดเคส", inprogress: "กำลังดำเนินการ", hold: "รอดำเนินการ", done: "เสร็จสิ้น" };
 const ACTIVE = new Set(["open", "inprogress", "hold"]);
 
 const ROLE_TOOLS = {
-  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge"],
-  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
-  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
+  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices"],
+  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats"],
+  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats"],
 };
 
 const lc = (s) => (s == null ? "" : String(s)).toLowerCase();
@@ -230,6 +231,53 @@ const TOOLS = {
     return out;
   },
 
+  // devices = Firestore "devices" (หน้าอุปกรณ์/รีโมท) — AssistantPage โหลดให้ครั้งแรกที่ใช้เครื่องมือนี้
+  // ไม่ส่งรหัสผ่านให้ AI (ดูได้ในหน้าอุปกรณ์/รีโมทเท่านั้น)
+  search_devices(input, { devices = [] }) {
+    const limit = clampLimit(input.limit);
+    const norm = (s) => lc(s).replace(/[\s_\-()]+/g, "");
+    let list = sortDevices(devices);
+    if (input.project) list = list.filter((d) => norm(d.project).includes(norm(input.project)));
+    if (input.type) list = list.filter((d) => norm(`${d.type} ${d.model}`).includes(norm(input.type)));
+    const words = lc(input.query).split(/[\s,]+/).filter(Boolean);
+    let matched = list;
+    let partial = false;
+    if (words.length) {
+      const text = (d) => deviceSearchText(d) + " " + norm(deviceSearchText(d));
+      matched = list.filter((d) => words.every((w) => text(d).includes(w) || text(d).includes(norm(w))));
+      if (!matched.length) {
+        // ไม่พบครบทุกคำ → เอาที่ตรงบางคำ เรียงตามจำนวนคำที่ตรง
+        partial = true;
+        matched = list.map((d) => ({ d, n: words.filter((w) => text(d).includes(norm(w))).length }))
+          .filter((x) => x.n > 0).sort((a, b) => b.n - a.n).map((x) => x.d);
+      }
+    }
+    const byType = {};
+    matched.forEach((d) => { byType[d.type || "อุปกรณ์"] = (byType[d.type || "อุปกรณ์"] || 0) + 1; });
+    const out = {
+      totalDevices: devices.length,
+      found: matched.length,
+      ...(partial ? { partialMatch: true } : {}),
+      countByType: byType,
+      devices: matched.slice(0, limit).map((d) => {
+        const r = {
+          project: d.project, site: d.site, type: d.type, name: d.name, model: d.model, serial: d.serial,
+          ip: d.ip ? (d.port ? `${d.ip}:${d.port}` : d.ip) : "", publicIp: d.publicIp ? (d.publicPort ? `${d.publicIp}:${d.publicPort}` : d.publicIp) : "",
+          anydesk: d.anydesk, rustdesk: d.rustdesk, username: d.username, note: d.note,
+          hasPassword: Boolean(d.password),
+        };
+        return Object.fromEntries(Object.entries(r).filter(([, v]) => v !== "" && v != null));
+      }),
+    };
+    if (matched.length > limit) out.truncated = true;
+    if (!matched.length) {
+      const sites = {};
+      devices.forEach((d) => { (sites[d.project || "(ไม่ระบุ)"] ||= new Set()).add(d.site || ""); });
+      out.allProjectsAndSites = Object.fromEntries(Object.entries(sites).map(([p, s]) => [p, [...s].filter(Boolean).slice(0, 60)]));
+    }
+    return out;
+  },
+
   case_stats(input, { cases }, ctx) {
     const list = ctx.applyCommonFilters(cases, input);
     const keyOf = {
@@ -257,12 +305,12 @@ const TOOLS = {
 };
 
 // รันเครื่องมือหนึ่งตัว → คืน string JSON สำหรับ tool_result
-export function runAssistantTool(name, input, { cases = [], projects = [], knowledge = [], currentUser, role }) {
+export function runAssistantTool(name, input, { cases = [], projects = [], knowledge = [], devices = [], currentUser, role }) {
   if (!(ROLE_TOOLS[role] || []).includes(name) || !TOOLS[name]) {
     return { content: JSON.stringify({ error: "ไม่มีสิทธิ์ใช้เครื่องมือนี้" }), isError: true };
   }
   try {
-    const data = { cases, projects, knowledge };
+    const data = { cases, projects, knowledge, devices };
     const ctx = makeCtx({ cases, projects, currentUser, role });
     const result = TOOLS[name](input || {}, data, ctx);
     return { content: JSON.stringify(result), isError: !!result?.error };
@@ -280,4 +328,5 @@ export const TOOL_LABELS = {
   expiring_contracts: "ตรวจประกัน/สัญญาใกล้หมด",
   case_stats: "สรุปสถิติเคส",
   search_knowledge: "ค้น Knowledge Hub",
+  search_devices: "ค้นอุปกรณ์/รีโมท",
 };

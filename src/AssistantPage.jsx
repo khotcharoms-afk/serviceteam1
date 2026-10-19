@@ -92,6 +92,17 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
     return list;
   }
 
+  // อุปกรณ์ (หน้าอุปกรณ์/รีโมท) โหลดเมื่อ AI เรียก search_devices ครั้งแรก เก็บไว้ 10 นาที
+  const devicesRef = useRef({ list: null, at: 0 });
+  async function loadDevices() {
+    const k = devicesRef.current;
+    if (k.list && Date.now() - k.at < 10 * 60 * 1000) return k.list;
+    const snap = await getDocs(collection(db, "devices"));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    devicesRef.current = { list, at: Date.now() };
+    return list;
+  }
+
   const inputRef = useRef(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -240,9 +251,13 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         if (toolUses.some((t) => t.name === "search_knowledge")) {
           try { knowledge = await loadKnowledge(); } catch (e) { console.error("load knowledge:", e); }
         }
+        let devices = [];
+        if (toolUses.some((t) => t.name === "search_devices")) {
+          try { devices = await loadDevices(); } catch (e) { console.error("load devices:", e); }
+        }
         const results = toolUses.map((t) => {
           const r = runAssistantTool(t.name, t.input, {
-            ...dataRef.current, knowledge, currentUser, role: data.role, // role จาก server ที่ตรวจแล้ว
+            ...dataRef.current, knowledge, devices, currentUser, role: data.role, // role จาก server ที่ตรวจแล้ว
           });
           return { type: "tool_result", tool_use_id: t.id, content: r.content, ...(r.isError ? { is_error: true } : {}) };
         });
