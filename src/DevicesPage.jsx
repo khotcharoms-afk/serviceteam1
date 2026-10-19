@@ -19,6 +19,7 @@ const RED = "#DC2626";
 const TYPE_COLOR = {
   NUC: "#2563EB", PC: "#2563EB", Server: "#7C3AED", Router: "#EA580C", VPN: "#EA580C", Switch: "#0891B2",
   NVR: "#16A34A", CCTV: "#0F766E", Intrusion: "#DB2777", Ruejai: "#CA8A04", "Face Scan": "#9333EA", Web: "#475569", Robot: "#C026D3",
+  SC50: "#2563EB", "SC50 Plus": "#7C3AED", SC80: "#EA580C", Mix1: "#0D9488",
 };
 const typeColor = (t) => TYPE_COLOR[t] || "#64748B";
 
@@ -400,6 +401,7 @@ export default function DevicesPage({ onBack, currentUser }) {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [project, setProject] = useState("");
+  const [typeF, setTypeF] = useState("");
   const [open, setOpen] = useState({}); // โครงการที่กางอยู่
   const [modal, setModal] = useState(null); // null | {} (เพิ่ม) | device (แก้ไข)
   const [saving, setSaving] = useState(false);
@@ -433,9 +435,16 @@ export default function DevicesPage({ onBack, currentUser }) {
     return [...m.entries()];
   }, [sorted]);
   const q = search.trim().toLowerCase();
-  const filtered = useMemo(() => sorted.filter((d) =>
-    (!project || (d.project || "(ไม่ระบุโครงการ)") === project) &&
-    (!q || q.split(/\s+/).every((w) => deviceSearchText(d).includes(w)))), [sorted, project, q]);
+  const inProject = useMemo(() => sorted.filter((d) => !project || (d.project || "(ไม่ระบุโครงการ)") === project), [sorted, project]);
+  // ประเภทในโครงการที่เลือก (เช่น หุ่นยนต์: SC50 / SC50 Plus / SC80 / Mix1)
+  const types = useMemo(() => {
+    const m = new Map();
+    inProject.forEach((d) => m.set(d.type || "อุปกรณ์", (m.get(d.type || "อุปกรณ์") || 0) + 1));
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [inProject]);
+  const filtered = useMemo(() => inProject.filter((d) =>
+    (!typeF || (d.type || "อุปกรณ์") === typeF) &&
+    (!q || q.split(/\s+/).every((w) => deviceSearchText(d).includes(w)))), [inProject, typeF, q]);
 
   // จัดกลุ่ม โครงการ → ไซต์
   const groups = useMemo(() => {
@@ -450,7 +459,7 @@ export default function DevicesPage({ onBack, currentUser }) {
     });
     return out;
   }, [filtered]);
-  const expandAll = Boolean(q || project) || groups.length === 1;
+  const expandAll = Boolean(q || project || typeF) || groups.length === 1;
 
   const onCopied = (label) => setToast(`คัดลอก ${label} แล้ว`);
 
@@ -560,9 +569,23 @@ export default function DevicesPage({ onBack, currentUser }) {
         <div style={{ display: "flex", gap: 6, overflowX: "auto", padding: "10px 0 4px", WebkitOverflowScrolling: "touch" }}>
           <button onClick={() => setProject("")} style={chip(!project)}>ทั้งหมด</button>
           {projects.map(([p, n]) => (
-            <button key={p} onClick={() => setProject(project === p ? "" : p)} style={chip(project === p)}>{p} · {n}</button>
+            <button key={p} onClick={() => { setProject(project === p ? "" : p); setTypeF(""); }} style={chip(project === p)}>{p} · {n}</button>
           ))}
         </div>
+        {project && types.length > 1 && (
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", padding: "4px 0", alignItems: "center" }}>
+            <span style={{ fontSize: 11.5, color: c.text400, whiteSpace: "nowrap" }}>ประเภท:</span>
+            {types.map(([t, n]) => {
+              const on = typeF === t;
+              return (
+                <button key={t} onClick={() => setTypeF(on ? "" : t)} style={{ padding: "4px 10px", borderRadius: 999, fontSize: 11.5,
+                  fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  border: `1px solid ${on ? typeColor(t) : typeColor(t) + "40"}`, background: on ? typeColor(t) : typeColor(t) + "10",
+                  color: on ? "#fff" : typeColor(t) }}>{t} · {n}</button>
+              );
+            })}
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "6px 0 12px" }}>
           {canEdit && <button onClick={() => setModal({})} style={toolBtn}>➕ เพิ่มอุปกรณ์</button>}
