@@ -18,7 +18,7 @@ const RED = "#DC2626";
 
 const TYPE_COLOR = {
   NUC: "#2563EB", PC: "#2563EB", Server: "#7C3AED", Router: "#EA580C", VPN: "#EA580C", Switch: "#0891B2",
-  NVR: "#16A34A", CCTV: "#0F766E", Intrusion: "#DB2777", Ruejai: "#CA8A04", "Face Scan": "#9333EA", Web: "#475569",
+  NVR: "#16A34A", CCTV: "#0F766E", Intrusion: "#DB2777", Ruejai: "#CA8A04", "Face Scan": "#9333EA", Web: "#475569", Robot: "#C026D3",
 };
 const typeColor = (t) => TYPE_COLOR[t] || "#64748B";
 
@@ -339,7 +339,10 @@ function DeviceModal({ record, projects, onClose, onSave, saving }) {
 }
 
 // ── ยืนยันการนำเข้า ──
-function ImportDialog({ data, existing, onClose, onConfirm, busy }) {
+function ImportDialog({ data, existingDevices, onClose, onConfirm, busy }) {
+  const existing = existingDevices.length;
+  const fileProjects = [...new Set(data.devices.map((d) => d.project || ""))];
+  const sameProject = existingDevices.filter((d) => fileProjects.includes(d.project || "")).length;
   const { c } = useTheme();
   const byProject = {};
   data.devices.forEach((d) => { byProject[d.project || "(ไม่ระบุโครงการ)"] = (byProject[d.project || "(ไม่ระบุโครงการ)"] || 0) + 1; });
@@ -358,14 +361,26 @@ function ImportDialog({ data, existing, onClose, onConfirm, busy }) {
         )}
         <div style={{ fontSize: 12.5, color: c.text500, marginTop: 12 }}>ตอนนี้ในระบบมี {existing} รายการ</div>
         <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
-          {existing > 0 && (
-            <button disabled={busy} onClick={() => onConfirm("replace")} style={btn(RED)}>
-              แทนที่ทั้งหมด (ลบ {existing} รายการเดิม แล้วใส่ชุดใหม่)
+          {sameProject > 0 ? (
+            <button disabled={busy} onClick={() => onConfirm("projects")} style={btn(PURPLE)}>
+              อัปเดตเฉพาะโครงการในไฟล์ (แทน {sameProject} รายการเดิมของโครงการเหล่านี้ โครงการอื่นไม่โดน)
+            </button>
+          ) : (
+            <button disabled={busy} onClick={() => onConfirm("append")} style={btn(PURPLE)}>
+              {existing > 0 ? `เพิ่มเข้าไป (ของเดิม ${existing} รายการยังอยู่ครบ)` : "นำเข้า"}
             </button>
           )}
-          <button disabled={busy} onClick={() => onConfirm("append")} style={btn(PURPLE)}>
-            {existing > 0 ? "เพิ่มต่อจากของเดิม" : "นำเข้า"}
-          </button>
+          {sameProject > 0 && (
+            <button disabled={busy} onClick={() => onConfirm("append")} style={{ ...btn("transparent"), color: PURPLE, border: `1px solid ${PURPLE}` }}>
+              เพิ่มต่อโดยไม่ลบอะไร (อาจได้รายการซ้ำ)
+            </button>
+          )}
+          {existing > 0 && (
+            <button disabled={busy} onClick={() => { if (window.confirm(`ลบอุปกรณ์ทั้งหมด ${existing} รายการทุกโครงการ แล้วใส่เฉพาะชุดในไฟล์นี้?`)) onConfirm("replace"); }}
+              style={{ ...btn("transparent"), color: RED, border: `1px solid ${RED}55`, fontWeight: 600 }}>
+              แทนที่ทั้งหมดทุกโครงการ (ลบ {existing} รายการเดิม)
+            </button>
+          )}
           <button disabled={busy} onClick={onClose} style={{ ...btn("transparent"), color: c.text500, border: `1px solid ${c.border}` }}>
             ยกเลิก
           </button>
@@ -486,6 +501,9 @@ export default function DevicesPage({ onBack, currentUser }) {
       if (mode === "replace") {
         const snap = await getDocs(col);
         snap.docs.forEach((d) => ops.push((b) => b.delete(d.ref)));
+      } else if (mode === "projects") {
+        const names = new Set(importData.devices.map((d) => d.project || ""));
+        devices.filter((d) => names.has(d.project || "")).forEach((d) => ops.push((b) => b.delete(doc(db, "devices", d.id))));
       }
       const base = Date.now();
       const by = currentUser?.name || currentUser?.email || "";
@@ -597,7 +615,7 @@ export default function DevicesPage({ onBack, currentUser }) {
         <DeviceModal record={modal} projects={projects.map(([p]) => p)} onClose={() => setModal(null)} onSave={handleSave} saving={saving} />
       )}
       {importData && (
-        <ImportDialog data={importData} existing={devices.length} onClose={() => setImportData(null)} onConfirm={runImport} busy={saving} />
+        <ImportDialog data={importData} existingDevices={devices} onClose={() => setImportData(null)} onConfirm={runImport} busy={saving} />
       )}
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "#0f172a", color: "#fff",
