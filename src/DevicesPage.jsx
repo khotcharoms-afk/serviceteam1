@@ -52,14 +52,35 @@ function useIsNarrow(px = 760) {
 }
 
 // ค่าที่กดแล้วคัดลอก
+// ปุ่มไอคอนคัดลอก (แสดงข้างค่าทุกช่อง)
+function CopyBtn({ value, label, onCopied, c }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.(label); setDone(true); setTimeout(() => setDone(false), 1200); }}
+      title={`คัดลอก ${label}`} aria-label={`คัดลอก ${label}`}
+      style={{ border: `1px solid ${done ? "#16A34A55" : c.border}`, background: done ? "#16A34A12" : c.card, borderRadius: 6,
+        width: 24, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+        padding: 0, flexShrink: 0, color: done ? "#16A34A" : c.text400 }}>
+      {done ? (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      )}
+    </button>
+  );
+}
+
 function Copy({ value, label, onCopied, c, mono = true, muted }) {
   if (!value) return <span style={{ color: c.text400, opacity: 0.5 }}>–</span>;
   return (
-    <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.(label); }} title={`คัดลอก ${label}`}
-      style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: mono ? MONO : "inherit",
-        fontSize: 12.5, color: muted ? c.text400 : c.text900, textAlign: "left", wordBreak: "break-all" }}>
-      {value}
-    </button>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%" }}>
+      <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.(label); }} title={`คัดลอก ${label}`}
+        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: mono ? MONO : "inherit",
+          fontSize: 12.5, color: muted ? c.text400 : c.text900, textAlign: "left", wordBreak: "break-all", minWidth: 0 }}>
+        {value}
+      </button>
+      <CopyBtn value={value} label={label} onCopied={onCopied} c={c} />
+    </span>
   );
 }
 
@@ -75,6 +96,7 @@ function Secret({ value, onCopied, c }) {
       <button onClick={(e) => { e.stopPropagation(); setShow((s) => !s); }} title={show ? "ซ่อน" : "แสดง"} style={iconBtn(c)}>
         {show ? "🙈" : "👁"}
       </button>
+      <CopyBtn value={value} label="รหัสผ่าน" onCopied={onCopied} c={c} />
     </span>
   );
 }
