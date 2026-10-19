@@ -303,6 +303,8 @@ export default function DevicesPage({ onBack, currentUser }) {
     try {
       const XLSX = await import("xlsx");
       const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      if (!wb.Sheets["devices"] && wb.SheetNames.length > 1 &&
+        !window.confirm(`ไฟล์นี้ไม่ใช่ไฟล์รูปแบบนำเข้า (ไม่มีชีต "devices") จะอ่านเฉพาะชีตแรก "${wb.SheetNames[0]}" ชีตอื่นอีก ${wb.SheetNames.length - 1} ชีตจะไม่ถูกนำเข้า — ทำต่อไหม?`)) return;
       const sheet = wb.Sheets["devices"] || wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "" });
       const data = rowsToDevices(rows);
