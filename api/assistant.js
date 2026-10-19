@@ -125,6 +125,22 @@ const TOOL_DEFS = {
       },
     },
   },
+  search_devices: {
+    name: "search_devices",
+    description:
+      "ค้นอุปกรณ์ในหน้า \"อุปกรณ์/รีโมท\": หุ่นยนต์ทำความสะอาด (SC50/SC50 Plus/SC80/Mix1), PC/NUC/Server, Router, NVR, กล้อง ฯลฯ ของแต่ละโครงการ/ไซต์ " +
+      "คืน โครงการ ไซต์ ประเภท/รุ่น ชื่อเครื่อง S/N(VIN) IP Public IP AnyDesk RustDesk Username และหมายเหตุ " +
+      "(หมายเหตุของหุ่นยนต์มักมีเบอร์ SIM และเบอร์ผู้ติดต่อหน้างาน) — ไม่คืนรหัสผ่าน",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "คำค้น เช่น ชื่อไซต์/สถานี ชื่อเครื่อง IP เลข AnyDesk VIN (เว้นวรรคได้หลายคำ)" },
+        project: { type: "string", description: "ชื่อโครงการในหน้าอุปกรณ์ (บางส่วนก็ได้) เช่น หุ่นยนต์ ARL, Plan B Billboard" },
+        type: { type: "string", description: "ประเภท/รุ่น เช่น SC50, SC80, Mix1, NVR, Router, PC" },
+        limit: { type: "integer", minimum: 1, maximum: 50, description: "ค่าเริ่มต้น 20" },
+      },
+    },
+  },
   case_stats: {
     name: "case_stats",
     description: "สถิติเคสแบบ Dashboard: นับจำนวนเคสแยกตาม status / tech / project / type / month ในช่วงวันที่ที่กำหนด",
@@ -147,9 +163,9 @@ const TOOL_DEFS = {
 //              และดูสัญญาเช่า/เช่าซื้อได้ใน expiring_contracts
 //  pending/disabled/ไม่มี users doc : ใช้ไม่ได้
 const ROLE_TOOLS = {
-  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge"],
-  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
-  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "case_stats"],
+  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices"],
+  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats"],
+  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats"],
 };
 
 export function toolsForRole(role) {
@@ -334,7 +350,9 @@ function systemPrompt(user) {
     "- เรียกเครื่องมือได้หลายครั้งถ้าจำเป็น เช่น ค้นหาก่อนแล้วค่อยดูรายละเอียดเคส",
     "- ถ้าผู้ถามพูดถึง \"งานของฉัน\" ให้ใช้ assignedToMe=true",
     "- คำถามเรื่องวิธีแก้ปัญหา ขั้นตอน คู่มือ หรือความรู้ทางเทคนิค ให้ค้น search_knowledge ก่อน (ลองทั้งคำไทยและอังกฤษ หรือรหัส error ถ้าครั้งแรกไม่พบ) และค้นเคสเก่าที่คล้ายกันด้วย search_cases ได้ ตอบโดยอ้างชื่อบทความ ถ้าไม่พบจริงจึงบอกว่ายังไม่มีใน Knowledge Hub",
-    "- ถามหาผู้ติดต่อ/เบอร์/ที่ตั้งลูกค้า ให้ใช้ list_projects ค้นด้วยชื่อลูกค้าหรือโครงการ ถ้าช่องนั้นว่างให้บอกว่ายังไม่ได้บันทึกไว้ในโครงการ",
+    "- ถามหาผู้ติดต่อ/เบอร์/ที่ตั้งลูกค้า ให้ใช้ list_projects ค้นด้วยชื่อลูกค้าหรือโครงการ และค้น search_devices ด้วยชื่อไซต์/สถานที่ด้วย (เบอร์ผู้ติดต่อหน้างานของหุ่นยนต์อยู่ในหมายเหตุของอุปกรณ์) ถ้าไม่พบทั้งสองที่ให้บอกว่ายังไม่ได้บันทึกไว้",
+    "- ถามเรื่องหุ่นยนต์/อุปกรณ์หน้างาน IP, AnyDesk, RustDesk, VIN/S/N, รุ่น หรือจำนวนเครื่องในไซต์ ให้ใช้ search_devices (ถ้าคำค้นแรกไม่พบ ลองคำสั้นลง ชื่ออังกฤษ/ไทย หรือรหัสไซต์)",
+    "- search_devices ไม่คืนรหัสผ่าน ถ้าถูกถามรหัสผ่านอุปกรณ์ ให้บอกให้เปิดดูในหน้า \"อุปกรณ์/รีโมท\" (กด 👁 ที่ช่อง Password)",
     "- ถ้าผลลัพธ์ถูกตัด (truncated) ให้บอกจำนวนทั้งหมดและแนะนำให้ระบุเงื่อนไขเพิ่ม",
     "- อ้างถึงเคสด้วยชื่อเคส + โครงการ/ไซต์ และวันที่ แสดงวันที่เป็น วว/ดด/ปปปป",
     "- คุณดูข้อมูลได้อย่างเดียว แก้ไข/สร้าง/ลบเคสไม่ได้ ถ้าถูกขอให้แก้ไข ให้แนะนำให้ทำในหน้าเคสของแอป",
