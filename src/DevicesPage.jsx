@@ -35,90 +35,229 @@ async function copyText(text) {
   }
 }
 
-// ── ช่องข้อมูลหนึ่งช่อง: ป้าย + ค่า + ปุ่มคัดลอก (รหัสผ่านซ่อนไว้ กดตาเพื่อดู) ──
-function Field({ label, value, secret, href, onCopied, c }) {
-  const [show, setShow] = useState(false);
-  if (!value) return null;
-  const shown = secret && !show ? "••••••••" : value;
+const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
+const iconBtn = (c) => ({ border: "none", background: "transparent", cursor: "pointer", color: c.text400, fontSize: 12.5,
+  padding: "1px 3px", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 });
+const withPort = (ip, port) => (ip ? (port ? `${ip}:${port}` : ip) : port ? `port ${port}` : "");
+const remoteHref = (kind, id) => (/^\d[\d ]+$/.test(id || "") ? `${kind === "anydesk" ? "anydesk:" : "rustdesk://"}${id.replace(/\s/g, "")}` : null);
+
+function useIsNarrow(px = 760) {
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.innerWidth < px);
+  useEffect(() => {
+    const on = () => setNarrow(window.innerWidth < px);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, [px]);
+  return narrow;
+}
+
+// ค่าที่กดแล้วคัดลอก
+function Copy({ value, label, onCopied, c, mono = true, muted }) {
+  if (!value) return <span style={{ color: c.text400, opacity: 0.5 }}>–</span>;
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: c.bg, border: `1px solid ${c.borderSoft}`,
-      borderRadius: 8, padding: "4px 6px 4px 9px", maxWidth: "100%", minWidth: 0 }}>
-      <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 700, whiteSpace: "nowrap" }}>{label}</span>
-      <span style={{ fontSize: 12.5, color: c.text900, fontFamily: "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
-        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{shown}</span>
-      {secret && (
-        <button onClick={() => setShow((s) => !s)} title={show ? "ซ่อน" : "แสดงรหัส"}
-          style={iconBtn(c)}>{show ? "🙈" : "👁"}</button>
-      )}
-      {href && (
-        <a href={href} title="เปิดโปรแกรมรีโมท" style={{ ...iconBtn(c), textDecoration: "none" }}>↗</a>
-      )}
-      <button onClick={() => { copyText(value); onCopied?.(label); }} title="คัดลอก" style={iconBtn(c)}>⧉</button>
+    <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.(label); }} title={`คัดลอก ${label}`}
+      style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: mono ? MONO : "inherit",
+        fontSize: 12.5, color: muted ? c.text400 : c.text900, textAlign: "left", wordBreak: "break-all" }}>
+      {value}
+    </button>
+  );
+}
+
+// รหัสผ่าน: ซ่อนไว้ กด 👁 เพื่อดู กดที่ตัวรหัสเพื่อคัดลอก
+function Secret({ value, onCopied, c }) {
+  const [show, setShow] = useState(false);
+  if (!value) return <span style={{ color: c.text400, opacity: 0.5 }}>–</span>;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+      <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.("รหัสผ่าน"); }} title="คัดลอกรหัสผ่าน"
+        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: MONO, fontSize: 12.5,
+          color: c.text900, wordBreak: "break-all", textAlign: "left" }}>{show ? value : "••••••"}</button>
+      <button onClick={(e) => { e.stopPropagation(); setShow((s) => !s); }} title={show ? "ซ่อน" : "แสดง"} style={iconBtn(c)}>
+        {show ? "🙈" : "👁"}
+      </button>
+    </span>
+  );
+}
+
+function Remote({ d, onCopied, c }) {
+  const items = [["anydesk", "AnyDesk", d.anydesk], ["rustdesk", "RustDesk", d.rustdesk]].filter(([, , v]) => v);
+  if (!items.length) return <span style={{ color: c.text400, opacity: 0.5 }}>–</span>;
+  return (
+    <div style={{ display: "grid", gap: 2 }}>
+      {items.map(([k, label, v]) => (
+        <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: k === "anydesk" ? "#EF4444" : "#0EA5E9" }}>{k === "anydesk" ? "AD" : "RD"}</span>
+          <Copy value={v} label={label} onCopied={onCopied} c={c} />
+          {remoteHref(k, v) && <a href={remoteHref(k, v)} title={`เปิด ${label}`} onClick={(e) => e.stopPropagation()}
+            style={{ ...iconBtn(c), textDecoration: "none", color: PURPLE }}>↗</a>}
+        </span>
+      ))}
     </div>
   );
 }
-const iconBtn = (c) => ({ border: "none", background: "transparent", cursor: "pointer", color: c.text400, fontSize: 12.5,
-  padding: "1px 3px", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 });
 
-const withPort = (ip, port) => (ip ? (port ? `${ip}:${port}` : ip) : port ? `port ${port}` : "");
+const TypeBadge = ({ t }) => (
+  <span style={{ fontSize: 10.5, fontWeight: 800, color: typeColor(t), background: typeColor(t) + "16", borderRadius: 6,
+    padding: "2px 7px", whiteSpace: "nowrap" }}>{t || "อุปกรณ์"}</span>
+);
 
-function DeviceCard({ d, canEdit, onEdit, onDelete, onCopied, c }) {
-  const [more, setMore] = useState(false);
-  const color = typeColor(d.type);
-  const details = [
-    ["ยี่ห้อ", d.brand], ["S/N", d.serial], ["Firmware", d.firmware], ["Subnet", d.subnet], ["Gateway", d.gateway],
-    ["RTSP", d.rtsp], ["Storage", d.storage],
-  ].filter(([, v]) => v);
+// รายละเอียดเพิ่มเติม (กดแถวเพื่อเปิด)
+function Details({ d, shared, canEdit, onEdit, onDelete, onCopied, c }) {
+  const rows = [["ยี่ห้อ", d.brand], ["รุ่น", d.model], ["S/N", d.serial], ["Firmware", d.firmware], ["Subnet", d.subnet],
+    ["Gateway", d.gateway], ["RTSP", d.rtsp], ["Storage", d.storage]].filter(([, v]) => v);
+  const accounts = [...(shared ? [{ username: d.username, password: d.password, main: true }] : []), ...(d.accounts || [])];
   return (
-    <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: "10px 12px", marginBottom: 8 }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-        <span style={{ fontSize: 10.5, fontWeight: 800, color, background: color + "16", borderRadius: 6, padding: "3px 7px",
-          whiteSpace: "nowrap", marginTop: 1 }}>{d.type || "อุปกรณ์"}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 13.5, color: c.text900, wordBreak: "break-word" }}>{d.name}</div>
-          {d.model && <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{d.model}</div>}
-        </div>
-        {canEdit && (
-          <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
-            <button onClick={() => onEdit(d)} title="แก้ไข" style={iconBtn(c)}>✏️</button>
-            <button onClick={() => onDelete(d)} title="ลบ" style={iconBtn(c)}>🗑️</button>
-          </div>
-        )}
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-        <Field label="IP" value={withPort(d.ip, d.port)} onCopied={onCopied} c={c} />
-        <Field label="Public" value={withPort(d.publicIp, d.publicPort)} onCopied={onCopied} c={c} />
-        <Field label="AnyDesk" value={d.anydesk}
-          href={/^\d[\d ]+$/.test(d.anydesk) ? `anydesk:${d.anydesk.replace(/\s/g, "")}` : null} onCopied={onCopied} c={c} />
-        <Field label="RustDesk" value={d.rustdesk}
-          href={/^\d[\d ]+$/.test(d.rustdesk) ? `rustdesk://${d.rustdesk.replace(/\s/g, "")}` : null} onCopied={onCopied} c={c} />
-        <Field label="User" value={d.username} onCopied={onCopied} c={c} />
-        <Field label="Pass" value={d.password} secret onCopied={onCopied} c={c} />
-      </div>
-      {(d.accounts || []).length > 0 && (
-        <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-          <span style={{ fontSize: 11, color: c.text400 }}>บัญชีอื่น:</span>
-          {d.accounts.map((a, i) => (
-            <React.Fragment key={i}>
-              <Field label="User" value={a.username} onCopied={onCopied} c={c} />
-              <Field label="Pass" value={a.password} secret onCopied={onCopied} c={c} />
+    <div style={{ background: c.bg, borderRadius: 10, padding: "10px 12px", display: "grid", gap: 8, fontSize: 12.5 }}>
+      {rows.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "max-content 1fr", gap: "4px 14px" }}>
+          {rows.map(([k, v]) => (
+            <React.Fragment key={k}>
+              <span style={{ color: c.text400, fontWeight: 700, fontSize: 11.5 }}>{k}</span>
+              <Copy value={v} label={k} onCopied={onCopied} c={c} />
             </React.Fragment>
           ))}
         </div>
       )}
-      {d.note && <div style={{ fontSize: 12, color: c.text500, marginTop: 7 }}>📝 {d.note}</div>}
-      {details.length > 0 && (
-        <div style={{ marginTop: 6 }}>
-          <button onClick={() => setMore((m) => !m)} style={{ ...iconBtn(c), fontSize: 11.5, color: PURPLE, padding: 0 }}>
-            {more ? "▴ ซ่อนรายละเอียด" : `▾ รายละเอียดเพิ่ม (${details.length})`}
-          </button>
-          {more && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-              {details.map(([k, v]) => <Field key={k} label={k} value={v} onCopied={onCopied} c={c} />)}
-            </div>
-          )}
+      {accounts.length > 0 && (
+        <div>
+          <div style={{ color: c.text400, fontWeight: 700, fontSize: 11.5, marginBottom: 4 }}>บัญชีเข้าใช้งาน</div>
+          <div style={{ display: "grid", gridTemplateColumns: "max-content max-content", gap: "4px 18px" }}>
+            {accounts.map((a, i) => (
+              <React.Fragment key={i}>
+                <Copy value={a.username} label="Username" onCopied={onCopied} c={c} />
+                <Secret value={a.password} onCopied={onCopied} c={c} />
+              </React.Fragment>
+            ))}
+          </div>
         </div>
       )}
+      {d.note && <div style={{ color: c.text500 }}>📝 {d.note}</div>}
+      {canEdit && (
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => onEdit(d)} style={{ ...iconBtn(c), color: PURPLE, fontWeight: 700, fontSize: 12 }}>✏️ แก้ไข</button>
+          <button onClick={() => onDelete(d)} style={{ ...iconBtn(c), color: RED, fontWeight: 700, fontSize: 12 }}>🗑️ ลบ</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// user/password ที่ใช้ซ้ำมากที่สุดในไซต์ (≥3 เครื่อง) แสดงครั้งเดียวที่หัวไซต์
+function sharedLogin(items) {
+  const m = new Map();
+  items.forEach((d) => { if (d.password) { const k = `${d.username}\u0000${d.password}`; m.set(k, (m.get(k) || 0) + 1); } });
+  let best = null;
+  m.forEach((n, k) => { if (n >= 3 && (!best || n > best.n)) best = { n, k }; });
+  if (!best) return null;
+  const [username, password] = best.k.split("\u0000");
+  return { username, password, n: best.n };
+}
+
+function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow }) {
+  const [openId, setOpenId] = useState(null);
+  const shared = useMemo(() => sharedLogin(items), [items]);
+  const isShared = (d) => shared && d.username === shared.username && d.password === shared.password;
+  const has = (f) => items.some(f);
+  const cols = [
+    { key: "type", label: "ประเภท", w: "88px", show: true },
+    { key: "name", label: "อุปกรณ์", w: "minmax(150px,1.4fr)", show: true },
+    { key: "ip", label: "Local IP", w: "minmax(120px,1fr)", show: has((d) => d.ip || d.port) },
+    { key: "pub", label: "Public", w: "minmax(130px,1fr)", show: has((d) => d.publicIp || d.publicPort) },
+    { key: "remote", label: "รีโมท", w: "minmax(120px,1fr)", show: has((d) => d.anydesk || d.rustdesk) },
+    { key: "user", label: "User", w: "minmax(80px,.8fr)", show: has((d) => d.username || d.password) },
+    { key: "pass", label: "Password", w: "minmax(110px,1fr)", show: has((d) => d.username || d.password) },
+  ].filter((x) => x.show);
+  const grid = cols.map((x) => x.w).join(" ") + " 22px";
+  const extras = (d) => {
+    const n = (d.accounts || []).length;
+    return (
+      <span style={{ display: "inline-flex", gap: 4, marginLeft: 6, verticalAlign: "middle" }}>
+        {n > 0 && <span style={{ fontSize: 10, color: PURPLE, background: PURPLE + "14", borderRadius: 5, padding: "1px 5px" }}>+{n} บัญชี</span>}
+        {d.note && <span title={d.note} style={{ fontSize: 11 }}>📝</span>}
+      </span>
+    );
+  };
+  const cell = (d, key) => {
+    switch (key) {
+      case "type": return <TypeBadge t={d.type} />;
+      case "name": return (
+        <div style={{ minWidth: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: c.text900, wordBreak: "break-word" }}>{d.name}</span>{extras(d)}
+          {d.model && <div style={{ fontSize: 11, color: c.text400 }}>{d.model}</div>}
+        </div>);
+      case "ip": return <Copy value={withPort(d.ip, d.port)} label="IP" onCopied={onCopied} c={c} />;
+      case "pub": return <Copy value={withPort(d.publicIp, d.publicPort)} label="Public IP" onCopied={onCopied} c={c} />;
+      case "remote": return <Remote d={d} onCopied={onCopied} c={c} />;
+      case "user": return isShared(d) ? <span style={{ fontSize: 11.5, color: "#92400E", whiteSpace: "nowrap" }}>🔑 รหัสหลัก</span>
+        : <Copy value={d.username} label="Username" onCopied={onCopied} c={c} />;
+      case "pass": return isShared(d) ? null
+        : <Secret value={d.password} onCopied={onCopied} c={c} />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 14px", padding: "10px 14px",
+        borderBottom: `1px solid ${c.border}` }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color: ORANGE }}>📍 {site || "ไม่ระบุไซต์"}</span>
+        <span style={{ fontSize: 11.5, color: c.text400 }}>{items.length} เครื่อง</span>
+        {shared && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, background: "#FEF3C7",
+            borderRadius: 8, padding: "3px 10px", marginLeft: "auto" }}>
+            <span style={{ color: "#92400E", fontWeight: 700 }}>🔑 รหัสหลัก ({shared.n} เครื่อง)</span>
+            <Copy value={shared.username} label="Username" onCopied={onCopied} c={c} />
+            <Secret value={shared.password} onCopied={onCopied} c={c} />
+          </span>
+        )}
+      </div>
+
+      {!narrow && (
+        <div style={{ display: "grid", gridTemplateColumns: grid, gap: 10, padding: "7px 14px", background: c.bg,
+          fontSize: 10.5, fontWeight: 800, color: c.text400, letterSpacing: 0.3 }}>
+          {cols.map((x) => <span key={x.key}>{x.label}</span>)}<span />
+        </div>
+      )}
+
+      {items.map((d, i) => {
+        const open = openId === d.id;
+        return (
+          <div key={d.id} style={{ borderTop: i ? `1px solid ${c.borderSoft}` : "none", background: open ? PURPLE + "06" : "transparent" }}>
+            <div onClick={() => setOpenId(open ? null : d.id)} style={{ cursor: "pointer", padding: "8px 14px" }}>
+              {narrow ? (
+                <div style={{ display: "grid", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <TypeBadge t={d.type} />
+                    <span style={{ flex: 1, minWidth: 0, fontWeight: 700, fontSize: 13, color: c.text900, wordBreak: "break-word" }}>
+                      {d.name}{extras(d)}</span>
+                    <span style={{ color: c.text400, fontSize: 11 }}>{open ? "▴" : "▾"}</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 14px", alignItems: "center", fontSize: 12 }}>
+                    {(d.ip || d.port) && <span>{cell(d, "ip")}</span>}
+                    {(d.publicIp || d.publicPort) && <span><span style={{ fontSize: 10, color: c.text400, fontWeight: 700 }}>PUB </span>{cell(d, "pub")}</span>}
+                    {(d.anydesk || d.rustdesk) && <Remote d={d} onCopied={onCopied} c={c} />}
+                    {!isShared(d) && (d.username || d.password) && (
+                      <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                        <Copy value={d.username} label="Username" onCopied={onCopied} c={c} /> <Secret value={d.password} onCopied={onCopied} c={c} />
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: grid, gap: 10, alignItems: "center" }}>
+                  {cols.map((x) => <div key={x.key} style={{ minWidth: 0 }}>{cell(d, x.key)}</div>)}
+                  <span style={{ color: c.text400, fontSize: 11, textAlign: "right" }}>{open ? "▴" : "▾"}</span>
+                </div>
+              )}
+            </div>
+            {open && (
+              <div style={{ padding: "0 14px 10px" }}>
+                <Details d={d} shared={isShared(d)} canEdit={canEdit} onEdit={onEdit} onDelete={onDelete} onCopied={onCopied} c={c} />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -217,6 +356,7 @@ function ImportDialog({ data, existing, onClose, onConfirm, busy }) {
 
 export default function DevicesPage({ onBack, currentUser }) {
   const { c } = useTheme();
+  const narrow = useIsNarrow();
   const canEdit = ["admin", "dev"].includes(currentUser?.role);
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -373,7 +513,7 @@ export default function DevicesPage({ onBack, currentUser }) {
         <div style={{ fontSize: 12, color: c.text400, whiteSpace: "nowrap" }}>{devices.length} รายการ</div>
       </div>
 
-      <div style={{ padding: "14px 16px 40px", maxWidth: 880, margin: "0 auto" }}>
+      <div style={{ padding: "14px 16px 40px", maxWidth: 1180, margin: "0 auto" }}>
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหา ชื่ออุปกรณ์ / IP / AnyDesk / ไซต์ / รุ่น..."
           style={inputBase({ padding: "10px 14px", fontSize: 14, borderRadius: 12 })} />
 
@@ -393,6 +533,11 @@ export default function DevicesPage({ onBack, currentUser }) {
           )}
           {devices.length > 0 && <button onClick={handleExport} style={toolBtn}>📤 ส่งออก Excel</button>}
         </div>
+        {devices.length > 0 && (
+          <div style={{ fontSize: 11.5, color: c.text400, margin: "-4px 0 10px" }}>
+            กดที่ค่าเพื่อคัดลอก · กดที่แถวเพื่อดูรายละเอียด/บัญชีอื่น · 🔑 รหัสหลัก = ใช้รหัสเดียวกับที่แสดงบนหัวไซต์
+          </div>
+        )}
 
         {loading && <div style={{ textAlign: "center", padding: 40, color: c.text400, fontSize: 13 }}>กำลังโหลด...</div>}
         {error && <div style={{ background: RED + "10", color: RED, padding: "10px 14px", borderRadius: 10, fontSize: 13 }}>{error}</div>}
@@ -417,14 +562,10 @@ export default function DevicesPage({ onBack, currentUser }) {
                 <span style={{ fontSize: 11.5, color: c.text400 }}>{g.sites.length} ไซต์ · {count} รายการ</span>
                 {!expandAll && <span style={{ color: c.text400, fontSize: 12 }}>{isOpen ? "▴" : "▾"}</span>}
               </button>
-              {isOpen && g.sites.map((s) => (
-                <div key={s.site} style={{ padding: "8px 0 0 6px" }}>
-                  {s.site && <div style={{ fontSize: 12, fontWeight: 700, color: ORANGE, margin: "2px 0 6px 4px" }}>📍 {s.site}</div>}
-                  {s.items.map((d) => (
-                    <DeviceCard key={d.id} d={d} canEdit={canEdit} onEdit={setModal} onDelete={handleDelete} onCopied={onCopied} c={c} />
-                  ))}
-                </div>
-              ))}
+              {isOpen && <div style={{ paddingTop: 8 }}>{g.sites.map((s) => (
+                <SiteTable key={s.site} site={s.site} items={s.items} canEdit={canEdit} onEdit={setModal} onDelete={handleDelete}
+                  onCopied={onCopied} c={c} narrow={narrow} />
+              ))}</div>}
             </div>
           );
         })}
