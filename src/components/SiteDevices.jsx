@@ -6,6 +6,7 @@ import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useTheme } from "../theme.js";
 import EyeIcon from "./EyeIcon.jsx";
+import { webHref } from "../deviceImport.js";
 
 let cache = { list: null, at: 0 };
 async function loadDevices() {
@@ -102,7 +103,8 @@ function Val({ label, value, href, secret, c, onCopied }) {
       <span style={{ fontSize: 10.5, fontWeight: 800, color: c.text400 }}>{label}</span>
       <span style={{ color: c.text900, fontVariantNumeric: "tabular-nums", wordBreak: "break-all" }}>{secret && !show ? "••••••" : value}</span>
       {secret && <button onClick={() => setShow((s) => !s)} title={show ? "ซ่อนรหัส" : "แสดงรหัส"} style={btn(c)}><EyeIcon off={show} size={13} /></button>}
-      {href && <a href={href} title="เปิดโปรแกรมรีโมท" style={{ ...btn(c), textDecoration: "none", color: "#6B21A8", fontWeight: 800 }}>↗</a>}
+      {href && <a href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        title={href.startsWith("http") ? `เปิด ${href}` : "เปิดโปรแกรมรีโมท"} style={{ ...btn(c), textDecoration: "none", color: "#6B21A8", fontWeight: 800 }}>↗</a>}
       <button onClick={() => { copyText(value); onCopied(label); }} title={`คัดลอก ${label}`} style={btn(c)}>⧉</button>
     </span>
   );
@@ -189,8 +191,8 @@ export default function SiteDevices({ caseData, project }) {
                       <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                         <Val label="AnyDesk" value={d.anydesk} href={remoteHref("anydesk", d.anydesk)} c={c} onCopied={onCopied} />
                         <Val label="RustDesk" value={d.rustdesk} href={remoteHref("rustdesk", d.rustdesk)} c={c} onCopied={onCopied} />
-                        <Val label="IP" value={d.ip ? (d.port ? `${d.ip}:${d.port}` : d.ip) : ""} c={c} onCopied={onCopied} />
-                        <Val label="Public" value={d.publicIp ? (d.publicPort ? `${d.publicIp}:${d.publicPort}` : d.publicIp) : ""} c={c} onCopied={onCopied} />
+                        <Val label="IP" value={d.ip ? (d.port ? `${d.ip}:${d.port}` : d.ip) : ""} href={webHref(d.ip, d.port)} c={c} onCopied={onCopied} />
+                        <Val label="Public" value={d.publicIp ? (d.publicPort ? `${d.publicIp}:${d.publicPort}` : d.publicIp) : ""} href={webHref(d.publicIp, d.publicPort)} c={c} onCopied={onCopied} />
                         <Val label="User" value={d.username} c={c} onCopied={onCopied} />
                         <Val label="Pass" value={d.password} secret c={c} onCopied={onCopied} />
                       </div>

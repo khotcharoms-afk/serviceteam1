@@ -9,7 +9,7 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, 
 import { useTheme } from "./theme.js";
 import { IS as inputBase } from "./utils.js";
 import {
-  DEVICE_COLUMNS, rowsToDevices, devicesToRows, deviceSearchText, sortDevices, parseAccounts, formatAccounts,
+  DEVICE_COLUMNS, rowsToDevices, devicesToRows, deviceSearchText, sortDevices, parseAccounts, formatAccounts, webHref,
 } from "./deviceImport.js";
 import EyeIcon from "./components/EyeIcon.jsx";
 
@@ -73,7 +73,18 @@ function CopyBtn({ value, label, onCopied, c }) {
   );
 }
 
-function Copy({ value, label, onCopied, c, mono = true, muted }) {
+// ปุ่มเปิดหน้าเว็บของอุปกรณ์ในแท็บใหม่
+function OpenBtn({ href, c }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title={`เปิด ${href}`}
+      style={{ border: `1px solid ${PURPLE}40`, background: PURPLE + "0c", color: PURPLE, borderRadius: 6, height: 22, padding: "0 7px",
+        display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 800, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}>
+      เปิด ↗
+    </a>
+  );
+}
+
+function Copy({ value, label, onCopied, c, mono = true, muted, href }) {
   if (!value) return <span style={{ color: c.text400, opacity: 0.5 }}>–</span>;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%" }}>
@@ -83,6 +94,7 @@ function Copy({ value, label, onCopied, c, mono = true, muted }) {
         {value}
       </button>
       <CopyBtn value={value} label={label} onCopied={onCopied} c={c} />
+      {href && <OpenBtn href={href} c={c} />}
     </span>
   );
 }
@@ -186,8 +198,8 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
   const cols = [
     { key: "type", label: "ประเภท", w: "88px", show: true },
     { key: "name", label: "อุปกรณ์", w: "minmax(150px,1.4fr)", show: true },
-    { key: "ip", label: "Local IP", w: "minmax(120px,1fr)", show: has((d) => d.ip || d.port) },
-    { key: "pub", label: "Public", w: "minmax(130px,1fr)", show: has((d) => d.publicIp || d.publicPort) },
+    { key: "ip", label: "Local IP", w: "minmax(185px,1fr)", show: has((d) => d.ip || d.port) },
+    { key: "pub", label: "Public", w: "minmax(200px,1fr)", show: has((d) => d.publicIp || d.publicPort) },
     { key: "remote", label: "รีโมท", w: "minmax(120px,1fr)", show: has((d) => d.anydesk || d.rustdesk) },
     { key: "user", label: "User", w: "minmax(80px,.8fr)", show: has((d) => d.username || d.password) },
     { key: "pass", label: "Password", w: "minmax(110px,1fr)", show: has((d) => d.username || d.password) },
@@ -210,8 +222,8 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
           <span style={{ fontWeight: 700, fontSize: 13, color: c.text900, wordBreak: "break-word" }}>{d.name}</span>{extras(d)}
           {d.model && <div style={{ fontSize: 11, color: c.text400 }}>{d.model}</div>}
         </div>);
-      case "ip": return <Copy value={withPort(d.ip, d.port)} label="IP" onCopied={onCopied} c={c} />;
-      case "pub": return <Copy value={withPort(d.publicIp, d.publicPort)} label="Public IP" onCopied={onCopied} c={c} />;
+      case "ip": return <Copy value={withPort(d.ip, d.port)} label="IP" onCopied={onCopied} c={c} href={webHref(d.ip, d.port)} />;
+      case "pub": return <Copy value={withPort(d.publicIp, d.publicPort)} label="Public IP" onCopied={onCopied} c={c} href={webHref(d.publicIp, d.publicPort)} />;
       case "remote": return <Remote d={d} onCopied={onCopied} c={c} />;
       case "user": return isShared(d) ? <span style={{ fontSize: 11.5, color: "#92400E", whiteSpace: "nowrap" }}>🔑 รหัสหลัก</span>
         : <Copy value={d.username} label="Username" onCopied={onCopied} c={c} />;
