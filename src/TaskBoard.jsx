@@ -95,6 +95,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
   const narrow = typeof window !== "undefined" && window.innerWidth < 640;
 
   const [tab, setTab] = useState("calendar"); // calendar | mine | all | done
+  const W = tab === "calendar" ? 1680 : 860; // ความกว้างสูงสุดของหน้า (ปฏิทินกว้างเกือบเต็มจอ)
   const [month, setMonth] = useState(todayIso.slice(0, 7)); // YYYY-MM
   const [mineOnly, setMineOnly] = useState(!isAdmin);
   const [search, setSearch] = useState("");
@@ -156,7 +157,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", "--card-bg": c.card }}>
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, zIndex: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px 6px", maxWidth: 1180, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px 6px", maxWidth: W, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer", padding: 4, lineHeight: 1 }}>←</button>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: PURPLE + "14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>📋</div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -172,7 +173,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
                 fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ ลงงาน</button>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", padding: "0 16px", maxWidth: 1180, margin: "0 auto", overflowX: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", padding: "0 16px", maxWidth: W, margin: "0 auto", overflowX: "auto" }}>
           {tabBtn("calendar", "📅 ปฏิทิน")}
           {tabBtn("mine", "งานของฉัน", mineActive.length, overdueMine > 0)}
           {tabBtn("all", "ทั้งหมด", allActive.length)}
@@ -181,7 +182,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
       </div>
 
       {tab === "calendar" ? (
-        <div style={{ maxWidth: 1180, margin: "0 auto", padding: narrow ? "10px 6px 60px" : "14px 16px 60px" }}>
+        <div style={{ maxWidth: W, margin: "0 auto", padding: narrow ? "10px 6px 60px" : "14px 20px 60px" }}>
           <MonthCalendar month={month} setMonth={setMonth} todayIso={todayIso} c={c} narrow={narrow} isAdmin={isAdmin}
             tasks={all.filter((t) => (!mineOnly || isMine(t)) && matches(t))} projColor={projColor} me={me}
             mineOnly={mineOnly} setMineOnly={setMineOnly} search={search} setSearch={setSearch}
@@ -278,13 +279,15 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
 
   const dated = tasks.filter((t) => endOf(t));
   const inMonth = dated.filter((t) => startOf(t) <= last && endOf(t) >= first);
-  const barH = narrow ? 18 : 22;
+  const barH = narrow ? 20 : 26;
+  // ให้ปฏิทินสูงพอดีจอ (อย่างน้อย 120px ต่อสัปดาห์บนคอม)
+  const vh = typeof window !== "undefined" ? window.innerHeight : 900;
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10, padding: narrow ? "0 4px" : 0 }}>
         <button onClick={() => shiftMonth(-1)} style={navBtn(c)}>‹</button>
-        <div style={{ fontSize: 17, fontWeight: 800, color: c.text900, minWidth: narrow ? 0 : 170, textAlign: "center" }}>{TH_MONTHS[m - 1]} {y + 543}</div>
+        <div style={{ fontSize: narrow ? 17 : 20, fontWeight: 800, color: c.text900, minWidth: narrow ? 0 : 200, textAlign: "center" }}>{TH_MONTHS[m - 1]} {y + 543}</div>
         <button onClick={() => shiftMonth(1)} style={navBtn(c)}>›</button>
         {month !== todayIso.slice(0, 7) && <button onClick={() => setMonth(todayIso.slice(0, 7))} style={{ ...navBtn(c), width: "auto", padding: "0 12px", fontSize: 12.5 }}>วันนี้</button>}
         <span style={{ fontSize: 12, color: c.text400 }}>{inMonth.length} งานในเดือนนี้</span>
@@ -300,7 +303,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
       <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", background: c.bg, borderBottom: `1px solid ${c.border}` }}>
           {TH_DAYS.map((d, i) => (
-            <div key={d} style={{ textAlign: "center", fontSize: 11.5, fontWeight: 800, padding: "6px 0", color: i >= 5 ? RED + "cc" : c.text400 }}>{d}</div>
+            <div key={d} style={{ textAlign: "center", fontSize: narrow ? 11.5 : 13, fontWeight: 800, padding: narrow ? "6px 0" : "9px 0", color: i >= 5 ? RED + "cc" : c.text400 }}>{d}</div>
           ))}
         </div>
 
@@ -318,7 +321,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
             laneEnds[lane] = sg.col + sg.span - 1;
             sg.lane = lane;
           });
-          const minH = narrow ? 64 : 96;
+          const minH = narrow ? 76 : Math.max(120, Math.floor((vh - 300) / weeks.length));
           return (
             <div key={ws} style={{ position: "relative", borderTop: ws === gridStart ? "none" : `1px solid ${c.border}`, minHeight: minH }}>
               {/* พื้นหลังแต่ละวัน (กดเพื่อลงงาน) */}
@@ -341,7 +344,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
                   const out = iso < first || iso > last;
                   const isToday = iso === todayIso;
                   return (
-                    <div key={iso} style={{ gridRow: 1, gridColumn: i + 1, padding: narrow ? "3px 4px 0" : "5px 7px 0", fontSize: narrow ? 11 : 12.5,
+                    <div key={iso} style={{ gridRow: 1, gridColumn: i + 1, padding: narrow ? "3px 4px 0" : "7px 10px 0", fontSize: narrow ? 11.5 : 14,
                       fontWeight: isToday ? 800 : 600, color: out ? c.text400 + "99" : c.text500 }}>
                       <span style={isToday ? { background: PURPLE, color: "#fff", borderRadius: 999, padding: "1px 6px" } : undefined}>{toDate(iso).getDate()}</span>
                     </div>
@@ -373,7 +376,7 @@ function CalBar({ sg, c, narrow, h, color, onOpen, todayIso }) {
     <div onClick={(e) => { e.stopPropagation(); onOpen(); }} title={`${t.title}${none ? " (ยังไม่มีคนทำ)" : ` — ${(t.assignees || []).join(", ")}`}`}
       style={{ gridRow: sg.lane + 2, gridColumn: `${sg.col + 1} / span ${sg.span}`, pointerEvents: "auto", cursor: "pointer",
         margin: `1px ${sg.contR ? 0 : 3}px 2px ${sg.contL ? 0 : 3}px`, height: h, display: "flex", alignItems: "center", gap: 4, overflow: "hidden",
-        padding: narrow ? "0 3px" : "0 6px", fontSize: narrow ? 10 : 11.5, fontWeight: 700,
+        padding: narrow ? "0 4px" : "0 8px", fontSize: narrow ? 10.5 : 13, fontWeight: 700,
         borderRadius: `${sg.contL ? 0 : 6}px ${sg.contR ? 0 : 6}px ${sg.contR ? 0 : 6}px ${sg.contL ? 0 : 6}px`,
         background: done ? base + "18" : base + "24", color: done ? c.text400 : c.text900,
         ...(() => {
@@ -386,7 +389,7 @@ function CalBar({ sg, c, narrow, h, color, onOpen, todayIso }) {
       {!narrow && !none && (
         <span style={{ display: "inline-flex", flexShrink: 0 }}>
           {(t.assignees || []).slice(0, 2).map((n, i) => (
-            <span key={n} style={{ width: 15, height: 15, borderRadius: "50%", background: avatarBg(n), color: "#fff", fontSize: 8.5, fontWeight: 800,
+            <span key={n} style={{ width: 18, height: 18, borderRadius: "50%", background: avatarBg(n), color: "#fff", fontSize: 10, fontWeight: 800,
               display: "inline-flex", alignItems: "center", justifyContent: "center", marginLeft: i ? -4 : 0 }}>{n.charAt(0)}</span>
           ))}
         </span>
