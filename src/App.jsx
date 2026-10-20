@@ -67,6 +67,33 @@ export default function App({ currentUser, onSignOut }) {
   const [onlineUsers,setOnlineUsers] = useState([]);
   const [darkMode,setDarkMode] = useState(false);
   const themeC = THEMES[darkMode ? "dark" : "light"];
+
+  // ── จำหน้าที่เปิดอยู่ไว้ใน URL (#devices, #tasks, #view=<โครงการ>) → กดรีเฟรชแล้วอยู่หน้าเดิม ──
+  // ลำดับต้องตรงกับลำดับ if(...) return ด้านล่าง (หน้าแรกที่เปิดอยู่คือหน้าที่แสดง)
+  const PAGE_HASH = [
+    ["admin", adminPage, setAdminPage], ["leave", leavePage, setLeavePage], ["profile", profilePage, setProfilePage],
+    ["ot", otPage, setOtPage], ["tasks", taskPage, setTaskPage], ["onsite", onsitePage, setOnsitePage],
+    ["shift", shiftPage, setShiftPage], ["knowledge", knowledgePage, setKnowledgePage],
+    ["robot-stats", robotStatsPage, setRobotStatsPage], ["case-log", caseLogPage, setCaseLogPage],
+    ["robot-issues", robotIssuesPage, setRobotIssuesPage], ["devices", devicesPage, setDevicesPage],
+    ["dashboard", dashboardPage, setDashboardPage],
+  ];
+  useEffect(() => {
+    const h = decodeURIComponent(window.location.hash.slice(1));
+    const page = PAGE_HASH.find(([k]) => k === h);
+    if (page) page[2](true);
+    else if (h.startsWith("view=") && h.length > 5) setView(h.slice(5));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const open = PAGE_HASH.find(([, on]) => on);
+    const h = open ? open[0] : view !== "overview" ? `view=${encodeURIComponent(view)}` : "";
+    const url = window.location.pathname + window.location.search + (h ? `#${h}` : "");
+    if (url !== window.location.pathname + window.location.search + window.location.hash) window.history.replaceState(null, "", url);
+  }, [...PAGE_HASH.map(([, on]) => on), view]); // eslint-disable-line react-hooks/exhaustive-deps
+  // โครงการที่จำไว้ถูกลบไปแล้ว → กลับหน้าภาพรวม
+  useEffect(() => {
+    if (!loading && view !== "overview" && projects.length && !projects.some((p) => p.id === view)) setView("overview");
+  }, [loading, projects, view]);
   const PageLoader = () => (<div style={{ minHeight:"100vh",background:themeC.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Sans Thai',sans-serif",color:themeC.text400,fontSize:14 }}><div style={{ textAlign:"center" }}><div style={{ fontSize:32,color:themeC.blue,marginBottom:10 }}>◈</div>กำลังโหลด...</div></div>);
 
   // ตั้งสีให้ input/select/textarea ทั้งแอป (utils.js IS() อ่านตัวแปรพวกนี้)
