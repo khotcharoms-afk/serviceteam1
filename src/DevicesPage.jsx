@@ -11,6 +11,7 @@ import { IS as inputBase } from "./utils.js";
 import {
   DEVICE_COLUMNS, rowsToDevices, devicesToRows, deviceSearchText, sortDevices, parseAccounts, formatAccounts,
 } from "./deviceImport.js";
+import EyeIcon from "./components/EyeIcon.jsx";
 
 const PURPLE = "#6B21A8";
 const ORANGE = "#F97316";
@@ -95,8 +96,8 @@ function Secret({ value, onCopied, c }) {
       <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.("รหัสผ่าน"); }} title="คัดลอกรหัสผ่าน"
         style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontSize: 12.5,
           color: c.text900, wordBreak: "break-all", textAlign: "left" }}>{show ? value : "••••••"}</button>
-      <button onClick={(e) => { e.stopPropagation(); setShow((s) => !s); }} title={show ? "ซ่อน" : "แสดง"} style={iconBtn(c)}>
-        {show ? "🙈" : "👁"}
+      <button onClick={(e) => { e.stopPropagation(); setShow((s) => !s); }} title={show ? "ซ่อนรหัส" : "แสดงรหัส"} style={{ ...iconBtn(c), display: "inline-flex", alignItems: "center" }}>
+        <EyeIcon off={show} size={14} />
       </button>
       <CopyBtn value={value} label="รหัสผ่าน" onCopied={onCopied} c={c} />
     </span>
