@@ -36,7 +36,8 @@ async function copyText(text) {
   }
 }
 
-const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
+// ค่าต่างๆ (IP, AnyDesk, รหัส) ใช้ฟอนต์เดียวกับทั้งแอป + ตัวเลขกว้างเท่ากันให้อ่านง่าย
+const MONO = "'Noto Sans Thai','Sora',sans-serif";
 const iconBtn = (c) => ({ border: "none", background: "transparent", cursor: "pointer", color: c.text400, fontSize: 12.5,
   padding: "1px 3px", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 });
 const withPort = (ip, port) => (ip ? (port ? `${ip}:${port}` : ip) : port ? `port ${port}` : "");
@@ -76,7 +77,7 @@ function Copy({ value, label, onCopied, c, mono = true, muted }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%" }}>
       <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.(label); }} title={`คัดลอก ${label}`}
-        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: mono ? MONO : "inherit",
+        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: mono ? MONO : "inherit", fontVariantNumeric: "tabular-nums",
           fontSize: 12.5, color: muted ? c.text400 : c.text900, textAlign: "left", wordBreak: "break-all", minWidth: 0 }}>
         {value}
       </button>
@@ -92,7 +93,7 @@ function Secret({ value, onCopied, c }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
       <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.("รหัสผ่าน"); }} title="คัดลอกรหัสผ่าน"
-        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: MONO, fontSize: 12.5,
+        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontSize: 12.5,
           color: c.text900, wordBreak: "break-all", textAlign: "left" }}>{show ? value : "••••••"}</button>
       <button onClick={(e) => { e.stopPropagation(); setShow((s) => !s); }} title={show ? "ซ่อน" : "แสดง"} style={iconBtn(c)}>
         {show ? "🙈" : "👁"}
