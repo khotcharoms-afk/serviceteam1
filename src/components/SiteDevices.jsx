@@ -16,7 +16,7 @@ async function loadDevices() {
 }
 
 const norm = (s) => String(s || "").toLowerCase().replace(/[\s_\-()/.,:]+/g, "");
-const GENERIC = new Set(["site", "ไซต์", "อาคาร", "ชั้น", "โครงการ", "project", "the", "and", "plan", "bkk", "building", "tower",
+const GENERIC = new Set(["site", "ไซต์", "อาคาร", "ชั้น", "โครงการ", "project", "the", "and", "plan", "building", "tower",
   "cleaning", "service", "services", "smart", "robot", "หุ่นยนต์", "lot1", "floor", "บริษัท", "จำกัด", "co", "ltd"].map(norm));
 const hasThai = (t) => /[\u0E00-\u0E7F]/.test(t);
 // คำในข้อความ: แยกด้วยช่องว่าง/สัญลักษณ์ และแยกไทยออกจากอังกฤษ ("รัชโยธินWest" → รัชโยธิน, west)
@@ -46,7 +46,8 @@ export function matchDevices(devices, caseData, project) {
   const loose = devices.filter(inProject);
   // ชื่อโครงการตรงกันทั้งชื่อ (เช่น "Plan B Billboard") → ไม่ต้องเอาโครงการชื่อสั้นกว่า ("Plan B") มาปน
   const exact = loose.filter((d) => norm(d.project) === projNorm);
-  const byProject = exact.length ? exact : loose;
+  const byProject = (exact.length ? exact : loose).slice()
+    .sort((a, b) => String(a.site || "").localeCompare(String(b.site || ""), "th", { numeric: true }));
 
   // ไม่ได้เลือกไซต์ → ใช้ชื่อโครงการเป็นตัวบอกไซต์ เช่น "Workforce Phuket (Smart Cleaning)" → Phuket → PKT
   // (ตัดคำที่เป็นชื่อโครงการในหน้าอุปกรณ์ออก เช่น "Workforce")
@@ -64,6 +65,7 @@ export function matchDevices(devices, caseData, project) {
     if (names.some((n) => site.includes(norm(n))) && !siteTokens.includes(code)) siteTokens.push(code);
     if (siteTokens.includes(code)) names.forEach((n) => { if (!siteTokens.includes(norm(n))) siteTokens.push(norm(n)); });
   });
+  const inferred = !caseData.site && !!site;
   if (!site) return { list: byProject, byProject };
 
   const hits = pool.map((d) => {
@@ -81,7 +83,8 @@ export function matchDevices(devices, caseData, project) {
 
   if (!hits.length) return { list: caseData.site ? [] : byProject, byProject };
   const best = hits[0].score;
-  return { list: hits.filter((x) => x.score >= best * (best >= 100 ? 0.9 : 0.75)).map((x) => x.d), byProject };
+  const list = hits.filter((x) => x.score >= best * (best >= 100 ? 0.9 : 0.75)).map((x) => x.d);
+  return { list, byProject, inferredSite: inferred ? [...new Set(list.map((d) => d.site))].join(", ") : "" };
 }
 
 async function copyText(text) {
@@ -125,7 +128,7 @@ export default function SiteDevices({ caseData, project }) {
   }
 
   const [showAllProject, setShowAllProject] = useState(false);
-  const { list: siteMatched, byProject } = useMemo(() => (devices ? matchDevices(devices, caseData, project) : { list: [], byProject: [] }),
+  const { list: siteMatched, byProject, inferredSite } = useMemo(() => (devices ? matchDevices(devices, caseData, project) : { list: [], byProject: [] }),
     [devices, caseData.site, project]); // eslint-disable-line react-hooks/exhaustive-deps
   const matched = showAllProject ? byProject : siteMatched;
   const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -162,13 +165,15 @@ export default function SiteDevices({ caseData, project }) {
                   {searched ? "ไม่พบอุปกรณ์ที่ตรงกับคำค้น" : caseData.site ? `ไม่พบอุปกรณ์ของไซต์ "${caseData.site}" ลองค้นด้วยชื่ออื่นด้านบน` : "ไม่พบอุปกรณ์ของโครงการนี้ ลองค้นด้านบน"}
                 </div>
               )}
-              {!searched && !caseData.site && list.length > 0 && (
-                <div style={{ fontSize: 11.5, color: c.text400, margin: "0 2px 6px" }}>ยังไม่ได้เลือกไซต์ — แสดงทุกเครื่องของโครงการ</div>
+              {!searched && !caseData.site && list.length > 0 && !showAllProject && (
+                <div style={{ fontSize: 11.5, color: c.text400, margin: "0 2px 6px" }}>
+                  {inferredSite ? `ไซต์จากชื่อโครงการ: ${inferredSite}` : "ยังไม่ได้เลือกไซต์ — แสดงทุกเครื่องของโครงการ"}
+                </div>
               )}
-              {!searched && caseData.site && byProject.length > 0 && (showAllProject || byProject.length > siteMatched.length) && (
+              {!searched && (caseData.site || inferredSite) && byProject.length > 0 && (showAllProject || byProject.length > siteMatched.length) && (
                 <button onClick={() => setShowAllProject((v) => !v)} style={{ border: `1px dashed ${c.border}`, background: c.card, color: "#6B21A8",
                   borderRadius: 8, padding: "5px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
-                  {showAllProject ? `แสดงเฉพาะไซต์ "${caseData.site}"` : `ดูทุกเครื่องของโครงการนี้ (${byProject.length})`}
+                  {showAllProject ? `แสดงเฉพาะไซต์ "${caseData.site || inferredSite}"` : `ดูทุกเครื่องของโครงการนี้ (${byProject.length})`}
                 </button>
               )}
               <div style={{ display: "grid", gap: 6 }}>
