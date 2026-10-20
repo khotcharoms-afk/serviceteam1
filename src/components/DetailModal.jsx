@@ -7,6 +7,8 @@ import SiteDevices from "./SiteDevices.jsx";
 import { useTheme } from "../theme.js";
 
 const tint = (hex, alpha = "22") => `${hex}${alpha}`;
+// ปิดปุ่ม/ป้าย Checklist ไว้ก่อน (ข้อมูล checklist เดิมยังอยู่ในเคส) — เปลี่ยนเป็น true เพื่อเปิดกลับ
+const SHOW_CHECKLIST = false;
 
 export default function DetailModal({
   detailCase, onClose, projects, users,
@@ -34,7 +36,7 @@ export default function DetailModal({
           padding:"3px 12px",fontSize:12,fontWeight:700 }}>
           {proj?.name}
         </span>
-        {detailCase.checklist && (
+        {SHOW_CHECKLIST && detailCase.checklist && (
           <span style={{ background: detailCase.checklist.confirmed?tint(c.green,"14"):tint(c.orange,"14"),
             color: detailCase.checklist.confirmed?c.green:c.orange,
             border:`1px solid ${detailCase.checklist.confirmed?tint(c.green,"55"):tint(c.orange,"55")}`,
@@ -169,13 +171,13 @@ export default function DetailModal({
 
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
         <GhostBtn onClick={onEdit}>✎ แก้ไข</GhostBtn>
-        <button onClick={()=>setShowChecklist(true)}
+        {SHOW_CHECKLIST && <button onClick={()=>setShowChecklist(true)}
           style={{ background: detailCase.checklist?.confirmed?tint(c.green,"14"):detailCase.checklist?tint(c.orange,"14"):c.borderSoft,
             border:`1px solid ${detailCase.checklist?.confirmed?tint(c.green,"55"):detailCase.checklist?tint(c.orange,"55"):c.border}`,
             color: detailCase.checklist?.confirmed?c.green:detailCase.checklist?c.orange:c.text500,
             borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           {detailCase.checklist?.confirmed?"✅ Checklist":detailCase.checklist?"📋 Checklist*":"📋 Checklist"}
-        </button>
+        </button>}
         <button onClick={onUpdate}
           style={{ background:tint(c.green,"14"),border:`1px solid ${tint(c.green,"55")}`,color:c.green,
             borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
