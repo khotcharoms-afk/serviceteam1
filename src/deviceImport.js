@@ -102,3 +102,15 @@ export function sortDevices(list) {
     (a.site || "").localeCompare(b.site || "", "th", { numeric: true }) ||
     (a.order ?? 0) - (b.order ?? 0));
 }
+
+// ลิงก์เปิดหน้าเว็บของอุปกรณ์ (Router/NVR/กล้อง) จาก IP + Port
+// port 443/8443 → https · port ที่ไม่ใช่หน้าเว็บ (RTSP, SSH, RDP, SDK ของ Hik/Dahua) → เปิดที่ IP พอร์ตปกติ
+const NON_WEB_PORTS = new Set(["22", "23", "554", "3389", "8000", "37777", "37778", "5900"]);
+export function webHref(ip, port) {
+  const host = String(ip || "").trim();
+  if (!/^(\d{1,3}(\.\d{1,3}){3}|[a-z0-9-]+(\.[a-z0-9-]+)+)$/i.test(host)) return null;
+  const p = String(port || "").trim().replace(/^:/, "");
+  const usePort = /^\d{1,5}$/.test(p) && !NON_WEB_PORTS.has(p) ? p : "";
+  const scheme = usePort === "443" || usePort === "8443" ? "https" : "http";
+  return `${scheme}://${host}${usePort && usePort !== "80" && usePort !== "443" ? ":" + usePort : ""}`;
+}
