@@ -202,7 +202,7 @@ const TOOLS = {
     if (input.tag) list = list.filter((a) => (a.tags || []).some((t) => lc(t).includes(lc(input.tag))));
 
     const scored = list.map((a) => {
-      const title = lc(a.title), tags = lc((a.tags || []).join(" ")), body = lc(`${a.problem || ""} ${a.solution || ""}`);
+      const title = lc(a.title), tags = lc([...(a.tags || []), a.category || ""].join(" ")), body = lc(`${a.problem || ""} ${a.cause || ""} ${a.solution || ""}`);
       let score = 0;
       if (q && (title.includes(q))) score += 10;
       if (q && body.includes(q)) score += 4;
@@ -218,8 +218,8 @@ const TOOLS = {
       totalArticles: knowledge.length,
       found: scored.length,
       articles: scored.slice(0, limit).map(({ a }) => ({
-        id: a.id, title: a.title || "", tags: a.tags || [],
-        problem: (a.problem || "").slice(0, 800), solution: (a.solution || "").slice(0, 2500),
+        id: a.id, title: a.title || "", category: a.category || "", tags: a.tags || [],
+        problem: (a.problem || "").slice(0, 800), cause: (a.cause || "").slice(0, 600), solution: (a.solution || "").slice(0, 2500),
         by: a.createdBy || "", date: (a.updatedAt || a.createdAt || "").slice(0, 10),
       })),
     };
