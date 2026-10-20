@@ -17,7 +17,7 @@ async function loadDevices() {
 
 const norm = (s) => String(s || "").toLowerCase().replace(/[\s_\-()/.,:]+/g, "");
 const GENERIC = new Set(["site", "ไซต์", "อาคาร", "ชั้น", "โครงการ", "project", "the", "and", "plan", "bkk", "building", "tower",
-  "cleaning", "service", "services", "robot", "หุ่นยนต์", "lot1", "floor", "บริษัท", "จำกัด", "co", "ltd"].map(norm));
+  "cleaning", "service", "services", "smart", "robot", "หุ่นยนต์", "lot1", "floor", "บริษัท", "จำกัด", "co", "ltd"].map(norm));
 const hasThai = (t) => /[\u0E00-\u0E7F]/.test(t);
 // คำในข้อความ: แยกด้วยช่องว่าง/สัญลักษณ์ และแยกไทยออกจากอังกฤษ ("รัชโยธินWest" → รัชโยธิน, west)
 const wordsOf = (s) => String(s || "").toLowerCase().split(/[^a-z0-9\u0E00-\u0E7F]+|(?<=[\u0E00-\u0E7F])(?=[a-z0-9])|(?<=[a-z0-9])(?=[\u0E00-\u0E7F])/)
@@ -41,35 +41,47 @@ const SITE_ALIASES = {
 // แยกคะแนนเป็น 2 ส่วน: site = ไซต์ตรงกัน, proj = โครงการตรงกัน
 // คืน { list, byProject } — list = เครื่องที่ตรงไซต์ (หรือทั้งโครงการถ้าเคสไม่ได้ระบุไซต์), byProject = ทุกเครื่องของโครงการ
 export function matchDevices(devices, caseData, project) {
-  const site = norm(caseData.site);
-  const siteTokens = tokensOf(caseData.site);
-  // เคสเขียน "สุวรรณภูมิ" → เพิ่มรหัส bkk ให้ไปตรงกับไซต์ "BKK" ในหน้าอุปกรณ์ (และกลับกัน)
+  const projNorm = norm(String(project?.name || "").replace(/^โครงการ/, ""));
+  const inProject = (d) => { const dp = norm(d.project); return dp.length >= 4 && projNorm.length >= 4 && (projNorm.includes(dp) || dp.includes(projNorm)); };
+  const loose = devices.filter(inProject);
+  // ชื่อโครงการตรงกันทั้งชื่อ (เช่น "Plan B Billboard") → ไม่ต้องเอาโครงการชื่อสั้นกว่า ("Plan B") มาปน
+  const exact = loose.filter((d) => norm(d.project) === projNorm);
+  const byProject = exact.length ? exact : loose;
+
+  // ไม่ได้เลือกไซต์ → ใช้ชื่อโครงการเป็นตัวบอกไซต์ เช่น "Workforce Phuket (Smart Cleaning)" → Phuket → PKT
+  // (ตัดคำที่เป็นชื่อโครงการในหน้าอุปกรณ์ออก เช่น "Workforce")
+  let siteText = caseData.site || "";
+  let pool = devices;
+  if (!siteText && byProject.length) {
+    const projWords = new Set(byProject.flatMap((d) => wordsOf(d.project)));
+    siteText = wordsOf(String(project?.name || "").replace(/^โครงการ/, "")).filter((w) => !projWords.has(w)).join(" ");
+    pool = byProject;
+  }
+  const site = norm(siteText);
+  const siteTokens = tokensOf(siteText);
+  // ไซต์ "สุวรรณภูมิ" → เพิ่มรหัส bkk ให้ไปตรงกับไซต์ "BKK" ในหน้าอุปกรณ์ (และกลับกัน)
   Object.entries(SITE_ALIASES).forEach(([code, names]) => {
     if (names.some((n) => site.includes(norm(n))) && !siteTokens.includes(code)) siteTokens.push(code);
     if (siteTokens.includes(code)) names.forEach((n) => { if (!siteTokens.includes(norm(n))) siteTokens.push(norm(n)); });
   });
-  const projNorm = norm(String(project?.name || "").replace(/^โครงการ/, ""));
-  const scored = devices.map((d) => {
-    const dSite = norm(d.site), dProj = norm(d.project);
+  if (!site) return { list: byProject, byProject };
+
+  const hits = pool.map((d) => {
+    const dSite = norm(d.site);
     const dWords = [...wordsOf(d.site), ...wordsOf(d.name)];
     const dText = `${d.site} ${d.name}`;
-    let siteScore = 0;
-    if (site.length >= 3 && (dSite === site || (site.length >= 5 && dSite.includes(site)) || (dSite.length >= 5 && site.includes(dSite)))) siteScore += 100;
-    siteTokens.forEach((t) => { if (tokenIn(t, dText, dWords)) siteScore += 10 + t.length; });
+    let score = 0;
+    if (site.length >= 3 && (dSite === site || (site.length >= 5 && dSite.includes(site)) || (dSite.length >= 5 && site.includes(dSite)))) score += 100;
+    siteTokens.forEach((t) => { if (tokenIn(t, dText, dWords)) score += 10 + t.length; });
     // กลับด้าน: ชื่อไทยของอุปกรณ์อยู่ในไซต์ของเคส เช่น อุปกรณ์ "ราชปรารภ" ↔ เคส "สถานีราชปรารภ"
-    if (site) tokensOf(d.site).filter(hasThai).forEach((t) => { if (site.includes(t) && !siteTokens.includes(t)) siteScore += 10 + t.length; });
-    // ชื่อโครงการในหน้าอุปกรณ์อยู่ในชื่อโครงการของเคส (หรือกลับกัน) เช่น "Plan B" ↔ "โครงการ Plan B Building"
-    const projScore = dProj.length >= 4 && projNorm.length >= 4 && (projNorm.includes(dProj) || dProj.includes(projNorm)) ? 20 : 0;
-    return { d, siteScore, projScore };
-  });
-  const byProject = scored.filter((x) => x.projScore > 0).map((x) => x.d);
-  if (!site) return { list: byProject, byProject };
-  const siteHits = scored.filter((x) => x.siteScore > 0).map((x) => ({ ...x, score: x.siteScore + x.projScore }))
-    .sort((a, b) => b.score - a.score);
-  if (!siteHits.length) return { list: [], byProject };
-  const best = siteHits[0].score;
-  // เอาเฉพาะกลุ่มที่ใกล้ตัวที่ดีที่สุด (เครื่องของโครงการเดียวกันได้คะแนนเพิ่ม จึงมาก่อนไซต์ชื่อซ้ำของโครงการอื่น)
-  return { list: siteHits.filter((x) => x.score >= best * (best >= 100 ? 0.9 : 0.75)).map((x) => x.d), byProject };
+    tokensOf(d.site).filter(hasThai).forEach((t) => { if (site.includes(t) && !siteTokens.includes(t)) score += 10 + t.length; });
+    if (score && inProject(d)) score += 20; // เครื่องของโครงการเดียวกันมาก่อนไซต์ชื่อซ้ำของโครงการอื่น
+    return { d, score };
+  }).filter((x) => x.score > 0).sort((x, y) => y.score - x.score);
+
+  if (!hits.length) return { list: caseData.site ? [] : byProject, byProject };
+  const best = hits[0].score;
+  return { list: hits.filter((x) => x.score >= best * (best >= 100 ? 0.9 : 0.75)).map((x) => x.d), byProject };
 }
 
 async function copyText(text) {
