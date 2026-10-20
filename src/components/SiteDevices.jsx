@@ -22,7 +22,11 @@ const hasThai = (t) => /[\u0E00-\u0E7F]/.test(t);
 // คำในข้อความ: แยกด้วยช่องว่าง/สัญลักษณ์ และแยกไทยออกจากอังกฤษ ("รัชโยธินWest" → รัชโยธิน, west)
 const wordsOf = (s) => String(s || "").toLowerCase().split(/[^a-z0-9\u0E00-\u0E7F]+|(?<=[\u0E00-\u0E7F])(?=[a-z0-9])|(?<=[a-z0-9])(?=[\u0E00-\u0E7F])/)
   .filter(Boolean);
-const tokensOf = (...vals) => [...new Set(vals.flatMap(wordsOf).filter((t) => (hasThai(t) ? t.length >= 4 : t.length >= 3) && !GENERIC.has(t)))];
+// คำนำหน้าชื่อสถานที่ที่ไม่ใช่ชื่อจริง ("สถานีราชปรารภ" → "ราชปรารภ")
+const TH_PREFIX = /^(สถานี|สาขา|โรงพยาบาล|รพ|อาคาร|ตึก|ศูนย์การแพทย์|ศูนย์|ห้าง|บริษัท|โครงการ|มหาวิทยาลัย|โรงเรียน|คลัง)/;
+const stripPrefix = (t) => (hasThai(t) ? t.replace(TH_PREFIX, "") : t);
+const tokensOf = (...vals) => [...new Set(vals.flatMap(wordsOf).map(stripPrefix)
+  .filter((t) => (hasThai(t) ? t.length >= 4 : t.length >= 3) && !GENERIC.has(t)))];
 // คำไทยไม่มีช่องว่าง → เทียบแบบมีอยู่ในข้อความ · คำอังกฤษ/รหัส → ต้องตรงทั้งคำ (กัน "era" ไปตรงกับ "TowerA")
 const tokenIn = (t, text, words) => (hasThai(t) ? norm(text).includes(t) : words.includes(t));
 
@@ -38,6 +42,8 @@ export function matchDevices(devices, caseData, project) {
     let score = 0;
     if (site.length >= 3 && (dSite === site || (site.length >= 5 && dSite.includes(site)) || (dSite.length >= 5 && site.includes(dSite)))) score += 100;
     siteTokens.forEach((t) => { if (tokenIn(t, dText, dWords)) score += 10 + t.length; });
+    // กลับด้าน: ชื่อไทยของอุปกรณ์อยู่ในไซต์ของเคส เช่น อุปกรณ์ "ราชปรารภ" ↔ เคส "สถานีราชปรารภ"
+    if (site) tokensOf(d.site).filter(hasThai).forEach((t) => { if (site.includes(t) && !siteTokens.includes(t)) score += 10 + t.length; });
     // ชื่อโครงการในหน้าอุปกรณ์อยู่ในชื่อโครงการของเคส (หรือกลับกัน) เช่น "Plan B" ↔ "โครงการ Plan B Building"
     if (dProj.length >= 4 && projNorm.length >= 4 && (projNorm.includes(dProj) || dProj.includes(projNorm))) score += 20;
     return { d, score };
