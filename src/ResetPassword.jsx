@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { auth } from "./firebase";
 import { verifyPasswordResetCode, confirmPasswordReset } from "firebase/auth";
+import EyeIcon from "./components/EyeIcon.jsx";
 
 const IS = (x={}) => ({
   width:"100%", background:"#fff", border:"1px solid #e2e8f0",
@@ -119,7 +120,7 @@ export default function ResetPassword({ oobCode, onDone }) {
                   <button type="button" onClick={()=>setShowPw(!showPw)}
                     style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",
                       background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#94a3b8" }}>
-                    {showPw?"🙈":"👁"}
+                    <EyeIcon off={showPw} size={18}/>
                   </button>
                 </div>
               </div>

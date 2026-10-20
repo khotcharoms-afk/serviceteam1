@@ -7,6 +7,7 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import EyeIcon from "./components/EyeIcon.jsx";
 
 const IS = (x={}) => ({
   width:"100%", background:"#fff", border:"1px solid #e2e8f0",
@@ -173,7 +174,7 @@ export default function Auth() {
                 <button type="button" onClick={()=>setShowPw(!showPw)}
                   style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",
                     background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#94a3b8" }}>
-                  {showPw?"🙈":"👁"}
+                  <EyeIcon off={showPw} size={18}/>
                 </button>
               </div>
               {/* Forgot password (login only) */}
