@@ -16,27 +16,36 @@ async function loadDevices() {
 }
 
 const norm = (s) => String(s || "").toLowerCase().replace(/[\s_\-()/.,:]+/g, "");
-const GENERIC = new Set(["site", "ไซต์", "อาคาร", "ชั้น", "โครงการ", "project", "the", "and", "plan", "bkk"].map(norm));
-const tokensOf = (...vals) => [...new Set(vals.flatMap((v) => String(v || "").split(/[\s()/_\-,]+/)).map(norm)
-  .filter((t) => t.length >= 3 && !GENERIC.has(t)))];
+const GENERIC = new Set(["site", "ไซต์", "อาคาร", "ชั้น", "โครงการ", "project", "the", "and", "plan", "bkk", "building", "tower",
+  "cleaning", "service", "services", "robot", "หุ่นยนต์", "lot1", "floor", "บริษัท", "จำกัด", "co", "ltd"].map(norm));
+const hasThai = (t) => /[\u0E00-\u0E7F]/.test(t);
+// คำในข้อความ: แยกด้วยช่องว่าง/สัญลักษณ์ และแยกไทยออกจากอังกฤษ ("รัชโยธินWest" → รัชโยธิน, west)
+const wordsOf = (s) => String(s || "").toLowerCase().split(/[^a-z0-9\u0E00-\u0E7F]+|(?<=[\u0E00-\u0E7F])(?=[a-z0-9])|(?<=[a-z0-9])(?=[\u0E00-\u0E7F])/)
+  .filter(Boolean);
+const tokensOf = (...vals) => [...new Set(vals.flatMap(wordsOf).filter((t) => (hasThai(t) ? t.length >= 4 : t.length >= 3) && !GENERIC.has(t)))];
+// คำไทยไม่มีช่องว่าง → เทียบแบบมีอยู่ในข้อความ · คำอังกฤษ/รหัส → ต้องตรงทั้งคำ (กัน "era" ไปตรงกับ "TowerA")
+const tokenIn = (t, text, words) => (hasThai(t) ? norm(text).includes(t) : words.includes(t));
 
-// คะแนนความเกี่ยวข้องของอุปกรณ์กับเคส: ไซต์ตรงกันได้คะแนนสูงสุด รองลงมาคือคำที่ตรงกับชื่อไซต์/โครงการ
+// คะแนนความเกี่ยวข้องของอุปกรณ์กับเคส: ไซต์ตรงกันได้คะแนนสูงสุด รองลงมาคือคำในชื่อไซต์ และชื่อโครงการที่ตรงกัน
 export function matchDevices(devices, caseData, project) {
   const site = norm(caseData.site);
   const siteTokens = tokensOf(caseData.site);
-  const projTokens = tokensOf(project?.name, project?.code, project?.customer);
+  const projNorm = norm(String(project?.name || "").replace(/^โครงการ/, ""));
   const scored = devices.map((d) => {
-    const dSite = norm(d.site), dName = norm(d.name), dProj = norm(d.project);
+    const dSite = norm(d.site), dProj = norm(d.project);
+    const dWords = [...wordsOf(d.site), ...wordsOf(d.name)];
+    const dText = `${d.site} ${d.name}`;
     let score = 0;
-    if (site.length >= 3 && (dSite.includes(site) || (dSite.length >= 3 && site.includes(dSite)))) score += 100;
-    siteTokens.forEach((t) => { if (dSite.includes(t) || dName.includes(t)) score += 10 + t.length; });
-    projTokens.forEach((t) => { if (dProj.includes(t) || dSite.includes(t)) score += 3 + t.length / 2; });
+    if (site.length >= 3 && (dSite === site || (site.length >= 5 && dSite.includes(site)) || (dSite.length >= 5 && site.includes(dSite)))) score += 100;
+    siteTokens.forEach((t) => { if (tokenIn(t, dText, dWords)) score += 10 + t.length; });
+    // ชื่อโครงการในหน้าอุปกรณ์อยู่ในชื่อโครงการของเคส (หรือกลับกัน) เช่น "Plan B" ↔ "โครงการ Plan B Building"
+    if (dProj.length >= 4 && projNorm.length >= 4 && (projNorm.includes(dProj) || dProj.includes(projNorm))) score += 20;
     return { d, score };
   }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
   if (!scored.length) return [];
   const best = scored[0].score;
   // ถ้ามีเครื่องที่ตรงไซต์ชัดๆ เอาเฉพาะกลุ่มนั้น ไม่งั้นเอาที่คะแนนใกล้ตัวที่ดีที่สุด
-  return scored.filter((x) => x.score >= best * (best >= 100 ? 0.9 : 0.5)).map((x) => x.d);
+  return scored.filter((x) => x.score >= best * (best >= 100 ? 0.9 : 0.6)).map((x) => x.d);
 }
 
 async function copyText(text) {
