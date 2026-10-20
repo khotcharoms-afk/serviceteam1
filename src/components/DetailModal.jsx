@@ -3,13 +3,14 @@ import { Modal, GhostBtn, WarrantyPill, LeasePill, HirePurchasePill, StatusPill 
 import { fmtDate, daysLeft } from "../utils.js";
 import WorkOrderModal from "./WorkOrderModal.jsx";
 import ChecklistModal from "./ChecklistModal.jsx";
+import SiteDevices from "./SiteDevices.jsx";
 import { useTheme } from "../theme.js";
 
 const tint = (hex, alpha = "22") => `${hex}${alpha}`;
 
 export default function DetailModal({
   detailCase, onClose, projects, users,
-  onEdit, onUpdate, onHandover, onDelete, onChecklist, saving
+  onEdit, onUpdate, onHandover, onDelete, onChecklist, onKnowledge, saving
 }) {
   const { c } = useTheme();
   const [showWorkOrder, setShowWorkOrder] = useState(false);
@@ -101,6 +102,19 @@ export default function DetailModal({
           <StatusPill value={detailCase.status}/>
         </div>
       </div>
+
+      <SiteDevices key={detailCase.id} caseData={detailCase} project={proj}/>
+
+      {detailCase.status==="done" && onKnowledge && (
+        detailCase.knowledgeId ? (
+          <div style={{ fontSize:12.5,color:c.green,fontWeight:700,marginBottom:16 }}>💡 บันทึกวิธีแก้ของเคสนี้ไว้ใน Knowledge Hub แล้ว</div>
+        ) : (
+          <button onClick={onKnowledge} style={{ width:"100%",marginBottom:16,background:tint("#F59E0B","14"),border:`1px dashed ${tint("#F59E0B","88")}`,
+            color:"#B45309",borderRadius:10,padding:"10px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,textAlign:"left" }}>
+            💡 บันทึกวิธีแก้ของเคสนี้ลง Knowledge Hub ให้ทีม
+          </button>
+        )
+      )}
 
       {detailCase.note && (
         <div style={{ background:c.borderSoft,border:`1px solid ${c.border}`,borderRadius:10,padding:"12px 14px",marginBottom:16 }}>

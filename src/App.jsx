@@ -22,6 +22,7 @@ const AssistantPage = lazy(() => import("./AssistantPage.jsx"));
 const CaseLogPage = lazy(() => import("./CaseLogPage.jsx"));
 const KnowledgeHub = lazy(() => import("./KnowledgeHub.jsx"));
 const DevicesPage = lazy(() => import("./DevicesPage.jsx"));
+const CaseToKnowledge = lazy(() => import("./components/CaseToKnowledge.jsx"));
 const ProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const TaskBoard = lazy(() => import("./TaskBoard.jsx"));
 import CaseModal from "./components/CaseModal.jsx";
@@ -116,6 +117,7 @@ export default function App({ currentUser, onSignOut }) {
   const [delCase,setDelCase]           = useState(null);
   const [handoverCase,setHandoverCase] = useState(null);
   const [updateCase,setUpdateCase]     = useState(null);
+  const [kbCase,setKbCase]             = useState(null); // เคสที่เพิ่งปิด → ชวนบันทึกลง Knowledge Hub
   const [projModal,setProjModal]       = useState(false);
   const [importModal,setImportModal]   = useState(false);
   const [importRows,setImportRows]     = useState([]);
@@ -337,6 +339,10 @@ export default function App({ currentUser, onSignOut }) {
       editCase?"แก้ไขเคสเรียบร้อย":"บันทึกเคสเรียบร้อย"
     );
     if(ok){ setCaseModal(false); setEditCase(null); }
+    if(ok && editCase && payload.status==="done"){
+      const prev = cases.find(x=>x.id===editCase);
+      if(prev && prev.status!=="done" && !prev.knowledgeId) setKbCase({ ...prev, ...payload, id: editCase });
+    }
     setSaving(false);
   }
   async function deleteCase(id){
@@ -377,8 +383,10 @@ export default function App({ currentUser, onSignOut }) {
     if(saving) return;
     setSaving(true);
     const now = new Date().toISOString();
+    const prev = cases.find(x=>x.id===updated.id);
     const ok = await commitWrite(setDoc(doc(db,"cases",updated.id), {...updated, updatedAt: now, activityAt: now}), "อัปเดตความคืบหน้าแล้ว");
     if(ok) setUpdateCase(null);
+    if(ok && updated.status==="done" && prev?.status!=="done" && !updated.knowledgeId) setKbCase(updated);
     setSaving(false);
   }
   async function saveChecklist(updated){
@@ -1166,7 +1174,15 @@ export default function App({ currentUser, onSignOut }) {
         onHandover={()=>{ setHandoverCase(detailCase); setDetailCase(null); }}
         onDelete={()=>{ setDelCase(detailCase.id); setDetailCase(null); }}
         onChecklist={saveChecklist}
+        onKnowledge={()=>{ setKbCase(detailCase); setDetailCase(null); }}
         saving={saving}/>
+
+      {kbCase && (
+        <Suspense fallback={null}>
+          <CaseToKnowledge caseData={kbCase} project={projects.find(p=>p.id===kbCase.projectId)} currentUser={currentUser}
+            onClose={()=>setKbCase(null)} onSaved={()=>showToast("💡 บันทึกลง Knowledge Hub แล้ว","success")}/>
+        </Suspense>
+      )}
 
       {globalSearch && (
         <div style={{ position:"fixed",inset:0,zIndex:800,background:"rgba(15,23,42,.6)",
