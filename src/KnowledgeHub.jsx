@@ -57,7 +57,7 @@ function Highlight({ text, words }) {
 }
 
 // ── ฟอร์มเพิ่ม/แก้ไข ──
-function KnowledgeModal({ onClose, onSave, saving, editRecord }) {
+export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, intro }) {
   const { c } = useTheme();
   const [title, setTitle] = useState(editRecord?.title || "");
   const [category, setCategory] = useState(editRecord ? categoryOf(editRecord) : "");
@@ -89,9 +89,11 @@ function KnowledgeModal({ onClose, onSave, saving, editRecord }) {
       <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 600, maxHeight: "94vh",
         overflowY: "auto", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: c.text900 }}>{editRecord ? "✏️ แก้ไขบทความ" : "📝 เพิ่มบทความ"}</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: c.text900 }}>{editRecord?.id ? "✏️ แก้ไขบทความ" : heading || "📝 เพิ่มบทความ"}</h2>
           <button onClick={onClose} style={{ background: c.borderSoft, border: "none", color: c.text500, cursor: "pointer", fontSize: 14, width: 30, height: 30, borderRadius: 8 }}>✕</button>
         </div>
+        {intro && <div style={{ fontSize: 13, color: c.text500, background: "#16A34A10", border: "1px solid #16A34A33", borderRadius: 10,
+          padding: "9px 12px", margin: "-4px 0 14px", lineHeight: 1.6 }}>{intro}</div>}
 
         <div style={{ marginBottom: 14 }}>
           <label style={LB}>หมวด *</label>
