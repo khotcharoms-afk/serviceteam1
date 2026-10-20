@@ -8,16 +8,17 @@ const PRIORITY_OPTS = [
   { value:"normal",      label:"ปกติ",    color:"#16a34a", bg:"#f0fdf4" },
 ];
 
-export default function TaskModal({ onClose, onSave, saving, projects, users, currentUser, editTask, initialTitle = "" }) {
+export default function TaskModal({ onClose, onSave, saving, projects, users, currentUser, editTask, initialTitle = "", initialDate = "" }) {
   const { c } = useTheme();
   const isEdit = !!editTask;
   const [title,    setTitle]    = useState(editTask?.title    || initialTitle);
   const [projId,   setProjId]   = useState(editTask?.projectId|| "");
   const [site,     setSite]     = useState(editTask?.site     || "");
   const [type,     setType]     = useState(editTask?.type     || (SERVICE_TYPES.includes("อื่นๆ") ? "อื่นๆ" : SERVICE_TYPES[0]));
-  const [dueDate,  setDueDate]  = useState(editTask?.dueDate  || "");
+  const [startDate,setStartDate]= useState(editTask?.startDate || editTask?.dueDate || initialDate);
+  const [dueDate,  setDueDate]  = useState(editTask?.dueDate  || initialDate);
   const [priority, setPriority] = useState(editTask?.priority || "normal");
-  const [assignees,setAssignees]= useState(editTask?.assignees|| (currentUser?.name ? [currentUser.name] : []));
+  const [assignees,setAssignees]= useState(editTask?.assignees|| []);
   const [note,     setNote]     = useState(editTask?.note     || "");
   const [projSearch, setProjSearch] = useState("");
   const [projDropdown, setProjDropdown] = useState(false);
@@ -35,12 +36,13 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
   }
 
   function handleSave() {
-    if (!title.trim() || assignees.length===0) return;
+    if (!title.trim()) return;
     onSave({
       title: title.trim(), projectId: projId,
       projectName: selProj?.name || "",
       projectColor: selProj?.color || "#94a3b8",
-      site, type, dueDate, priority, assignees,
+      site, type, priority, assignees,
+      startDate: startDate || dueDate || "", dueDate: dueDate || startDate || "",
       note: note.trim(),
       status: editTask?.status === "accepted" ? "todo" : (editTask?.status || "todo"),
       createdBy: editTask?.createdBy ?? (currentUser?.name || ""),
@@ -66,7 +68,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:c.text900 }}>
-            📋 {isEdit?"แก้ไขงาน":"สร้างงานใหม่"}
+            📋 {isEdit?"แก้ไขงาน":"ลงงานใหม่"}
           </h2>
           <button onClick={onClose} style={{ background:c.borderSoft,border:"none",
             color:c.text500,cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
@@ -138,18 +140,28 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
           )}
         </div>
 
-        {/* grid: ประเภท + กำหนดเสร็จ */}
+        {/* วันเริ่ม – วันจบ */}
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14 }}>
           <div>
-            <label style={LB}>ประเภทงาน</label>
-            <select value={type} onChange={e=>setType(e.target.value)} style={IS2}>
-              {SERVICE_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
-            </select>
+            <label style={LB}>วันเริ่ม</label>
+            <input type="date" value={startDate} onChange={e=>{ const v=e.target.value; setStartDate(v); if(!dueDate || dueDate<v) setDueDate(v); }} style={IS2}/>
           </div>
           <div>
-            <label style={LB}>กำหนดเสร็จ</label>
-            <input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)} style={IS2}/>
+            <label style={LB}>วันจบ</label>
+            <input type="date" value={dueDate} min={startDate||undefined} onChange={e=>{ const v=e.target.value; setDueDate(v); if(!startDate || startDate>v) setStartDate(v); }} style={IS2}/>
           </div>
+        </div>
+        {startDate && dueDate && dueDate>startDate && (
+          <div style={{ fontSize:12,color:c.text400,margin:"-8px 0 14px" }}>
+            งาน {Math.round((new Date(dueDate)-new Date(startDate))/86400000)+1} วัน
+          </div>
+        )}
+
+        <div style={{ marginBottom:14 }}>
+          <label style={LB}>ประเภทงาน</label>
+          <select value={type} onChange={e=>setType(e.target.value)} style={IS2}>
+            {SERVICE_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+          </select>
         </div>
 
         {/* priority */}
@@ -171,7 +183,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
 
         {/* ผู้รับผิดชอบ */}
         <div style={{ marginBottom:14 }}>
-          <label style={LB}>ผู้รับผิดชอบ *</label>
+          <label style={LB}>ผู้รับผิดชอบ <span style={{ textTransform:"none",fontWeight:400 }}>(เลือกทีหลังได้)</span></label>
           <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
             {approvedUsers.map(u=>(
               <label key={u.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
@@ -199,11 +211,11 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
             color:c.text500,borderRadius:10,padding:12,fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={handleSave}
-            disabled={saving||!title.trim()||assignees.length===0}
+            disabled={saving||!title.trim()}
             style={{ background:"#6B21A8",border:"none",color:"#fff",borderRadius:10,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
-              opacity:saving||!title.trim()||assignees.length===0?0.5:1 }}>
-            {saving?"กำลังบันทึก...":(isEdit?"💾 บันทึก":"➕ สร้างงาน")}
+              opacity:saving||!title.trim()?0.5:1 }}>
+            {saving?"กำลังบันทึก...":(isEdit?"💾 บันทึก":"➕ ลงงาน")}
           </button>
         </div>
       </div>
