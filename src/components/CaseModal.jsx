@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal, Field, PrimaryBtn, GhostBtn } from "../UI.jsx";
 import { IS, SERVICE_TYPES, STATUS_OPTS, fmtDate, daysLeft } from "../utils.js";
 import { useTheme } from "../theme.js";
+import SiteDevices from "./SiteDevices.jsx";
 
 export default function CaseModal({
   open, onClose, editCase, caseForm, setCaseForm,
@@ -136,6 +137,10 @@ export default function CaseModal({
           );
         })()}
       </Field>
+      {(caseForm.site || caseForm.projectId) && (
+        <SiteDevices caseData={{ site: caseForm.site, title: caseForm.title }}
+          project={projects.find(p => p.id === caseForm.projectId)} />
+      )}
       <Field label="ประเภทงาน">
         <select style={IS({ cursor:"pointer" })} value={caseForm.type}
           onChange={e => setCaseForm(f => ({ ...f, type:e.target.value }))}>

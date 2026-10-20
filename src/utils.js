@@ -29,7 +29,8 @@ export const COLOR_OPTS = [
 export const FEATURE_SHIFT = false;
 
 // ── Helpers ───────────────────────────────────────────────────
-export const today = () => new Date().toISOString().slice(0, 10);
+// วันนี้ตามเวลาไทย (YYYY-MM-DD) — toISOString() เป็นเวลา UTC ทำให้ช่วงเที่ยงคืน–7 โมงเช้าได้วันที่ของเมื่อวาน
+export const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" });
 
 export const daysLeft = (s) => {
   if (!s) return null;

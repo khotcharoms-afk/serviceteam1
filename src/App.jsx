@@ -309,7 +309,7 @@ export default function App({ currentUser, onSignOut }) {
   // ── Case actions ──
   function openAddCase(){
     const pid=view!=="overview"?view:(projects[0]?.id||"");
-    setCaseForm({...emptyCase,projectId:pid,tech:currentUser?.name||"",techs:[currentUser?.name||""]});
+    setCaseForm({...emptyCase,date:today(),projectId:pid,tech:currentUser?.name||"",techs:[currentUser?.name||""]});
     setEditCase(null); setCaseModal(true);
   }
   function openEditCase(c){
