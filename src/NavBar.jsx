@@ -14,7 +14,7 @@ export default function NavBar({
 }) {
   const { c } = useTheme();
   const taskBadge = (tasks||[]).filter(t =>
-    t.status === "todo" && (t.assignees||[]).includes(currentUser?.name)
+    (t.status === "todo" || t.status === "accepted") && (t.assignees||[]).includes(currentUser?.name)
   ).length;
 
   return (
