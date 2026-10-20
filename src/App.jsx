@@ -716,7 +716,7 @@ export default function App({ currentUser, onSignOut }) {
       const batch = writeBatch(db);
       const now = new Date().toISOString();
 
-      if (isNew && (data.assignees||[]).length>0) {
+      if (isNew) {
         // แจ้งผู้รับผิดชอบเมื่อสร้างงานใหม่
         (data.assignees||[]).forEach(name => {
           const u = users.find(x=>x.name===name);
@@ -729,7 +729,7 @@ export default function App({ currentUser, onSignOut }) {
         });
         await batch.commit();
         const others = (data.assignees||[]).some(n=>n!==currentUser?.name);
-        showToast(others ? "📋 สร้างงานและแจ้งเตือนแล้ว" : "📋 เพิ่มงานแล้ว","success");
+        showToast(others ? "📋 ลงงานและแจ้งผู้รับผิดชอบแล้ว" : "📋 ลงงานแล้ว","success");
       } else if (!isNew && prevTask && data.status && normSt(prevTask.status) !== normSt(data.status)) {
         // แจ้งผู้สร้างงาน + admin เมื่อมีคนเปลี่ยนสถานะ
         const toNotify = users.filter(u=>(u.role==="admin"||u.id===data.createdByUid||u.name===data.createdBy)&&u.id!==currentUser?.id);
