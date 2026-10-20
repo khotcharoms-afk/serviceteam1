@@ -491,6 +491,33 @@ export default function DevicesPage({ onBack, currentUser }) {
     setSaving(false);
   }
 
+  // เปลี่ยนชื่อโครงการ หรือรวมเข้ากับโครงการที่มีอยู่ (ย้ายทุกเครื่องไปชื่อใหม่)
+  async function renameProject(from) {
+    const to = window.prompt(`ย้ายอุปกรณ์ทั้งหมดของ "${from}" ไปที่โครงการ:\n(พิมพ์ชื่อโครงการที่มีอยู่แล้วเพื่อรวม หรือชื่อใหม่เพื่อเปลี่ยนชื่อ)`, from)?.trim();
+    if (!to || to === from) return;
+    const items = devices.filter((d) => (d.project || "(ไม่ระบุโครงการ)") === from);
+    const target = projects.find(([p]) => p.toLowerCase() === to.toLowerCase());
+    const name = target ? target[0] : to;
+    if (!window.confirm(target
+      ? `รวม ${items.length} รายการของ "${from}" เข้ากับ "${name}" (${target[1]} รายการ)?`
+      : `เปลี่ยนชื่อโครงการ "${from}" เป็น "${name}" (${items.length} รายการ)?`)) return;
+    setSaving(true);
+    try {
+      const by = currentUser?.name || currentUser?.email || "";
+      for (let i = 0; i < items.length; i += 400) {
+        const batch = writeBatch(db);
+        items.slice(i, i + 400).forEach((d) => batch.update(doc(db, "devices", d.id), { project: name, updatedAt: Date.now(), updatedBy: by }));
+        await batch.commit();
+      }
+      if (project === from) setProject(name);
+      setToast(target ? `รวมเข้ากับ ${name} แล้ว` : `เปลี่ยนชื่อเป็น ${name} แล้ว`);
+    } catch (err) {
+      console.error(err);
+      alert("บันทึกไม่สำเร็จ");
+    }
+    setSaving(false);
+  }
+
   async function handleDelete(d) {
     if (!window.confirm(`ลบ "${d.name}" (${d.project}${d.site ? " / " + d.site : ""})?`)) return;
     try { await deleteDoc(doc(db, "devices", d.id)); } catch (err) { console.error(err); alert("ลบไม่สำเร็จ"); }
@@ -632,13 +659,20 @@ export default function DevicesPage({ onBack, currentUser }) {
           const count = g.sites.reduce((n, s) => n + s.items.length, 0);
           return (
             <div key={g.project} style={{ marginBottom: 10 }}>
-              <button onClick={() => setOpen((o) => ({ ...o, [g.project]: !isOpen }))} disabled={expandAll}
-                style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: c.card, border: `1px solid ${c.border}`,
-                  borderRadius: 12, padding: "11px 14px", cursor: expandAll ? "default" : "pointer", fontFamily: "inherit", textAlign: "left" }}>
-                <span style={{ fontSize: 14.5, fontWeight: 800, color: c.text900, flex: 1 }}>{g.project}</span>
-                <span style={{ fontSize: 11.5, color: c.text400 }}>{g.sites.length} ไซต์ · {count} รายการ</span>
-                {!expandAll && <span style={{ color: c.text400, fontSize: 12 }}>{isOpen ? "▴" : "▾"}</span>}
-              </button>
+              <div style={{ display: "flex", alignItems: "stretch", background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
+                <button onClick={() => setOpen((o) => ({ ...o, [g.project]: !isOpen }))} disabled={expandAll}
+                  style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none",
+                    padding: "11px 14px", cursor: expandAll ? "default" : "pointer", fontFamily: "inherit", textAlign: "left" }}>
+                  <span style={{ fontSize: 14.5, fontWeight: 800, color: c.text900, flex: 1 }}>{g.project}</span>
+                  <span style={{ fontSize: 11.5, color: c.text400 }}>{g.sites.length} ไซต์ · {count} รายการ</span>
+                  {!expandAll && <span style={{ color: c.text400, fontSize: 12 }}>{isOpen ? "▴" : "▾"}</span>}
+                </button>
+                {canEdit && (
+                  <button onClick={() => renameProject(g.project)} title="เปลี่ยนชื่อ / รวมเข้ากับโครงการอื่น"
+                    style={{ border: "none", borderLeft: `1px solid ${c.borderSoft}`, background: "transparent", color: c.text400, cursor: "pointer",
+                      padding: "0 12px", fontSize: 12, fontFamily: "inherit", whiteSpace: "nowrap" }}>✏️ ชื่อ/รวม</button>
+                )}
+              </div>
               {isOpen && <div style={{ paddingTop: 8 }}>{g.sites.map((s) => (
                 <SiteTable key={s.site} site={s.site} items={s.items} canEdit={canEdit} onEdit={setModal} onDelete={handleDelete}
                   onCopied={onCopied} c={c} narrow={narrow} />

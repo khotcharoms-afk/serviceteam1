@@ -32,6 +32,8 @@ const tokensOf = (...vals) => [...new Set(vals.flatMap(wordsOf).map(stripPrefix)
 const tokenIn = (t, text, words) => (hasThai(t) ? norm(text).includes(t) : words.includes(t));
 
 // คะแนนความเกี่ยวข้องของอุปกรณ์กับเคส: ไซต์ตรงกันได้คะแนนสูงสุด รองลงมาคือคำในชื่อไซต์ และชื่อโครงการที่ตรงกัน
+const PROJECT_GENERIC = new Set(["building", "hq", "office", "head", "สำนักงานใหญ่", "อาคาร", "tower", "smart", "cleaning", "service", "services", "co", "ltd"]);
+
 // ชื่อเรียกอื่นของไซต์ (รหัสสนามบินในหน้าอุปกรณ์ ↔ ชื่อที่ใช้ในเคส)
 const SITE_ALIASES = {
   bkk: ["สุวรรณภูมิ", "suvarnabhumi"], dmk: ["ดอนเมือง", "donmueang", "donmuang"], hdy: ["หาดใหญ่", "hatyai"],
@@ -43,7 +45,15 @@ const SITE_ALIASES = {
 // คืน { list, byProject } — list = เครื่องที่ตรงไซต์ (หรือทั้งโครงการถ้าเคสไม่ได้ระบุไซต์), byProject = ทุกเครื่องของโครงการ
 export function matchDevices(devices, caseData, project) {
   const projNorm = norm(String(project?.name || "").replace(/^โครงการ/, ""));
-  const inProject = (d) => { const dp = norm(d.project); return dp.length >= 4 && projNorm.length >= 4 && (projNorm.includes(dp) || dp.includes(projNorm)); };
+  // แก่นของชื่อโครงการ (ตัดคำทั่วไปอย่าง Building / HQ ออก) เช่น "Plan B HQ" ↔ "โครงการ Plan B Building" = "planb"
+  const core = (name) => wordsOf(String(name || "").replace(/^โครงการ/, "")).filter((w) => !PROJECT_GENERIC.has(w)).join("");
+  const projCore = core(project?.name);
+  const inProject = (d) => {
+    const dp = norm(d.project);
+    if (dp.length >= 4 && projNorm.length >= 4 && (projNorm.includes(dp) || dp.includes(projNorm))) return true;
+    const dc = core(d.project);
+    return dc.length >= 4 && dc === projCore;
+  };
   const loose = devices.filter(inProject);
   // ชื่อโครงการตรงกันทั้งชื่อ (เช่น "Plan B Billboard") → ไม่ต้องเอาโครงการชื่อสั้นกว่า ("Plan B") มาปน
   const exact = loose.filter((d) => norm(d.project) === projNorm);
