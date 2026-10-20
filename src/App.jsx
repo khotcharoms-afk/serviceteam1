@@ -684,7 +684,8 @@ export default function App({ currentUser, onSignOut }) {
       const prevTask = id ? (tasks||[]).find(t=>t.id===id) : null;
       await setDoc(doc(db,"tasks",docId),data,{merge:true});
 
-      const STATUS_LABEL = { todo:"รอรับงาน", accepted:"รับแล้ว", inprogress:"กำลังทำ", done:"เสร็จแล้ว" };
+      const STATUS_LABEL = { todo:"ต้องทำ", accepted:"ต้องทำ", inprogress:"กำลังทำ", done:"เสร็จแล้ว" };
+      const normSt = (x) => x==="accepted" ? "todo" : x;
       const batch = writeBatch(db);
       const now = new Date().toISOString();
 
@@ -700,11 +701,12 @@ export default function App({ currentUser, onSignOut }) {
           });
         });
         await batch.commit();
-        showToast("📋 สร้างงานและแจ้งเตือนแล้ว","success");
-      } else if (!isNew && prevTask && data.status && prevTask.status !== data.status) {
-        // แจ้ง admin เมื่อช่างเปลี่ยนสถานะ
-        const admins = users.filter(u=>u.role==="admin"&&u.id!==currentUser?.id);
-        admins.forEach(a=>{
+        const others = (data.assignees||[]).some(n=>n!==currentUser?.name);
+        showToast(others ? "📋 สร้างงานและแจ้งเตือนแล้ว" : "📋 เพิ่มงานแล้ว","success");
+      } else if (!isNew && prevTask && data.status && normSt(prevTask.status) !== normSt(data.status)) {
+        // แจ้งผู้สร้างงาน + admin เมื่อมีคนเปลี่ยนสถานะ
+        const toNotify = users.filter(u=>(u.role==="admin"||u.id===data.createdByUid||u.name===data.createdBy)&&u.id!==currentUser?.id);
+        toNotify.forEach(a=>{
           batch.set(doc(db,"notifications",Date.now().toString()+a.id.slice(0,4)),{
             type:"task", toUid:a.id, toName:a.name, fromName:currentUser?.name||"",
             message:`"${data.title}" → ${STATUS_LABEL[data.status]||data.status}`,
@@ -714,7 +716,19 @@ export default function App({ currentUser, onSignOut }) {
         await batch.commit();
         showToast(`📋 ${STATUS_LABEL[data.status]||data.status}แล้ว`,"success");
       } else if (!isNew) {
-        showToast("💾 บันทึกการแก้ไขแล้ว","success");
+        // แจ้งคนที่เพิ่งถูกเพิ่มเป็นผู้รับผิดชอบ
+        const added = (data.assignees||[]).filter(n=>!(prevTask?.assignees||[]).includes(n));
+        added.forEach(name=>{
+          const u = users.find(x=>x.name===name);
+          if (!u || u.id===currentUser?.id) return;
+          batch.set(doc(db,"notifications",Date.now().toString()+u.id.slice(0,4)),{
+            type:"task", toUid:u.id, toName:name, fromName:currentUser?.name||"",
+            message:`มอบงานให้คุณ: "${data.title}"${data.projectName?` (${data.projectName})`:""}`,
+            createdAt:now, read:false,
+          });
+        });
+        if (added.length) await batch.commit();
+        if ((data.comments||[]).length === (prevTask?.comments||[]).length) showToast("💾 บันทึกแล้ว","success");
       }
     }}
     onDeleteTask={async(id)=>{
