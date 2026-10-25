@@ -5,15 +5,13 @@
   "type": "module",
   "dependencies": {
     "exceljs": "^4.4.0",
-    "firebase": "latest",
+    "firebase": "10.14.1",
     "firebase-admin": "^12.0.0",
     "googleapis": "^140.0.0",
-    "iconv-lite": "^0.6.3",
     "jszip": "^3.10.1",
     "web-push": "^3.6.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "three": "^0.160.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
