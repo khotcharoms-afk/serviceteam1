@@ -398,6 +398,10 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const [statusFilter, setStatusFilter] = useState('all'); // all | worked | notworked
   const [showReport, setShowReport] = useState(false);
   const [reportMode, setReportMode] = useState('morning'); // morning | evening
+  const [reportDate, setReportDate] = useState(todayStr());
+  const [reportRows, setReportRows] = useState(null); // null = ใช้ rows ของหน้าหลัก (ช่วงเดียวกันวันเดียว)
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showSheetSync, setShowSheetSync] = useState(false);
   const [sheetSyncStart, setSheetSyncStart] = useState(todayStr());
@@ -516,7 +520,29 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const is7 = startDate === todayStr(-6) && endDate === todayStr();
   const is30 = startDate === todayStr(-29) && endDate === todayStr();
 
-  const reportText = buildDailyReport(rows, reportMode);
+  // รายงานประจำวันดึงข้อมูลของ "วันเดียว" ตามวันที่เลือกในกล่องรายงาน
+  // ถ้าตรงกับช่วงที่ค้นหาอยู่ (วันเดียวกัน) ใช้ข้อมูลที่โหลดไว้แล้ว ไม่ต้องดึงซ้ำ
+  const reportUsesMain = startDate === reportDate && endDate === reportDate;
+  useEffect(() => {
+    if (!showReport || reportUsesMain) { setReportRows(null); setReportError(null); return; }
+    let cancelled = false;
+    (async () => {
+      setReportLoading(true); setReportError(null);
+      try {
+        const params = new URLSearchParams({ start_time: reportDate, end_time: reportDate, page: '1', size: '100' });
+        const res = await fetch(`/api/robot-stats?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+        if (!cancelled) setReportRows((data.result || []).filter((r) => !EXCLUDED_CODES.includes(r.project_name)));
+      } catch (err) {
+        if (!cancelled) { setReportError(err.message); setReportRows([]); }
+      } finally {
+        if (!cancelled) setReportLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [showReport, reportDate, reportUsesMain]);
+  const reportText = buildDailyReport(reportUsesMain ? rows : (reportRows || []), reportMode);
 
   async function copyReport() {
     try {
@@ -676,7 +702,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
-                onClick={() => setShowReport((v) => !v)}
+                onClick={() => { if (!showReport) setReportDate(endDate); setShowReport((v) => !v); }}
                 style={{
                   background: showReport ? c.purple : c.card, color: showReport ? '#fff' : c.purple,
                   border: `1px solid ${c.purple}`, borderRadius: 8, padding: '8px 13px',
@@ -801,11 +827,23 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         {showReport && rows.length > 0 && (
           <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: c.text900 }}>รายงานประจำวัน · {endDate}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900 }}>รายงานประจำวัน</span>
+                <button onClick={() => setReportDate(addDays(reportDate, -1))} title="วันก่อนหน้า"
+                  style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: 30, height: 32, cursor: 'pointer', color: c.text500, fontFamily: 'inherit' }}>‹</button>
+                <input type="date" value={reportDate} max={todayStr()} onChange={(e) => e.target.value && setReportDate(e.target.value)}
+                  style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '6px 8px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+                <button onClick={() => setReportDate(addDays(reportDate, 1))} disabled={reportDate >= todayStr()} title="วันถัดไป"
+                  style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: 30, height: 32, cursor: reportDate >= todayStr() ? 'default' : 'pointer', color: c.text500, opacity: reportDate >= todayStr() ? 0.4 : 1, fontFamily: 'inherit' }}>›</button>
+                {reportDate !== todayStr() && (
+                  <button onClick={() => setReportDate(todayStr())}
+                    style={{ background: 'none', border: 'none', color: c.purple, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>วันนี้</button>
+                )}
+              </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <QuickRangeBtn label="🌅 เช้า" active={reportMode === 'morning'} onClick={() => setReportMode('morning')} />
                 <QuickRangeBtn label="🌙 เย็น" active={reportMode === 'evening'} onClick={() => setReportMode('evening')} />
-                <button onClick={copyReport}
+                <button onClick={copyReport} disabled={reportLoading || !!reportError}
                   style={{ background: copied ? c.green : c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {copied ? '✓ คัดลอกแล้ว' : '📋 คัดลอกข้อความ'}
                 </button>
@@ -816,7 +854,9 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
               color: c.text900, background: c.bg, borderRadius: 10, padding: 14, margin: 0, lineHeight: 1.7,
               maxHeight: 420, overflowY: 'auto',
             }}>
-              {reportText}
+              {reportLoading ? 'กำลังโหลดข้อมูลวันที่ ' + reportDate + '…'
+                : reportError ? '⚠️ ' + reportError
+                : reportText}
             </pre>
             <div style={{ fontSize: 11, color: c.text400, marginTop: 8 }}>
               💡 ถ้ามีไซต์ใหม่เพิ่มใน VIGGO ที่ยังไม่มีในรายงาน ให้เพิ่มโค้ดในไฟล์ RobotStatsPage.jsx ตรง SITE_CONFIG และ SITE_ORDER ด้านบนไฟล์
