@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { db } from "./firebase";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs } from "firebase/firestore";
 import { useTheme } from "./theme.js";
-import { IS as inputBase } from "./utils.js";
+import { IS as inputBase, today } from "./utils.js";
 import {
   DEVICE_COLUMNS, rowsToDevices, devicesToRows, deviceSearchText, sortDevices, parseAccounts, formatAccounts, webHref,
 } from "./deviceImport.js";
@@ -580,7 +580,7 @@ export default function DevicesPage({ onBack, currentUser }) {
     ws["!cols"] = DEVICE_COLUMNS.map((x) => ({ wch: ["name", "note", "rtsp", "accounts"].includes(x.key) ? 30 : 16 }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "devices");
-    XLSX.writeFile(wb, `devices-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `devices-${today()}.xlsx`);
   }
 
   const chip = (active) => ({ padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer",

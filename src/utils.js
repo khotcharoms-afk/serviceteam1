@@ -31,6 +31,12 @@ export const FEATURE_SHIFT = false;
 // ── Helpers ───────────────────────────────────────────────────
 // วันนี้ตามเวลาไทย (YYYY-MM-DD) — toISOString() เป็นเวลา UTC ทำให้ช่วงเที่ยงคืน–7 โมงเช้าได้วันที่ของเมื่อวาน
 export const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" });
+// วันที่ตามเวลาไทยของ Date ใดๆ (YYYY-MM-DD)
+export const dateKey = (d) => d.toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" });
+// บวก/ลบวันจากสตริง YYYY-MM-DD (คิดแบบปฏิทิน ไม่ขึ้นกับ timezone ของเครื่อง)
+export const addDays = (s, n) => { const d = new Date(s + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+// บวกปีจากสตริง YYYY-MM-DD (29 ก.พ. → 1 มี.ค. ถ้าปีปลายทางไม่มี)
+export const addYears = (s, n) => { const d = new Date(s + "T00:00:00Z"); d.setUTCFullYear(d.getUTCFullYear() + n); return d.toISOString().slice(0, 10); };
 
 export const daysLeft = (s) => {
   if (!s) return null;

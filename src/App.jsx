@@ -2,7 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
 import { doc, setDoc, deleteDoc, writeBatch, collection, addDoc, onSnapshot } from "firebase/firestore";
-import { today, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS, mapsUrl } from "./utils.js";
+import { today, addDays, fmtDate, daysLeft, emptyCase, COLOR_OPTS, STATUS_OPTS, IS, mapsUrl } from "./utils.js";
 import { WarrantyPill, LeasePill, StatusPill, Modal, Field, PrimaryBtn, GhostBtn } from "./UI.jsx";
 import CaseCard from "./CaseCard.jsx";
 import HandoverModal from "./HandoverModal.jsx";
@@ -717,7 +717,12 @@ export default function App({ currentUser, onSignOut }) {
       const docId = id||Date.now().toString();
       const isNew = !id;
       const prevTask = id ? (tasks||[]).find(t=>t.id===id) : null;
-      await setDoc(doc(db,"tasks",docId),data,{merge:true});
+      try {
+        await setDoc(doc(db,"tasks",docId),data,{merge:true});
+      } catch (e) {
+        showToast(e?.code==="permission-denied" ? "ไม่มีสิทธิ์แก้งานนี้ (เฉพาะ admin หรือผู้รับผิดชอบ)" : "บันทึกงานไม่สำเร็จ","error");
+        return;
+      }
 
       const STATUS_LABEL = { todo:"ต้องทำ", accepted:"ต้องทำ", inprogress:"กำลังทำ", done:"เสร็จแล้ว" };
       const normSt = (x) => x==="accepted" ? "todo" : x;
@@ -997,10 +1002,10 @@ export default function App({ currentUser, onSignOut }) {
             {[
               { label:"วันนี้",    fn:()=>{ const t=today(); setDateFrom(t); setDateTo(t); },
                 active:()=>{ const t=today(); return dateFrom===t&&dateTo===t; }},
-              { label:"7 วัน",    fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-6); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); },
-                active:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-6); return dateFrom===f.toISOString().slice(0,10)&&dateTo===t; }},
-              { label:"30 วัน",   fn:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-29); setDateFrom(f.toISOString().slice(0,10)); setDateTo(t); },
-                active:()=>{ const t=today(); const f=new Date(t); f.setDate(f.getDate()-29); return dateFrom===f.toISOString().slice(0,10)&&dateTo===t; }},
+              { label:"7 วัน",    fn:()=>{ const t=today(); setDateFrom(addDays(t,-6)); setDateTo(t); },
+                active:()=>{ const t=today(); return dateFrom===addDays(t,-6)&&dateTo===t; }},
+              { label:"30 วัน",   fn:()=>{ const t=today(); setDateFrom(addDays(t,-29)); setDateTo(t); },
+                active:()=>{ const t=today(); return dateFrom===addDays(t,-29)&&dateTo===t; }},
               { label:"เดือนนี้", fn:()=>{ const n=new Date(); setDateFrom(n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"); setDateTo(today()); },
                 active:()=>{ const n=new Date(); return dateFrom===n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"&&dateTo===today(); }},
             ].map(p=>{

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IS } from "./utils.js";
+import { IS, today } from "./utils.js";
 import { useTheme } from "./theme.js";
 
 // ── Handover Modal ────────────────────────────────────────────
@@ -15,7 +15,7 @@ function HandoverModal({ open, onClose, caseData, onSave, users, currentUser }) 
       from: currentUser?.name||caseData.tech||"ไม่ระบุ",
       to:   toUser?.name||toId,
       note: note.trim(),
-      date: new Date().toISOString().slice(0,10),
+      date: today(),
       time: new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}),
     };
     const log = [...(caseData.handoverLog||[]), entry];

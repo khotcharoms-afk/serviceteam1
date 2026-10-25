@@ -1,4 +1,4 @@
-import { fmtDate } from "../utils.js";
+import { fmtDate, today } from "../utils.js";
 import { useTheme } from "../theme.js";
 
 const ORANGE = "#F97316";
@@ -70,7 +70,7 @@ function buildWorkOrderHTML(c, proj) {
     <div style="text-align:right">
       <div style="background:${PURPLE};color:#fff;font-size:12pt;font-weight:700;padding:4px 14px;border-radius:6px;margin-bottom:6px;display:inline-block">ใบงาน (Work Order)</div>
       <div style="font-size:9pt;color:#64748b">เลขที่: WO-${(c.id||'').toString().slice(-6)}</div>
-      <div style="font-size:9pt;color:#64748b">วันที่พิมพ์: ${fmtDate(new Date().toISOString().slice(0,10))}</div>
+      <div style="font-size:9pt;color:#64748b">วันที่พิมพ์: ${fmtDate(today())}</div>
     </div>
   </div>
 

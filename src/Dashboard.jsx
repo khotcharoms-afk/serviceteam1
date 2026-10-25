@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { daysLeft, fmtDate } from "./utils.js";
+import { daysLeft, fmtDate, today } from "./utils.js";
 import CaseSummaryReport from "./CaseSummaryReport.jsx";
 import { useTheme } from "./theme.js";
 
@@ -117,7 +117,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
   });
   const onsiteProjTop = Object.entries(onsiteByProj).sort((a,b)=>b[1].total-a[1].total).slice(0,5);
   const onsiteTotalAll = approvedOnsite.reduce((s,r)=>s+(r.totalCost||0),0);
-  const _nowMonth = new Date().toISOString().slice(0,7);
+  const _nowMonth = today().slice(0,7);
   const onsiteThisMonth = onsiteMonthly[_nowMonth]?.total || 0;
   const MONTH_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
   const fmtMonth = m => { const [y,mo]=m.split("-"); return `${MONTH_TH[parseInt(mo)-1]} ${(parseInt(y)+543)%100}`; };

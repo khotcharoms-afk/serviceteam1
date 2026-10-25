@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Field, PrimaryBtn, GhostBtn } from "../UI.jsx";
-import { IS, COLOR_OPTS, fmtDate, daysLeft, mapsUrl } from "../utils.js";
+import { IS, COLOR_OPTS, fmtDate, daysLeft, mapsUrl, today, addYears } from "../utils.js";
 
 export default function ProjectModal({
   open, onClose, editProjId,
@@ -79,8 +79,7 @@ export default function ProjectModal({
           <input type="date" style={IS({ flex:1,minWidth:140 })} value={newProjWarranty}
             onChange={e => setNewProjWarranty(e.target.value)}/>
           {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b => {
-            const d = new Date(); d.setFullYear(d.getFullYear()+b.y);
-            const v = d.toISOString().slice(0,10);
+            const v = addYears(today(), b.y);
             return <button key={b.l} type="button" onClick={() => setNewProjWarranty(v)}
               style={{ background:newProjWarranty===v?"#3b82f6":"#f1f5f9",
                 border:"1px solid #e2e8f0",color:newProjWarranty===v?"#fff":"#475569",
@@ -99,8 +98,7 @@ export default function ProjectModal({
           <input type="date" style={IS({ flex:1,minWidth:140 })} value={newProjLease}
             onChange={e => setNewProjLease(e.target.value)}/>
           {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b => {
-            const d = new Date(); d.setFullYear(d.getFullYear()+b.y);
-            const v = d.toISOString().slice(0,10);
+            const v = addYears(today(), b.y);
             return <button key={b.l} type="button" onClick={() => setNewProjLease(v)}
               style={{ background:newProjLease===v?"#8b5cf6":"#f1f5f9",
                 border:"1px solid #e2e8f0",color:newProjLease===v?"#fff":"#475569",
@@ -119,8 +117,7 @@ export default function ProjectModal({
           <input type="date" style={IS({ flex:1,minWidth:140 })} value={newProjHirePurchase}
             onChange={e => setNewProjHirePurchase(e.target.value)}/>
           {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b => {
-            const d = new Date(); d.setFullYear(d.getFullYear()+b.y);
-            const v = d.toISOString().slice(0,10);
+            const v = addYears(today(), b.y);
             return <button key={b.l} type="button" onClick={() => setNewProjHirePurchase(v)}
               style={{ background:newProjHirePurchase===v?"#0891b2":"#f1f5f9",
                 border:"1px solid #e2e8f0",color:newProjHirePurchase===v?"#fff":"#475569",

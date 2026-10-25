@@ -43,7 +43,7 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
       by:     currentUser?.name||"ไม่ระบุ",
       text:   text.trim(),
       status: status||caseData.status,
-      date:   new Date().toISOString().slice(0,10),
+      date:   today(),
       time:   new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}),
     };
     const log = [...(caseData.updateLog||[]), entry];
