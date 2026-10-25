@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { today as todayTH } from "./utils.js";
 
 const LEAVE_TYPES = [
   { id:"vacation", label:"ลาพักผ่อน" },
@@ -9,7 +10,7 @@ const LEAVE_TYPES = [
 const DAYS_TH = ["จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์","อาทิตย์"];
 
 export default function LeaveModal({ onClose, onSave, saving, currentUser, users, allLeaves }) {
-  const today = new Date().toISOString().slice(0,10);
+  const today = todayTH();
   const [leaveType, setLeaveType] = useState("vacation");
   const [otherType, setOtherType] = useState("");
   const [workLocation, setWorkLocation] = useState("");

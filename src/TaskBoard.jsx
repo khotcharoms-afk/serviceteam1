@@ -121,6 +121,9 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
 
   function save(t, patch) {
     const { id, ...rest } = t;
+    // คงสถานะดิบไว้ (เช่น accepted รุ่นเก่า) ถ้าไม่ได้ตั้งใจเปลี่ยนสถานะ — rules ให้คนที่ไม่ใช่ผู้รับผิดชอบคอมเมนต์ได้ แต่ห้ามแตะ status
+    const raw = (tasks || []).find((x) => x.id === id);
+    if (raw && !("status" in patch)) rest.status = raw.status;
     onSaveTask({ ...rest, ...patch, updatedAt: new Date().toISOString() }, id);
   }
   const setStatus = (t, status) => save(t, { status, ...(status === "done" ? { completedAt: new Date().toISOString(), completedBy: me } : {}) });

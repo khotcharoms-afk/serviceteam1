@@ -1,0 +1,165 @@
+// สำเนา Firestore Security Rules ของ ServiceLog — เก็บไว้ในโค้ดเพื่อไม่ให้หาย
+// ไฟล์นี้ไม่ถูก deploy อัตโนมัติ: ต้องคัดลอกไปวางที่ Firebase Console → Firestore Database → Rules → Publish
+// แก้ rules ใน console เมื่อไหร่ ให้อัปเดตไฟล์นี้ตามด้วย
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────
+    function isLoggedIn() { return request.auth != null; }
+
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isAdmin()      { return isLoggedIn() && myRole() == "admin"; }
+    function isDev()        { return isLoggedIn() && myRole() == "dev"; }
+    function isAdminOrDev() { return isAdmin() || isDev(); }
+
+    // บัญชีที่ใช้งานได้จริง — pending และ disabled ถูกกันออกโดยอัตโนมัติ
+    function isApproved() {
+      return isLoggedIn() && myRole() in ["admin","dev","user"];
+    }
+    function myName() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.name;
+    }
+    function taskChanged() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ── users ──────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isLoggedIn();
+      allow create: if request.auth.uid == userId;
+
+      allow update:
+        // dev จัดการได้ทุกอย่าง
+        if isDev()
+
+        // admin จัดการได้ทุกคน ยกเว้นแตะบัญชี dev หรือตั้งใครเป็น dev
+        || (isAdmin()
+            && resource.data.role != "dev"
+            && request.resource.data.role != "dev")
+
+        // เจ้าของบัญชีแก้ข้อมูลตัวเองได้ แต่เปลี่ยน role ตัวเองไม่ได้
+        || (request.auth.uid == userId
+            && request.resource.data.role == resource.data.role);
+
+      // ลบบัญชีได้เฉพาะ dev — ปกติควรใช้ "ระงับ" (role = disabled) แทนการลบ
+      // เพราะลบ doc ที่นี่ไม่ได้ลบบัญชีใน Firebase Authentication อีเมลจะยังถูกจอง
+      allow delete: if isDev();
+    }
+
+    // ── presence (ใครออนไลน์) ──────────────────────────────────
+    match /presence/{uid} {
+      allow read: if isLoggedIn();
+      allow write: if isLoggedIn() && request.auth.uid == uid;
+    }
+
+    // ── งานหลัก ────────────────────────────────────────────────
+    match /cases/{id} {
+      allow read: if isApproved();
+      allow create, update: if isApproved();
+      allow delete: if isAdminOrDev();
+    }
+    // บันทึกการรับเคส — เคสที่แก้ทางไกล (LINE OA ฯลฯ) แยกจาก cases
+    match /caseLogs/{id} {
+      allow read, create, update: if isApproved();
+      allow delete: if isAdminOrDev();
+    }
+    match /deletedCases/{id} {
+      allow read: if isApproved();
+      allow create: if isApproved();
+      allow delete: if isAdminOrDev();
+    }
+    match /projects/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isApproved();
+    }
+    // บอร์ดงาน: admin/dev ลงงาน แก้ไข มอบหมาย ลบ ได้ทั้งหมด
+    // คนอื่นทำได้แค่ (1) คอมเมนต์ และ (2) เปลี่ยนสถานะ เฉพาะงานที่ตัวเองเป็นผู้รับผิดชอบ
+    // (ผู้รับผิดชอบเก็บเป็น "ชื่อ" ใน assignees จึงเทียบกับ users/{uid}.name)
+    match /tasks/{id} {
+      allow read: if isApproved();
+      allow create: if isAdminOrDev();
+      allow update: if isAdminOrDev()
+        || (isApproved()
+            && taskChanged().hasOnly(["status", "completedAt", "completedBy", "comments", "updatedAt"])
+            && (!taskChanged().hasAny(["status", "completedAt", "completedBy"])
+                || myName() in resource.data.get("assignees", [])));
+      allow delete: if isAdminOrDev();
+    }
+
+    // ── Onsite / OT / ลา ───────────────────────────────────────
+    match /onsiteRecords/{id} {
+      allow read: if isApproved();
+      allow create, update: if isApproved();
+      allow delete: if isAdminOrDev();
+    }
+    match /otRecords/{id} {
+      allow read: if isApproved();
+      allow create, update: if isApproved();
+      allow delete: if isAdminOrDev();
+    }
+    match /otProfiles/{uid} {
+      allow read: if isApproved();
+      allow write: if isLoggedIn() && (request.auth.uid == uid || isAdminOrDev());
+    }
+    match /leaves/{id} {
+      allow read: if isApproved();
+      allow create: if isApproved();
+      allow update, delete: if isAdminOrDev();
+    }
+
+    // ── ตารางกะ ────────────────────────────────────────────────
+    match /shifts/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isApproved();
+    }
+    match /shiftTypes/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isApproved();
+    }
+    match /userSchedules/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isApproved();
+    }
+    match /shiftMembers/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isApproved();
+    }
+
+    // ── อะไหล่ / มาตรฐาน ───────────────────────────────────────
+    match /partStandards/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isAdminOrDev();
+    }
+    match /partInspections/{id} {
+      allow read: if isApproved();
+      allow create, update: if isApproved();
+      allow delete: if isAdminOrDev();
+    }
+
+    // ── อุปกรณ์/รีโมท (IP · AnyDesk · รหัสเข้าอุปกรณ์หน้างาน) ──────
+    // ทุกคนที่อนุมัติแล้วดูได้ เพิ่ม/แก้/ลบ/นำเข้า เฉพาะ admin/dev
+    match /devices/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isAdminOrDev();
+    }
+
+    // ── อื่นๆ ──────────────────────────────────────────────────
+    match /knowledge/{docId} {
+      allow read: if isLoggedIn();
+      allow write: if isApproved();
+    }
+    match /notifications/{id} {
+      // ตอนสมัครใหม่ Auth.jsx เขียนแจ้ง admin ก่อน role จะถูกอนุมัติ
+      // จึงใช้ isLoggedIn() ที่นี่ ไม่ใช่ isApproved()
+      allow read, create, update: if isLoggedIn();
+      allow delete: if isAdminOrDev();
+    }
+    match /fcmTokens/{id} {
+      allow read, write: if isLoggedIn();
+    }
+  }
+}

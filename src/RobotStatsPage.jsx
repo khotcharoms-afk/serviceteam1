@@ -141,24 +141,21 @@ function formatIdleDays(n, lookback) {
   return n >= lookback ? `${lookback}+ วัน` : `${n} วัน`;
 }
 
+// วันที่ตามเวลาไทย — toISOString() เป็น UTC ช่วงเที่ยงคืน–7 โมงเช้าจะได้วันของเมื่อวาน
 function todayStr(offsetDays = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().split('T')[0];
+  return addDays(new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" }), offsetDays);
 }
 
 function mondayOfThisWeek() {
-  const d = new Date();
-  const day = d.getDay(); // 0=อาทิตย์ ... 6=เสาร์
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diffToMonday);
-  return d.toISOString().split('T')[0];
+  const t = todayStr();
+  const day = new Date(t + "T00:00:00Z").getUTCDay(); // 0=อาทิตย์ ... 6=เสาร์
+  return addDays(t, day === 0 ? -6 : 1 - day);
 }
 
 function addDays(dateStr, n) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + n);
-  return d.toISOString().split('T')[0];
+  const d = new Date(dateStr + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
 }
 
 function formatHours(mins) {

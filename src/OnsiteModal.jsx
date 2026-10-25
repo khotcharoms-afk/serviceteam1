@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { today as todayTH } from "./utils.js";
 
 function calcTravel(km) {
   const k = parseFloat(km) || 0;
@@ -9,7 +10,7 @@ function calcTravel(km) {
 
 export default function OnsiteModal({ onClose, onSave, saving, projects, users, currentUser, editRecord }) {
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayTH();
   const isEdit = !!editRecord;
 
   const [date, setDate]         = useState(editRecord?.date || today);

@@ -1,0 +1,4 @@
+node_modules/
+.pv/
+.env*
+.vercel

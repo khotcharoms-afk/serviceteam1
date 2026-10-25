@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { today as todayTH } from "./utils.js";
 
 const SITUATION_OPTS = ["Support", "Commissioning"];
 const EXAMINER_OPTS = ["นายณัฐพงศ์ รัตนไชย", "นายพีรพงษ์ คล่องวิชา", "นายเจริญชัย สุวรรณประทีป"];
@@ -12,7 +13,7 @@ function calcHours(timeIn, timeOut, dateIn, dateOut) {
 }
 
 export default function OTModal({ onClose, onSave, saving, projects, users, currentUser, editRecord, profile }) {
-  const today = new Date().toISOString().slice(0,10);
+  const today = todayTH();
   const thaiName = (users||[]).find(u=>u.id===(currentUser?.id||currentUser?.uid))?.name || currentUser?.name || "";
 
   const [serviceId,  setServiceId]  = useState(editRecord?.serviceId  || "");

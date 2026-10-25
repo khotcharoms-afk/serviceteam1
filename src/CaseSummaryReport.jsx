@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fmtDate } from "./utils.js";
+import { fmtDate, today, addDays } from "./utils.js";
 import { useTheme, THEMES } from "./theme.js";
 
 const tint = (hex, alpha = "22") => `${hex}${alpha}`;
@@ -14,25 +14,22 @@ const STATUS_LABEL = {
 function getRange(mode, customFrom, customTo) {
   const now = new Date();
   if (mode === "today") {
-    const d = now.toISOString().slice(0,10);
+    const d = today();
     return { from: d, to: d, label: `วันที่ ${fmtDate(d)}` };
   }
   if (mode === "week") {
-    const to = now.toISOString().slice(0,10);
-    const f = new Date(now); f.setDate(f.getDate()-6);
-    const from = f.toISOString().slice(0,10);
+    const to = today();
+    const from = addDays(to, -6);
     return { from, to, label: `${fmtDate(from)} – ${fmtDate(to)}` };
   }
   if (mode === "month") {
-    const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,"0");
-    const from = `${y}-${m}-01`;
-    const to = now.toISOString().slice(0,10);
+    const to = today();
+    const from = `${to.slice(0,7)}-01`;
     return { from, to, label: `เดือน ${m}/${y}` };
   }
   if (mode === "year") {
-    const y = now.getFullYear();
-    const from = `${y}-01-01`;
-    const to = now.toISOString().slice(0,10);
+    const to = today();
+    const from = `${to.slice(0,4)}-01-01`;
     return { from, to, label: `ปี ${y+543}` };
   }
   if (mode === "custom") {
@@ -181,7 +178,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
               โครงการ: {projects.find(p=>p.id===selectedProj)?.name||""}
             </div>
           )}
-          <div style={{ fontSize:13,color:c.text500 }}>วันที่พิมพ์: {fmtDate(new Date().toISOString().slice(0,10))}</div>
+          <div style={{ fontSize:13,color:c.text500 }}>วันที่พิมพ์: {fmtDate(today())}</div>
         </div>
 
         {/* สรุปตัวเลข 4 ช่อง */}
