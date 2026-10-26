@@ -57,9 +57,10 @@ export async function fillRequisitionZip(zip, r) {
   return zip;
 }
 
+// ชื่อไฟล์เป็นตัวอักษรอังกฤษ — Chrome บางเครื่องตัดชื่อไฟล์ภาษาไทยทิ้งเหลือแค่ "download" (ไม่มีนามสกุล)
 export function requisitionFileName(r) {
-  const safe = (s) => (s || "").replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 40);
-  return `ใบขอเบิกสินค้า ${r.date || ""} ${safe(r.site) || safe(r.project)}`.trim() + ".xlsx";
+  const job = (r.jobNo || "").replace(/[^A-Za-z0-9-]+/g, "").slice(0, 20);
+  return `Requisition_${r.date || "draft"}${job ? `_${job}` : ""}.xlsx`;
 }
 
 export async function downloadRequisition(r) {
