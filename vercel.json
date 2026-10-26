@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/robot-stats.js": { "maxDuration": 30 },
+    "api/sheet-sync.js": { "maxDuration": 60 }
+  }
+}
