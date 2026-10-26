@@ -286,7 +286,8 @@ function VehicleDetail({ vehicle, onBack }) {
   const [weekData, setWeekData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [endDay, setEndDay] = useState(todayStr()); // ดูช่วง 7 วันที่จบที่วันนี้ (เลื่อนย้อนหลังได้)
+  const [endDay, setEndDay] = useState(todayStr());
+  const [reloadKey, setReloadKey] = useState(0); // ดูช่วง 7 วันที่จบที่วันนี้ (เลื่อนย้อนหลังได้)
   const startDay = addDays(endDay, -6);
   const atToday = endDay >= todayStr();
 
@@ -299,7 +300,7 @@ function VehicleDetail({ vehicle, onBack }) {
         const dayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
         const days = [];
         for (let i = 0; i < 7; i++) days.push(addDays(startDay, i));
-        const results = await Promise.all(days.map(async (date) => {
+        const loadDay = async (date) => {
           const d = new Date(date);
           if (date > todayStr()) {
             return { date, dateShort: `${d.getDate()}/${d.getMonth() + 1}`, dayLabel: dayNames[d.getDay()], task_num: 0, actual_clean_area: 0, total_time: 0 };
@@ -321,7 +322,16 @@ function VehicleDetail({ vehicle, onBack }) {
           } catch {
             return { ...base, task_num: 0, actual_clean_area: 0, total_time: 0, failed: true };
           }
-        }));
+        };
+        // ทีละ 2 วัน (ไม่ยิงพร้อมกัน 7 ครั้ง) และลองใหม่อีกรอบสำหรับวันที่ล้มเหลว
+        const results = [];
+        for (let i = 0; i < days.length; i += 2) {
+          results.push(...await Promise.all(days.slice(i, i + 2).map(loadDay)));
+          if (cancelled) return;
+        }
+        for (let i = 0; i < results.length; i++) {
+          if (results[i].failed && !cancelled) results[i] = await loadDay(results[i].date);
+        }
         if (!cancelled) setWeekData(results);
       } catch (err) {
         if (!cancelled) setError('โหลดข้อมูลรายสัปดาห์ไม่สำเร็จ ลองใหม่อีกครั้ง');
@@ -331,7 +341,7 @@ function VehicleDetail({ vehicle, onBack }) {
     }
     loadWeek();
     return () => { cancelled = true; };
-  }, [vehicle.vin, startDay]);
+  }, [vehicle.vin, startDay, reloadKey]);
 
   const maxArea = Math.max(1, ...weekData.map((d) => d.actual_clean_area));
   const weekTotalArea = weekData.reduce((s, d) => s + d.actual_clean_area, 0);
@@ -403,10 +413,10 @@ function VehicleDetail({ vehicle, onBack }) {
                     <tr key={d.date} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: d.date === todayStr() ? `${c.orange}14` : 'transparent' }}>
                       <td style={{ padding: '10px 14px', fontWeight: 700, color: c.text900 }}>{d.dayLabel}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.dateShort}</td>
-                      <td style={{ padding: '10px 14px', color: c.text500 }}>{d.task_num}</td>
-                      <td style={{ padding: '10px 14px', color: c.text500 }}>{formatHours(d.total_time)}</td>
+                      <td style={{ padding: '10px 14px', color: c.text500 }}>{d.failed ? '—' : d.task_num}</td>
+                      <td style={{ padding: '10px 14px', color: c.text500 }}>{d.failed ? '—' : formatHours(d.total_time)}</td>
                       <td style={{ padding: '10px 14px', color: c.text900, fontWeight: 600 }}>
-                        {d.failed ? <span style={{ color: c.red, fontWeight: 600, fontSize: 12 }}>โหลดไม่สำเร็จ</span> : d.actual_clean_area.toLocaleString()}
+                        {d.failed ? <button onClick={() => setReloadKey((k) => k + 1)} style={{ background: 'none', border: 'none', padding: 0, color: c.red, fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>โหลดไม่สำเร็จ · ลองใหม่</button> : d.actual_clean_area.toLocaleString()}
                         {d.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706' }}>⟲ ย้อนหลัง</span>}
                       </td>
                     </tr>

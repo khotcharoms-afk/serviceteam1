@@ -49,9 +49,17 @@ const pick = (row, re) => { const k = Object.keys(row).find((h) => re.test(h)); 
 // งานดิบ → { vin: { task_num, actual_clean_area, total_time } }
 async function fetchRawByVin(token, start_time, end_time) {
   const url = `${BASE}/multi-original-download?access-token=${token}&start_time=${start_time}&end_time=${end_time}`;
-  const upstream = await fetch(url);
-  if (!upstream.ok) return null;
-  const text = new TextDecoder('gb18030').decode(await upstream.arrayBuffer()).replace(/^﻿/, '');
+  // จำกัดเวลา 8 วิ — ถ้างานดิบช้า ให้ตอบด้วยสรุปเดิมไปก่อน ไม่ให้ทั้งคำขอค้างจนล้มเหลว
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  let text;
+  try {
+    const upstream = await fetch(url, { signal: ctrl.signal });
+    if (!upstream.ok) return null;
+    text = new TextDecoder('gb18030').decode(await upstream.arrayBuffer()).replace(/^﻿/, '');
+  } finally {
+    clearTimeout(timer);
+  }
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return {};
   const headers = parseCsvLine(lines[0]).map((h) => h.trim());
