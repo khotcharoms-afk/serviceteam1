@@ -147,6 +147,14 @@ service cloud.firestore {
       allow create, update, delete: if isAdminOrDev();
     }
 
+    // ── ใบเบิกของ ──────────────────────────────────────────────
+    // ทุกคนที่อนุมัติแล้วดูและสร้างได้ แก้/ลบได้เฉพาะคนที่สร้าง หรือ admin/dev
+    match /requisitions/{id} {
+      allow read, create: if isApproved();
+      allow update, delete: if isAdminOrDev()
+        || (isApproved() && resource.data.createdByUid == request.auth.uid);
+    }
+
     // ── อื่นๆ ──────────────────────────────────────────────────
     match /knowledge/{docId} {
       allow read: if isLoggedIn();
