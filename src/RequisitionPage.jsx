@@ -4,14 +4,14 @@ import { db } from "./firebase";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useTheme } from "./theme.js";
 import { IS as inputBase, today } from "./utils.js";
-import { downloadRequisition, thaiDate, MAX_ITEMS } from "./requisitionExcel.js";
+import { downloadRequisition, thaiDate, MAX_ITEMS, normalizeReq } from "./requisitionExcel.js";
 import { downloadRequisitionPdf } from "./requisitionPdf.js";
 import { isChunkError, reloadForNewVersion } from "./staleChunk.js";
 
 // ชื่อโครงการในระบบส่วนใหญ่ขึ้นต้นด้วย "โครงการ" อยู่แล้ว — ไม่เติมซ้ำ
 const projLabel = (name = "") => (name.trim().startsWith("โครงการ") ? name.trim() : `โครงการ ${name.trim()}`);
 const emptyItem = () => ({ serial: "", name: "", qty: 1, unit: "Ea.", note: "" });
-const emptyForm = () => ({ jobNo: "", project: "", projectId: "", site: "", date: today(), sales: "", items: [emptyItem()] });
+const emptyForm = () => ({ jobNo: "", project: "", projectId: "", site: "", location: "", date: today(), sales: "", items: [emptyItem()] });
 
 export default function RequisitionPage({ onBack, currentUser, projects = [] }) {
   const { c } = useTheme();
@@ -34,18 +34,20 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
 
   // คำแนะนำจากใบเบิกเก่า: ชื่อรายการ หน่วย ไซต์
   const suggest = useMemo(() => {
-    const names = new Map(), units = new Set(["Ea.", "ชิ้น", "ชุด", "อัน", "ม้วน", "เส้น", "กล่อง", "ลิตร"]), sites = new Set();
+    const names = new Map(), units = new Set(["Ea.", "ชิ้น", "ชุด", "อัน", "ม้วน", "เส้น", "กล่อง", "ลิตร"]), sites = new Set(), locations = new Set();
     list.forEach((r) => {
-      if (r.site) sites.add(r.site);
+      const n = normalizeReq(r);
+      if (n.site) sites.add(n.site);
+      if (n.location) locations.add(n.location);
       (r.items || []).forEach((it) => { if (it.name) names.set(it.name, it.unit || ""); if (it.unit) units.add(it.unit); });
     });
-    return { names, units: [...units], sites: [...sites] };
+    return { names, units: [...units], sites: [...sites], locations: [...locations] };
   }, [list]);
 
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     return list
-      .filter((r) => !s || [r.jobNo, r.project, r.site, r.sales, r.createdBy, ...(r.items || []).map((i) => `${i.name} ${i.serial}`)]
+      .filter((r) => !s || [r.jobNo, r.project, r.site, r.location, r.sales, r.createdBy, ...(r.items || []).map((i) => `${i.name} ${i.serial}`)]
         .some((x) => (x || "").toLowerCase().includes(s)))
       .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || "").localeCompare(a.createdAt || ""));
   }, [list, q]);
@@ -58,7 +60,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
     const now = new Date().toISOString();
     const data = {
       jobNo: form.jobNo.trim(), project: form.project.trim(), projectId: form.projectId || "",
-      site: form.site.trim(), date: form.date || today(), sales: form.sales.trim(),
+      site: form.site.trim(), location: form.location.trim(), date: form.date || today(), sales: form.sales.trim(),
       items: items.map((it) => ({ serial: it.serial.trim(), name: it.name.trim(), qty: Number(it.qty) || 0, unit: it.unit.trim(), note: it.note.trim() })),
       updatedAt: now,
     };
@@ -74,7 +76,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
   }
 
   async function remove(r) {
-    if (!window.confirm(`ลบใบเบิกวันที่ ${thaiDate(r.date)} (${r.site || r.project}) ?`)) return;
+    if (!window.confirm(`ลบใบเบิกวันที่ ${thaiDate(r.date)} (${normalizeReq(r).location || r.site || r.project}) ?`)) return;
     try { await deleteDoc(doc(db, "requisitions", r.id)); flash("ลบแล้ว"); }
     catch { flash("ลบไม่สำเร็จ", false); }
   }
@@ -127,7 +129,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
             <div key={r.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: c.text900 }}>{r.site || "—"} <span style={{ fontWeight: 500, color: c.text400, fontSize: 12.5 }}>· {thaiDate(r.date)}</span></div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: c.text900 }}>{(() => { const n = normalizeReq(r); return [n.location, n.site].filter(Boolean).join(" · ") || "—"; })()} <span style={{ fontWeight: 500, color: c.text400, fontSize: 12.5 }}>· {thaiDate(r.date)}</span></div>
                   <div style={{ fontSize: 12.5, color: c.text500, marginTop: 2 }}>{r.project}{r.jobNo ? ` · JOB ${r.jobNo}` : ""}</div>
                   <div style={{ fontSize: 12.5, color: c.text900, marginTop: 8, lineHeight: 1.7 }}>
                     {(r.items || []).slice(0, 4).map((it, i) => (
@@ -140,10 +142,10 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => download(r, "pdf")} disabled={!!busy} style={btn(c.red)}>{busy === `${r.id}-pdf` ? "กำลังสร้าง…" : "⬇ PDF"}</button>
                   <button onClick={() => download(r)} disabled={!!busy} style={btn(c.green)}>{busy === `${r.id}-xlsx` ? "กำลังสร้าง…" : "⬇ Excel"}</button>
-                  <button onClick={() => setForm({ ...emptyForm(), ...r, id: undefined, date: today(), items: (r.items || []).map((it) => ({ ...emptyItem(), ...it })) })}
+                  <button onClick={() => setForm({ ...emptyForm(), ...normalizeReq(r), id: undefined, date: today(), items: (r.items || []).map((it) => ({ ...emptyItem(), ...it })) })}
                     title="สร้างใบใหม่โดยใช้รายการเดิม" style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>⧉ ใช้ซ้ำ</button>
                   {canEdit(r) && <>
-                    <button onClick={() => setForm({ ...emptyForm(), ...r, items: (r.items || []).map((it) => ({ ...emptyItem(), ...it })) })}
+                    <button onClick={() => setForm({ ...emptyForm(), ...normalizeReq(r), items: (r.items || []).map((it) => ({ ...emptyItem(), ...it })) })}
                       style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>แก้ไข</button>
                     <button onClick={() => remove(r)} style={btn(c.bg, c.red, { border: `1px solid ${c.border}` })}>ลบ</button>
                   </>}
@@ -179,9 +181,14 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
                 <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={IS} />
               </div>
               <div>
-                <label style={label}>สถานที่ / ไซต์</label>
-                <input list="req-sites" value={form.site} placeholder="เช่น สถานีมักกะสัน" onChange={(e) => setForm({ ...form, site: e.target.value })} style={IS} />
+                <label style={label}>SITE</label>
+                <input list="req-sites" value={form.site} placeholder="เช่น ARL" onChange={(e) => setForm({ ...form, site: e.target.value })} style={IS} />
                 <datalist id="req-sites">{suggest.sites.map((s) => <option key={s} value={s} />)}</datalist>
+              </div>
+              <div>
+                <label style={label}>สถานที่</label>
+                <input list="req-locations" value={form.location} placeholder="เช่น สถานีมักกะสัน" onChange={(e) => setForm({ ...form, location: e.target.value })} style={IS} />
+                <datalist id="req-locations">{suggest.locations.map((s) => <option key={s} value={s} />)}</datalist>
               </div>
               <div>
                 <label style={label}>JOB NO</label>
