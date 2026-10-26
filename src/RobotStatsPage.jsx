@@ -913,7 +913,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                       <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <StatusBadge worked={isWorked(r)} />
+                      <StatusBadge worked={isWorked(r)} />{r.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706', whiteSpace: 'nowrap' }}>⟲ ย้อนหลัง</span>}
                       {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS) && (
                         <span style={{ fontSize: 10.5, fontWeight: 700, color: c.red }}>
                           ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}
@@ -963,7 +963,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                     const pct = pctOf(r);
                     return (
                       <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: isWorked(r) ? 'transparent' : redBg, cursor: 'pointer' }}>
-                        <td style={{ padding: '10px 10px' }}><StatusBadge worked={isWorked(r)} /></td>
+                        <td style={{ padding: '10px 10px' }}><StatusBadge worked={isWorked(r)} />{r.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706', whiteSpace: 'nowrap' }}>⟲ ย้อนหลัง</span>}</td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
                             ? <span style={{ color: c.red, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>

@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { getCars } from './_viggo.js';
 
 const SHEET_ID = '1AvIzJ4mWfsS8I5mov4EpT32aKAaS4aHETMD7oYzT9cI';
 const TAB_NAME = 'Weekly สรุป';
@@ -117,20 +118,10 @@ function toISO(d) {
 }
 
 async function fetchViggoDay(dateStr, robotToken) {
-  const params = new URLSearchParams();
-  params.append('page', '1');
-  params.append('size', '100');
-  params.append('start_time', dateStr);
-  params.append('end_time', dateStr);
-  const viggoUrl = `https://wolfsburg.phpserver.idriverplus.com/basic/web/index.php/wv/statistics/cars-list?access-token=${robotToken}`;
-  const viggoRes = await fetch(viggoUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
-  });
-  const viggoData = await viggoRes.json();
+  // ใช้ตัวเดียวกับหน้าสถิติ: ครบทุกหน้า + เติมวันที่สรุปค้างเป็น 0 จากงานดิบ
+  const { result } = await getCars(robotToken, dateStr, dateStr, { pageSize: 100 });
   const byProject = {};
-  (viggoData.result || []).forEach((r) => {
+  result.forEach((r) => {
     byProject[r.project_name] = (byProject[r.project_name] || 0) + (Number(r.actual_clean_area) || 0);
   });
   return byProject;
