@@ -1,7 +1,9 @@
 // สร้างไฟล์ Excel ใบขอเบิกสินค้า จากแม่แบบ public/templates/requisition.xlsx
-// แม่แบบคือฟอร์มเดิมของบริษัท (โลโก้ เส้นตาราง ช่องเซ็นชื่อ) — เราแค่เติมค่าลงช่อง
+// แก้เฉพาะค่าในช่องของ sheet1.xml ตรงๆ (ผ่าน JSZip) ส่วนอื่นของไฟล์ — โลโก้ เส้นตาราง ช่องเซ็นชื่อ
+// การตั้งค่าหน้ากระดาษ — คงไว้ตามต้นฉบับทุกไบต์ (ExcelJS เขียนโลโก้ใหม่ผิดขนาด Excel จึงไม่แสดงโลโก้)
 export const MAX_ITEMS = 28; // แถว 14–41 ในฟอร์ม
 const FIRST_ITEM_ROW = 14;
+const SHEET = "xl/worksheets/sheet1.xml";
 
 // YYYY-MM-DD → d/m/พ.ศ.
 export function thaiDate(s) {
@@ -10,24 +12,49 @@ export function thaiDate(s) {
   return `${Number(d)}/${Number(m)}/${Number(y) + 543}`;
 }
 
-// เติมข้อมูลลง worksheet (แยกออกมาเพื่อทดสอบใน Node ได้)
-export function fillRequisition(ws, r) {
-  ws.getCell("B8").value = r.jobNo || "";
-  ws.getCell("B9").value = r.project || "";
-  ws.getCell("J9").value = thaiDate(r.date);
-  ws.getCell("J10").value = r.site || "";
-  ws.getCell("B11").value = r.sales || "";
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// ตั้งค่าช่องเดียวใน XML ของชีต (ช่องต้องมีอยู่แล้วในแม่แบบ — ทุกช่องในฟอร์มมีสไตล์เส้นตารางอยู่แล้ว)
+function setCell(xml, ref, value) {
+  const re = new RegExp(`<c r="${ref}"([^>]*?)(/>|>[\\s\\S]*?</c>)`);
+  const m = xml.match(re);
+  if (!m) return xml;
+  const attrs = m[1].replace(/\s+t="[^"]*"/, "");
+  let cell;
+  if (value === null || value === undefined || value === "") cell = `<c r="${ref}"${attrs}/>`;
+  else if (typeof value === "number" && isFinite(value)) cell = `<c r="${ref}"${attrs}><v>${value}</v></c>`;
+  else cell = `<c r="${ref}"${attrs} t="inlineStr"><is><t xml:space="preserve">${esc(value)}</t></is></c>`;
+  return xml.replace(re, cell);
+}
+
+// ค่าทุกช่องของฟอร์ม (ช่องที่ไม่มีข้อมูล = ล้างค่าในแม่แบบ)
+export function requisitionCells(r) {
+  const cells = {
+    B8: r.jobNo || "", B9: r.project || "", J9: thaiDate(r.date),
+    B10: "", J10: r.site || "", B11: r.sales || "", J11: "",
+  };
   const items = (r.items || []).filter((it) => (it.name || "").trim()).slice(0, MAX_ITEMS);
   for (let i = 0; i < MAX_ITEMS; i++) {
-    const row = FIRST_ITEM_ROW + i;
-    const it = items[i];
-    ws.getCell(`A${row}`).value = it ? i + 1 : null;
-    ws.getCell(`B${row}`).value = it ? (it.serial || "") : null;
-    ws.getCell(`C${row}`).value = it ? it.name : null;
-    ws.getCell(`I${row}`).value = it ? (Number(it.qty) || it.qty || "") : null;
-    ws.getCell(`J${row}`).value = it ? (it.unit || "") : null;
-    ws.getCell(`K${row}`).value = it ? (it.note || "") : null;
+    const row = FIRST_ITEM_ROW + i, it = items[i];
+    const qty = it ? Number(it.qty) : null;
+    Object.assign(cells, {
+      [`A${row}`]: it ? i + 1 : "",
+      [`B${row}`]: it ? (it.serial || "") : "",
+      [`C${row}`]: it ? it.name : "",
+      [`I${row}`]: it ? (isFinite(qty) && String(it.qty).trim() !== "" ? qty : (it.qty || "")) : "",
+      [`J${row}`]: it ? (it.unit || "") : "",
+      [`K${row}`]: it ? (it.note || "") : "",
+    });
   }
+  return cells;
+}
+
+// zip = JSZip ที่โหลดแม่แบบแล้ว → เติมข้อมูลในที่เดิม
+export async function fillRequisitionZip(zip, r) {
+  let xml = await zip.file(SHEET).async("string");
+  for (const [ref, v] of Object.entries(requisitionCells(r))) xml = setCell(xml, ref, v);
+  zip.file(SHEET, xml);
+  return zip;
 }
 
 export function requisitionFileName(r) {
@@ -36,16 +63,15 @@ export function requisitionFileName(r) {
 }
 
 export async function downloadRequisition(r) {
-  const [{ default: ExcelJS }, res] = await Promise.all([
-    import("exceljs"),
+  const [{ default: JSZip }, res] = await Promise.all([
+    import("jszip"),
     fetch("/templates/requisition.xlsx", { cache: "no-cache" }),
   ]);
   if (!res.ok) throw new Error("โหลดแม่แบบใบเบิกไม่สำเร็จ");
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(await res.arrayBuffer());
-  fillRequisition(wb.worksheets[0], r);
-  const buf = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  await fillRequisitionZip(zip, r);
+  const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
