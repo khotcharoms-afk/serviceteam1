@@ -1,5 +1,6 @@
 // ออกใบขอเบิกสินค้าเป็น PDF (A4) — วาดฟอร์มเป็น HTML หน้าตาเดียวกับไฟล์ Excel แล้วแปลงเป็นรูปลง PDF
-// ใช้ฟอนต์ Noto Sans Thai ที่หน้าเว็บโหลดอยู่แล้ว ภาษาไทยจึงแสดงถูกต้อง
+// ฟอนต์ Angsana New (ตามฟอร์มบริษัท) — เป็นฟอนต์ของ Windows ฝังในเว็บไม่ได้ (ลิขสิทธิ์ Microsoft)
+// จึงใช้ได้เฉพาะเครื่องที่ติดตั้งไว้ เครื่องที่ไม่มี (มือถือ/Mac) ใช้ Sarabun แทน
 import { MAX_ITEMS, thaiDate, requisitionFileName } from "./requisitionExcel.js";
 
 // ใบเก่าที่บันทึกตอนมีบั๊ก "โครงการ โครงการ"
@@ -7,7 +8,23 @@ export const cleanProject = (s) => String(s || "").replace(/^(โครงกา
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export function requisitionHtml(r) {
+// เครื่องนี้มีฟอนต์นี้ไหม — วัดความกว้างข้อความเทียบกับฟอนต์สำรอง
+export function hasLocalFont(name) {
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    const text = "ใบขอเบิกสินค้า abcdefghijklm 0123456789";
+    return ["monospace", "serif", "sans-serif"].some((base) => {
+      ctx.font = `40px ${base}`; const w0 = ctx.measureText(text).width;
+      ctx.font = `40px "${name}", ${base}`; return ctx.measureText(text).width !== w0;
+    });
+  } catch { return false; }
+}
+
+// font: "angsana" | "sarabun" — Angsana ตัวเล็กกว่าฟอนต์ทั่วไปที่ขนาดเดียวกัน จึงขยาย 1.4 เท่า
+export function requisitionHtml(r, font = "angsana") {
+  const k = font === "angsana" ? 1.4 : 1;
+  const px = (n) => `${Math.round(n * k * 10) / 10}px`;
+  const family = font === "angsana" ? `'Angsana New','AngsanaUPC','Sarabun',sans-serif` : `'Sarabun','Noto Sans Thai',sans-serif`;
   const items = (r.items || []).filter((it) => (it.name || "").trim()).slice(0, MAX_ITEMS);
   const rows = Array.from({ length: MAX_ITEMS }, (_, i) => {
     const it = items[i];
@@ -20,12 +37,12 @@ export function requisitionHtml(r) {
   const sign = (role) => `<div class="s"><div>(............................................)</div><div class="sr">${role}</div><div>(………./………./……….)</div></div>`;
   return `
 <style>
-  .rq{width:794px;padding:34px 40px 30px;box-sizing:border-box;background:#fff;color:#000;font-family:'Noto Sans Thai','Sora',sans-serif;font-size:12px;line-height:1.35}
+  .rq{width:794px;padding:34px 40px 30px;box-sizing:border-box;background:#fff;color:#000;font-family:${family};font-size:${px(12)};line-height:1.3}
   .rq .hd{display:flex;gap:18px;align-items:center}
   .rq .hd img{width:170px;height:auto}
-  .rq .co b{display:block;font-size:16px}
-  .rq .co div{font-size:10.5px}
-  .rq h1{text-align:center;font-size:19px;margin:14px 0 10px;text-decoration:underline;text-underline-offset:4px}
+  .rq .co b{display:block;font-size:${px(16)}}
+  .rq .co div{font-size:${px(10.5)}}
+  .rq h1{text-align:center;font-size:${px(19)};margin:14px 0 10px;text-decoration:underline;text-underline-offset:4px}
   .rq .fs{display:flex;justify-content:space-between;gap:20px}
   .rq .f{display:flex;align-items:flex-end;margin:3px 0}
   .rq .fl{font-weight:700;white-space:nowrap;margin-right:6px}
@@ -36,8 +53,8 @@ export function requisitionHtml(r) {
   .rq td.n{white-space:normal;word-break:break-word}
   .rq th{font-weight:700;background:#f2f2f2;height:24px;line-height:24px}
   .rq .c{text-align:center}
-  .rq .nt{margin-top:10px;font-size:11px}
-  .rq .ss{display:flex;justify-content:space-between;margin-top:34px;text-align:center;font-size:11.5px}
+  .rq .nt{margin-top:10px;font-size:${px(11)}}
+  .rq .ss{display:flex;justify-content:space-between;margin-top:34px;text-align:center;font-size:${px(11.5)}}
   .rq .s{width:30%}.rq .sr{font-weight:700;margin:6px 0}
 </style>
 <div class="rq">
@@ -67,13 +84,24 @@ export function requisitionHtml(r) {
 
 export async function downloadRequisitionPdf(r) {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
+  const font = hasLocalFont("Angsana New") ? "angsana" : "sarabun";
+  if (font === "sarabun" && !document.getElementById("rq-sarabun")) {
+    const link = document.createElement("link");
+    link.id = "rq-sarabun"; link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap";
+    document.head.appendChild(link);
+    await new Promise((ok) => { link.onload = ok; link.onerror = ok; setTimeout(ok, 4000); });
+  }
   const host = document.createElement("div");
   host.style.cssText = "position:fixed;left:-10000px;top:0;z-index:-1";
-  host.innerHTML = requisitionHtml(r);
+  host.innerHTML = requisitionHtml(r, font);
   document.body.appendChild(host);
   try {
     const img = host.querySelector("img");
     if (img && !img.complete) await new Promise((ok) => { img.onload = ok; img.onerror = ok; });
+    if (font === "sarabun" && document.fonts?.load) {
+      await Promise.all([document.fonts.load('16px "Sarabun"', "ใบเบิก"), document.fonts.load('bold 16px "Sarabun"', "ใบเบิก")]).catch(() => {});
+    }
     if (document.fonts?.ready) await document.fonts.ready;
     const canvas = await html2canvas(host.querySelector(".rq"), { scale: 2, backgroundColor: "#ffffff", useCORS: true });
     const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
@@ -89,6 +117,7 @@ export async function downloadRequisitionPdf(r) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+    return font;
   } finally {
     host.remove();
   }
