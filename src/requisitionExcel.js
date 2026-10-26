@@ -30,7 +30,7 @@ function setCell(xml, ref, value) {
 // ค่าทุกช่องของฟอร์ม (ช่องที่ไม่มีข้อมูล = ล้างค่าในแม่แบบ)
 export function requisitionCells(r) {
   const cells = {
-    B8: r.jobNo || "", B9: r.project || "", J9: thaiDate(r.date),
+    B8: r.jobNo || "", B9: String(r.project || "").replace(/^(โครงการ\s*)+/, "โครงการ ").trim(), J9: thaiDate(r.date),
     B10: "", J10: r.site || "", B11: r.sales || "", J11: "",
   };
   const items = (r.items || []).filter((it) => (it.name || "").trim()).slice(0, MAX_ITEMS);

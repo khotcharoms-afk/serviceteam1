@@ -2,6 +2,9 @@
 // ใช้ฟอนต์ Noto Sans Thai ที่หน้าเว็บโหลดอยู่แล้ว ภาษาไทยจึงแสดงถูกต้อง
 import { MAX_ITEMS, thaiDate, requisitionFileName } from "./requisitionExcel.js";
 
+// ใบเก่าที่บันทึกตอนมีบั๊ก "โครงการ โครงการ"
+export const cleanProject = (s) => String(s || "").replace(/^(โครงการ\s*)+/, "โครงการ ").trim();
+
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export function requisitionHtml(r) {
@@ -28,10 +31,10 @@ export function requisitionHtml(r) {
   .rq .fl{font-weight:700;white-space:nowrap;margin-right:6px}
   .rq .fv{border-bottom:1px solid #000;min-width:120px;flex:1;padding:0 4px;min-height:16px}
   .rq .l{flex:1}.rq .r{width:230px}
-  .rq table{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed}
-  .rq th,.rq td{border:1px solid #000;padding:2px 5px;height:19px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .rq table{width:100%;border-collapse:separate;border-spacing:0;margin-top:10px;table-layout:fixed;border-top:1px solid #000;border-left:1px solid #000}
+  .rq th,.rq td{border:0;border-right:1px solid #000;border-bottom:1px solid #000;padding:0 5px;line-height:20px;height:20px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
   .rq td.n{white-space:normal;word-break:break-word}
-  .rq th{font-weight:700;background:#f2f2f2;height:24px}
+  .rq th{font-weight:700;background:#f2f2f2;height:24px;line-height:24px}
   .rq .c{text-align:center}
   .rq .nt{margin-top:10px;font-size:11px}
   .rq .ss{display:flex;justify-content:space-between;margin-top:34px;text-align:center;font-size:11.5px}
@@ -49,8 +52,8 @@ export function requisitionHtml(r) {
   </div>
   <h1>ใบขอเบิกสินค้า</h1>
   <div class="fs">
-    <div class="l">${field("JOB NO :", r.jobNo)}${field("PROJECT :", r.project)}${field("SITE :", "")}${field("SALES", r.sales)}</div>
-    <div class="r">${field("", "")}${field("วันที่", thaiDate(r.date))}${field("สถานที่", r.site)}</div>
+    <div class="l">${field("JOB NO :", r.jobNo)}${field("PROJECT :", cleanProject(r.project))}${field("SITE :", "")}${field("SALES", r.sales)}</div>
+    <div class="r"><div class="f" style="visibility:hidden"><span class="fl">-</span></div>${field("วันที่", thaiDate(r.date))}${field("สถานที่", r.site)}</div>
   </div>
   <table>
     <colgroup><col style="width:8%"><col style="width:16%"><col style="width:44%"><col style="width:9%"><col style="width:9%"><col style="width:14%"></colgroup>
