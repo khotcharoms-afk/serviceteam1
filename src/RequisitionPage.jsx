@@ -5,7 +5,10 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "fireb
 import { useTheme } from "./theme.js";
 import { IS as inputBase, today } from "./utils.js";
 import { downloadRequisition, thaiDate, MAX_ITEMS } from "./requisitionExcel.js";
+import { downloadRequisitionPdf } from "./requisitionPdf.js";
 
+// ชื่อโครงการในระบบส่วนใหญ่ขึ้นต้นด้วย "โครงการ" อยู่แล้ว — ไม่เติมซ้ำ
+const projLabel = (name = "") => (name.trim().startsWith("โครงการ") ? name.trim() : `โครงการ ${name.trim()}`);
 const emptyItem = () => ({ serial: "", name: "", qty: 1, unit: "Ea.", note: "" });
 const emptyForm = () => ({ jobNo: "", project: "", projectId: "", site: "", date: today(), sales: "", items: [emptyItem()] });
 
@@ -75,9 +78,9 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
     catch { flash("ลบไม่สำเร็จ", false); }
   }
 
-  async function download(r) {
-    setBusy(r.id || "form");
-    try { await downloadRequisition(r); }
+  async function download(r, kind = "xlsx") {
+    setBusy(`${r.id || "form"}-${kind}`);
+    try { await (kind === "pdf" ? downloadRequisitionPdf(r) : downloadRequisition(r)); }
     catch (e) { flash(e.message || "สร้างไฟล์ไม่สำเร็จ", false); }
     finally { setBusy(null); }
   }
@@ -94,7 +97,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
           <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>📦 ใบเบิกของ</div>
-            <div style={{ fontSize: 11.5, color: c.text400 }}>กรอกรายการแล้วดาวน์โหลดเป็นไฟล์ใบขอเบิกสินค้า (Excel)</div>
+            <div style={{ fontSize: 11.5, color: c.text400 }}>กรอกรายการแล้วดาวน์โหลดใบขอเบิกสินค้าเป็น PDF หรือ Excel</div>
           </div>
           <button onClick={() => setForm(emptyForm())} style={btn(c.purple)}>+ สร้างใบเบิก</button>
         </div>
@@ -126,7 +129,8 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
                   <div style={{ fontSize: 11, color: c.text400, marginTop: 6 }}>โดย {r.createdBy || "-"}</div>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <button onClick={() => download(r)} disabled={busy === r.id} style={btn(c.green)}>{busy === r.id ? "กำลังสร้าง…" : "⬇ Excel"}</button>
+                  <button onClick={() => download(r, "pdf")} disabled={!!busy} style={btn(c.red)}>{busy === `${r.id}-pdf` ? "กำลังสร้าง…" : "⬇ PDF"}</button>
+                  <button onClick={() => download(r)} disabled={!!busy} style={btn(c.green)}>{busy === `${r.id}-xlsx` ? "กำลังสร้าง…" : "⬇ Excel"}</button>
                   <button onClick={() => setForm({ ...emptyForm(), ...r, id: undefined, date: today(), items: (r.items || []).map((it) => ({ ...emptyItem(), ...it })) })}
                     title="สร้างใบใหม่โดยใช้รายการเดิม" style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>⧉ ใช้ซ้ำ</button>
                   {canEdit(r) && <>
@@ -156,10 +160,10 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
                 <input list="req-projects" value={form.project} placeholder="เช่น โครงการ Asia Era One : Cleaning Services"
                   onChange={(e) => {
                     const v = e.target.value;
-                    const p = projects.find((x) => `โครงการ ${x.name}` === v || x.name === v);
+                    const p = projects.find((x) => projLabel(x.name) === v || x.name === v);
                     setForm({ ...form, project: v, projectId: p?.id || "" });
                   }} style={IS} />
-                <datalist id="req-projects">{projects.map((p) => <option key={p.id} value={`โครงการ ${p.name}`} />)}</datalist>
+                <datalist id="req-projects">{projects.map((p) => <option key={p.id} value={projLabel(p.name)} />)}</datalist>
               </div>
               <div>
                 <label style={label}>วันที่</label>
@@ -209,8 +213,10 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
             )}
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16, flexWrap: "wrap" }}>
+              <button onClick={() => download(form, "pdf")} disabled={!!busy} style={btn(c.bg, c.red, { border: `1px solid ${c.red}` })}>
+                {busy === "form-pdf" ? "กำลังสร้าง…" : "⬇ PDF"}</button>
               <button onClick={() => download(form)} disabled={!!busy} style={btn(c.bg, c.green, { border: `1px solid ${c.green}` })}>
-                {busy === "form" ? "กำลังสร้าง…" : "⬇ ดาวน์โหลด Excel"}</button>
+                {busy === "form-xlsx" ? "กำลังสร้าง…" : "⬇ Excel"}</button>
               <button onClick={() => setForm(null)} disabled={!!busy} style={btn(c.bg, c.text500, { border: `1px solid ${c.border}` })}>ยกเลิก</button>
               <button onClick={save} disabled={!!busy} style={btn(c.purple)}>{busy === "save" ? "กำลังบันทึก…" : "บันทึก"}</button>
             </div>
