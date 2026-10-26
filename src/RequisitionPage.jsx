@@ -80,7 +80,12 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
 
   async function download(r, kind = "xlsx") {
     setBusy(`${r.id || "form"}-${kind}`);
-    try { await (kind === "pdf" ? downloadRequisitionPdf(r) : downloadRequisition(r)); }
+    try {
+      if (kind === "pdf") {
+        const font = await downloadRequisitionPdf(r);
+        if (font === "sarabun") flash("เครื่องนี้ไม่มีฟอนต์ Angsana New — ใช้ Sarabun แทน");
+      } else await downloadRequisition(r);
+    }
     catch (e) { flash(e.message || "สร้างไฟล์ไม่สำเร็จ", false); }
     finally { setBusy(null); }
   }
