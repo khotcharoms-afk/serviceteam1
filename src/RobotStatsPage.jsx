@@ -83,6 +83,12 @@ function siteLabel(code, fallbackName) {
   return SITE_CONFIG[code]?.label || fallbackName;
 }
 
+// ถือว่า "ทำงาน" ถ้ามีงานที่จบแล้ว หรือมีพื้นที่/เวลาทำความสะอาด
+// (VIGGO นับ task_num เฉพาะงานที่จบแล้ว — รถที่กำลังทำงานอยู่จะมี task_num = 0 แต่มีพื้นที่/เวลาแล้ว)
+function isWorked(r) {
+  return Number(r?.task_num) > 0 || Number(r?.actual_clean_area) > 0 || Number(r?.total_time) > 0;
+}
+
 function buildDailyReport(rows, mode = 'morning') {
   const bySite = {};
   rows.forEach((r) => {
@@ -111,7 +117,7 @@ function buildDailyReport(rows, mode = 'morning') {
     lines.push(site);
     const needsLabel = vehicles.length > 1 || vehicles.some((v) => SITE_CONFIG[v.project_name]?.label);
     vehicles.forEach((v) => {
-      const worked = Number(v.task_num) > 0;
+      const worked = isWorked(v);
       const label = needsLabel ? siteLabel(v.project_name, v.vehicle_name) : null;
 
       if (mode === 'evening') {
@@ -323,7 +329,7 @@ function VehicleDetail({ vehicle, onBack }) {
   const maxArea = Math.max(1, ...weekData.map((d) => d.actual_clean_area));
   const weekTotalArea = weekData.reduce((s, d) => s + d.actual_clean_area, 0);
   const weekTotalTask = weekData.reduce((s, d) => s + d.task_num, 0);
-  const daysWorked = weekData.filter((d) => d.task_num > 0).length;
+  const daysWorked = weekData.filter((d) => isWorked(d)).length;
 
   return (
     <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", overflowX: 'hidden' }}>
@@ -433,17 +439,21 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
     try {
       const days = [];
       for (let i = 0; i < IDLE_MAX_DAYS; i++) days.push(todayStr(-i));
-      const dayResults = await Promise.all(days.map(async (date) => {
-        const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
-        const res = await fetch(`/api/robot-stats?${params.toString()}`);
-        const data = await res.json();
-        return { date, rows: data.result || [] };
-      }));
+      // ดึงทีละ 3 วัน ไม่ยิงพร้อมกัน 14 ครั้ง กัน API ต้นทางรับไม่ไหว
+      const dayResults = [];
+      for (let i = 0; i < days.length; i += 3) {
+        dayResults.push(...await Promise.all(days.slice(i, i + 3).map(async (date) => {
+          const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
+          const res = await fetch(`/api/robot-stats?${params.toString()}`);
+          const data = await res.json();
+          return { date, rows: data.result || [] };
+        })));
+      }
       const byVin = {};
       dayResults.forEach(({ date, rows: dayRows }) => {
         dayRows.forEach((r) => {
           if (!byVin[r.vin]) byVin[r.vin] = {};
-          byVin[r.vin][date] = Number(r.task_num) > 0;
+          byVin[r.vin][date] = isWorked(r);
         });
       });
       const result = {};
@@ -482,8 +492,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   }
 
   useEffect(() => {
-    fetchData();
-    loadIdleDays();
+    // โหลดข้อมูลหลักก่อน แล้วค่อยโหลดวันหยุดย้อนหลัง
+    fetchData().finally(() => loadIdleDays());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -502,18 +512,18 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       return [r.vehicle_name, r.project_name, r.vin, siteName(r.project_name)].some((x) => x?.toLowerCase().includes(q));
     })
     .filter((r) => {
-      const worked = Number(r.task_num) > 0;
+      const worked = isWorked(r);
       if (statusFilter === 'worked') return worked;
       if (statusFilter === 'notworked') return !worked;
       return true;
     })
-    .sort((a, b) => (Number(b.task_num) > 0 ? 1 : 0) - (Number(a.task_num) > 0 ? 1 : 0));
+    .sort((a, b) => (isWorked(b) ? 1 : 0) - (isWorked(a) ? 1 : 0));
 
   const totalTask = rows.reduce((s, r) => s + (Number(r.task_num) || 0), 0);
   const totalActual = rows.reduce((s, r) => s + (Number(r.actual_clean_area) || 0), 0);
   const totalPlan = rows.reduce((s, r) => s + (Number(r.plan_clean_area) || 0), 0);
   const avgPct = totalPlan > 0 ? (totalActual / totalPlan) * 100 : null;
-  const activeCount = rows.filter((r) => Number(r.task_num) > 0).length;
+  const activeCount = rows.filter((r) => isWorked(r)).length;
   const notWorkedCount = rows.length - activeCount;
 
   const isToday = startDate === todayStr() && endDate === todayStr();
@@ -903,7 +913,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                       <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <StatusBadge worked={Number(r.task_num) > 0} />
+                      <StatusBadge worked={isWorked(r)} />
                       {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS) && (
                         <span style={{ fontSize: 10.5, fontWeight: 700, color: c.red }}>
                           ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}
@@ -952,8 +962,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                   {filteredRows.map((r) => {
                     const pct = pctOf(r);
                     return (
-                      <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: Number(r.task_num) > 0 ? 'transparent' : redBg, cursor: 'pointer' }}>
-                        <td style={{ padding: '10px 10px' }}><StatusBadge worked={Number(r.task_num) > 0} /></td>
+                      <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: isWorked(r) ? 'transparent' : redBg, cursor: 'pointer' }}>
+                        <td style={{ padding: '10px 10px' }}><StatusBadge worked={isWorked(r)} /></td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
                             ? <span style={{ color: c.red, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>
