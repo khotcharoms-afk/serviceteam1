@@ -47,11 +47,11 @@ const num = (v) => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); re
 const pick = (row, re) => { const k = Object.keys(row).find((h) => re.test(h)); return k ? row[k] : ''; };
 
 // งานดิบ → { vin: { task_num, actual_clean_area, total_time } }
-async function fetchRawByVin(token, start_time, end_time) {
+async function fetchRawByVin(token, start_time, end_time, timeoutMs = 8000) {
   const url = `${BASE}/multi-original-download?access-token=${token}&start_time=${start_time}&end_time=${end_time}`;
-  // จำกัดเวลา 8 วิ — ถ้างานดิบช้า ให้ตอบด้วยสรุปเดิมไปก่อน ไม่ให้ทั้งคำขอค้างจนล้มเหลว
+  // จำกัดเวลา — ถ้างานดิบช้า ให้ตอบด้วยสรุปเดิมไปก่อน ไม่ให้ทั้งคำขอค้างจนล้มเหลว
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   let text;
   try {
     const upstream = await fetch(url, { signal: ctrl.signal });
@@ -81,7 +81,7 @@ async function fetchRawByVin(token, start_time, end_time) {
 const isZero = (r) => !(Number(r.task_num) > 0) && !(Number(r.actual_clean_area) > 0) && !(Number(r.total_time) > 0);
 
 // สรุปรายคันครบทุกหน้า + เติมคันที่เป็น 0 จากงานดิบ
-export async function getCars(token, start_time, end_time, { page = 1, pageSize = 100, raw = true } = {}) {
+export async function getCars(token, start_time, end_time, { page = 1, pageSize = 100, raw = true, rawTimeout = 8000 } = {}) {
   const first = await fetchSummaryPage(token, start_time, end_time, page, pageSize);
   const result = [...(first.result || [])];
   if ((first.result || []).length === pageSize) {
@@ -92,9 +92,11 @@ export async function getCars(token, start_time, end_time, { page = 1, pageSize 
     }
   }
   let filled = 0;
+  let rawStatus = 'skipped';
   if (raw && result.some(isZero)) {
     try {
-      const byVin = await fetchRawByVin(token, start_time, end_time);
+      const byVin = await fetchRawByVin(token, start_time, end_time, rawTimeout);
+      rawStatus = byVin ? 'ok' : 'failed';
       if (byVin) result.forEach((r) => {
         const x = byVin[r.vin];
         if (isZero(r) && x && x.task_num > 0) {
@@ -105,7 +107,7 @@ export async function getCars(token, start_time, end_time, { page = 1, pageSize 
           filled++;
         }
       });
-    } catch { /* งานดิบล้มเหลว — ใช้สรุปเดิม */ }
+    } catch { rawStatus = 'failed'; /* งานดิบล้มเหลว/ช้าเกิน — ใช้สรุปเดิม */ }
   }
-  return { first, result, filled };
+  return { first, result, filled, rawStatus };
 }

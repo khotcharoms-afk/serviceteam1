@@ -287,7 +287,28 @@ function VehicleDetail({ vehicle, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [endDay, setEndDay] = useState(todayStr());
-  const [reloadKey, setReloadKey] = useState(0); // ดูช่วง 7 วันที่จบที่วันนี้ (เลื่อนย้อนหลังได้)
+  const [reloadKey, setReloadKey] = useState(0);
+  const [pulling, setPulling] = useState(null); // วันที่กำลังดึงข้อมูลย้อนหลัง
+
+  // ดึงข้อมูลย้อนหลังของวันเดียว (เฉพาะเมื่อผู้ใช้กด) — เติมจากงานดิบของ VIGGO
+  async function pullRaw(date) {
+    setPulling(date);
+    try {
+      const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100', raw: '1' });
+      const res = await fetch(`/api/robot-stats?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const row = (data.result || []).find((r) => r.vin === vehicle.vin);
+      setWeekData((list) => list.map((d) => d.date !== date ? d : (row?.from_raw ? {
+        ...d, task_num: Number(row.task_num) || 0, actual_clean_area: Math.round(Number(row.actual_clean_area) || 0),
+        total_time: Number(row.total_time) || 0, from_raw: true, rawNote: null,
+      } : { ...d, rawNote: data.raw_status === 'failed' ? 'VIGGO ตอบช้า ลองใหม่' : 'ไม่มีข้อมูลวันนี้' })));
+    } catch {
+      setWeekData((list) => list.map((d) => d.date !== date ? d : { ...d, rawNote: 'ดึงไม่สำเร็จ ลองใหม่' }));
+    } finally {
+      setPulling(null);
+    }
+  } // ดูช่วง 7 วันที่จบที่วันนี้ (เลื่อนย้อนหลังได้)
   const startDay = addDays(endDay, -6);
   const atToday = endDay >= todayStr();
 
@@ -417,6 +438,13 @@ function VehicleDetail({ vehicle, onBack }) {
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.failed ? '—' : formatHours(d.total_time)}</td>
                       <td style={{ padding: '10px 14px', color: c.text900, fontWeight: 600 }}>
                         {d.failed ? <button onClick={() => setReloadKey((k) => k + 1)} style={{ background: 'none', border: 'none', padding: 0, color: c.red, fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>โหลดไม่สำเร็จ · ลองใหม่</button> : d.actual_clean_area.toLocaleString()}
+                        {!d.failed && !isWorked(d) && d.date <= todayStr() && (
+                          <button onClick={() => pullRaw(d.date)} disabled={!!pulling}
+                            title="ดึงงานดิบจาก VIGGO มาเติม (กรณีหุ่นส่งข้อมูลย้อนหลังหลังเน็ตกลับมา)"
+                            style={{ marginLeft: 8, background: 'none', border: `1px solid ${c.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 11.5, fontWeight: 700, color: c.purple, cursor: pulling ? 'default' : 'pointer', fontFamily: 'inherit', opacity: pulling && pulling !== d.date ? 0.5 : 1 }}>
+                            {pulling === d.date ? 'กำลังดึง…' : (d.rawNote ? `⟲ ${d.rawNote}` : '⟲ ดึงข้อมูล')}
+                          </button>
+                        )}
                         {d.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706' }}>⟲ ย้อนหลัง</span>}
                       </td>
                     </tr>
@@ -441,6 +469,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const [statusFilter, setStatusFilter] = useState('all'); // all | worked | notworked
   const [showReport, setShowReport] = useState(false);
   const [reportMode, setReportMode] = useState('morning'); // morning | evening
+  const [rawLoading, setRawLoading] = useState(false);
+  const [rawMsg, setRawMsg] = useState(null);
   const [reportDate, setReportDate] = useState(todayStr());
   const [reportRows, setReportRows] = useState(null); // null = ใช้ rows ของหน้าหลัก (ช่วงเดียวกันวันเดียว)
   const [reportLoading, setReportLoading] = useState(false);
@@ -589,6 +619,28 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
     })();
     return () => { cancelled = true; };
   }, [showReport, reportDate, reportUsesMain]);
+  // ดึงข้อมูลย้อนหลังของรถที่เป็น 0 ในช่วงที่ค้นหาอยู่ (ยิงครั้งเดียวเมื่อผู้ใช้กด)
+  async function pullRawForZeros() {
+    setRawLoading(true); setRawMsg(null);
+    try {
+      const params = new URLSearchParams({ start_time: startDate, end_time: endDate, page: '1', size: '100', raw: '1' });
+      const res = await fetch(`/api/robot-stats?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+      const byVin = {};
+      (data.result || []).forEach((r) => { if (r.from_raw) byVin[r.vin] = r; });
+      const n = Object.keys(byVin).length;
+      setRows((list) => list.map((r) => byVin[r.vin] && !isWorked(r) ? { ...r, ...byVin[r.vin] } : r));
+      setRawMsg(n > 0 ? `✓ เติมข้อมูลย้อนหลังได้ ${n} คัน`
+        : data.raw_status === 'failed' ? 'VIGGO ตอบช้า ลองกดใหม่อีกครั้ง' : 'ไม่พบข้อมูลย้อนหลังเพิ่ม — รถที่เหลือไม่ได้ทำงานจริง');
+    } catch (err) {
+      setRawMsg('ดึงไม่สำเร็จ: ' + err.message);
+    } finally {
+      setRawLoading(false);
+    }
+  }
+  useEffect(() => { setRawMsg(null); }, [startDate, endDate]);
+
   const reportText = buildDailyReport(reportUsesMain ? rows : (reportRows || []), reportMode);
 
   async function copyReport() {
@@ -747,7 +799,16 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
               <QuickRangeBtn label={`ทำงาน (${activeCount})`} active={statusFilter === 'worked'} onClick={() => setStatusFilter('worked')} />
               <QuickRangeBtn label={`ไม่ได้ทำงาน (${notWorkedCount})`} active={statusFilter === 'notworked'} onClick={() => setStatusFilter('notworked')} />
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {rawMsg && <span style={{ fontSize: 12, color: rawMsg.startsWith('✓') ? c.green : c.text500 }}>{rawMsg}</span>}
+              {notWorkedCount > 0 && (
+                <button onClick={pullRawForZeros} disabled={rawLoading}
+                  title="หุ่นที่เน็ตหน้างานล่มจะส่งข้อมูลย้อนหลังมาทีหลัง แต่สรุปของ VIGGO ยังเป็น 0 — กดเพื่อดึงงานดิบมาเติม"
+                  style={{ background: c.card, color: c.text900, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 13px',
+                    fontSize: 12.5, fontWeight: 700, cursor: rawLoading ? 'default' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flex: isMobile ? 1 : 'none' }}>
+                  {rawLoading ? 'กำลังดึง…' : `⟲ ดึงข้อมูลย้อนหลัง (${notWorkedCount} คันที่เป็น 0)`}
+                </button>
+              )}
               <button
                 onClick={() => { if (!showReport) setReportDate(endDate); setShowReport((v) => !v); }}
                 style={{
