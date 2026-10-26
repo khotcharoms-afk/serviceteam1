@@ -1,6 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import Root from './Root.jsx'
+import { isChunkError, reloadForNewVersion } from './staleChunk.js'
+
+// ไฟล์ย่อยของเวอร์ชันเก่าหายหลัง deploy → รีเฟรชเอง
+window.addEventListener('vite:preloadError', (e) => { if (reloadForNewVersion()) e.preventDefault() })
 
 // Global error boundary for iOS debugging
 class ErrorBoundary extends React.Component {
@@ -13,6 +17,7 @@ class ErrorBoundary extends React.Component {
   }
   componentDidCatch(error, info) {
     console.error("App crashed:", error, info)
+    if (isChunkError(error)) reloadForNewVersion()
   }
   render() {
     if (this.state.error) {

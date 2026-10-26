@@ -6,6 +6,7 @@ import { useTheme } from "./theme.js";
 import { IS as inputBase, today } from "./utils.js";
 import { downloadRequisition, thaiDate, MAX_ITEMS } from "./requisitionExcel.js";
 import { downloadRequisitionPdf } from "./requisitionPdf.js";
+import { isChunkError, reloadForNewVersion } from "./staleChunk.js";
 
 // ชื่อโครงการในระบบส่วนใหญ่ขึ้นต้นด้วย "โครงการ" อยู่แล้ว — ไม่เติมซ้ำ
 const projLabel = (name = "") => (name.trim().startsWith("โครงการ") ? name.trim() : `โครงการ ${name.trim()}`);
@@ -86,7 +87,10 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
         if (font === "sarabun") flash("เครื่องนี้ไม่มีฟอนต์ Angsana New — ใช้ Sarabun แทน");
       } else await downloadRequisition(r);
     }
-    catch (e) { flash(e.message || "สร้างไฟล์ไม่สำเร็จ", false); }
+    catch (e) {
+      if (isChunkError(e)) { flash("เว็บมีเวอร์ชันใหม่ กำลังรีเฟรช… แล้วกดดาวน์โหลดอีกครั้ง"); setTimeout(reloadForNewVersion, 1200); }
+      else flash(e.message || "สร้างไฟล์ไม่สำเร็จ", false);
+    }
     finally { setBusy(null); }
   }
 
