@@ -1,7 +1,7 @@
 // ออกใบขอเบิกสินค้าเป็น PDF (A4) — วาดฟอร์มเป็น HTML หน้าตาเดียวกับไฟล์ Excel แล้วแปลงเป็นรูปลง PDF
 // ฟอนต์ Angsana New (ตามฟอร์มบริษัท) — เป็นฟอนต์ของ Windows ฝังในเว็บไม่ได้ (ลิขสิทธิ์ Microsoft)
 // จึงใช้ได้เฉพาะเครื่องที่ติดตั้งไว้ เครื่องที่ไม่มี (มือถือ/Mac) ใช้ Sarabun แทน
-import { MAX_ITEMS, thaiDate, requisitionFileName } from "./requisitionExcel.js";
+import { MAX_ITEMS, thaiDate, requisitionFileName, normalizeReq } from "./requisitionExcel.js";
 
 // ใบเก่าที่บันทึกตอนมีบั๊ก "โครงการ โครงการ"
 export const cleanProject = (s) => String(s || "").replace(/^(โครงการ\s*)+/, "โครงการ ").trim();
@@ -22,6 +22,7 @@ export function hasLocalFont(name) {
 
 // font: "angsana" | "sarabun" — Angsana ตัวเล็กกว่าฟอนต์ทั่วไปที่ขนาดเดียวกัน จึงขยาย 1.4 เท่า
 export function requisitionHtml(r, font = "angsana") {
+  r = normalizeReq(r);
   const k = font === "angsana" ? 1.4 : 1;
   const px = (n) => `${Math.round(n * k * 10) / 10}px`;
   const family = font === "angsana" ? `'Angsana New','AngsanaUPC','Sarabun',sans-serif` : `'Sarabun','Noto Sans Thai',sans-serif`;
@@ -69,8 +70,8 @@ export function requisitionHtml(r, font = "angsana") {
   </div>
   <h1>ใบขอเบิกสินค้า</h1>
   <div class="fs">
-    <div class="l">${field("JOB NO :", r.jobNo)}${field("PROJECT :", cleanProject(r.project))}${field("SITE :", "")}${field("SALES", r.sales)}</div>
-    <div class="r"><div class="f" style="visibility:hidden"><span class="fl">-</span></div>${field("วันที่", thaiDate(r.date))}${field("สถานที่", r.site)}</div>
+    <div class="l">${field("JOB NO :", r.jobNo)}${field("PROJECT :", cleanProject(r.project))}${field("SITE :", r.site)}${field("SALES", r.sales)}</div>
+    <div class="r"><div class="f" style="visibility:hidden"><span class="fl">-</span></div>${field("วันที่", thaiDate(r.date))}${field("สถานที่", r.location)}</div>
   </div>
   <table>
     <colgroup><col style="width:8%"><col style="width:16%"><col style="width:44%"><col style="width:9%"><col style="width:9%"><col style="width:14%"></colgroup>

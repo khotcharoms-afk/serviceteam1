@@ -28,10 +28,16 @@ function setCell(xml, ref, value) {
 }
 
 // ค่าทุกช่องของฟอร์ม (ช่องที่ไม่มีข้อมูล = ล้างค่าในแม่แบบ)
+// ใบเก่าเก็บ "สถานที่" ไว้ในช่อง site — แยกเป็น site (SITE) กับ location (สถานที่) แล้ว
+export function normalizeReq(r = {}) {
+  return r.location === undefined ? { ...r, location: r.site || "", site: "" } : r;
+}
+
 export function requisitionCells(r) {
+  r = normalizeReq(r);
   const cells = {
     B8: r.jobNo || "", B9: String(r.project || "").replace(/^(โครงการ\s*)+/, "โครงการ ").trim(), J9: thaiDate(r.date),
-    B10: "", J10: r.site || "", B11: r.sales || "", J11: "",
+    B10: r.site || "", J10: r.location || "", B11: r.sales || "", J11: "",
   };
   const items = (r.items || []).filter((it) => (it.name || "").trim()).slice(0, MAX_ITEMS);
   for (let i = 0; i < MAX_ITEMS; i++) {
