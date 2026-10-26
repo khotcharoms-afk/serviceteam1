@@ -152,12 +152,6 @@ function todayStr(offsetDays = 0) {
   return addDays(new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" }), offsetDays);
 }
 
-function mondayOfThisWeek() {
-  const t = todayStr();
-  const day = new Date(t + "T00:00:00Z").getUTCDay(); // 0=อาทิตย์ ... 6=เสาร์
-  return addDays(t, day === 0 ? -6 : 1 - day);
-}
-
 function addDays(dateStr, n) {
   const d = new Date(dateStr + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
@@ -281,11 +275,20 @@ function WeekBarChart({ data, maxValue }) {
   );
 }
 
+const TH_MONTH_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+function fmtShort(s) {
+  const [, m, d] = s.split('-');
+  return `${Number(d)} ${TH_MONTH_SHORT[Number(m) - 1]}`;
+}
+
 function VehicleDetail({ vehicle, onBack }) {
   const { c } = useTheme();
   const [weekData, setWeekData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [endDay, setEndDay] = useState(todayStr()); // ดูช่วง 7 วันที่จบที่วันนี้ (เลื่อนย้อนหลังได้)
+  const startDay = addDays(endDay, -6);
+  const atToday = endDay >= todayStr();
 
   useEffect(() => {
     let cancelled = false;
@@ -294,26 +297,30 @@ function VehicleDetail({ vehicle, onBack }) {
       setError(null);
       try {
         const dayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-        const monday = mondayOfThisWeek();
         const days = [];
-        for (let i = 0; i < 7; i++) days.push(addDays(monday, i));
+        for (let i = 0; i < 7; i++) days.push(addDays(startDay, i));
         const results = await Promise.all(days.map(async (date) => {
           const d = new Date(date);
           if (date > todayStr()) {
             return { date, dateShort: `${d.getDate()}/${d.getMonth() + 1}`, dayLabel: dayNames[d.getDay()], task_num: 0, actual_clean_area: 0, total_time: 0 };
           }
           const params = new URLSearchParams({ start_time: date, end_time: date, page: '1', size: '100' });
-          const res = await fetch(`/api/robot-stats?${params.toString()}`);
-          const data = await res.json();
-          const row = (data.result || []).find((r) => r.vin === vehicle.vin);
-          return {
-            date,
-            dateShort: `${d.getDate()}/${d.getMonth() + 1}`,
-            dayLabel: dayNames[d.getDay()],
-            task_num: Number(row?.task_num) || 0,
-            actual_clean_area: Math.round(Number(row?.actual_clean_area) || 0),
-            total_time: Number(row?.total_time) || 0,
-          };
+          const base = { date, dateShort: `${d.getDate()}/${d.getMonth() + 1}`, dayLabel: dayNames[d.getDay()] };
+          try {
+            const res = await fetch(`/api/robot-stats?${params.toString()}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            const row = (data.result || []).find((r) => r.vin === vehicle.vin);
+            return {
+              ...base,
+              task_num: Number(row?.task_num) || 0,
+              actual_clean_area: Math.round(Number(row?.actual_clean_area) || 0),
+              total_time: Number(row?.total_time) || 0,
+              from_raw: !!row?.from_raw,
+            };
+          } catch {
+            return { ...base, task_num: 0, actual_clean_area: 0, total_time: 0, failed: true };
+          }
         }));
         if (!cancelled) setWeekData(results);
       } catch (err) {
@@ -324,7 +331,7 @@ function VehicleDetail({ vehicle, onBack }) {
     }
     loadWeek();
     return () => { cancelled = true; };
-  }, [vehicle.vin]);
+  }, [vehicle.vin, startDay]);
 
   const maxArea = Math.max(1, ...weekData.map((d) => d.actual_clean_area));
   const weekTotalArea = weekData.reduce((s, d) => s + d.actual_clean_area, 0);
@@ -344,6 +351,23 @@ function VehicleDetail({ vehicle, onBack }) {
       </div>
 
       <div style={{ padding: 16, maxWidth: 700, margin: '0 auto' }}>
+        {/* เลือกช่วงที่จะดู: เลื่อนทีละ 7 วัน หรือเลือกวันสุดท้ายของช่วง */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <button onClick={() => setEndDay(addDays(endDay, -7))} disabled={loading}
+            style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', color: c.text900, fontFamily: 'inherit' }}>‹ 7 วันก่อน</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: c.text500 }}>
+            <span>{fmtShort(startDay)} – </span>
+            <input type="date" value={endDay} max={todayStr()} onChange={(e) => e.target.value && setEndDay(e.target.value > todayStr() ? todayStr() : e.target.value)}
+              style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 8px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+          </div>
+          <button onClick={() => setEndDay(addDays(endDay, 7) > todayStr() ? todayStr() : addDays(endDay, 7))} disabled={loading || atToday}
+            style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, cursor: atToday ? 'default' : 'pointer', color: c.text900, opacity: atToday ? 0.4 : 1, fontFamily: 'inherit' }}>7 วันถัดไป ›</button>
+          {!atToday && (
+            <button onClick={() => setEndDay(todayStr())}
+              style={{ background: 'none', border: 'none', color: c.purple, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>กลับมาวันนี้</button>
+          )}
+        </div>
+
         {error && (
           <div style={{ background: '#fff5f5', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 12, padding: '12px 16px', marginBottom: 14, fontSize: 13.5 }}>
             ⚠️ {error}
@@ -351,7 +375,7 @@ function VehicleDetail({ vehicle, onBack }) {
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 48, color: c.text400 }}>กำลังโหลดข้อมูล 7 วันล่าสุด…</div>
+          <div style={{ textAlign: 'center', padding: 48, color: c.text400 }}>กำลังโหลดข้อมูล {fmtShort(startDay)} – {fmtShort(endDay)}…</div>
         ) : (
           <>
             <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -381,7 +405,10 @@ function VehicleDetail({ vehicle, onBack }) {
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.dateShort}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.task_num}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{formatHours(d.total_time)}</td>
-                      <td style={{ padding: '10px 14px', color: c.text900, fontWeight: 600 }}>{d.actual_clean_area.toLocaleString()}</td>
+                      <td style={{ padding: '10px 14px', color: c.text900, fontWeight: 600 }}>
+                        {d.failed ? <span style={{ color: c.red, fontWeight: 600, fontSize: 12 }}>โหลดไม่สำเร็จ</span> : d.actual_clean_area.toLocaleString()}
+                        {d.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706' }}>⟲ ย้อนหลัง</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
