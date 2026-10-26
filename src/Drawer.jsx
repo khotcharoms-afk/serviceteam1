@@ -42,6 +42,7 @@ export default function Drawer({
   setRobotStatsPage,
   setRobotIssuesPage,
   setDevicesPage,
+  setRequisitionPage,
   setAssistantPage,
   setCaseLogPage,
   isDev, onlineCount, setShowOnlineUsers,
@@ -126,6 +127,8 @@ export default function Drawer({
           onClick={()=>{ setRobotIssuesPage(true); onClose(); }}/>
         <DrawerItem active={false} color="#0891B2" icon="🖥️" label="อุปกรณ์/รีโมท" count={""}
           onClick={()=>{ setDevicesPage(true); onClose(); }}/>
+        <DrawerItem active={false} color="#B45309" icon="📦" label="ใบเบิกของ" count={""}
+          onClick={()=>{ setRequisitionPage(true); onClose(); }}/>
         <DrawerItem active={false} color="#6B21A8" icon="🤖" label="ผู้ช่วย AI" count={""}
           onClick={()=>{ setAssistantPage(true); onClose(); }}/>
 
