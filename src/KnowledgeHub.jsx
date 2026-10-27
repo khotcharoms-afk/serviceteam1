@@ -3,10 +3,13 @@
 // บทความเก่าที่ยังไม่มี category จะเดาหมวดจากชื่อ/แท็กเพื่อแสดงผล (ไม่เขียนกลับจนกว่าจะแก้ไข)
 // ผู้ช่วย AI ค้นบทความเหล่านี้ผ่าน search_knowledge ใน src/assistantTools.js
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { db } from "./firebase";
 import { useTheme } from "./theme.js";
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
+
+// แท็บเครื่องมือ WMS (ตรวจ FFM / SOP / SQL template) — โหลดเฉพาะตอนเปิด และเห็นเฉพาะ admin/dev
+const WmsToolkit = lazy(() => import("./WmsToolkit.jsx"));
 
 
 export const KB_CATEGORIES = [
@@ -233,6 +236,8 @@ export default function KnowledgeHub({ onBack, currentUser }) {
   const [expanded, setExpanded] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const isAdmin = ["admin", "dev"].includes(currentUser?.role);
+  const [view, setView] = useState("articles"); // "articles" | "wms" (wms เฉพาะ admin/dev)
+  const showWms = isAdmin && view === "wms";
 
   useEffect(() => onSnapshot(collection(db, "knowledge"), (snap) => {
     setArticles(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
@@ -287,11 +292,26 @@ export default function KnowledgeHub({ onBack, currentUser }) {
             <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>Knowledge Hub</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>วิธีแก้ปัญหาที่ทีมบันทึกไว้ · {articles.length} บทความ</div>
           </div>
-          <button onClick={() => setModal({})} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: "8px 14px", fontSize: 13,
-            fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ เพิ่มบทความ</button>
+          {!showWms && <button onClick={() => setModal({})} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: "8px 14px", fontSize: 13,
+            fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ เพิ่มบทความ</button>}
         </div>
+        {isAdmin && (
+          <div style={{ display: "flex", gap: 4, padding: "0 16px", maxWidth: 860, margin: "0 auto" }}>
+            {[["articles", "บทความ"], ["wms", "🛠 WMS Toolkit"]].map(([k, l]) => (
+              <button key={k} onClick={() => setView(k)} style={{ background: "none", border: "none", borderBottom: `2px solid ${view === k ? c.ink : "transparent"}`,
+                color: view === k ? c.text900 : c.text400, padding: "8px 10px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
+            ))}
+          </div>
+        )}
       </div>
 
+      {showWms ? (
+        <div style={{ maxWidth: 860, margin: "0 auto", padding: "2px 16px 80px" }}>
+          <Suspense fallback={<div style={{ textAlign: "center", color: c.text400, padding: 48 }}>กำลังโหลด...</div>}>
+            <WmsToolkit />
+          </Suspense>
+        </div>
+      ) : (
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "14px 16px 80px" }}>
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาอาการ วิธีแก้ ชื่อเมนู รหัส error…"
           style={{ width: "100%", boxSizing: "border-box", border: `1px solid ${c.border}`, borderRadius: 12, padding: "11px 14px", fontSize: 14,
@@ -329,6 +349,7 @@ export default function KnowledgeHub({ onBack, currentUser }) {
           </section>
         ))}
       </div>
+      )}
 
       {confirmId && (
         <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(15,23,42,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
