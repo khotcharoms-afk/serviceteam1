@@ -205,6 +205,17 @@ const SOPS = [
     ],
   },
   {
+    key: "partial", title: "✂️ Partial Shipment — ย้าย AWB ไปเที่ยวบินอื่น",
+    when: "เคส Partial Shipment / ของมาไม่ครบหรือต้องย้ายไปลงอีกเที่ยวบิน",
+    steps: [
+      "SQL template 'หาเที่ยวบิน' → ใส่เลขเที่ยวบินปลายทางที่ต้องการย้ายไป + วันที่ → จด flight id ของเที่ยวนั้น",
+      "SQL template 'ค้น AWB ขาเข้า' (หรือขาออก) → ดูแถว routing ว่าตอนนี้ผูกกับ flight ไหนอยู่",
+      "วิธีแก้: นำ flight_id ของเที่ยวที่ต้องการย้ายไป มาเปลี่ยนที่ routing ของ AWB นั้น",
+      "ค้นซ้ำให้ routing ชี้ไปเที่ยวบินใหม่แล้ว → ให้หน้างานเปิดหน้าจอเช็ก",
+      "ที่มา: บทความ 'WMS Partial Shipment' ใน Knowledge Hub (Sayan, 13/9/2569)",
+    ],
+  },
+  {
     key: "restore", title: "♻️ Back up / คืนข้อมูลที่ลบไป",
     when: "ลบไปแล้วมีปัญหา ต้องเอาข้อมูลกลับ",
     steps: [
