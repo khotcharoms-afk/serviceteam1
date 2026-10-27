@@ -1,28 +1,43 @@
 import { daysLeft, FEATURE_SHIFT } from "./utils.js";
 import { useTheme } from "./theme.js";
+import Icon from "./components/Icon.jsx";
 
-// รายการเมนู: ไม่มีอีโมจิ — โครงการแสดงจุดสีประจำโครงการ (dot)
-function DrawerItem({ active, onClick, label, count, dot }) {
+// รายการเมนู: ไอคอนเส้นเรียบช่วยกวาดตา — โครงการแสดงจุดสีประจำโครงการ (dot)
+function DrawerItem({ active, onClick, label, count, dot, icon }) {
   const { c } = useTheme();
   return (
     <button onClick={onClick} style={{
       display:"flex", alignItems:"center", justifyContent:"space-between",
       width:"100%", background: active ? c.borderSoft : "transparent",
-      border:"none", borderRadius:8, padding:"8px 10px",
+      border:"none", borderRadius:8, padding:"7px 10px",
       cursor:"pointer", fontFamily:"inherit", marginBottom:1, textAlign:"left",
       position:"relative", overflow:"hidden",
     }}>
       {active && <span style={{ position:"absolute",left:0,top:"22%",bottom:"22%",width:3,
         borderRadius:"0 3px 3px 0", background:c.ink }}/>}
-      <span style={{ display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0 }}>
-        {dot && <span style={{ width:7,height:7,borderRadius:"50%",background:dot,flexShrink:0 }}/>}
-        <span style={{ fontSize:13.5,color:active?c.text900:c.text500,fontWeight:active?700:500,
+      <span style={{ display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0 }}>
+        {icon && <span style={{ color:active?c.ink:c.text400,flexShrink:0,display:"inline-flex" }}><Icon name={icon} size={17}/></span>}
+        {dot && <span style={{ width:7,height:7,borderRadius:"50%",background:dot,flexShrink:0,margin:"0 3px 0 4px" }}/>}
+        <span style={{ fontSize:13.5,color:c.text900,fontWeight:active?700:500,
           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
       {count !== "" && count !== undefined && (
         <span style={{ fontSize:11.5,color:c.text400,flexShrink:0,marginLeft:4,fontWeight:600 }}>{count}</span>
       )}
     </button>
+  );
+}
+
+// หัวข้อกลุ่มเมนู: ตัวหนา สีเข้มกว่าเดิม มีเส้นคั่นด้านบน
+function Section({ title, right, first }) {
+  const { c } = useTheme();
+  return (
+    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",
+      margin: first ? "4px 0 4px" : "12px 0 4px", padding: first ? "0 10px" : "12px 10px 0",
+      borderTop: first ? "none" : `1px solid ${c.borderSoft}` }}>
+      <span style={{ fontSize:12,fontWeight:700,color:c.text500 }}>{title}</span>
+      {right}
+    </div>
   );
 }
 
@@ -93,46 +108,49 @@ export default function Drawer({
         </div>
 
         {/* หน้าหลัก */}
-        <div style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"4px 8px 8px" }}>หน้าหลัก</div>
-        <DrawerItem active={view==="overview"} label="ภาพรวม" count={cases.length}
+        <Section title="หน้าหลัก" first/>
+        <DrawerItem active={view==="overview"} icon="home" label="ภาพรวมเคส" count={cases.length}
           onClick={()=>{ setView("overview"); onClose(); setFilterStat("all"); }}/>
         {isAdminOrDev && (
-          <DrawerItem active={false} label="Dashboard" count={""}
+          <DrawerItem active={false} icon="chart" label="Dashboard" count={""}
             onClick={()=>{ setDashboardPage(true); onClose(); }}/>
         )}
 
-        {/* ปฏิบัติการ */}
-        <div style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>ปฏิบัติการ</div>
-        <DrawerItem active={false} label="บันทึกการรับเคส" count={""}
+        {/* งานบริการ */}
+        <Section title="งานบริการ"/>
+        <DrawerItem active={false} icon="inbox" label="บันทึกการรับเคส" count={""}
           onClick={()=>{ setCaseLogPage(true); onClose(); }}/>
-        <DrawerItem active={false} label="Onsite" count={""}
-          onClick={()=>{ setOnsitePage(true); onClose(); }}/>
-        <DrawerItem active={false} label="บันทึก OT" count={""}
-          onClick={()=>{ setOtPage(true); onClose(); }}/>
-        {FEATURE_SHIFT && (
-          <DrawerItem active={false} label="ตารางกะ" count={""}
-            onClick={()=>{ setShiftPage(true); onClose(); }}/>
-        )}
-        <DrawerItem active={false} label="ใบลา" count={""}
-          onClick={()=>{ setLeavePage(true); onClose(); }}/>
-        <DrawerItem active={false} label="Knowledge Hub" count={""}
-          onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
-        <DrawerItem active={false} label="สถิติหุ่นยนต์" count={""}
-          onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
-        <DrawerItem active={false} label="แจ้งเหตุ/แจ้งซ่อม" count={""}
-          onClick={()=>{ setRobotIssuesPage(true); onClose(); }}/>
-        <DrawerItem active={false} label="อุปกรณ์/รีโมท" count={""}
+        <DrawerItem active={false} icon="monitor" label="อุปกรณ์/รีโมท" count={""}
           onClick={()=>{ setDevicesPage(true); onClose(); }}/>
-        <DrawerItem active={false} label="ใบเบิกของ" count={""}
+        <DrawerItem active={false} icon="box" label="ใบเบิกของ" count={""}
           onClick={()=>{ setRequisitionPage(true); onClose(); }}/>
-        <DrawerItem active={false} label="ผู้ช่วย AI" count={""}
+        <DrawerItem active={false} icon="book" label="Knowledge Hub" count={""}
+          onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
+        <DrawerItem active={false} icon="chat" label="ผู้ช่วย AI" count={""}
           onClick={()=>{ setAssistantPage(true); onClose(); }}/>
 
+        {/* หุ่นยนต์ */}
+        <Section title="หุ่นยนต์"/>
+        <DrawerItem active={false} icon="activity" label="สถิติหุ่นยนต์" count={""}
+          onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
+        <DrawerItem active={false} icon="wrench" label="แจ้งเหตุ/แจ้งซ่อม" count={""}
+          onClick={()=>{ setRobotIssuesPage(true); onClose(); }}/>
+
+        {/* เวลาทำงาน */}
+        <Section title="เวลาทำงาน"/>
+        <DrawerItem active={false} icon="pin" label="Onsite" count={""}
+          onClick={()=>{ setOnsitePage(true); onClose(); }}/>
+        <DrawerItem active={false} icon="clock" label="บันทึก OT" count={""}
+          onClick={()=>{ setOtPage(true); onClose(); }}/>
+        <DrawerItem active={false} icon="leave" label="ใบลา" count={""}
+          onClick={()=>{ setLeavePage(true); onClose(); }}/>
+        {FEATURE_SHIFT && (
+          <DrawerItem active={false} icon="calendar" label="ตารางกะ" count={""}
+            onClick={()=>{ setShiftPage(true); onClose(); }}/>
+        )}
+
         {/* โครงการ */}
-        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 8px 8px" }}>
-          <span style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700 }}>โครงการ</span>
-          <span style={{ fontSize:11,background:c.borderSoft,color:c.text500,borderRadius:20,padding:"2px 8px",fontWeight:700 }}>{projects.length}</span>
-        </div>
+        <Section title="โครงการ" right={<span style={{ fontSize:11.5,color:c.text400,fontWeight:600 }}>{projects.length}</span>}/>
         <div style={{ overflowY:"auto",maxHeight:320,marginRight:-8,paddingRight:8 }}>
           {projects.map(p=>(
             <div key={p.id}>
