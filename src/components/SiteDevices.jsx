@@ -114,7 +114,7 @@ function Val({ label, value, href, secret, c, onCopied }) {
       <span style={{ color: c.text900, fontVariantNumeric: "tabular-nums", wordBreak: "break-all" }}>{secret && !show ? "••••••" : value}</span>
       {secret && <button onClick={() => setShow((s) => !s)} title={show ? "ซ่อนรหัส" : "แสดงรหัส"} style={btn(c)}><EyeIcon off={show} size={13} /></button>}
       {href && <a href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-        title={href.startsWith("http") ? `เปิด ${href}` : "เปิดโปรแกรมรีโมท"} style={{ ...btn(c), textDecoration: "none", color: "#6B21A8", fontWeight: 800 }}>↗</a>}
+        title={href.startsWith("http") ? `เปิด ${href}` : "เปิดโปรแกรมรีโมท"} style={{ ...btn(c), textDecoration: "none", color: c.text500, fontWeight: 600 }}>↗</a>}
       <button onClick={() => { copyText(value); onCopied(label); }} title={`คัดลอก ${label}`} style={btn(c)}>⧉</button>
     </span>
   );
@@ -158,7 +158,6 @@ export default function SiteDevices({ caseData, project }) {
     <div style={{ marginBottom: 16, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
       <button onClick={toggle} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "11px 14px", background: c.borderSoft,
         border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
-        <span style={{ fontSize: 15 }}>🖥️</span>
         <span style={{ flex: 1, fontSize: 13, fontWeight: 800, color: c.text900 }}>อุปกรณ์ / รีโมท ของไซต์นี้</span>
         {devices && !searched && <span style={{ fontSize: 11.5, color: c.text400 }}>{matched.length ? `${matched.length} เครื่อง` : "ไม่พบที่ตรง"}</span>}
         <span style={{ color: c.text400, fontSize: 12 }}>{open ? "▴" : "▾"}</span>
@@ -183,7 +182,7 @@ export default function SiteDevices({ caseData, project }) {
                 </div>
               )}
               {!searched && (caseData.site || inferredSite) && byProject.length > 0 && (showAllProject || byProject.length > siteMatched.length) && (
-                <button onClick={() => setShowAllProject((v) => !v)} style={{ border: `1px dashed ${c.border}`, background: c.card, color: "#6B21A8",
+                <button onClick={() => setShowAllProject((v) => !v)} style={{ border: `1px dashed ${c.border}`, background: c.card, color: c.text500,
                   borderRadius: 8, padding: "5px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
                   {showAllProject ? `แสดงเฉพาะไซต์ "${caseData.site || inferredSite}"` : `ดูทุกเครื่องของโครงการนี้ (${byProject.length})`}
                 </button>
@@ -194,7 +193,7 @@ export default function SiteDevices({ caseData, project }) {
                   return (
                     <div key={d.id} style={{ background: c.card, border: `1px solid ${c.borderSoft}`, borderRadius: 10, padding: "8px 10px" }}>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap", marginBottom: 5 }}>
-                        {d.type && <span style={{ fontSize: 10.5, fontWeight: 800, color: "#6B21A8", background: "#6B21A814", borderRadius: 5, padding: "1px 6px" }}>{d.type}</span>}
+                        {d.type && <span style={{ fontSize: 10.5, fontWeight: 600, color: c.text500, border: `1px solid ${c.border}`, borderRadius: 5, padding: "0 5px" }}>{d.type}</span>}
                         <span style={{ fontSize: 13, fontWeight: 700, color: c.text900 }}>{d.name}</span>
                         <span style={{ fontSize: 11.5, color: c.text400 }}>{[d.project, d.site].filter(Boolean).join(" / ")}</span>
                       </div>
@@ -211,7 +210,7 @@ export default function SiteDevices({ caseData, project }) {
                   );
                 })}
               </div>
-              {copied && <div style={{ fontSize: 12, color: "#16A34A", marginTop: 6, fontWeight: 700 }}>✓ {copied}</div>}
+              {copied && <div style={{ fontSize: 12, color: c.text500, marginTop: 6, fontWeight: 600 }}>✓ {copied}</div>}
             </>
           )}
         </div>

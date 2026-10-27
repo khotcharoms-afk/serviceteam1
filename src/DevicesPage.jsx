@@ -13,8 +13,6 @@ import {
 } from "./deviceImport.js";
 import EyeIcon from "./components/EyeIcon.jsx";
 
-const PURPLE = "#6B21A8";
-const ORANGE = "#F97316";
 const RED = "#DC2626";
 
 const TYPE_COLOR = {
@@ -22,7 +20,6 @@ const TYPE_COLOR = {
   NVR: "#16A34A", CCTV: "#0F766E", Intrusion: "#DB2777", Ruejai: "#CA8A04", "Face Scan": "#9333EA", Web: "#475569", Robot: "#C026D3",
   SC50: "#2563EB", "SC50 Plus": "#7C3AED", SC80: "#EA580C", Mix1: "#0D9488",
 };
-const typeColor = (t) => TYPE_COLOR[t] || "#64748B";
 
 async function copyText(text) {
   try {
@@ -61,9 +58,9 @@ function CopyBtn({ value, label, onCopied, c }) {
   return (
     <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.(label); setDone(true); setTimeout(() => setDone(false), 1200); }}
       title={`คัดลอก ${label}`} aria-label={`คัดลอก ${label}`}
-      style={{ border: `1px solid ${done ? "#16A34A55" : c.border}`, background: done ? "#16A34A12" : c.card, borderRadius: 6,
+      style={{ border: `1px solid ${c.border}`, background: done ? c.bg : c.card, borderRadius: 6,
         width: 24, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-        padding: 0, flexShrink: 0, color: done ? "#16A34A" : c.text400 }}>
+        padding: 0, flexShrink: 0, color: done ? c.text900 : c.text400 }}>
       {done ? (
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       ) : (
@@ -77,8 +74,8 @@ function CopyBtn({ value, label, onCopied, c }) {
 function OpenBtn({ href, c }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title={`เปิด ${href}`}
-      style={{ border: `1px solid ${PURPLE}40`, background: PURPLE + "0c", color: PURPLE, borderRadius: 6, height: 22, padding: "0 7px",
-        display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 800, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}>
+      style={{ border: `1px solid ${c.border}`, background: c.card, color: c.text500, borderRadius: 6, height: 22, padding: "0 7px",
+        display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}>
       เปิด ↗
     </a>
   );
@@ -123,20 +120,23 @@ function Remote({ d, onCopied, c }) {
     <div style={{ display: "grid", gap: 2 }}>
       {items.map(([k, label, v]) => (
         <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, color: k === "anydesk" ? "#EF4444" : "#0EA5E9" }}>{k === "anydesk" ? "AD" : "RD"}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: c.text400 }}>{k === "anydesk" ? "AD" : "RD"}</span>
           <Copy value={v} label={label} onCopied={onCopied} c={c} />
           {remoteHref(k, v) && <a href={remoteHref(k, v)} title={`เปิด ${label}`} onClick={(e) => e.stopPropagation()}
-            style={{ ...iconBtn(c), textDecoration: "none", color: PURPLE }}>↗</a>}
+            style={{ ...iconBtn(c), textDecoration: "none", color: c.text500 }}>↗</a>}
         </span>
       ))}
     </div>
   );
 }
 
-const TypeBadge = ({ t }) => (
-  <span style={{ fontSize: 10.5, fontWeight: 800, color: typeColor(t), background: typeColor(t) + "16", borderRadius: 6,
-    padding: "2px 7px", whiteSpace: "nowrap" }}>{t || "อุปกรณ์"}</span>
-);
+function TypeBadge({ t }) {
+  const { c } = useTheme();
+  return (
+    <span style={{ fontSize: 11, fontWeight: 600, color: c.text500, border: `1px solid ${c.border}`, borderRadius: 5,
+      padding: "1px 6px", whiteSpace: "nowrap" }}>{t || "อุปกรณ์"}</span>
+  );
+}
 
 // รายละเอียดเพิ่มเติม (กดแถวเพื่อเปิด)
 function Details({ d, shared, canEdit, onEdit, onDelete, onCopied, c }) {
@@ -168,11 +168,11 @@ function Details({ d, shared, canEdit, onEdit, onDelete, onCopied, c }) {
           </div>
         </div>
       )}
-      {d.note && <div style={{ color: c.text500 }}>📝 {d.note}</div>}
+      {d.note && <div style={{ color: c.text500 }}>หมายเหตุ: {d.note}</div>}
       {canEdit && (
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => onEdit(d)} style={{ ...iconBtn(c), color: PURPLE, fontWeight: 700, fontSize: 12 }}>✏️ แก้ไข</button>
-          <button onClick={() => onDelete(d)} style={{ ...iconBtn(c), color: RED, fontWeight: 700, fontSize: 12 }}>🗑️ ลบ</button>
+          <button onClick={() => onEdit(d)} style={{ ...iconBtn(c), color: c.text900, fontWeight: 600, fontSize: 12, textDecoration: "underline" }}>แก้ไข</button>
+          <button onClick={() => onDelete(d)} style={{ ...iconBtn(c), color: RED, fontWeight: 600, fontSize: 12, textDecoration: "underline" }}>ลบ</button>
         </div>
       )}
     </div>
@@ -209,8 +209,8 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
     const n = (d.accounts || []).length;
     return (
       <span style={{ display: "inline-flex", gap: 4, marginLeft: 6, verticalAlign: "middle" }}>
-        {n > 0 && <span style={{ fontSize: 10, color: PURPLE, background: PURPLE + "14", borderRadius: 5, padding: "1px 5px" }}>+{n} บัญชี</span>}
-        {d.note && <span title={d.note} style={{ fontSize: 11 }}>📝</span>}
+        {n > 0 && <span style={{ fontSize: 10.5, color: c.text400 }}>+{n} บัญชี</span>}
+        {d.note && <span title={d.note} style={{ fontSize: 10.5, color: c.text400 }}>มีหมายเหตุ</span>}
       </span>
     );
   };
@@ -225,7 +225,7 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
       case "ip": return <Copy value={withPort(d.ip, d.port)} label="IP" onCopied={onCopied} c={c} href={webHref(d.ip, d.port)} />;
       case "pub": return <Copy value={withPort(d.publicIp, d.publicPort)} label="Public IP" onCopied={onCopied} c={c} href={webHref(d.publicIp, d.publicPort)} />;
       case "remote": return <Remote d={d} onCopied={onCopied} c={c} />;
-      case "user": return isShared(d) ? <span style={{ fontSize: 11.5, color: "#92400E", whiteSpace: "nowrap" }}>🔑 รหัสหลัก</span>
+      case "user": return isShared(d) ? <span style={{ fontSize: 11.5, color: c.text400, whiteSpace: "nowrap" }}>ใช้รหัสหลัก</span>
         : <Copy value={d.username} label="Username" onCopied={onCopied} c={c} />;
       case "pass": return isShared(d) ? null
         : <Secret value={d.password} onCopied={onCopied} c={c} />;
@@ -237,12 +237,12 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
     <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 14px", padding: "10px 14px",
         borderBottom: `1px solid ${c.border}` }}>
-        <span style={{ fontSize: 13, fontWeight: 800, color: ORANGE }}>📍 {site || "ไม่ระบุไซต์"}</span>
+        <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900 }}>{site || "ไม่ระบุไซต์"}</span>
         <span style={{ fontSize: 11.5, color: c.text400 }}>{items.length} เครื่อง</span>
         {shared && (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, background: "#FEF3C7",
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, border: `1px solid ${c.border}`,
             borderRadius: 8, padding: "3px 10px", marginLeft: "auto" }}>
-            <span style={{ color: "#92400E", fontWeight: 700 }}>🔑 รหัสหลัก ({shared.n} เครื่อง)</span>
+            <span style={{ color: c.text500, fontWeight: 600 }}>รหัสหลัก ({shared.n} เครื่อง)</span>
             <Copy value={shared.username} label="Username" onCopied={onCopied} c={c} />
             <Secret value={shared.password} onCopied={onCopied} c={c} />
           </span>
@@ -259,7 +259,7 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
       {items.map((d, i) => {
         const open = openId === d.id;
         return (
-          <div key={d.id} style={{ borderTop: i ? `1px solid ${c.borderSoft}` : "none", background: open ? PURPLE + "06" : "transparent" }}>
+          <div key={d.id} style={{ borderTop: i ? `1px solid ${c.borderSoft}` : "none", background: open ? c.bg : "transparent" }}>
             <div onClick={() => setOpenId(open ? null : d.id)} style={{ cursor: "pointer", padding: "8px 14px" }}>
               {narrow ? (
                 <div style={{ display: "grid", gap: 4 }}>
@@ -316,7 +316,7 @@ function DeviceModal({ record, projects, onClose, onSave, saving }) {
       <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 620,
         maxHeight: "92vh", overflowY: "auto", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.15)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text900 }}>{record?.id ? "✏️ แก้ไขอุปกรณ์" : "➕ เพิ่มอุปกรณ์"}</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text900 }}>{record?.id ? "แก้ไขอุปกรณ์" : "เพิ่มอุปกรณ์"}</h2>
           <button onClick={onClose} style={{ background: c.borderSoft, border: "none", color: c.text500, cursor: "pointer",
             fontSize: 14, width: 30, height: 30, borderRadius: 8 }}>✕</button>
         </div>
@@ -343,7 +343,7 @@ function DeviceModal({ record, projects, onClose, onSave, saving }) {
             padding: "10px", cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>ยกเลิก</button>
           <button disabled={!canSave || saving}
             onClick={() => onSave({ ...Object.fromEntries(Object.entries(f).map(([k, v]) => [k, k === "accounts" ? parseAccounts(v) : String(v).trim()])) })}
-            style={{ background: canSave ? PURPLE : c.border, border: "none", color: "#fff", borderRadius: 10, padding: "10px",
+            style={{ background: canSave ? c.text900 : c.border, border: "none", color: c.card, borderRadius: 10, padding: "10px",
               cursor: canSave ? "pointer" : "default", fontFamily: "inherit", fontSize: 13, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
             {saving ? "กำลังบันทึก..." : "บันทึก"}
           </button>
@@ -361,32 +361,32 @@ function ImportDialog({ data, existingDevices, onClose, onConfirm, busy }) {
   const { c } = useTheme();
   const byProject = {};
   data.devices.forEach((d) => { byProject[d.project || "(ไม่ระบุโครงการ)"] = (byProject[d.project || "(ไม่ระบุโครงการ)"] || 0) + 1; });
-  const btn = (bg) => ({ border: "none", background: bg, color: "#fff", borderRadius: 10, padding: "10px 12px",
+  const btn = (bg) => ({ border: "none", background: bg, color: c.card, borderRadius: 10, padding: "10px 12px",
     cursor: busy ? "default" : "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, opacity: busy ? 0.6 : 1 });
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(15,23,42,.5)", display: "flex",
       alignItems: "center", justifyContent: "center", padding: 12 }}>
       <div style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 20 }}>
-        <h2 style={{ margin: "0 0 10px", fontSize: 16, color: c.text900 }}>📥 นำเข้าอุปกรณ์ {data.devices.length} รายการ</h2>
+        <h2 style={{ margin: "0 0 10px", fontSize: 16, color: c.text900 }}>นำเข้าอุปกรณ์ {data.devices.length} รายการ</h2>
         <div style={{ fontSize: 13, color: c.text500, lineHeight: 1.7 }}>
           {Object.entries(byProject).map(([p, n]) => <div key={p}>• {p}: {n} รายการ</div>)}
         </div>
         {data.unknownHeaders.length > 0 && (
-          <div style={{ fontSize: 12, color: ORANGE, marginTop: 10 }}>ข้ามคอลัมน์ที่ไม่รู้จัก: {data.unknownHeaders.join(", ")}</div>
+          <div style={{ fontSize: 12, color: c.text500, marginTop: 10 }}>ข้ามคอลัมน์ที่ไม่รู้จัก: {data.unknownHeaders.join(", ")}</div>
         )}
         <div style={{ fontSize: 12.5, color: c.text500, marginTop: 12 }}>ตอนนี้ในระบบมี {existing} รายการ</div>
         <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
           {sameProject > 0 ? (
-            <button disabled={busy} onClick={() => onConfirm("projects")} style={btn(PURPLE)}>
+            <button disabled={busy} onClick={() => onConfirm("projects")} style={btn(c.text900)}>
               อัปเดตเฉพาะโครงการในไฟล์ (แทน {sameProject} รายการเดิมของโครงการเหล่านี้ โครงการอื่นไม่โดน)
             </button>
           ) : (
-            <button disabled={busy} onClick={() => onConfirm("append")} style={btn(PURPLE)}>
+            <button disabled={busy} onClick={() => onConfirm("append")} style={btn(c.text900)}>
               {existing > 0 ? `เพิ่มเข้าไป (ของเดิม ${existing} รายการยังอยู่ครบ)` : "นำเข้า"}
             </button>
           )}
           {sameProject > 0 && (
-            <button disabled={busy} onClick={() => onConfirm("append")} style={{ ...btn("transparent"), color: PURPLE, border: `1px solid ${PURPLE}` }}>
+            <button disabled={busy} onClick={() => onConfirm("append")} style={{ ...btn("transparent"), color: c.text900, border: `1px solid ${c.text400}` }}>
               เพิ่มต่อโดยไม่ลบอะไร (อาจได้รายการซ้ำ)
             </button>
           )}
@@ -584,9 +584,9 @@ export default function DevicesPage({ onBack, currentUser }) {
   }
 
   const chip = (active) => ({ padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer",
-    fontFamily: "inherit", whiteSpace: "nowrap", border: `1px solid ${active ? PURPLE : c.border}`,
-    background: active ? PURPLE : c.card, color: active ? "#fff" : c.text500 });
-  const toolBtn = { ...chip(false), color: PURPLE, display: "inline-flex", alignItems: "center", gap: 4 };
+    fontFamily: "inherit", whiteSpace: "nowrap", border: `1px solid ${active ? c.text900 : c.border}`,
+    background: active ? c.text900 : c.card, color: active ? c.card : c.text500 });
+  const toolBtn = { ...chip(false), color: c.text900, display: "inline-flex", alignItems: "center", gap: 4 };
 
   return (
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
@@ -594,9 +594,7 @@ export default function DevicesPage({ onBack, currentUser }) {
         background: c.card, position: "sticky", top: 0, zIndex: 5 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer",
           padding: 4, lineHeight: 1 }}>←</button>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "#0891B216", display: "flex", alignItems: "center",
-          justifyContent: "center", fontSize: 17 }}>🖥️</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>อุปกรณ์/รีโมท</div>
           <div style={{ fontSize: 11.5, color: c.text400 }}>IP · AnyDesk · RustDesk · รหัสเข้าอุปกรณ์หน้างาน</div>
         </div>
@@ -621,25 +619,25 @@ export default function DevicesPage({ onBack, currentUser }) {
               return (
                 <button key={t} onClick={() => setTypeF(on ? "" : t)} style={{ padding: "4px 10px", borderRadius: 999, fontSize: 11.5,
                   fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-                  border: `1px solid ${on ? typeColor(t) : typeColor(t) + "40"}`, background: on ? typeColor(t) : typeColor(t) + "10",
-                  color: on ? "#fff" : typeColor(t) }}>{t} · {n}</button>
+                  border: `1px solid ${on ? c.text900 : c.border}`, background: on ? c.text900 : c.card,
+                  color: on ? c.card : c.text500 }}>{t} · {n}</button>
               );
             })}
           </div>
         )}
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "6px 0 12px" }}>
-          {canEdit && <button onClick={() => setModal({})} style={toolBtn}>➕ เพิ่มอุปกรณ์</button>}
+          {canEdit && <button onClick={() => setModal({})} style={toolBtn}>+ เพิ่มอุปกรณ์</button>}
           {canEdit && (
-            <label style={{ ...toolBtn, cursor: "pointer" }}>📥 นำเข้า Excel
+            <label style={{ ...toolBtn, cursor: "pointer" }}>นำเข้า Excel
               <input type="file" accept=".xlsx,.xls" onChange={handleFile} style={{ display: "none" }} />
             </label>
           )}
-          {devices.length > 0 && <button onClick={handleExport} style={toolBtn}>📤 ส่งออก Excel</button>}
+          {devices.length > 0 && <button onClick={handleExport} style={toolBtn}>ส่งออก Excel</button>}
         </div>
         {devices.length > 0 && (
           <div style={{ fontSize: 11.5, color: c.text400, margin: "-4px 0 10px" }}>
-            กดที่ค่าเพื่อคัดลอก · กดที่แถวเพื่อดูรายละเอียด/บัญชีอื่น · 🔑 รหัสหลัก = ใช้รหัสเดียวกับที่แสดงบนหัวไซต์
+            กดที่ค่าเพื่อคัดลอก · กดที่แถวเพื่อดูรายละเอียด/บัญชีอื่น · "ใช้รหัสหลัก" = ใช้รหัสเดียวกับที่แสดงบนหัวไซต์
           </div>
         )}
 
@@ -670,7 +668,7 @@ export default function DevicesPage({ onBack, currentUser }) {
                 {canEdit && (
                   <button onClick={() => renameProject(g.project)} title="เปลี่ยนชื่อ / รวมเข้ากับโครงการอื่น"
                     style={{ border: "none", borderLeft: `1px solid ${c.borderSoft}`, background: "transparent", color: c.text400, cursor: "pointer",
-                      padding: "0 12px", fontSize: 12, fontFamily: "inherit", whiteSpace: "nowrap" }}>✏️ ชื่อ/รวม</button>
+                      padding: "0 12px", fontSize: 12, fontFamily: "inherit", whiteSpace: "nowrap" }}>ชื่อ/รวม</button>
                 )}
               </div>
               {isOpen && <div style={{ paddingTop: 8 }}>{g.sites.map((s) => (
