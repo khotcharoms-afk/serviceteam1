@@ -1,30 +1,26 @@
 import { daysLeft, FEATURE_SHIFT } from "./utils.js";
 import { useTheme } from "./theme.js";
 
-function DrawerItem({ active, onClick, icon, label, count, color }) {
+// รายการเมนู: ไม่มีอีโมจิ — โครงการแสดงจุดสีประจำโครงการ (dot)
+function DrawerItem({ active, onClick, label, count, dot }) {
   const { c } = useTheme();
   return (
     <button onClick={onClick} style={{
       display:"flex", alignItems:"center", justifyContent:"space-between",
-      width:"100%", background: active ? color+"14" : "transparent",
-      border:"none", borderRadius:10, padding:"9px 10px 9px 8px",
-      cursor:"pointer", fontFamily:"inherit", marginBottom:2, textAlign:"left",
+      width:"100%", background: active ? c.borderSoft : "transparent",
+      border:"none", borderRadius:8, padding:"8px 10px",
+      cursor:"pointer", fontFamily:"inherit", marginBottom:1, textAlign:"left",
       position:"relative", overflow:"hidden",
     }}>
-      {active && <span style={{ position:"absolute",left:0,top:"20%",bottom:"20%",width:3,
-        borderRadius:"0 3px 3px 0", background:color }}/>}
-      <span style={{ display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0,paddingLeft:active?6:0 }}>
-        <span style={{ width:30,height:30,borderRadius:8,flexShrink:0,
-          background: active ? color+"20" : c.borderSoft,
-          display:"flex",alignItems:"center",justifyContent:"center",fontSize:15 }}>{icon}</span>
-        <span style={{ fontSize:13,color:active?c.text900:c.text500,fontWeight:active?700:500,
+      {active && <span style={{ position:"absolute",left:0,top:"22%",bottom:"22%",width:3,
+        borderRadius:"0 3px 3px 0", background:c.ink }}/>}
+      <span style={{ display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0 }}>
+        {dot && <span style={{ width:7,height:7,borderRadius:"50%",background:dot,flexShrink:0 }}/>}
+        <span style={{ fontSize:13.5,color:active?c.text900:c.text500,fontWeight:active?700:500,
           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
       {count !== "" && count !== undefined && (
-        <span style={{ fontSize:11,background:active?color+"20":c.borderSoft,borderRadius:20,
-          padding:"2px 9px",color:active?color:c.text400,flexShrink:0,marginLeft:4,fontWeight:700 }}>
-          {count}
-        </span>
+        <span style={{ fontSize:11.5,color:c.text400,flexShrink:0,marginLeft:4,fontWeight:600 }}>{count}</span>
       )}
     </button>
   );
@@ -71,65 +67,65 @@ export default function Drawer({
           <div style={{ display:"flex",gap:6,marginTop:8,flexWrap:"wrap" }}>
             {isAdminOrDev && (
               <button onClick={()=>{ setAdminPage(true); onClose(); }}
-                style={{ background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",
-                  borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
-                👥 จัดการ User
+                style={{ background:"transparent",border:`1px solid ${c.border}`,color:c.text900,
+                  borderRadius:7,padding:"5px 10px",fontSize:11.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                จัดการ User
               </button>
             )}
             <button onClick={()=>{ setProfilePage(true); onClose(); }}
-              style={{ background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",
-                borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
-              👤 โปรไฟล์
+              style={{ background:"transparent",border:`1px solid ${c.border}`,color:c.text900,
+                  borderRadius:7,padding:"5px 10px",fontSize:11.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+              โปรไฟล์
             </button>
             {isDev && (
               <button onClick={()=>{ setShowOnlineUsers(true); onClose(); }}
-                style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
-                  borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
-                🟢 Online{onlineCount > 0 ? ` (${onlineCount})` : ""}
+                style={{ background:"transparent",border:`1px solid ${c.border}`,color:c.text900,
+                  borderRadius:7,padding:"5px 10px",fontSize:11.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+                Online{onlineCount > 0 ? ` (${onlineCount})` : ""}
               </button>
             )}
             <button onClick={onSignOut}
-              style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-                borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit" }}>
-              🚪 ออกจากระบบ
+              style={{ background:"transparent",border:"none",color:c.danger,
+                borderRadius:7,padding:"5px 6px",fontSize:11.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+              ออกจากระบบ
             </button>
           </div>
         </div>
 
         {/* หน้าหลัก */}
         <div style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"4px 8px 8px" }}>หน้าหลัก</div>
-        <DrawerItem active={view==="overview"} color="#2563eb" icon="▦" label="ภาพรวม" count={cases.length}
+        <DrawerItem active={view==="overview"} label="ภาพรวม" count={cases.length}
           onClick={()=>{ setView("overview"); onClose(); setFilterStat("all"); }}/>
         {isAdminOrDev && (
-          <DrawerItem active={false} color="#16a34a" icon="📊" label="Dashboard" count={""}
+          <DrawerItem active={false} label="Dashboard" count={""}
             onClick={()=>{ setDashboardPage(true); onClose(); }}/>
         )}
 
         {/* ปฏิบัติการ */}
         <div style={{ fontSize:10,color:c.text400,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700,padding:"14px 8px 8px" }}>ปฏิบัติการ</div>
-        <DrawerItem active={false} color="#0f766e" icon="🗂️" label="บันทึกการรับเคส" count={""}
+        <DrawerItem active={false} label="บันทึกการรับเคส" count={""}
           onClick={()=>{ setCaseLogPage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#f97316" icon="📍" label="Onsite" count={""}
+        <DrawerItem active={false} label="Onsite" count={""}
           onClick={()=>{ setOnsitePage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#f59e0b" icon="⏰" label="บันทึก OT" count={""}
+        <DrawerItem active={false} label="บันทึก OT" count={""}
           onClick={()=>{ setOtPage(true); onClose(); }}/>
         {FEATURE_SHIFT && (
-          <DrawerItem active={false} color="#854d0e" icon="📅" label="ตารางกะ" count={""}
+          <DrawerItem active={false} label="ตารางกะ" count={""}
             onClick={()=>{ setShiftPage(true); onClose(); }}/>
         )}
-        <DrawerItem active={false} color="#2563eb" icon="📋" label="ใบลา" count={""}
+        <DrawerItem active={false} label="ใบลา" count={""}
           onClick={()=>{ setLeavePage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#6B21A8" icon="💡" label="Knowledge Hub" count={""}
+        <DrawerItem active={false} label="Knowledge Hub" count={""}
           onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#6B21A8" icon="📊" label="สถิติหุ่นยนต์" count={""}
+        <DrawerItem active={false} label="สถิติหุ่นยนต์" count={""}
           onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#DC2626" icon="🛠️" label="แจ้งเหตุ/แจ้งซ่อม" count={""}
+        <DrawerItem active={false} label="แจ้งเหตุ/แจ้งซ่อม" count={""}
           onClick={()=>{ setRobotIssuesPage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#0891B2" icon="🖥️" label="อุปกรณ์/รีโมท" count={""}
+        <DrawerItem active={false} label="อุปกรณ์/รีโมท" count={""}
           onClick={()=>{ setDevicesPage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#B45309" icon="📦" label="ใบเบิกของ" count={""}
+        <DrawerItem active={false} label="ใบเบิกของ" count={""}
           onClick={()=>{ setRequisitionPage(true); onClose(); }}/>
-        <DrawerItem active={false} color="#6B21A8" icon="🤖" label="ผู้ช่วย AI" count={""}
+        <DrawerItem active={false} label="ผู้ช่วย AI" count={""}
           onClick={()=>{ setAssistantPage(true); onClose(); }}/>
 
         {/* โครงการ */}
@@ -140,7 +136,7 @@ export default function Drawer({
         <div style={{ overflowY:"auto",maxHeight:320,marginRight:-8,paddingRight:8 }}>
           {projects.map(p=>(
             <div key={p.id}>
-              <DrawerItem active={view===p.id} color={p.color} icon="◆" label={p.name}
+              <DrawerItem active={view===p.id} dot={p.color||c.text400} label={p.name}
                 count={cases.filter(c=>c.projectId===p.id).length}
                 onClick={()=>{ setView(p.id); onClose(); setFilterStat("all"); }}/>
             </div>
@@ -158,7 +154,7 @@ export default function Drawer({
           <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
             border:`1.5px dashed ${c.border}`,borderRadius:8,padding:"10px 8px",cursor:"pointer",
             fontFamily:"inherit",color:c.text400,fontSize:12 }}>
-            <span style={{ fontSize:14 }}>📥</span> Import โครงการ
+            Import โครงการ
             <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
               onChange={e=>{ onClose(); handleImportFile(e); }}/>
           </label>
@@ -167,7 +163,7 @@ export default function Drawer({
           <label style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"none",
             border:`1.5px dashed ${c.border}`,borderRadius:8,padding:"10px 8px",cursor:"pointer",
             fontFamily:"inherit",color:c.text400,fontSize:12,width:"100%" }}>
-            <span style={{ fontSize:14 }}>📋</span> Import เคส
+            Import เคส
             <input type="file" accept=".xlsx,.xls" style={{ display:"none" }}
               onChange={e=>{ onClose(); handleImportCaseFile(e); }}/>
           </label>

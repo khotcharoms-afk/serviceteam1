@@ -7,10 +7,10 @@ export const WARRANTY_OPTS = [
 ];
 
 export const STATUS_OPTS = [
-  { value: "open",       label: "เปิดเคส",        color: "#f59e0b", bg: "#fef3c7" },
-  { value: "inprogress", label: "กำลังดำเนินการ",  color: "#3b82f6", bg: "#dbeafe" },
-  { value: "done",       label: "เสร็จสิ้น",       color: "#10b981", bg: "#d1fae5" },
-  { value: "hold",       label: "รอดำเนินการ",     color: "#ef4444", bg: "#fee2e2" },
+  { value: "open",       label: "เปิดเคส",        color: "#b45309", bg: "#fef3c7" },
+  { value: "inprogress", label: "กำลังดำเนินการ",  color: "#1d4ed8", bg: "#dbeafe" },
+  { value: "done",       label: "เสร็จสิ้น",       color: "#15803d", bg: "#d1fae5" },
+  { value: "hold",       label: "รอดำเนินการ",     color: "#b91c1c", bg: "#fee2e2" },
 ];
 
 export const SERVICE_TYPES = [

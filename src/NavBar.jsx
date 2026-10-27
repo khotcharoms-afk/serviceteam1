@@ -1,4 +1,5 @@
 import { useTheme } from "./theme.js";
+import Icon from "./components/Icon.jsx";
 
 export default function NavBar({
   onMenuOpen,
@@ -13,6 +14,13 @@ export default function NavBar({
   darkMode, onToggleDark,
 }) {
   const { c } = useTheme();
+  const iconBtn = { background:"transparent", border:`1px solid ${c.border}`, color:c.text500, flexShrink:0,
+    borderRadius:8, width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, cursor:"pointer", fontFamily:"inherit",
+    display:"inline-flex", alignItems:"center", justifyContent:"center", padding:0, position:"relative" };
+  const badge = (n) => (
+    <span style={{ position:"absolute", top:-5, right:-5, background:c.danger, color:"#fff", borderRadius:9, minWidth:16, height:16,
+      padding:"0 4px", fontSize:10, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>{n}</span>
+  );
   const taskBadge = (tasks||[]).filter(t =>
     (t.status === "todo" || t.status === "accepted") && (t.assignees||[]).includes(currentUser?.name)
   ).length;
@@ -25,17 +33,17 @@ export default function NavBar({
       {/* Left */}
       <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 6 : 10, flexShrink:0 }}>
         <button onClick={onMenuOpen} style={{ background:"none", border:"none",
-          cursor:"pointer", padding:"6px", fontSize:18, color:c.text500, lineHeight:1, flexShrink:0 }}>☰</button>
+          cursor:"pointer", padding:"6px", color:c.text500, lineHeight:1, flexShrink:0 }}><Icon name="menu" size={20}/></button>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <div style={{ width:28, height:28, borderRadius:8, flexShrink:0,
-            background:"linear-gradient(135deg,#2563eb,#7c3aed)",
+            background:c.ink,
             display:"flex", alignItems:"center", justifyContent:"center",
-            color:"#fff", fontSize:13, fontWeight:700 }}>S</div>
+            color:c.onInk, fontSize:13, fontWeight:700 }}>S</div>
           {!isMobile && (
             <div>
               <div style={{ fontSize:13, fontWeight:800, color:c.text900, lineHeight:1 }}>ServiceLog</div>
               {view !== "overview" && (
-                <div style={{ fontSize:10, color:activeProj?.color||c.text400, fontWeight:600, lineHeight:1.2 }}>
+                <div style={{ fontSize:10, color:c.text400, fontWeight:600, lineHeight:1.2 }}>
                   {activeProj?.name}
                 </div>
               )}
@@ -47,65 +55,39 @@ export default function NavBar({
       {/* Right */}
       <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 4 : 8, overflowX:"auto", flexWrap:"nowrap" }}>
         {onToggleDark && (
-          <button onClick={onToggleDark} title="สลับโหมดมืด/สว่าง"
-            style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500, flexShrink:0,
-              borderRadius:8, padding: isMobile ? "6px 8px" : "7px 10px", fontSize:14,
-              cursor:"pointer", fontFamily:"inherit" }}>{darkMode ? "☀️" : "🌙"}</button>
+          <button onClick={onToggleDark} title="สลับโหมดมืด/สว่าง" style={iconBtn}><Icon name={darkMode ? "sun" : "moon"}/></button>
         )}
 
-        <button onClick={onSearch}
-          style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text500, flexShrink:0,
-            borderRadius:8, padding: isMobile ? "6px 9px" : "7px 12px", fontSize:12, fontWeight:600,
-            cursor:"pointer", fontFamily:"inherit" }}>🔍</button>
+        <button onClick={onSearch} title="ค้นหา" style={iconBtn}><Icon name="search"/></button>
 
         {!isMobile && (
-          <button onClick={onOnsite}
-            style={{ background:"#fff7ed", border:"1px solid #fed7aa", color:"#ea580c", flexShrink:0,
-              borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
-              cursor:"pointer", fontFamily:"inherit" }}>📍</button>
+          <button onClick={onOnsite} title="Onsite" style={iconBtn}><Icon name="pin"/></button>
         )}
 
         <div style={{ position:"relative", display:"inline-flex", flexShrink:0 }}>
-          <button onClick={onTaskBoard}
-            style={{ background:"#f5f3ff", border:"1px solid #ddd6fe", color:"#6B21A8",
-              borderRadius:8, padding: isMobile ? "6px 9px" : "7px 12px", fontSize:12, fontWeight:600,
-              cursor:"pointer", fontFamily:"inherit" }}>📋</button>
-          {taskBadge > 0 && (
-            <span style={{ position:"absolute", top:-4, right:-4, background:"#dc2626",
-              color:"#fff", borderRadius:"50%", width:16, height:16, fontSize:10,
-              fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              {taskBadge}
-            </span>
-          )}
+          <button onClick={onTaskBoard} title="บอร์ดงาน" style={iconBtn}><Icon name="board"/></button>
+          {taskBadge > 0 && badge(taskBadge)}
         </div>
 
         <div style={{ position:"relative", flexShrink:0 }}>
-          <button onClick={onNotif}
-            style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:8,
-              padding: isMobile ? "7px 8px" : "8px 10px", fontSize:18, cursor:"pointer", lineHeight:1, position:"relative" }}>
-            🔔
-            {unreadCount > 0 && (
-              <span style={{ position:"absolute", top:-4, right:-4, background:"#ef4444",
-                color:"#fff", borderRadius:"50%", width:18, height:18, fontSize:10,
-                fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
+          <button onClick={onNotif} title="แจ้งเตือน" style={iconBtn}>
+            <Icon name="bell"/>
+            {unreadCount > 0 && badge(unreadCount > 9 ? "9+" : unreadCount)}
           </button>
         </div>
 
         <button onClick={onNewCase}
-          style={{ background:c.blue, border:"none", color:"#fff", flexShrink:0,
-            borderRadius:8, padding: isMobile ? "8px 10px" : "8px 14px", fontSize:13, fontWeight:600,
+          style={{ background:c.ink, border:"none", color:c.onInk, flexShrink:0,
+            borderRadius:8, padding: isMobile ? "8px 11px" : "8px 14px", fontSize:13, fontWeight:600,
             cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>
           {isMobile ? "+" : "+ เคสใหม่"}
         </button>
 
         {!isMobile && (
           <button onClick={onProfile}
-            style={{ width:34, height:34, borderRadius:"50%", border:`2px solid ${c.border}`, flexShrink:0,
-              background:"linear-gradient(135deg,#F97316,#6B21A8)",
-              color:"#fff", fontSize:12, fontWeight:800, cursor:"pointer",
+            style={{ width:34, height:34, borderRadius:"50%", border:`1px solid ${c.border}`, flexShrink:0,
+              background:c.borderSoft,
+              color:c.text900, fontSize:12, fontWeight:700, cursor:"pointer",
               display:"flex", alignItems:"center", justifyContent:"center" }}
             title={currentUser?.name}>
             {(currentUser?.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
