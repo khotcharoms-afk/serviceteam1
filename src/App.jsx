@@ -1149,10 +1149,10 @@ export default function App({ currentUser, onSignOut }) {
       {/* ผู้ช่วย AI — ปุ่มลอยมุมซ้ายล่าง + แผงแชทด้านซ้าย */}
       {!assistantOpen && !assistantHasChat && (
         <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:20,
-          background:themeC.card,border:`1px solid ${themeC.border}`,color:themeC.text900,
-          height:44,padding:"0 16px",borderRadius:22,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-          boxShadow:"0 4px 14px rgba(15,23,42,.12)",zIndex:40,display:"flex",
-          alignItems:"center",justifyContent:"center",lineHeight:1 }}>ถาม AI</button>
+          background:"linear-gradient(135deg,#6B21A8,#F97316)",border:"none",color:"#fff",
+          width:52,height:52,borderRadius:"50%",fontSize:24,cursor:"pointer",
+          boxShadow:"0 6px 20px rgba(107,33,168,.4)",zIndex:40,display:"flex",
+          alignItems:"center",justifyContent:"center",lineHeight:1 }}>🤖</button>
       )}
       {assistantMounted && (
         <Suspense fallback={null}>
