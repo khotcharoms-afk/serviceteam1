@@ -2,70 +2,53 @@ import { daysLeft, fmtDate, STATUS_OPTS } from "./utils.js";
 import { useTheme } from "./theme.js";
 
 // ── Pills ─────────────────────────────────────────────────────
-// สถานะเร่งด่วน (สีของ pill พวกนี้มีความหมายอยู่แล้ว เช่น แดง=หมดแล้ว) เลยคงสีเดิมไว้ไม่ผูกกับธีม
-// แต่ปรับพื้นหลัง "ไม่มีข้อมูล" ให้ผูกกับธีมแทน
-export function WarrantyPill({ warrantyEnd }) {
+// โทนเรียบ: กรอบเทา + จุดสี — ใส่สีที่ตัวอักษรเฉพาะเมื่อต้องเตือน (หมดแล้ว / ใกล้หมด)
+const STATUS_DARK = { open: "#fbbf24", inprogress: "#93c5fd", done: "#86efac", hold: "#fca5a5" };
+export function statusColor(value, dark) {
+  const s = STATUS_OPTS.find(x => x.value === value) || STATUS_OPTS[0];
+  return dark ? (STATUS_DARK[s.value] || s.color) : s.color;
+}
+
+function DatePill({ end, emptyLabel, prefix }) {
   const { c } = useTheme();
-  if (!warrantyEnd) return (
-    <span style={{ display:"inline-flex",alignItems:"center",gap:4,
-      background:c.borderSoft,color:c.text400,borderRadius:20,
-      padding:"3px 9px",fontSize:11,fontWeight:700 }}>ไม่มีประกัน</span>
-  );
-  const days = daysLeft(warrantyEnd);
-  const col = days < 0 ? "#ef4444" : days <= 90 ? "#f59e0b" : days <= 365 ? "#3b82f6" : "#10b981";
+  if (!end) return emptyLabel ? (
+    <span style={{ display:"inline-flex",alignItems:"center",border:`1px solid ${c.border}`,color:c.text400,
+      borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600 }}>{emptyLabel}</span>
+  ) : null;
+  const days = daysLeft(end);
+  const urgent = days < 0 ? c.danger : days <= 90 ? c.warn : null;
   const label = days < 0 ? "หมดแล้ว" : days === 0 ? "หมดวันนี้"
     : days <= 365 ? `เหลือ ${days} วัน`
     : `เหลือ ${Math.floor(days/365)} ปี ${Math.floor((days%365)/30)} เดือน`;
   return (
-    <span style={{ display:"inline-flex",alignItems:"center",gap:4,
-      background:col+"18",color:col,border:`1px solid ${col}40`,
-      borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700,whiteSpace:"nowrap" }}>
-      <span style={{ width:5,height:5,borderRadius:"50%",background:col,flexShrink:0 }}/>
-      🛡 {label}
+    <span style={{ display:"inline-flex",alignItems:"center",gap:5,border:`1px solid ${c.border}`,
+      color:urgent||c.text500,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,whiteSpace:"nowrap" }}>
+      <span style={{ width:5,height:5,borderRadius:"50%",background:urgent||c.text400,flexShrink:0 }}/>
+      {prefix} {label}
     </span>
   );
+}
+
+export function WarrantyPill({ warrantyEnd }) {
+  return <DatePill end={warrantyEnd} emptyLabel="ไม่มีประกัน" prefix="ประกัน"/>;
 }
 
 export function LeasePill({ leaseEnd }) {
-  if (!leaseEnd) return null;
-  const days = daysLeft(leaseEnd);
-  const col = days < 0 ? "#ef4444" : days <= 90 ? "#f59e0b" : days <= 365 ? "#f97316" : "#8b5cf6";
-  const label = days < 0 ? "หมดแล้ว" : days === 0 ? "หมดวันนี้"
-    : days <= 365 ? `เหลือ ${days} วัน`
-    : `เหลือ ${Math.floor(days/365)} ปี ${Math.floor((days%365)/30)} เดือน`;
-  return (
-    <span style={{ display:"inline-flex",alignItems:"center",gap:4,
-      background:col+"18",color:col,border:`1px solid ${col}40`,
-      borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700,whiteSpace:"nowrap" }}>
-      <span style={{ width:5,height:5,borderRadius:"50%",background:col,flexShrink:0 }}/>
-      📋 {label}
-    </span>
-  );
+  return <DatePill end={leaseEnd} prefix="เช่า"/>;
 }
 
 export function HirePurchasePill({ hirePurchaseEnd }) {
-  if (!hirePurchaseEnd) return null;
-  const days = daysLeft(hirePurchaseEnd);
-  const col = days < 0 ? "#ef4444" : days <= 90 ? "#f59e0b" : days <= 365 ? "#0891b2" : "#0891b2";
-  const label = days < 0 ? "หมดแล้ว" : days === 0 ? "หมดวันนี้"
-    : days <= 365 ? `เหลือ ${days} วัน`
-    : `เหลือ ${Math.floor(days/365)} ปี ${Math.floor((days%365)/30)} เดือน`;
-  return (
-    <span style={{ display:"inline-flex",alignItems:"center",gap:4,
-      background:col+"18",color:col,border:`1px solid ${col}40`,
-      borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700,whiteSpace:"nowrap" }}>
-      <span style={{ width:5,height:5,borderRadius:"50%",background:col,flexShrink:0 }}/>
-      🤝 {label}
-    </span>
-  );
+  return <DatePill end={hirePurchaseEnd} prefix="เช่าซื้อ"/>;
 }
 
 export function StatusPill({ value }) {
+  const { c, dark } = useTheme();
   const s = STATUS_OPTS.find(x => x.value === value) || STATUS_OPTS[0];
+  const col = statusColor(value, dark);
   return (
-    <span style={{ display:"inline-flex",alignItems:"center",gap:4,
-      background:s.bg,color:s.color,borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700 }}>
-      <span style={{ width:5,height:5,borderRadius:"50%",background:s.color,flexShrink:0 }}/>
+    <span style={{ display:"inline-flex",alignItems:"center",gap:5,border:`1px solid ${c.border}`,
+      color:col,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700,whiteSpace:"nowrap" }}>
+      <span style={{ width:6,height:6,borderRadius:"50%",background:col,flexShrink:0 }}/>
       {s.label}
     </span>
   );
@@ -76,7 +59,7 @@ export function PrimaryBtn({ onClick, children, full, style = {} }) {
   const { c } = useTheme();
   return (
     <button onClick={onClick}
-      style={{ background:c.blue,border:"none",color:"#fff",borderRadius:10,
+      style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:10,
         padding:"12px 22px",fontSize:14,fontWeight:600,cursor:"pointer",
         fontFamily:"inherit",width:full?"100%":"auto",transition:"background .15s",...style }}>
       {children}
