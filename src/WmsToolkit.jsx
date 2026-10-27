@@ -194,6 +194,16 @@ const SOPS = [
     ],
   },
   {
+    key: "ts", title: "🔀 ทำ T/S (Transhipment / ต่อเครื่อง) ไม่ได้",
+    when: "หน้างานแจ้งว่าทำ T/S ของ AWB ขาเข้าไม่ได้",
+    steps: [
+      "SQL template 'ค้น AWB ขาเข้า' → ดูแถว customer (ข้อมูลจาก kn_cargo_in_booking_customers)",
+      "AWB ต้องมี customer ครบ 3 แถว: 1 Consignee · 2 Agent · 3 Shipper",
+      "ขาดแถวไหน หรือมีไม่ครบ 3 = ต้นเหตุที่ทำ T/S ไม่ได้ → ส่งเคสให้ admin/dev เพิ่มแถวที่ขาด (ดูรูปแบบจาก AWB อื่นที่ทำ T/S ผ่าน)",
+      "เพิ่มครบแล้ว → ค้นซ้ำให้เห็นครบ 3 แถว → ให้หน้างานลองทำ T/S อีกครั้ง",
+    ],
+  },
+  {
     key: "restore", title: "♻️ Back up / คืนข้อมูลที่ลบไป",
     when: "ลบไปแล้วมีปัญหา ต้องเอาข้อมูลกลับ",
     steps: [
@@ -230,6 +240,7 @@ UNION ALL SELECT 'bflight', f.id, '', f.flight_no || ' ' || f.origin || '-' || f
 UNION ALL SELECT 'shipment', s.id, s.piece || ' / ' || s.weight || ' / ' || coalesce(s.volume::text,''), 'manifest=' || s.manifest_id || ' ' || s.shipment_type FROM ${S}kn_cargo_in_shipments s WHERE s.booking_id IN (${inBk})
 UNION ALL SELECT 'breakdown', d.id, d.piece || ' / ' || d.weight, 'shipment=' || d.shipment_id || coalesce(' deleted=' || d.deleted_at::text,'') FROM ${S}kn_cargo_in_breakdowns d WHERE d.shipment_id IN (${inShip})
 UNION ALL SELECT 'awb_do', o.id, o.piece || ' / ' || o.weight, 'do=' || o.delivery_order_id || coalesce(' deleted=' || o.deleted_at::text,'') FROM ${S}kn_cargo_in_awb_delivery_orders o WHERE o.booking_id IN (${inBk})
+UNION ALL SELECT 'customer', cu.id, '', left((to_jsonb(cu) - 'id' - 'booking_id' - 'created_at' - 'updated_at' - 'created_by' - 'updated_by')::text, 160) FROM ${S}kn_cargo_in_booking_customers cu WHERE cu.booking_id IN (${inBk})
 ORDER BY 1, 2;`,
     },
     {
