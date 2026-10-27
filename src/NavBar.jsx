@@ -36,9 +36,9 @@ export default function NavBar({
           cursor:"pointer", padding:"6px", color:c.text500, lineHeight:1, flexShrink:0 }}><Icon name="menu" size={20}/></button>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <div style={{ width:28, height:28, borderRadius:8, flexShrink:0,
-            background:c.ink,
+            background:"linear-gradient(135deg,#2563eb,#7c3aed)",
             display:"flex", alignItems:"center", justifyContent:"center",
-            color:c.onInk, fontSize:13, fontWeight:700 }}>S</div>
+            color:"#fff", fontSize:13, fontWeight:700 }}>S</div>
           {!isMobile && (
             <div>
               <div style={{ fontSize:13, fontWeight:800, color:c.text900, lineHeight:1 }}>ServiceLog</div>
