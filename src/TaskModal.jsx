@@ -107,12 +107,12 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
                 ) : filteredProjs.map(p=>(
                   <div key={p.id} onMouseDown={()=>{ setProjId(p.id); setProjDropdown(false); setProjSearch(""); setSite(""); }}
                     style={{ padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
-                      background:projId===p.id?"#f973161a":"transparent",borderBottom:`1px solid ${c.borderSoft}` }}
+                      background:projId===p.id?c.borderSoft:"transparent",borderBottom:`1px solid ${c.borderSoft}` }}
                     onMouseEnter={e=>{ if(projId!==p.id) e.currentTarget.style.background=c.bg; }}
                     onMouseLeave={e=>{ if(projId!==p.id) e.currentTarget.style.background="transparent"; }}>
                     <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
                     <span style={{ fontSize:13,fontWeight:600,color:c.text900,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</span>
-                    {projId===p.id && <span style={{ color:"#f97316" }}>✓</span>}
+                    {projId===p.id && <span style={{ color:c.text900 }}>✓</span>}
                   </div>
                 ))}
               </div>
@@ -172,9 +172,9 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
               <button key={p.value} type="button" onClick={()=>setPriority(p.value)}
                 style={{ flex:1,padding:"7px",borderRadius:8,fontSize:12,fontWeight:700,
                   fontFamily:"inherit",cursor:"pointer",
-                  background:priority===p.value?p.color+"1a":c.bg,
-                  border:`1px solid ${priority===p.value?p.color:c.border}`,
-                  color:priority===p.value?p.color:c.text400 }}>
+                  background:priority===p.value?c.ink:c.bg,
+                  border:`1px solid ${priority===p.value?c.ink:c.border}`,
+                  color:priority===p.value?c.onInk:c.text500 }}>
                 {p.label}
               </button>
             ))}
@@ -187,11 +187,11 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
           <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
             {approvedUsers.map(u=>(
               <label key={u.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
-                background:assignees.includes(u.name)?"#16a34a1a":c.bg,
-                border:`1px solid ${assignees.includes(u.name)?"#16a34a66":c.border}`, color:c.text900,
+                background:assignees.includes(u.name)?c.borderSoft:c.bg,
+                border:`1px solid ${assignees.includes(u.name)?c.text400:c.border}`, color:c.text900,
                 borderRadius:8,padding:"5px 10px",fontSize:12 }}>
                 <input type="checkbox" checked={assignees.includes(u.name)}
-                  onChange={()=>toggleAssignee(u.name)} style={{ accentColor:"#16a34a" }}/>
+                  onChange={()=>toggleAssignee(u.name)} style={{ accentColor:c.ink }}/>
                 {u.name}
               </label>
             ))}
@@ -212,7 +212,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={handleSave}
             disabled={saving||!title.trim()}
-            style={{ background:"#6B21A8",border:"none",color:"#fff",borderRadius:10,
+            style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:10,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:saving||!title.trim()?0.5:1 }}>
             {saving?"กำลังบันทึก...":(isEdit?"💾 บันทึก":"➕ ลงงาน")}

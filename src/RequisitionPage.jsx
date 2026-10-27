@@ -107,10 +107,10 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
         <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 1000, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>📦 ใบเบิกของ</div>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>ใบเบิกของ</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>กรอกรายการแล้วดาวน์โหลดใบขอเบิกสินค้าเป็น PDF หรือ Excel</div>
           </div>
-          <button onClick={() => setForm(emptyForm())} style={btn(c.purple)}>+ สร้างใบเบิก</button>
+          <button onClick={() => setForm(emptyForm())} style={btn(c.ink, c.onInk)}>+ สร้างใบเบิก</button>
         </div>
       </div>
 
@@ -118,11 +118,10 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
         <input placeholder="ค้นหาโครงการ ไซต์ รายการ serial ผู้เบิก…" value={q} onChange={(e) => setQ(e.target.value)}
           style={{ ...IS, background: c.card, marginBottom: 14 }} />
 
-        {error && <div style={{ background: "#fff5f5", border: "1px solid #fecaca", color: "#b91c1c", borderRadius: 12, padding: "12px 16px", marginBottom: 14, fontSize: 13.5 }}>⚠️ {error}</div>}
+        {error && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, color: c.text900, borderRadius: 10, padding: "12px 16px", marginBottom: 14, fontSize: 13.5 }}>{error}</div>}
         {loading ? <div style={{ textAlign: "center", color: c.text400, padding: 40 }}>กำลังโหลด…</div>
           : !shown.length ? (
             <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: "40px 20px", textAlign: "center", color: c.text400 }}>
-              <div style={{ fontSize: 30, marginBottom: 6 }}>📦</div>
               {q ? "ไม่พบใบเบิกที่ค้นหา" : "ยังไม่มีใบเบิก กด \"+ สร้างใบเบิก\" เพื่อเริ่ม"}
             </div>
           ) : shown.map((r) => (
@@ -140,14 +139,14 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
                   <div style={{ fontSize: 11, color: c.text400, marginTop: 6 }}>โดย {r.createdBy || "-"}</div>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <button onClick={() => download(r, "pdf")} disabled={!!busy} style={btn(c.red)}>{busy === `${r.id}-pdf` ? "กำลังสร้าง…" : "⬇ PDF"}</button>
-                  <button onClick={() => download(r)} disabled={!!busy} style={btn(c.green)}>{busy === `${r.id}-xlsx` ? "กำลังสร้าง…" : "⬇ Excel"}</button>
+                  <button onClick={() => download(r, "pdf")} disabled={!!busy} style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>{busy === `${r.id}-pdf` ? "กำลังสร้าง…" : "PDF"}</button>
+                  <button onClick={() => download(r)} disabled={!!busy} style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>{busy === `${r.id}-xlsx` ? "กำลังสร้าง…" : "Excel"}</button>
                   <button onClick={() => setForm({ ...emptyForm(), ...normalizeReq(r), id: undefined, date: today(), items: (r.items || []).map((it) => ({ ...emptyItem(), ...it })) })}
-                    title="สร้างใบใหม่โดยใช้รายการเดิม" style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>⧉ ใช้ซ้ำ</button>
+                    title="สร้างใบใหม่โดยใช้รายการเดิม" style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>ใช้ซ้ำ</button>
                   {canEdit(r) && <>
                     <button onClick={() => setForm({ ...emptyForm(), ...normalizeReq(r), items: (r.items || []).map((it) => ({ ...emptyItem(), ...it })) })}
                       style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>แก้ไข</button>
-                    <button onClick={() => remove(r)} style={btn(c.bg, c.red, { border: `1px solid ${c.border}` })}>ลบ</button>
+                    <button onClick={() => remove(r)} style={btn("transparent", c.danger)}>ลบ</button>
                   </>}
                 </div>
               </div>
@@ -219,29 +218,29 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
                   <input list="req-units" placeholder="หน่วย" value={it.unit} onChange={(e) => set({ unit: e.target.value })} style={IS} />
                   <input placeholder="หมายเหตุ" value={it.note} onChange={(e) => set({ note: e.target.value })} style={{ ...IS, gridColumn: narrow ? "1 / 2" : "auto" }} />
                   <button onClick={() => setForm({ ...form, items: form.items.length > 1 ? form.items.filter((_, j) => j !== i) : [emptyItem()] })}
-                    title="ลบรายการนี้" style={{ background: "none", border: "none", color: c.red, fontSize: 16, cursor: "pointer" }}>✕</button>
+                    title="ลบรายการนี้" style={{ background: "none", border: "none", color: c.text400, fontSize: 16, cursor: "pointer" }}>✕</button>
                 </div>
               );
             })}
             {form.items.length < MAX_ITEMS && (
               <button onClick={() => setForm({ ...form, items: [...form.items, emptyItem()] })}
-                style={btn(c.bg, c.purple, { border: `1px dashed ${c.border}`, width: "100%", marginTop: 2 })}>+ เพิ่มรายการ</button>
+                style={btn(c.bg, c.text900, { border: `1px dashed ${c.text400}`, width: "100%", marginTop: 2 })}>+ เพิ่มรายการ</button>
             )}
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16, flexWrap: "wrap" }}>
-              <button onClick={() => download(form, "pdf")} disabled={!!busy} style={btn(c.bg, c.red, { border: `1px solid ${c.red}` })}>
-                {busy === "form-pdf" ? "กำลังสร้าง…" : "⬇ PDF"}</button>
-              <button onClick={() => download(form)} disabled={!!busy} style={btn(c.bg, c.green, { border: `1px solid ${c.green}` })}>
-                {busy === "form-xlsx" ? "กำลังสร้าง…" : "⬇ Excel"}</button>
+              <button onClick={() => download(form, "pdf")} disabled={!!busy} style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>
+                {busy === "form-pdf" ? "กำลังสร้าง…" : "PDF"}</button>
+              <button onClick={() => download(form)} disabled={!!busy} style={btn(c.bg, c.text900, { border: `1px solid ${c.border}` })}>
+                {busy === "form-xlsx" ? "กำลังสร้าง…" : "Excel"}</button>
               <button onClick={() => setForm(null)} disabled={!!busy} style={btn(c.bg, c.text500, { border: `1px solid ${c.border}` })}>ยกเลิก</button>
-              <button onClick={save} disabled={!!busy} style={btn(c.purple)}>{busy === "save" ? "กำลังบันทึก…" : "บันทึก"}</button>
+              <button onClick={save} disabled={!!busy} style={btn(c.ink, c.onInk)}>{busy === "save" ? "กำลังบันทึก…" : "บันทึก"}</button>
             </div>
           </div>
         </div>
       )}
 
       {toast && (
-        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: toast.ok ? "#16a34a" : "#dc2626", color: "#fff",
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: toast.ok ? c.ink : c.danger, color: toast.ok ? c.onInk : "#fff",
           padding: "10px 18px", borderRadius: 10, fontSize: 13.5, fontWeight: 700, zIndex: 400, boxShadow: "0 6px 20px rgba(0,0,0,.2)" }}>{toast.msg}</div>
       )}
     </div>
