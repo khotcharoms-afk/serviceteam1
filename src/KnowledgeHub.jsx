@@ -8,7 +8,7 @@ import { db } from "./firebase";
 import { useTheme } from "./theme.js";
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 
-// แท็บเครื่องมือ WMS (ตรวจ FFM / SOP / SQL template) — โหลดเฉพาะตอนเปิด และเห็นเฉพาะ admin/dev
+// แท็บเครื่องมือ WMS (ตรวจ FFM / SOP / SQL template) — โหลดเฉพาะตอนเปิด ทุกคนใช้ได้
 const WmsToolkit = lazy(() => import("./WmsToolkit.jsx"));
 
 
@@ -236,8 +236,8 @@ export default function KnowledgeHub({ onBack, currentUser }) {
   const [expanded, setExpanded] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const isAdmin = ["admin", "dev"].includes(currentUser?.role);
-  const [view, setView] = useState("articles"); // "articles" | "wms" (wms เฉพาะ admin/dev)
-  const showWms = isAdmin && view === "wms";
+  const [view, setView] = useState("articles"); // "articles" | "wms"
+  const showWms = view === "wms";
 
   useEffect(() => onSnapshot(collection(db, "knowledge"), (snap) => {
     setArticles(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
@@ -295,7 +295,7 @@ export default function KnowledgeHub({ onBack, currentUser }) {
           {!showWms && <button onClick={() => setModal({})} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: "8px 14px", fontSize: 13,
             fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ เพิ่มบทความ</button>}
         </div>
-        {isAdmin && (
+        {(
           <div style={{ display: "flex", gap: 4, padding: "0 16px", maxWidth: 860, margin: "0 auto" }}>
             {[["articles", "บทความ"], ["wms", "🛠 WMS Toolkit"]].map(([k, l]) => (
               <button key={k} onClick={() => setView(k)} style={{ background: "none", border: "none", borderBottom: `2px solid ${view === k ? c.ink : "transparent"}`,

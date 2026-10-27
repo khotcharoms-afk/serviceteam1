@@ -1,4 +1,4 @@
-// src/WmsToolkit.jsx — เครื่องมือแก้เคส WMS (เฉพาะ admin/dev) อยู่ในแท็บของ Knowledge Hub
+// src/WmsToolkit.jsx — เครื่องมือแก้เคส WMS (ทุกคนใช้ได้) อยู่ในแท็บของ Knowledge Hub
 // 1) ตรวจ FFM: วาง message แล้วแยกทีละ AWB + เช็กเลข AWB 8 หลัก / check digit (mod 7)
 // 2) SOP: ขั้นตอนมาตรฐานที่ใช้แก้เคสจริง
 // 3) SQL template: ใส่เลข AWB แล้วได้ query สำหรับค้น / back up / ลบ พร้อมปุ่มคัดลอก
@@ -436,7 +436,7 @@ export default function WmsToolkit() {
   return (
     <div style={{ marginTop: 12 }}>
       <div style={{ fontSize: 12, color: c.text400, background: c.card, border: `1px solid ${c.border}`, borderRadius: 10, padding: "8px 12px", marginBottom: 10, lineHeight: 1.6 }}>
-        🔒 เห็นเฉพาะ admin / dev · query ในหน้านี้แก้ข้อมูลจริงของ WMS — ค้นดูก่อนทุกครั้ง และ back up ก่อนลบ
+        ⚠️ query ในหน้านี้แก้ข้อมูลจริงของ WMS — ค้นดูก่อนทุกครั้ง และ back up ก่อนลบ
       </div>
       <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto" }}>
         {tabs.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={chip(tab === k)}>{l}</button>)}
