@@ -10,9 +10,6 @@ import { useTheme } from "./theme.js";
 import { fmtDate } from "./utils.js";
 import TaskModal from "./TaskModal.jsx";
 
-const PURPLE = "#6B21A8";
-const RED = "#DC2626";
-const ORANGE = "#EA580C";
 
 export const TASK_STATUS = {
   todo:       { label: "ต้องทำ",   color: "#64748B" },
@@ -22,8 +19,8 @@ export const TASK_STATUS = {
 const normStatus = (s) => (s === "accepted" ? "todo" : TASK_STATUS[s] ? s : "todo");
 
 const PRIORITY = {
-  urgent_high: { label: "ด่วนมาก", color: "#fff", bg: "#DC2626", rank: 0 },
-  urgent:      { label: "ด่วน",    color: "#B45309", bg: "#FEF3C7", rank: 1 },
+  urgent_high: { label: "ด่วนมาก", color: "#b91c1c", bg: "transparent", rank: 0 },
+  urgent:      { label: "ด่วน",    color: "#b45309", bg: "transparent", rank: 1 },
   normal:      { label: "",        color: "", bg: "", rank: 2 },
 };
 
@@ -45,11 +42,11 @@ const rangeText = (t) => {
 };
 
 const GROUPS = [
-  { key: "overdue", label: "🔥 เลยกำหนด", color: RED },
-  { key: "today",   label: "📌 วันนี้", color: ORANGE },
-  { key: "week",    label: "🗓️ 7 วันข้างหน้า", color: "#2563EB" },
-  { key: "later",   label: "⏳ ภายหลัง", color: "#64748B" },
-  { key: "nodate",  label: "📝 ไม่กำหนดวัน", color: "#64748B" },
+  { key: "overdue", label: "เลยกำหนด", danger: true },
+  { key: "today",   label: "วันนี้" },
+  { key: "week",    label: "7 วันข้างหน้า" },
+  { key: "later",   label: "ภายหลัง" },
+  { key: "nodate",  label: "ไม่กำหนดวัน" },
 ];
 function groupOf(t, todayIso) {
   const s = startOf(t), e = endOf(t);
@@ -69,12 +66,11 @@ function dueText(t, todayIso) {
   return rangeText(t);
 }
 
-const avatarBg = (name = "") => `hsl(${(name.charCodeAt(0) || 0) * 7 % 360},55%,58%)`;
 function Avatars({ names = [], size = 22 }) {
   return (
     <span style={{ display: "inline-flex", flexShrink: 0 }}>
       {names.slice(0, 4).map((n, i) => (
-        <span key={n} title={n} style={{ width: size, height: size, borderRadius: "50%", background: avatarBg(n), color: "#fff",
+        <span key={n} title={n} style={{ width: size, height: size, borderRadius: "50%", background: "var(--av-bg, #e2e8f0)", color: "var(--av-fg, #0f172a)",
           fontSize: size * 0.48, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center",
           marginLeft: i ? -6 : 0, border: "2px solid var(--card-bg, #fff)" }}>{n.charAt(0)}</span>
       ))}
@@ -83,7 +79,7 @@ function Avatars({ names = [], size = 22 }) {
   );
 }
 const Unassigned = ({ small }) => (
-  <span style={{ fontSize: small ? 10 : 11, fontWeight: 800, color: ORANGE, border: `1px dashed ${ORANGE}`, borderRadius: 6,
+  <span style={{ fontSize: small ? 10 : 11, fontWeight: 600, color: "var(--av-fg, #0f172a)", border: "1px dashed currentColor", borderRadius: 6, opacity: 0.7,
     padding: small ? "0 4px" : "1px 6px", whiteSpace: "nowrap" }}>ยังไม่มีคนทำ</span>
 );
 
@@ -132,10 +128,10 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
     const on = tab === key;
     return (
       <button key={key} onClick={() => setTab(key)} style={{ border: "none", background: "transparent", cursor: "pointer", fontFamily: "inherit",
-        padding: "10px 4px", marginRight: 14, fontSize: 13.5, fontWeight: on ? 800 : 600, color: on ? PURPLE : c.text500,
-        borderBottom: `2.5px solid ${on ? PURPLE : "transparent"}`, whiteSpace: "nowrap" }}>
+        padding: "10px 4px", marginRight: 14, fontSize: 13.5, fontWeight: on ? 700 : 500, color: on ? c.text900 : c.text500,
+        borderBottom: `2px solid ${on ? c.ink : "transparent"}`, whiteSpace: "nowrap" }}>
         {label}{n != null && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 999,
-          background: warn ? RED + "18" : on ? PURPLE + "18" : c.borderSoft, color: warn ? RED : on ? PURPLE : c.text400 }}>{n}</span>}
+          background: c.borderSoft, color: warn ? c.danger : c.text500 }}>{n}</span>}
       </button>
     );
   };
@@ -148,7 +144,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
     (endOf(a) || "9999").localeCompare(endOf(b) || "9999") ||
     (a.createdAt || "").localeCompare(b.createdAt || "");
   const groups = tab === "done"
-    ? [{ key: "done", label: "✅ เสร็จแล้ว", color: "#16A34A",
+    ? [{ key: "done", label: "เสร็จแล้ว",
         items: [...list].sort((a, b) => (b.completedAt || b.updatedAt || "").localeCompare(a.completedAt || a.updatedAt || "")).slice(0, 100) }]
     : GROUPS.map((g) => ({ ...g, items: list.filter((t) => groupOf(t, todayIso) === g.key).sort(sortActive) })).filter((g) => g.items.length);
   const overdueMine = mineActive.filter((t) => groupOf(t, todayIso) === "overdue").length;
@@ -157,27 +153,26 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
     onOpen: () => setDetailId(t.id), onStatus: (s) => setStatus(t, s) });
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", "--card-bg": c.card }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", "--card-bg": c.card, "--av-bg": c.borderSoft, "--av-fg": c.text900 }}>
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px 6px", maxWidth: W, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer", padding: 4, lineHeight: 1 }}>←</button>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: PURPLE + "14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>📋</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>บอร์ดงาน</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>
-              งานของคุณ {mineActive.length} งาน{overdueMine > 0 && <span style={{ color: RED, fontWeight: 700 }}> · เลยกำหนด {overdueMine}</span>}
-              {isAdmin && unassigned.length > 0 && <span style={{ color: ORANGE, fontWeight: 700 }}> · ยังไม่มีคนทำ {unassigned.length}</span>}
+              งานของคุณ {mineActive.length} งาน{overdueMine > 0 && <span style={{ color: c.danger, fontWeight: 700 }}> · เลยกำหนด {overdueMine}</span>}
+              {isAdmin && unassigned.length > 0 && <span style={{ color: c.warn, fontWeight: 700 }}> · ยังไม่มีคนทำ {unassigned.length}</span>}
             </div>
           </div>
           {isAdmin && (
             <button onClick={() => setModal({ date: tab === "calendar" && month !== todayIso.slice(0, 7) ? `${month}-01` : todayIso })}
-              style={{ background: PURPLE, border: "none", color: "#fff", borderRadius: 10, padding: "8px 14px",
+              style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: "8px 14px",
                 fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ ลงงาน</button>
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", padding: "0 16px", maxWidth: W, margin: "0 auto", overflowX: "auto" }}>
-          {tabBtn("calendar", "📅 ปฏิทิน")}
+          {tabBtn("calendar", "ปฏิทิน")}
           {tabBtn("mine", "งานของฉัน", mineActive.length, overdueMine > 0)}
           {tabBtn("all", "ทั้งหมด", allActive.length)}
           {tabBtn("done", "เสร็จแล้ว", doneList.length)}
@@ -195,7 +190,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
             if (!undated.length) return null;
             return (
               <section style={{ marginTop: 16, padding: narrow ? "0 4px" : 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: c.text500, margin: "0 2px 6px" }}>📝 ยังไม่กำหนดวัน <span style={{ fontWeight: 600, color: c.text400 }}>{undated.length}</span></div>
+                <div style={{ fontSize: 12.5, fontWeight: 800, color: c.text500, margin: "0 2px 6px" }}>ยังไม่กำหนดวัน <span style={{ fontWeight: 600, color: c.text400 }}>{undated.length}</span></div>
                 <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
                   {undated.map((t, i) => <TaskRow key={t.id} first={i === 0} showAssignees {...rowProps(t)} />)}
                 </div>
@@ -206,19 +201,19 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
       ) : (
         <div style={{ maxWidth: 860, margin: "0 auto", padding: "14px 16px 60px" }}>
           {all.length > 0 && (
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 ค้นหา ชื่องาน / โครงการ / ไซต์ / คน…"
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหา ชื่องาน / โครงการ / ไซต์ / คน…"
               style={{ width: "100%", border: `1px solid ${c.border}`, borderRadius: 10, padding: "9px 12px", fontSize: 13.5,
                 outline: "none", background: c.card, color: c.text900, marginBottom: 4 }} />
           )}
           {groups.length === 0 && (
             <div style={{ textAlign: "center", padding: "50px 10px", color: c.text400, fontSize: 13.5, lineHeight: 1.9 }}>
-              {q ? "ไม่พบงานที่ตรงกับคำค้น" : tab === "mine" ? "ไม่มีงานค้างของคุณ 🎉" : tab === "all" ? "ยังไม่มีงานที่ค้างอยู่" : "ยังไม่มีงานที่เสร็จ"}
+              {q ? "ไม่พบงานที่ตรงกับคำค้น" : tab === "mine" ? "ไม่มีงานค้างของคุณ" : tab === "all" ? "ยังไม่มีงานที่ค้างอยู่" : "ยังไม่มีงานที่เสร็จ"}
             </div>
           )}
           {groups.map((g) => (
             <section key={g.key} style={{ marginTop: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 6px" }}>
-                <span style={{ fontSize: 12.5, fontWeight: 800, color: g.color }}>{g.label}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: g.danger ? c.danger : c.text900 }}>{g.label}</span>
                 <span style={{ fontSize: 11.5, color: c.text400 }}>{g.items.length}</span>
               </div>
               <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
@@ -243,7 +238,6 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
       {confirm && (
         <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(15,23,42,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: c.card, borderRadius: 16, padding: 22, maxWidth: 340, width: "100%", textAlign: "center" }}>
-            <div style={{ fontSize: 30, marginBottom: 8 }}>{confirm.kind === "delete" ? "🗑️" : "📁"}</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: c.text900, marginBottom: 4 }}>{confirm.kind === "delete" ? "ลบงานนี้?" : "สร้างเคสจากงานนี้?"}</div>
             <div style={{ fontSize: 13, color: c.text500, marginBottom: 18 }}>"{confirm.task.title}"{confirm.kind === "delete" && <><br />ลบแล้วกู้คืนไม่ได้</>}</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -252,7 +246,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
               <button onClick={() => {
                 if (confirm.kind === "delete") { onDeleteTask(confirm.task.id); setDetailId(null); } else onConvertToCase(confirm.task);
                 setConfirm(null);
-              }} style={{ background: confirm.kind === "delete" ? RED : PURPLE, border: "none", color: "#fff", borderRadius: 10, padding: 10,
+              }} style={{ background: confirm.kind === "delete" ? c.danger : c.ink, border: "none", color: confirm.kind === "delete" ? "#fff" : c.onInk, borderRadius: 10, padding: 10,
                 fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{confirm.kind === "delete" ? "ลบ" : "สร้างเคส"}</button>
             </div>
           </div>
@@ -296,9 +290,9 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
         <span style={{ fontSize: 12, color: c.text400 }}>{inMonth.length} งานในเดือนนี้</span>
         <div style={{ flex: 1 }} />
         <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: c.text500, cursor: "pointer", fontWeight: 600 }}>
-          <input type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} style={{ accentColor: PURPLE }} /> เฉพาะงานของฉัน
+          <input type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} style={{ accentColor: c.ink }} /> เฉพาะงานของฉัน
         </label>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 ค้นหา…"
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหา…"
           style={{ width: narrow ? "100%" : 200, border: `1px solid ${c.border}`, borderRadius: 9, padding: "6px 10px", fontSize: 12.5, outline: "none",
             background: c.card, color: c.text900 }} />
       </div>
@@ -306,7 +300,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
       <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", background: c.bg, borderBottom: `1px solid ${c.border}` }}>
           {TH_DAYS.map((d, i) => (
-            <div key={d} style={{ textAlign: "center", fontSize: narrow ? 11.5 : 13, fontWeight: 800, padding: narrow ? "6px 0" : "9px 0", color: i >= 5 ? RED + "cc" : c.text400 }}>{d}</div>
+            <div key={d} style={{ textAlign: "center", fontSize: narrow ? 11.5 : 13, fontWeight: 800, padding: narrow ? "6px 0" : "9px 0", color: c.text400 }}>{d}</div>
           ))}
         </div>
 
@@ -335,7 +329,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
                   return (
                     <div key={iso} onClick={isAdmin ? () => onAdd(iso) : undefined} title={isAdmin ? "กดเพื่อลงงานวันนี้" : undefined}
                       style={{ borderLeft: i ? `1px solid ${c.borderSoft}` : "none", cursor: isAdmin ? "copy" : "default",
-                        background: iso === todayIso ? PURPLE + "0d" : out ? c.bg : i >= 5 ? c.bg + "80" : "transparent" }} />
+                        background: iso === todayIso ? c.borderSoft : out ? c.bg : "transparent" }} />
                   );
                 })}
               </div>
@@ -349,7 +343,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
                   return (
                     <div key={iso} style={{ gridRow: 1, gridColumn: i + 1, padding: narrow ? "3px 4px 0" : "7px 10px 0", fontSize: narrow ? 11.5 : 14,
                       fontWeight: isToday ? 800 : 600, color: out ? c.text400 + "99" : c.text500 }}>
-                      <span style={isToday ? { background: PURPLE, color: "#fff", borderRadius: 999, padding: "1px 6px" } : undefined}>{toDate(iso).getDate()}</span>
+                      <span style={isToday ? { background: c.ink, color: c.onInk, borderRadius: 999, padding: "1px 6px" } : undefined}>{toDate(iso).getDate()}</span>
                     </div>
                   );
                 })}
@@ -373,31 +367,23 @@ function CalBar({ sg, c, narrow, h, color, onOpen, todayIso }) {
   const done = t.status === "done";
   const none = !(t.assignees || []).length;
   const overdue = !done && endOf(t) < todayIso;
-  const base = done ? "#16A34A" : t.status === "inprogress" ? "#D97706" : color || PURPLE;
   const pri = PRIORITY[t.priority] || PRIORITY.normal;
+  // แถบเรียบ: พื้นการ์ด กรอบเทา แถบซ้ายสีโครงการ (เลยกำหนด = แดง) · ยังไม่มีคนทำ = กรอบประ
+  const edge = none ? `1px dashed ${c.text400}` : `1px solid ${c.border}`;
   return (
     <div onClick={(e) => { e.stopPropagation(); onOpen(); }} title={`${t.title}${none ? " (ยังไม่มีคนทำ)" : ` — ${(t.assignees || []).join(", ")}`}`}
       style={{ gridRow: sg.lane + 2, gridColumn: `${sg.col + 1} / span ${sg.span}`, pointerEvents: "auto", cursor: "pointer",
-        margin: `1px ${sg.contR ? 0 : 3}px 2px ${sg.contL ? 0 : 3}px`, height: h, display: "flex", alignItems: "center", gap: 4, overflow: "hidden",
-        padding: narrow ? "0 4px" : "0 8px", fontSize: narrow ? 10.5 : 13, fontWeight: 700,
-        borderRadius: `${sg.contL ? 0 : 6}px ${sg.contR ? 0 : 6}px ${sg.contR ? 0 : 6}px ${sg.contL ? 0 : 6}px`,
-        background: done ? base + "18" : base + "24", color: done ? c.text400 : c.text900,
-        ...(() => {
-          const edge = none ? `1.5px dashed ${ORANGE}` : `1px solid ${base}55`;
-          return { borderTop: edge, borderBottom: edge, borderRight: sg.contR ? "none" : edge,
-            borderLeft: sg.contL ? "none" : `3px solid ${overdue ? RED : none ? ORANGE : base}` };
-        })(),
+        margin: `1px ${sg.contR ? 0 : 3}px 2px ${sg.contL ? 0 : 3}px`, height: h, display: "flex", alignItems: "center", gap: 5, overflow: "hidden",
+        padding: narrow ? "0 4px" : "0 8px", fontSize: narrow ? 10.5 : 12.5, fontWeight: 600,
+        borderRadius: `${sg.contL ? 0 : 5}px ${sg.contR ? 0 : 5}px ${sg.contR ? 0 : 5}px ${sg.contL ? 0 : 5}px`,
+        background: c.card, color: done ? c.text400 : c.text900,
+        borderTop: edge, borderBottom: edge, borderRight: sg.contR ? "none" : edge,
+        borderLeft: sg.contL ? "none" : `3px solid ${overdue ? c.danger : color || c.text400}`,
         textDecoration: done ? "line-through" : "none" }}>
-      {pri.label && !narrow && <span style={{ width: 7, height: 7, borderRadius: "50%", background: pri.rank === 0 ? RED : "#F59E0B", flexShrink: 0 }} />}
-      {!narrow && !none && (
-        <span style={{ display: "inline-flex", flexShrink: 0 }}>
-          {(t.assignees || []).slice(0, 2).map((n, i) => (
-            <span key={n} style={{ width: 18, height: 18, borderRadius: "50%", background: avatarBg(n), color: "#fff", fontSize: 10, fontWeight: 800,
-              display: "inline-flex", alignItems: "center", justifyContent: "center", marginLeft: i ? -4 : 0 }}>{n.charAt(0)}</span>
-          ))}
-        </span>
-      )}
+      {t.status === "inprogress" && <span title="กำลังทำ" style={{ width: 6, height: 6, borderRadius: "50%", background: c.warn, flexShrink: 0 }} />}
+      {pri.label && !narrow && <span style={{ fontSize: 10.5, fontWeight: 700, color: pri.rank === 0 ? c.danger : c.warn, flexShrink: 0 }}>{pri.label}</span>}
       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
+      {!narrow && !none && <span style={{ marginLeft: "auto", fontSize: 11, color: c.text400, fontWeight: 500, flexShrink: 0, whiteSpace: "nowrap" }}>{(t.assignees || []).join(", ")}</span>}
     </div>
   );
 }
@@ -407,9 +393,9 @@ function TaskRow({ t, first, c, todayIso, showAssignees, projName, projColor, ca
   const pri = PRIORITY[t.priority] || PRIORITY.normal;
   const done = t.status === "done";
   const e = endOf(t);
-  const dueColor = done || !e ? c.text400 : e < todayIso ? RED : startOf(t) <= todayIso ? ORANGE : c.text500;
-  const next = t.status === "todo" ? { s: "inprogress", label: "▶ เริ่มทำ", bg: "#FEF3C7", color: "#B45309" }
-    : t.status === "inprogress" ? { s: "done", label: "✓ เสร็จ", bg: "#DCFCE7", color: "#15803D" } : null;
+  const dueColor = done || !e ? c.text400 : e < todayIso ? c.danger : startOf(t) <= todayIso ? c.text900 : c.text500;
+  const next = t.status === "todo" ? { s: "inprogress", label: "เริ่มทำ" }
+    : t.status === "inprogress" ? { s: "done", label: "เสร็จ" } : null;
   const where = [projName, t.site].filter(Boolean).join(" · ");
   const none = !(t.assignees || []).length;
   return (
@@ -417,22 +403,22 @@ function TaskRow({ t, first, c, todayIso, showAssignees, projName, projColor, ca
       borderTop: first ? "none" : `1px solid ${c.borderSoft}`, borderLeft: `3px solid ${projColor || "transparent"}` }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          {pri.label && <span style={{ fontSize: 10.5, fontWeight: 800, padding: "1px 7px", borderRadius: 6, background: pri.bg, color: pri.color }}>{pri.label}</span>}
-          {t.status === "inprogress" && <span style={{ fontSize: 10.5, fontWeight: 800, padding: "1px 7px", borderRadius: 6, background: "#D9770618", color: "#D97706" }}>กำลังทำ</span>}
+          {pri.label && <span style={{ fontSize: 10.5, fontWeight: 700, padding: "0 6px", borderRadius: 5, border: `1px solid ${c.border}`, color: pri.rank === 0 ? c.danger : c.warn }}>{pri.label}</span>}
+          {t.status === "inprogress" && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, padding: "0 6px", borderRadius: 5, border: `1px solid ${c.border}`, color: c.text500 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: c.warn }} />กำลังทำ</span>}
           <span style={{ fontSize: 14, fontWeight: 700, color: done ? c.text400 : c.text900, textDecoration: done ? "line-through" : "none", wordBreak: "break-word" }}>{t.title}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 3, fontSize: 12, color: c.text400 }}>
           {where && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280 }}>{where}</span>}
-          {e && <span style={{ color: dueColor, fontWeight: !done && startOf(t) <= todayIso ? 700 : 500 }}>📅 {dueText(t, todayIso)}</span>}
-          {(t.comments || []).length > 0 && <span>💬 {t.comments.length}</span>}
-          {t.caseId && <span style={{ color: "#16A34A" }}>📁 เป็นเคสแล้ว</span>}
+          {e && <span style={{ color: dueColor, fontWeight: !done && startOf(t) <= todayIso ? 700 : 500 }}>{dueText(t, todayIso)}</span>}
+          {(t.comments || []).length > 0 && <span>{t.comments.length} ความคิดเห็น</span>}
+          {t.caseId && <span>เป็นเคสแล้ว</span>}
           {done && t.completedBy && <span>โดย {t.completedBy}</span>}
         </div>
       </div>
       {showAssignees && (none ? (!done && <Unassigned />) : <Avatars names={t.assignees} />)}
       {canStatus && next && !none && (
         <button onClick={(ev) => { ev.stopPropagation(); onStatus(next.s); }}
-          style={{ border: "none", background: next.bg, color: next.color, borderRadius: 8, padding: "7px 11px", fontSize: 12.5, fontWeight: 800,
+          style={{ border: `1px solid ${c.border}`, background: c.card, color: c.text900, borderRadius: 8, padding: "6px 11px", fontSize: 12.5, fontWeight: 600,
             cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>{next.label}</button>
       )}
     </div>
@@ -469,8 +455,8 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
               return (
                 <button key={k} disabled={!canStatus || on} onClick={() => onStatus(k)}
                   style={{ flex: 1, padding: "8px 6px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-                    cursor: canStatus && !on ? "pointer" : "default", border: `1.5px solid ${on ? s.color : c.border}`,
-                    background: on ? s.color : "transparent", color: on ? "#fff" : canStatus ? c.text500 : c.text400 }}>{s.label}</button>
+                    cursor: canStatus && !on ? "pointer" : "default", border: `1px solid ${on ? c.ink : c.border}`,
+                    background: on ? c.ink : "transparent", color: on ? c.onInk : canStatus ? c.text500 : c.text400 }}>{s.label}</button>
               );
             })}
           </div>
@@ -478,7 +464,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
           {meta("วันที่", (startOf(t) && `${rangeText(t)}${t.status !== "done" && dueText(t, todayIso) !== rangeText(t) ? ` (${dueText(t, todayIso)})` : ""}`) || <span style={{ color: c.text400 }}>ยังไม่กำหนด</span>)}
           {meta("โครงการ", projName && <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: projColor || "#94a3b8", marginRight: 6 }} />{projName}</span>)}
           {meta("ไซต์", t.site)}
-          {meta("ความเร่งด่วน", pri.label && <span style={{ fontWeight: 700, padding: "1px 8px", borderRadius: 6, background: pri.bg, color: pri.color }}>{pri.label}</span>)}
+          {meta("ความเร่งด่วน", pri.label && <span style={{ fontWeight: 700, color: pri.rank === 0 ? c.danger : c.warn }}>{pri.label}</span>)}
           {meta("ประเภท", t.type)}
           {!isAdmin && meta("ผู้รับผิดชอบ", assignees.length ? <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Avatars names={assignees} /> {assignees.join(", ")}</span> : <Unassigned />)}
           {meta("ลงงานโดย", t.createdBy && `${t.createdBy}${t.createdAt ? ` · ${fmtDate(t.createdAt.slice(0, 10))}` : ""}`)}
@@ -486,10 +472,10 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
           {t.note && <div style={{ marginTop: 8, background: c.bg, borderRadius: 10, padding: "9px 12px", fontSize: 13, color: c.text500, whiteSpace: "pre-wrap" }}>{t.note}</div>}
 
           {isAdmin && (
-            <div style={{ marginTop: 12, background: assignees.length ? c.bg : ORANGE + "0f", border: `1px ${assignees.length ? "solid" : "dashed"} ${assignees.length ? c.border : ORANGE}`,
+            <div style={{ marginTop: 12, background: c.bg, border: `1px ${assignees.length ? "solid" : "dashed"} ${assignees.length ? c.border : c.text400}`,
               borderRadius: 12, padding: "10px 12px" }}>
-              <div style={{ fontSize: 12.5, fontWeight: 800, color: assignees.length ? c.text500 : ORANGE, marginBottom: 8 }}>
-                👷 {assignees.length ? `ผู้รับผิดชอบ (${assignees.length})` : "ยังไม่มีคนทำ — เลือกคนทำงานนี้"}
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: assignees.length ? c.text500 : c.text900, marginBottom: 8 }}>
+                {assignees.length ? `ผู้รับผิดชอบ (${assignees.length})` : "ยังไม่มีคนทำ — เลือกคนทำงานนี้"}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {people.map((u) => {
@@ -497,9 +483,9 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
                   return (
                     <button key={u.id} onClick={() => onAssign(on ? assignees.filter((n) => n !== u.name) : [...assignees, u.name])}
                       style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px 4px 4px", borderRadius: 999, cursor: "pointer",
-                        fontSize: 12.5, fontWeight: 700, border: `1.5px solid ${on ? "#16A34A" : c.border}`, background: on ? "#16A34A14" : c.card,
-                        color: on ? "#15803D" : c.text500 }}>
-                      <span style={{ width: 20, height: 20, borderRadius: "50%", background: avatarBg(u.name), color: "#fff", fontSize: 10, fontWeight: 800,
+                        fontSize: 12.5, fontWeight: 600, border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card,
+                        color: on ? c.onInk : c.text500 }}>
+                      <span style={{ width: 20, height: 20, borderRadius: "50%", background: on ? c.onInk : c.borderSoft, color: on ? c.ink : c.text900, fontSize: 10, fontWeight: 700,
                         display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{(u.name || "?").charAt(0)}</span>
                       {u.name}{on && " ✓"}
                     </button>
@@ -510,26 +496,26 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
           )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            {isAdmin && <button onClick={onEdit} style={smallBtn(PURPLE)}>✏️ แก้ไขงาน</button>}
-            {isAdmin && t.status === "done" && !t.caseId && <button onClick={onConvert} style={smallBtn(PURPLE)}>📁 สร้างเคสจากงานนี้</button>}
-            {t.caseId && <span style={{ fontSize: 12.5, color: "#16A34A", alignSelf: "center" }}>📁 สร้างเคสแล้ว</span>}
-            {isAdmin && <button onClick={onDelete} style={{ ...smallBtn(RED), marginLeft: "auto" }}>🗑️ ลบ</button>}
+            {isAdmin && <button onClick={onEdit} style={smallBtn(c)}>แก้ไขงาน</button>}
+            {isAdmin && t.status === "done" && !t.caseId && <button onClick={onConvert} style={smallBtn(c)}>สร้างเคสจากงานนี้</button>}
+            {t.caseId && <span style={{ fontSize: 12.5, color: c.text500, alignSelf: "center" }}>สร้างเคสแล้ว</span>}
+            {isAdmin && <button onClick={onDelete} style={{ ...smallBtn(c), color: c.danger, border: "none", marginLeft: "auto" }}>ลบ</button>}
           </div>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 18px", minHeight: 80 }}>
-          <div style={{ fontSize: 11.5, color: c.text400, fontWeight: 700, marginBottom: 8 }}>💬 ความคิดเห็น ({(t.comments || []).length})</div>
+          <div style={{ fontSize: 11.5, color: c.text400, fontWeight: 700, marginBottom: 8 }}>ความคิดเห็น ({(t.comments || []).length})</div>
           {(t.comments || []).length === 0 ? (
             <div style={{ color: c.text400, fontSize: 12.5, padding: "6px 0" }}>ยังไม่มีความคิดเห็น</div>
           ) : (t.comments || []).map((m, i) => {
             const mine = m.by === me;
             return (
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 10, flexDirection: mine ? "row-reverse" : "row" }}>
-                <span style={{ width: 26, height: 26, borderRadius: "50%", background: avatarBg(m.by), color: "#fff", fontSize: 12, fontWeight: 700,
+                <span style={{ width: 26, height: 26, borderRadius: "50%", background: c.borderSoft, color: c.text900, fontSize: 12, fontWeight: 700,
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{(m.by || "?").charAt(0)}</span>
                 <div style={{ maxWidth: "78%" }}>
                   <div style={{ fontSize: 10.5, color: c.text400, marginBottom: 2, textAlign: mine ? "right" : "left" }}>{m.by} · {m.at ? fmtDate(m.at.slice(0, 10)) : ""}</div>
-                  <div style={{ background: mine ? PURPLE + "12" : c.bg, border: `1px solid ${mine ? PURPLE + "30" : c.border}`, borderRadius: 12,
+                  <div style={{ background: mine ? c.borderSoft : c.card, border: `1px solid ${c.border}`, borderRadius: 12,
                     padding: "7px 11px", fontSize: 13, color: c.text900, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.text}</div>
                 </div>
               </div>
@@ -542,12 +528,12 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
             placeholder="พิมพ์ความคิดเห็น… (Enter ส่ง)"
             style={{ flex: 1, border: `1px solid ${c.border}`, borderRadius: 10, padding: "9px 12px", fontSize: 13.5, resize: "none",
               outline: "none", background: c.bg, color: c.text900 }} />
-          <button onClick={send} disabled={!text.trim()} style={{ background: PURPLE, border: "none", color: "#fff", borderRadius: 10, padding: "9px 16px",
+          <button onClick={send} disabled={!text.trim()} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: "9px 16px",
             fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: text.trim() ? 1 : 0.5 }}>ส่ง</button>
         </div>
       </div>
     </div>
   );
 }
-const smallBtn = (color) => ({ border: `1px solid ${color}40`, background: color + "0c", color, borderRadius: 9, padding: "6px 12px",
-  fontSize: 12.5, fontWeight: 700, cursor: "pointer" });
+const smallBtn = (c) => ({ border: `1px solid ${c.border}`, background: "transparent", color: c.text900, borderRadius: 9, padding: "6px 12px",
+  fontSize: 12.5, fontWeight: 600, cursor: "pointer" });
