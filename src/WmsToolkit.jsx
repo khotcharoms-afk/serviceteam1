@@ -81,65 +81,126 @@ export function parseFFM(raw) {
 
 // ───────────────────────── SOP ─────────────────────────
 
+// อัปเดต SOP ทุกครั้งที่เคสใหม่สอนอะไรใหม่ — แก้ SOP_UPDATED ด้วย
+// when = ใช้เมื่อไหร่ (ภาษาหน้างาน), steps = ทีละขั้น อ้างชื่อปุ่ม/template ในหน้านี้ให้มากที่สุด
+const SOP_UPDATED = "28 ต.ค. 2569";
+
 const SOPS = [
   {
-    key: "rules", title: "กติกาพื้นฐานก่อนแก้ข้อมูล WMS",
+    key: "rules", title: "📌 กติกาพื้นฐาน (อ่านก่อนแก้อะไร)",
+    when: "ทุกเคส",
     steps: [
-      "ขาเข้า (Import) ใช้ตาราง kn_cargo_in_* — ขาออก (Export) ใช้ตารางที่ไม่มี in_ เช่น kn_cargo_bookings, kn_cargo_shipments",
-      "เราไม่สร้าง breakdown / D/O / ไม่ออกบิลให้ — หน้างานทำเองในโปรแกรม เราแก้แค่ข้อมูลตั้งต้น",
-      "ค้นดูก่อนทุกครั้ง (SELECT) แล้วสรุปให้ผู้รับผิดชอบดู ก่อนรัน UPDATE / INSERT / DELETE",
-      "UPDATE ใส่เงื่อนไขค่าเดิมใน WHERE ด้วย (เช่น AND piece = 2 AND weight = 16) กันแก้ผิดแถว และใส่ RETURNING เพื่อดูผล",
-      "งานที่แก้หลายตาราง ให้รวมเป็นคำสั่งเดียวด้วย WITH … (CTE) — ถ้าตัวไหนพังจะไม่บันทึกเลยสักแถว",
-      "ลบข้อมูล = back up ก่อนเสมอ (ดู SOP ยกเลิก AWB)",
-      "Dataflare: Ctrl+Enter = รันคำสั่งที่เคอร์เซอร์อยู่ / ปุ่มดาวน์โหลดมุมขวาล่าง = Export ผลลัพธ์เป็นไฟล์",
+      "ค้นดูก่อนเสมอ: แท็บ SQL template → ใส่เลข AWB → คัดลอก 'ค้น AWB ขาเข้า' หรือ 'ค้น AWB ขาออก' → วางใน Dataflare → Ctrl+Enter",
+      "ดูคอลัมน์ pcs_wt (ชิ้น / กก.) ทุกแถวต้องตรงกัน — แถวไหนไม่ตรง หรือมีแถวเกินมา = จุดที่ต้องแก้",
+      "ขาเข้า (Import) = ตารางชื่อ kn_cargo_in_… / ขาออก (Export) = ตารางที่ไม่มี in_ เช่น kn_cargo_bookings",
+      "ปกติหน้างานทำ breakdown / D/O / บิลเอง — เราแก้แค่ข้อมูลตั้งต้น (ยกเว้นได้รับมอบหมาย ดู SOP 'ทำ breakdown แทนหน้างาน')",
+      "จะลบอะไร = back up ก่อนเสมอ แล้วเปิดไฟล์เช็กว่าครบ (ดู SOP 'Back up / คืนข้อมูล')",
+      "แก้เสร็จ → ค้นซ้ำอีกรอบให้ทุกแถวถูก → บอกหน้างานให้ปิดหน้าจอแล้วเปิดใหม่ (หรือ refresh) แล้วเช็ก",
+      "Dataflare: Ctrl+Enter = รันคำสั่ง · ปุ่มดาวน์โหลดมุมขวาล่าง = เซฟผลลัพธ์เป็นไฟล์ · ถ้าพิมพ์แล้วไม่ติด ให้คลิกหน้าต่าง Dataflare ก่อน (อาจถูกย่ออยู่)",
     ],
   },
   {
-    key: "ffm", title: "รับ FFM ใหม่ → สร้าง booking ขาเข้า",
+    key: "ffm-check", title: "📨 หน้างานส่ง FFM มา — เช็กก่อนทำ",
+    when: "ได้ message FFM ใหม่ / หน้างานขอให้ลง AWB จาก FFM",
     steps: [
-      "วาง FFM ในแท็บ 'ตรวจ FFM' ด้านบน — ถ้ามีเลข AWB ไม่ครบ 8 หลักหรือ check digit ไม่ผ่าน ให้ส่งกลับหน้างานแก้ก่อน",
-      "Postman → wms-message-extraction → FFM → Body: messageType = FFM, message = วาง FFM ทั้งก้อน → Send (ต้องได้ 200 OK)",
-      "อ่าน JSON: API ส่งทุก AWB ใน message กลับมา (ไม่ได้เช็กว่ามีในระบบแล้วหรือยัง) — ค่า $user_id / $flight_id / $airline_version_id ต้องค้นเอง",
-      "ค้น flight_id จาก kn_cargo_flights (airline_prefix เช่น TG = 217, flight_no = 221, depart/arrival, std ตามวัน) — ใช้ airline_version_id ของ flight นั้นกับ booking ด้วย",
-      "ค้น AWB ใน kn_cargo_in_bookings ว่าตัวไหนมีแล้ว — insert เฉพาะตัวที่ยังไม่มี",
-      "ค้น kn_cargo_imp_messages ของ flight นั้น: ถ้ามี message + BULK manifest อยู่แล้ว ให้ใช้ manifest เดิม (ไม่สร้าง BULK ซ้ำ)",
-      "insert ตามลำดับในคำสั่งเดียว: in_bookings → in_booking_routings (flight_id, mvt FFM) → in_booking_flights (flight_no, origin, destination, flight_date) → in_shipments (manifest_id, shipment_type T/P, piece, weight, volume, destination)",
-      "id ที่เป็น UUID ใน JSON ไม่ต้องใช้ — ตารางใช้ id ตัวเลขรันเอง ผูกกันด้วย RETURNING id",
-      "ตารางที่บังคับ created_at / created_by ต้องใส่ now() และ user id เอง",
-      "แจ้งหน้างานให้ทำ breakdown / D/O / บิลต่อเอง",
+      "แท็บ 'ตรวจ FFM' → วาง message ทั้งก้อน",
+      "ขึ้น ❌ สีแดง (เช่น AWB 9 หลัก, check digit ไม่ผ่าน) → อย่าเพิ่งยิง Postman ส่งกลับหน้างาน บอกให้ชัดว่าผิดตรงไหน เช่น \"เลข AWB 229-826956935 มี 9 หลัก ปกติ 8 หลัก รบกวนเช็กจากเอกสาร AWB\" (ถ้าบอกแค่ 'ขอ message ใหม่' หน้างานจะส่งอันเดิมกลับมา)",
+      "ระบบอาจเสนอ 'เลขที่ผ่าน check digit' ให้ — เป็นแค่การเดา ต้องให้หน้างานยืนยันก่อนใช้",
+      "ขึ้น ⚠️ บรรทัดเที่ยวบินมีส่วนต่อท้าย → ให้หน้างานยืนยันว่าตรงกับต้นฉบับ",
+      "ขึ้น ✅ สีเขียว → ไปต่อ SOP 'ลง AWB ขาเข้าจาก FFM'",
     ],
   },
   {
-    key: "amend-imp", title: "แก้จำนวนชิ้น / น้ำหนัก — ขาเข้า (Import)",
+    key: "ffm", title: "📥 ลง AWB ขาเข้าจาก FFM",
+    when: "FFM ผ่านการตรวจแล้ว แต่ AWB ยังไม่มีในระบบ",
     steps: [
-      "ค้นด้วย SQL template 'ค้น AWB ขาเข้า' ดูค่าในทุกตาราง",
-      "แก้ที่ kn_cargo_in_bookings (piece, weight, volume ถ้าเกี่ยว)",
-      "แก้ที่ kn_cargo_in_shipments ของ booking นั้น",
-      "แก้ที่ kn_cargo_in_breakdowns (ถ้ามี — ผูกกับ shipment_id)",
-      "แก้ที่ kn_cargo_in_awb_delivery_orders (ถ้ามี D/O แล้ว)",
-      "ค้นซ้ำอีกรอบเพื่อยืนยันว่าทุกตารางตรงกัน แล้วให้หน้างานเปิดหน้าจอใหม่เช็ก",
+      "Postman → wms-message-extraction → FFM → แท็บ Body → ช่อง message วาง FFM ทั้งก้อน → Send (ต้องได้ 200 OK)",
+      "JSON ที่ได้มี AWB ทุกใบใน message (API ไม่ได้เช็กว่ามีในระบบแล้วหรือยัง) — เอาไปใช้เฉพาะใบที่ยังไม่มี",
+      "SQL template 'ค้น AWB ขาเข้า' ทีละเลข → ใบที่มีผลแล้ว = ข้ามไป",
+      "SQL template 'หาเที่ยวบิน' → ใส่เลขเที่ยวบิน (เช่น 221) + วันที่ → ได้ flight id, airline_version และ message/manifest ของเที่ยวนั้น",
+      "ถ้าเที่ยวบินมี BULK manifest อยู่แล้ว → ใช้ manifest เดิม ไม่สร้างใหม่ (ไม่งั้นจะมี BULK ซ้ำ 2 อัน)",
+      "ข้อมูลที่ต้องสร้างต่อ 1 AWB: booking → routing (เที่ยวบิน, สถานะ FFM) → booking_flight (เลขเที่ยว, ต้นทาง-ปลายทาง, วันที่) → shipment (manifest, T/P, ชิ้น, กก., ลบ.ม.) — ส่งเคสให้ admin/dev รันคำสั่ง insert",
+      "แจ้งหน้างานให้ทำ breakdown → D/O → บิล ต่อเองในโปรแกรม",
     ],
   },
   {
-    key: "amend-exp", title: "แก้จำนวนชิ้น / น้ำหนัก — ขาออก (Export)",
+    key: "wrong-awb", title: "🔁 FFM ลง AWB ผิดใบ (ต้องลบใบผิด + ลงใบใหม่)",
+    when: "หน้างานบอกว่าของจริงคือ AWB อื่น หรือขอ 'ทำบิล AWB A และ cancel AWB B'",
     steps: [
-      "ค้นด้วย SQL template 'ค้น AWB ขาออก' — ดู bookings, booking_warehouses, shipments, handling_ratings",
-      "แก้ kn_cargo_bookings (ถ้ายังไม่ถูก)",
-      "แก้ kn_cargo_shipments ของ booking นั้น (piece, weight และ volume ถ้าถูกนับซ้ำ)",
+      "ค้นทั้ง 2 เลขด้วย 'ค้น AWB ขาเข้า' — มักเจอว่าใบผิดมีครบถึง breakdown/D/O แต่ใบที่ถูกไม่มีในระบบเลย",
+      "ขอ FFM ฉบับแก้จากหน้างาน (ได้ข้อมูลครบ: ต้นทาง, ชนิดสินค้า, SHC, ลบ.ม.) → ตรวจในแท็บ 'ตรวจ FFM'",
+      "ใบผิด → ทำตาม SOP 'ยกเลิก AWB ขาเข้า' (back up ก่อนลบ)",
+      "ใบถูก → ทำตาม SOP 'ลง AWB ขาเข้าจาก FFM' โดยใช้ message/manifest เดิมของเที่ยวบิน",
+      "ไม่ต้องแก้ข้อความ FFM เก่าใน message ของเที่ยวบิน — ข้อมูลที่ใช้งานจริงอยู่ในตารางอื่นแล้ว",
+      "แจ้งหน้างานทำ breakdown / D/O / บิลของใบใหม่ต่อ",
+    ],
+  },
+  {
+    key: "amend-imp", title: "⚖️ แก้จำนวนชิ้น / น้ำหนัก — ขาเข้า (Import)",
+    when: "หน้างานแจ้งชิ้น/น้ำหนักผิด งานขาเข้า",
+    steps: [
+      "SQL template 'ค้น AWB ขาเข้า' → ดู pcs_wt ทุกแถว",
+      "จุดที่ต้องแก้ (ถ้ามี): booking → shipment → breakdown → awb_do (D/O)",
+      "ถ้าจำนวนชิ้นเปลี่ยน ลบ.ม. มักต้องแก้ตามด้วย",
+      "ค้นซ้ำให้ทุกแถวตรงกัน แล้วให้หน้างานเปิดหน้าจอใหม่เช็ก",
+    ],
+  },
+  {
+    key: "amend-exp", title: "⚖️ แก้จำนวนชิ้น / น้ำหนัก — ขาออก (Export) / Document Details ขึ้นผิด",
+    when: "หน้างานแจ้งชิ้น/น้ำหนักผิด งานขาออก หรือหน้า Document Details (Handling and Rating) ขึ้นตัวเลขผิด",
+    steps: [
+      "SQL template 'ค้น AWB ขาออก' → ดู booking, warehouse, shipment, rating",
+      "⭐ เช็ก warehouse ก่อน: ถ้ามี 2 แถวค่าเท่ากัน สร้างห่างกันไม่กี่วินาที = กดรับเข้าคลังซ้ำ → ยอดรวมเป็น 2 เท่า (เช่น 1/8 กลายเป็น 2/16) — นี่คือต้นเหตุหลักที่ทำให้ Document Details ขึ้นผิด",
+      "แถวซ้ำ: เก็บแถวที่ถูกแก้ล่าสุด (มี updated_at ใหม่กว่า) ลบแถวที่ไม่เคยแก้ — back up ก่อนลบ",
+      "shipment ขึ้นยอดผิด → แก้ชิ้น / กก. / ลบ.ม. ให้ตรงของจริง",
+      "rating (handling_ratings) ขึ้นยอดผิด → แก้ info_piece / info_weight ได้ แต่ถ้า warehouse ยังซ้ำอยู่ หน้าจอก็ยังผิด",
+      "E-Weight Slip (kn_cargo_eweights) มีเลข AWB ด้วย — ถ้าค้นแล้วยังหาที่มาไม่เจอให้ดูตัวนี้",
       "ขาออกไม่มี breakdown / AWB delivery (เป็นของขาเข้าเท่านั้น)",
-      "ถ้าหน้า Document Details (Handling and Rating) ยังขึ้นค่าเดิม: แก้ kn_cargo_handling_ratings.info_piece / info_weight ของ AWB นั้น (rating ที่ถูกลบแล้วก็ยังถูกโหลดขึ้นมาได้)",
-      "เช็ก kn_cargo_booking_warehouses — ถ้ามี 2 แถวค่าเท่ากัน สร้างห่างกันไม่กี่วินาที = กดรับเข้าคลังซ้ำ ทำให้ยอดรวมเป็น 2 เท่า (ลบแถวซ้ำต้อง back up ก่อน)",
+      "แก้เสร็จ → ค้นซ้ำ → ให้หน้างานปิดหน้า Document Details แล้วเปิดใหม่",
     ],
   },
   {
-    key: "cancel", title: "ยกเลิก (cancel) AWB ขาเข้า — ลบ + back up",
+    key: "no-do", title: "🚫 หน้างานกดรับ D/O ไม่ได้ (Select Shipment ว่าง)",
+    when: "หน้า D/O เห็น AWB ในตารางบน แต่ช่อง Select Shipment ว่าง",
     steps: [
-      "ค้นทุกตารางที่ผูกกับ booking: in_booking_routings, in_booking_flights, in_shipments, in_breakdowns (ผ่าน shipment_id), in_awb_delivery_orders, in_delivery_orders (หัว D/O), notifications (delivery_id) และตารางลูกอื่นๆ ของ in_bookings",
-      "หัว D/O (in_delivery_orders) ลบได้เฉพาะเมื่อไม่มี AWB อื่นอยู่ใน D/O เดียวกัน",
-      "รัน SQL template 'Back up ก่อนลบ' → กดปุ่มดาวน์โหลดมุมขวาล่างของ Dataflare → JSON → ตั้งชื่อ backup_cancel_AWB_<เลข>_<วันที่>.json เก็บไว้",
-      "เปิดไฟล์เช็กว่ามีครบทุกแถว",
-      "รัน SQL template 'ลบ AWB ขาเข้า' (คำสั่งเดียว ลบไล่จากลูกไปแม่: notifications → awb_delivery_orders → delivery_orders → breakdowns → shipments → booking_flights → routings → bookings)",
+      "สาเหตุที่เจอบ่อย: ยังไม่ได้ทำ breakdown — ช่อง Select Shipment แสดงเฉพาะ shipment ที่ breakdown แล้ว",
+      "เช็ก: 'ค้น AWB ขาเข้า' → ไม่มีแถว breakdown และสถานะ booking ยังเป็น FFM (ใบที่ทำ D/O ได้จะเป็น RCF)",
+      "แจ้งหน้างาน: \"ต้องทำ Breakdown ของเที่ยว … ก่อน แล้วกลับมาหน้า D/O จะมี shipment ให้เลือก\"",
+      "ถ้าหน้างานทำ breakdown ไม่ได้จริง / ได้รับมอบหมายให้ทำแทน → SOP 'ทำ breakdown แทนหน้างาน'",
+    ],
+  },
+  {
+    key: "breakdown", title: "🛠 ทำ breakdown แทนหน้างาน (เมื่อได้รับมอบหมาย)",
+    when: "หัวหน้า/admin สั่งให้ทำ breakdown ให้ (ปกติหน้างานทำเอง)",
+    steps: [
+      "ใช้ข้อมูลจาก shipment ของ AWB นั้น (ชิ้น / กก. / ลบ.ม.) — ไม่ใช่การนับของจริง ให้หน้างานแจ้งถ้าของจริงไม่ตรง",
+      "เวลา RCF: ใช้เวลาเดียวกับ breakdown ของ AWB อื่นในเที่ยวบินเดียวกัน (มาเที่ยวเดียวกัน) — เวลานี้มีผลกับค่าเก็บรักษา",
+      "location ใช้ค่าเดียวกับ AWB อื่นในเที่ยว (ปกติ 1)",
+      "สร้างแถว breakdown + เปลี่ยนสถานะ booking และ routing จาก FFM เป็น RCF ในคำสั่งเดียว — ส่งเคสให้ admin/dev รัน",
+      "ค้นซ้ำ: ต้องเห็นแถว breakdown และสถานะ RCF → แจ้งหน้างาน refresh หน้า D/O แล้วกดรับ D/O / ออกบิลต่อ",
+    ],
+  },
+  {
+    key: "cancel", title: "❌ ยกเลิก (cancel) AWB ขาเข้า — back up แล้วลบ",
+    when: "หน้างานขอ cancel AWB / AWB ลงผิดใบ",
+    steps: [
+      "SQL template 'Back up ก่อนลบ AWB ขาเข้า' → คัดลอก → รันใน Dataflare",
+      "กดปุ่มดาวน์โหลดมุมขวาล่าง → เลือก JSON → Export → ตั้งชื่อ backup_cancel_AWB_<เลข>_<วันที่>.json (หน้าต่าง Save อาจเด้งไปอีกจอ)",
+      "เปิดไฟล์เช็กว่ามีครบทุกแถว (booking, routing, booking_flight, shipment, breakdown, D/O ฯลฯ)",
+      "ติ๊ก 'ฉัน back up แล้ว' → คัดลอก 'ลบ AWB ขาเข้า' → รัน — ลบทั้งหมดในคำสั่งเดียว ถ้ามีตารางลูกอื่นค้างจะ error และไม่ลบอะไรเลย",
+      "หัว D/O จะถูกลบเฉพาะเมื่อไม่มี AWB อื่นอยู่ใน D/O เดียวกัน",
       "ค้นซ้ำว่าไม่เหลือ — ไม่ต้องแตะ message FFM / manifest ของเที่ยวบิน เพราะ AWB อื่นยังใช้อยู่",
+      "ย้ายไฟล์ back up ไปเก็บที่ปลอดภัย (โฟลเดอร์ back up / OneDrive) อย่าทิ้งไว้ใน Downloads",
+    ],
+  },
+  {
+    key: "restore", title: "♻️ Back up / คืนข้อมูลที่ลบไป",
+    when: "ลบไปแล้วมีปัญหา ต้องเอาข้อมูลกลับ",
+    steps: [
+      "ไฟล์ back up เก็บทุกคอลัมน์ รวม id เดิม — ใส่คืนด้วย id เดิมได้ ไม่ชนกับข้อมูลใหม่ (เลข id รันไปข้างหน้าเสมอ)",
+      "คืนทีละแถว: INSERT INTO aotga.<ชื่อตาราง> SELECT * FROM jsonb_populate_record(NULL::aotga.<ชื่อตาราง>, '<row_json จากไฟล์>'::jsonb);",
+      "ต้องคืนตามลำดับ แม่ก่อนลูก: booking → routing / booking_flight / shipment → breakdown → หัว D/O → awb_do → notification",
+      "คืนได้เฉพาะสิ่งที่อยู่ในไฟล์ — งานที่หน้างานทำต่อหลังลบ (เช่น บิลใหม่) จะไม่ย้อนตาม",
     ],
   },
 ];
@@ -328,12 +389,16 @@ function SopList({ c }) {
   const [open, setOpen] = useState("rules");
   return (
     <div style={{ display: "grid", gap: 8 }}>
+      <div style={{ fontSize: 12, color: c.text400, margin: "0 2px" }}>เลือกหัวข้อที่ตรงกับเคส · อัปเดตล่าสุด {SOP_UPDATED}</div>
       {SOPS.map((s) => {
         const on = open === s.key;
         return (
           <div key={s.key} style={{ background: c.card, border: `1px solid ${on ? c.text400 : c.border}`, borderRadius: 12, overflow: "hidden" }}>
             <div onClick={() => setOpen(on ? "" : s.key)} style={{ padding: "12px 14px", cursor: "pointer", display: "flex", gap: 10, alignItems: "center" }}>
-              <div style={{ flex: 1, fontSize: 14.5, fontWeight: 800, color: c.text900 }}>{s.title}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 800, color: c.text900 }}>{s.title}</div>
+                {s.when && <div style={{ fontSize: 12, color: c.text500, marginTop: 2 }}>ใช้เมื่อ: {s.when}</div>}
+              </div>
               <span style={{ fontSize: 11.5, color: c.text400 }}>{s.steps.length} ขั้นตอน</span>
               <span style={{ color: c.text400, fontSize: 12 }}>{on ? "▴" : "▾"}</span>
             </div>
