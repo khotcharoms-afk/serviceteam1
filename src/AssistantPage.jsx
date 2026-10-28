@@ -22,7 +22,49 @@ const AI_EXAMPLES = [
   "สรุปเคสล่าสุดของโครงการ ",
   "เบอร์ผู้ติดต่อของลูกค้า ",
   "วิธีแก้ปัญหา ",
+  "เคส WMS: ",
 ];
+
+// กันข้อมูลส่วนบุคคลหลุดไปกับ AI: ซ่อนเลข 13 หลัก (เลขประจำตัวผู้เสียภาษี/บัตรประชาชน) ก่อนส่ง
+// เลข AWB (3+8 หลัก) ไม่โดน
+function maskSensitive(text) {
+  return text.replace(/(^|[^\d])(\d[\d -]{11,16}\d)(?!\d)/g, (m, pre, num) =>
+    num.replace(/\D/g, "").length === 13 ? `${pre}[ซ่อนเลข 13 หลัก]` : m);
+}
+
+// การ์ด SQL จากเครื่องมือ wms_make_sql — ผู้ใช้กดคัดลอกไปรันใน Dataflare เอง
+function SqlCard({ card, c }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try { await navigator.clipboard.writeText(card.sql); }
+    catch {
+      const ta = document.createElement("textarea");
+      ta.value = card.sql; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+  const danger = /^amend/.test(card.kind || "");
+  return (
+    <div style={{ background: c.card, border: `1px solid ${danger ? RED + "66" : c.border}`, borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderBottom: `1px solid ${c.borderSoft || c.border}` }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: danger ? RED : c.text900 }}>{danger ? "⚠️ " : "🔎 "}{card.title}</div>
+          <div style={{ fontSize: 11.5, color: c.text500, marginTop: 2 }}>AWB {card.awb}{card.note ? ` · ${card.note}` : ""}</div>
+          {card.warning && <div style={{ fontSize: 11.5, color: RED, marginTop: 2 }}>{card.warning}</div>}
+        </div>
+        <button onClick={copy} style={{ background: danger ? RED : PURPLE, border: "none", color: "#fff", borderRadius: 8, padding: "6px 12px",
+          fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}>
+          {copied ? "✓ คัดลอกแล้ว" : "คัดลอก SQL"}
+        </button>
+      </div>
+      <pre style={{ margin: 0, padding: "8px 12px", fontSize: 11, lineHeight: 1.5, color: c.text900, background: c.bg, overflowX: "auto",
+        maxHeight: 150, fontFamily: "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" }}>{card.sql}</pre>
+    </div>
+  );
+}
 
 // แสดง markdown แบบง่าย (ตัวหนา, รายการ, หัวข้อ) โดยไม่ใช้ innerHTML
 function renderInline(text, keyBase) {
@@ -210,7 +252,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
   }
 
   async function send(text, { forceAI = false } = {}) {
-    const q = (text ?? input).trim();
+    const q = maskSensitive((text ?? input).trim());
     if (!q || busy) return;
     setInput("");
     setError("");
@@ -313,7 +355,18 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
 
   // แปลง history เป็นฟองแชทที่ผู้ใช้เห็น (ซ่อน tool_result)
   const bubbles = [];
+  const toolNameById = {};
+  history.forEach((m) => m.content.forEach((b) => { if (b.type === "tool_use") toolNameById[b.id] = b.name; }));
   history.forEach((m, i) => {
+    if (m.role === "user") {
+      m.content.forEach((b, j) => {
+        if (b.type !== "tool_result" || toolNameById[b.tool_use_id] !== "wms_make_sql") return;
+        try {
+          const r = JSON.parse(b.content);
+          if (r?.sql) bubbles.push({ key: `${i}-sql-${j}`, who: "sql", card: r });
+        } catch { /* ignore */ }
+      });
+    }
     const texts = m.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
     if (m.role === "user" && texts) bubbles.push({ key: i, who: "me", text: texts });
     if (m.role === "assistant") {
@@ -394,7 +447,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: 10, background: PURPLE + "16", display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 15 : 17, flexShrink: 0 }}>🤖</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>ผู้ช่วย AI</div>
-          {!isMobile && <div style={{ fontSize: 11.5, color: c.text400 }}>ถามข้อมูลเคส โครงการ งานค้าง และประกันใกล้หมด</div>}
+          {!isMobile && <div style={{ fontSize: 11.5, color: c.text400 }}>ถามข้อมูลเคส โครงการ งานค้าง ประกันใกล้หมด และเคส WMS</div>}
         </div>
         {history.length > 0 && (
           <button onClick={() => { if (!busy) { setHistory([]); setError(""); } }} disabled={busy}
@@ -449,7 +502,9 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
           )}
 
           {bubbles.map((b) =>
-            b.who === "tool" ? (
+            b.who === "sql" ? (
+              <SqlCard key={b.key} card={b.card} c={c} />
+            ) : b.who === "tool" ? (
               <div key={b.key} style={{ fontSize: 11.5, color: c.text400, paddingLeft: 6 }}>🔎 {b.text}</div>
             ) : (
               <div key={b.key} style={{ display: "flex", justifyContent: b.who === "me" ? "flex-end" : "flex-start" }}>
@@ -508,7 +563,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         )}
         <form onSubmit={(e) => { e.preventDefault(); send(); }}
           style={{ maxWidth: 720, margin: "0 auto", display: "flex", gap: 8, alignItems: "flex-end" }}>
-          <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} rows={1} maxLength={2000}
+          <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} rows={1} maxLength={6000}
             placeholder="พิมพ์คำถาม…"
             enterKeyHint="send"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}

@@ -4,14 +4,15 @@
 
 import { daysLeft } from "./utils.js";
 import { deviceSearchText, sortDevices } from "./deviceImport.js";
+import { SOPS, parseFFM, awbCheckOk, sqlTemplates, amendSql, warehouseCheckSql } from "./WmsToolkit.jsx";
 
 const STATUS_LABEL = { open: "เปิดเคส", inprogress: "กำลังดำเนินการ", hold: "รอดำเนินการ", done: "เสร็จสิ้น" };
 const ACTIVE = new Set(["open", "inprogress", "hold"]);
 
 const ROLE_TOOLS = {
-  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices"],
-  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats"],
-  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats"],
+  user: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "wms_search_sop", "wms_check_ffm", "wms_make_sql"],
+  admin: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats", "wms_search_sop", "wms_check_ffm", "wms_make_sql"],
+  dev: ["search_cases", "get_case", "list_projects", "pending_work", "expiring_contracts", "search_knowledge", "search_devices", "case_stats", "wms_search_sop", "wms_check_ffm", "wms_make_sql"],
 };
 
 const lc = (s) => (s == null ? "" : String(s)).toLowerCase();
@@ -302,6 +303,76 @@ const TOOLS = {
     rows.sort(input.groupBy === "month" ? (a, b) => a.key.localeCompare(b.key) : (a, b) => b.total - a.total);
     return { totalCases: list.length, groupBy: input.groupBy, groups: rows.slice(0, 60) };
   },
+
+  // ── WMS (ระบบคลังสินค้า air cargo) — ใช้ SOP/ตัวตรวจ FFM/ตัวสร้าง SQL เดียวกับแท็บ WMS Toolkit ──
+  wms_search_sop(input) {
+    const q = lc(input.query).trim();
+    const words = q.split(/[\s,]+/).filter((w) => w.length >= 2);
+    // ภาษาไทยไม่เว้นวรรค → นับทั้ง "คำค้นอยู่ในหัวข้อ" และ "คำในหัวข้ออยู่ในคำค้น"
+    const keyTokens = (str) => lc(str).replace(/[()—:·,]/g, " ").split(/\s+/).filter((w) => w.length >= 3 && !/^[^a-z0-9\u0E00-\u0E7F]+$/.test(w));
+    const scored = SOPS.map((s) => {
+      const title = lc(s.title), when = lc(s.when || ""), body = lc(s.steps.join(" "));
+      let score = 0;
+      for (const w of words) {
+        if (title.includes(w)) score += 4;
+        if (when.includes(w)) score += 3;
+        if (body.includes(w)) score += 1;
+      }
+      for (const t of keyTokens(`${s.title} ${s.when || ""}`)) if (q.includes(t)) score += 3;
+      return { s, score };
+    }).sort((a, b) => b.score - a.score);
+    const hits = scored.filter((x) => x.score > 0).slice(0, 3);
+    return {
+      found: hits.length,
+      sops: hits.map(({ s }) => ({ title: s.title, when: s.when || "", steps: s.steps })),
+      allTitles: SOPS.map((s) => s.title),
+    };
+  },
+
+  wms_check_ffm(input) {
+    const r = parseFFM(String(input.message || ""));
+    return {
+      header: r.header, unloading: r.unloading, ulds: r.ulds, ended: r.ended, problems: r.problems,
+      awbs: r.awbs.map((a) => ({
+        awb: `${a.prefix}-${a.awb}`, route: `${a.orig}-${a.dest}`, shipmentCode: a.code, piece: a.pcs, weight: a.wt, volume: a.vol,
+        nature: a.nature, shc: a.shc, uld: a.uld, ok: a.issues.length === 0, issues: a.issues, checkDigitCandidates: a.cands.map((x) => `${a.prefix}-${x}`),
+      })),
+    };
+  },
+
+  // คืน SQL ให้หน้าแชทแสดงเป็นการ์ดพร้อมปุ่มคัดลอก (ไม่มีชนิด "ลบ" — งานลบต้องให้ admin/dev ทำ)
+  wms_make_sql(input) {
+    const m = String(input.awb || "").replace(/\s/g, "").match(/^(\d{3})-?(\d{8})$/);
+    if (!m) return { error: "เลข AWB ต้องเป็น prefix 3 หลัก + 8 หลัก เช่น 217-75613171" };
+    const [, prefix, awb] = m;
+    const warn = awbCheckOk(awb) ? null : `เลข ${prefix}-${awb} ไม่ผ่าน check digit — ตรวจเลขกับหน้างานอีกครั้ง`;
+    const t = sqlTemplates(prefix, awb);
+    const num = (x) => x !== undefined && x !== null && String(x).trim() !== "" && /^\d+(\.\d+)?$/.test(String(x).trim());
+    let title, note, sql;
+    switch (input.kind) {
+      case "find_import": ({ title, sql } = t.find((x) => x.key === "find-in")); note = "รันแล้ววางผลกลับมาในแชท เพื่อให้ช่วยอ่านว่าแถวไหนผิด"; break;
+      case "find_export": ({ title, sql } = t.find((x) => x.key === "find-ex")); note = "รันแล้ววางผลกลับมาในแชท เพื่อให้ช่วยอ่านว่าแถวไหนผิด"; break;
+      case "warehouse_check": title = "เช็กแถวรับเข้าคลังซ้ำ (ขาออก)"; sql = warehouseCheckSql(prefix, awb); note = "ถ้ามีมากกว่า 1 แถวค่าเท่ากัน = กดรับเข้าคลังซ้ำ ต้องให้ admin/dev ลบแถวซ้ำ"; break;
+      case "flight": {
+        const no = String(input.flight_no || "").replace(/^[A-Z]{2}\s*/i, "").trim();
+        if (!/^\d{1,4}[A-Z]?$/i.test(no) || !/^\d{4}-\d{2}-\d{2}$/.test(String(input.flight_date || ""))) return { error: "ต้องมี flight_no (เช่น 221) และ flight_date (YYYY-MM-DD)" };
+        title = "หาเที่ยวบิน + message FFM ของเที่ยวบิน"; sql = t.find((x) => x.key === "flight").sql({ no: no.toUpperCase(), date: input.flight_date }); note = "ได้ flight id / message / manifest ของเที่ยวนั้น"; break;
+      }
+      case "amend_import":
+      case "amend_export": {
+        if (!/^\d+$/.test(String(input.piece ?? "").trim()) || !num(input.weight)) return { error: "ต้องมี piece (จำนวนเต็ม) และ weight ที่ถูกต้อง" };
+        if (input.volume !== undefined && input.volume !== null && String(input.volume).trim() !== "" && !num(input.volume)) return { error: "volume ต้องเป็นตัวเลข" };
+        if (!/^\d+$/.test(String(input.wms_user_id ?? "").trim())) return { error: "ต้องมี wms_user_id (user id ของผู้แก้ในระบบ WMS เป็นตัวเลข) — ถามผู้ใช้ก่อน" };
+        const dir = input.kind === "amend_import" ? "in" : "ex";
+        title = `แก้ชิ้น/น้ำหนัก ${dir === "in" ? "ขาเข้า" : "ขาออก"} เป็น ${input.piece} ชิ้น / ${input.weight} กก.`;
+        sql = amendSql(dir, prefix, awb, String(input.piece).trim(), String(input.weight).trim(), input.volume == null ? "" : String(input.volume).trim(), String(input.wms_user_id).trim());
+        note = "แก้ทุกตารางในคำสั่งเดียว ผลจะบอกจำนวนแถวที่แก้ — ถ้าได้ 0 ทั้งหมด = ไม่ได้แก้ (มีหลาย shipment ต้องให้ admin/dev ทำ) แก้เสร็จให้ค้นซ้ำ";
+        break;
+      }
+      default: return { error: "kind ไม่ถูกต้อง" };
+    }
+    return { shownToUser: true, kind: input.kind, awb: `${prefix}-${awb}`, title, note, warning: warn, sql };
+  },
 };
 
 // รันเครื่องมือหนึ่งตัว → คืน string JSON สำหรับ tool_result
@@ -329,4 +400,7 @@ export const TOOL_LABELS = {
   case_stats: "สรุปสถิติเคส",
   search_knowledge: "ค้น Knowledge Hub",
   search_devices: "ค้นอุปกรณ์/รีโมท",
+  wms_search_sop: "ค้น SOP ของ WMS",
+  wms_check_ffm: "ตรวจ FFM",
+  wms_make_sql: "เตรียม SQL ของ WMS",
 };

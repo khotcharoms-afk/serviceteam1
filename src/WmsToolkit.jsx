@@ -85,7 +85,7 @@ export function parseFFM(raw) {
 // when = ใช้เมื่อไหร่ (ภาษาหน้างาน), steps = ทีละขั้น อ้างชื่อปุ่ม/template ในหน้านี้ให้มากที่สุด
 const SOP_UPDATED = "28 ต.ค. 2569";
 
-const SOPS = [
+export const SOPS = [
   {
     key: "rules", title: "📌 กติกาพื้นฐาน (อ่านก่อนแก้อะไร)",
     when: "ทุกเคส",
@@ -247,7 +247,7 @@ const SOPS = [
 
 const S = "aotga.";
 
-function sqlTemplates(prefix, awb) {
+export function sqlTemplates(prefix, awb) {
   const A = `'${awb}'`, P = `'${prefix}'`;
   const inBk = `SELECT id FROM ${S}kn_cargo_in_bookings WHERE prefix = ${P} AND awb = ${A}`;
   const exBk = `SELECT id FROM ${S}kn_cargo_bookings WHERE prefix = ${P} AND awb = ${A}`;
@@ -536,7 +536,7 @@ function SqlTemplates({ c }) {
 // สร้าง SQL แก้ชิ้น / น้ำหนัก (/ ลบ.ม.) ทุกตารางที่เกี่ยวในคำสั่งเดียว
 // กันพลาด: แก้เฉพาะเมื่อ AWB มี booking 1 ใบ และ shipment 1 แถว (ถ้ามีหลาย shipment = เคส partial ต้องแก้มือ)
 
-function amendSql(dir, prefix, awb, pcs, wt, vol, uid) {
+export function amendSql(dir, prefix, awb, pcs, wt, vol, uid) {
   const P = `'${prefix}'`, A = `'${awb}'`;
   const V = vol === "" ? null : vol;
   if (dir === "in") {
@@ -587,7 +587,7 @@ WITH u_bk AS (
 SELECT (SELECT count(*) FROM u_bk) AS booking, (SELECT count(*) FROM u_ship) AS shipment, (SELECT count(*) FROM u_rt) AS rating;`;
 }
 
-function warehouseCheckSql(prefix, awb) {
+export function warehouseCheckSql(prefix, awb) {
   return `-- นับแถวรับเข้าคลัง: ถ้ามี 2 แถวค่าเท่ากัน สร้างห่างกันไม่กี่วินาที = กดรับเข้าคลังซ้ำ (ลบแถวซ้ำ ต้อง back up ก่อน)
 SELECT w.id, w.piece || ' / ' || w.weight AS pcs_wt, w.created_at::text AS created, w.updated_at::text AS updated
 FROM ${S}kn_cargo_booking_warehouses w
