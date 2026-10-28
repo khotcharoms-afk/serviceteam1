@@ -207,6 +207,20 @@ const SOPS = [
     ],
   },
   {
+    key: "awb-no", title: "🔢 แก้เลข AWB (Amendment MAWB No.)",
+    when: "หน้างานขอเปลี่ยนเลข AWB จากเลขเดิมเป็นเลขใหม่",
+    steps: [
+      "เช็กเลขใหม่ในแท็บ 'ตรวจ FFM' หรือคำนวณเอง: 7 หลักแรก หาร 7 เศษต้องเท่ากับหลักสุดท้าย — เลขเดิมที่ผิดมักไม่ผ่าน check digit",
+      "SQL template 'ค้น AWB ขาเข้า/ขาออก' ด้วยเลขใหม่ → ต้องไม่เจอ (ถ้าเจอ = มีใบนี้อยู่แล้ว ห้ามเปลี่ยนทับ ต้องคุยก่อน)",
+      "เลข AWB เก็บอยู่ที่ booking (kn_cargo_in_bookings / kn_cargo_bookings) ที่เดียว — routing, shipment, breakdown, D/O ผูกด้วย booking_id แก้ booking แล้วเปลี่ยนตามเอง",
+      "ที่อื่นที่มีเลข AWB: imp_messages (FFM ดิบ) และ message_centers (ประวัติ FSU ที่ระบบสร้าง) — ปกติไม่แก้ เก็บเป็นประวัติ",
+      "Back up แถว booking (+ message_centers ถ้ามี) เป็นไฟล์ก่อน",
+      "แก้ awb ใน booking แถวเดียว ใส่เงื่อนไขเลขเดิมใน WHERE และกันเลขใหม่ซ้ำ (NOT EXISTS) — ส่งเคสให้ admin/dev รัน",
+      "ค้นซ้ำด้วยเลขใหม่: ต้องเห็น booking, routing, shipment, breakdown, D/O ครบ และค้นเลขเดิมใน booking ต้องไม่เจอ",
+      "ถ้าระบบส่ง FSU เลขเดิมไปสายการบินแล้ว → แจ้งหน้างาน/สายการบินเอง แก้ในฐานข้อมูลเราไม่ได้",
+    ],
+  },
+  {
     key: "partial", title: "✂️ Partial Shipment — ย้าย AWB ไปเที่ยวบินอื่น",
     when: "เคส Partial Shipment / ของมาไม่ครบหรือต้องย้ายไปลงอีกเที่ยวบิน",
     steps: [
