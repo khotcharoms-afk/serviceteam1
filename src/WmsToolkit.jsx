@@ -139,6 +139,7 @@ const SOPS = [
     key: "amend-imp", title: "⚖️ แก้จำนวนชิ้น / น้ำหนัก — ขาเข้า (Import)",
     when: "หน้างานแจ้งชิ้น/น้ำหนักผิด งานขาเข้า",
     steps: [
+      "ทางลัด: แท็บ '⚖️ แก้น้ำหนัก' → เลือกขาเข้า ใส่ AWB + ค่าที่ถูก → ทำตามขั้นที่ 1–3 (กดคัดลอกไปรันทีละขั้น)",
       "SQL template 'ค้น AWB ขาเข้า' → ดู pcs_wt ทุกแถว",
       "จุดที่ต้องแก้ (ถ้ามี): booking → shipment → breakdown → awb_do (D/O)",
       "ถ้าจำนวนชิ้นเปลี่ยน ลบ.ม. มักต้องแก้ตามด้วย",
@@ -149,6 +150,7 @@ const SOPS = [
     key: "amend-exp", title: "⚖️ แก้จำนวนชิ้น / น้ำหนัก — ขาออก (Export) / Document Details ขึ้นผิด",
     when: "หน้างานแจ้งชิ้น/น้ำหนักผิด งานขาออก หรือหน้า Document Details (Handling and Rating) ขึ้นตัวเลขผิด",
     steps: [
+      "ทางลัด: แท็บ '⚖️ แก้น้ำหนัก' → เลือกขาออก ใส่ AWB + ค่าที่ถูก → ทำตามขั้นที่ 1–3 (มีขั้นเช็กแถวคลังซ้ำให้ด้วย)",
       "SQL template 'ค้น AWB ขาออก' → ดู booking, warehouse, shipment, rating",
       "⭐ เช็ก warehouse ก่อน: ถ้ามี 2 แถวค่าเท่ากัน สร้างห่างกันไม่กี่วินาที = กดรับเข้าคลังซ้ำ → ยอดรวมเป็น 2 เท่า (เช่น 1/8 กลายเป็น 2/16) — นี่คือต้นเหตุหลักที่ทำให้ Document Details ขึ้นผิด",
       "แถวซ้ำ: เก็บแถวที่ถูกแก้ล่าสุด (มี updated_at ใหม่กว่า) ลบแถวที่ไม่เคยแก้ — back up ก่อนลบ",
@@ -515,10 +517,150 @@ function SqlTemplates({ c }) {
   );
 }
 
+
+// ───────────────────────── ตัวช่วยแก้น้ำหนัก ─────────────────────────
+// สร้าง SQL แก้ชิ้น / น้ำหนัก (/ ลบ.ม.) ทุกตารางที่เกี่ยวในคำสั่งเดียว
+// กันพลาด: แก้เฉพาะเมื่อ AWB มี booking 1 ใบ และ shipment 1 แถว (ถ้ามีหลาย shipment = เคส partial ต้องแก้มือ)
+
+function amendSql(dir, prefix, awb, pcs, wt, vol, uid) {
+  const P = `'${prefix}'`, A = `'${awb}'`;
+  const V = vol === "" ? null : vol;
+  if (dir === "in") {
+    const bk = `SELECT id FROM ${S}kn_cargo_in_bookings WHERE prefix = ${P} AND awb = ${A}`;
+    const guard = `(SELECT count(*) FROM ${S}kn_cargo_in_bookings WHERE prefix = ${P} AND awb = ${A}) = 1
+    AND (SELECT count(*) FROM ${S}kn_cargo_in_shipments WHERE booking_id IN (${bk})) = 1`;
+    const setV = V === null ? "" : `, volume = ${V}`;
+    return `-- แก้ AWB ขาเข้า ${prefix}-${awb} เป็น ${pcs} ชิ้น / ${wt} กก.${V === null ? "" : ` / ${V} ลบ.ม.`}
+-- ถ้าผลออกมา 0 ทุกช่อง = ไม่ได้แก้อะไร (ไม่พบ AWB / มีหลาย booking / หลาย shipment)
+WITH u_bk AS (
+  UPDATE ${S}kn_cargo_in_bookings SET piece = ${pcs}, weight = ${wt}${setV}, updated_at = now(), updated_by = ${uid}
+  WHERE prefix = ${P} AND awb = ${A} AND ${guard}
+  RETURNING id
+), u_ship AS (
+  UPDATE ${S}kn_cargo_in_shipments SET piece = ${pcs}, weight = ${wt}${setV}, updated_at = now(), updated_by = ${uid}
+  WHERE booking_id IN (${bk}) AND ${guard}
+  RETURNING id
+), u_bd AS (
+  UPDATE ${S}kn_cargo_in_breakdowns SET piece = ${pcs}, weight = ${wt}${setV}, updated_at = now(), updated_by = ${uid}
+  WHERE deleted_at IS NULL AND shipment_id IN (SELECT id FROM ${S}kn_cargo_in_shipments WHERE booking_id IN (${bk})) AND ${guard}
+  RETURNING id
+), u_do AS (
+  UPDATE ${S}kn_cargo_in_awb_delivery_orders SET piece = ${pcs}, weight = ${wt}${setV}
+  WHERE deleted_at IS NULL AND booking_id IN (${bk}) AND ${guard}
+  RETURNING id
+)
+SELECT (SELECT count(*) FROM u_bk) AS booking, (SELECT count(*) FROM u_ship) AS shipment,
+  (SELECT count(*) FROM u_bd) AS breakdown, (SELECT count(*) FROM u_do) AS awb_do;`;
+  }
+  const bk = `SELECT id FROM ${S}kn_cargo_bookings WHERE prefix = ${P} AND awb = ${A}`;
+  const guard = `(SELECT count(*) FROM ${S}kn_cargo_bookings WHERE prefix = ${P} AND awb = ${A}) = 1
+    AND (SELECT count(*) FROM ${S}kn_cargo_shipments WHERE booking_id IN (${bk})) <= 1`;
+  return `-- แก้ AWB ขาออก ${prefix}-${awb} เป็น ${pcs} ชิ้น / ${wt} กก.${V === null ? "" : ` / ${V} ลบ.ม.`}
+-- ไม่แก้ตารางรับเข้าคลัง (booking_warehouses) — ถ้ามีแถวซ้ำ ต้องลบแถวซ้ำแยก (ดูขั้นที่ 1)
+WITH u_bk AS (
+  UPDATE ${S}kn_cargo_bookings SET piece = ${pcs}, weight = ${wt}, updated_at = now()
+  WHERE prefix = ${P} AND awb = ${A} AND ${guard}
+  RETURNING id
+), u_ship AS (
+  UPDATE ${S}kn_cargo_shipments SET piece = ${pcs}, weight = ${wt}${V === null ? "" : `, volume = ${V}`}, updated_at = now(), updated_by = ${uid}
+  WHERE booking_id IN (${bk}) AND ${guard}
+  RETURNING id
+), u_rt AS (
+  UPDATE ${S}kn_cargo_handling_ratings SET info_piece = ${pcs}, info_weight = ${wt}
+  WHERE awb = ${A} AND ${guard}
+  RETURNING id
+)
+SELECT (SELECT count(*) FROM u_bk) AS booking, (SELECT count(*) FROM u_ship) AS shipment, (SELECT count(*) FROM u_rt) AS rating;`;
+}
+
+function warehouseCheckSql(prefix, awb) {
+  return `-- นับแถวรับเข้าคลัง: ถ้ามี 2 แถวค่าเท่ากัน สร้างห่างกันไม่กี่วินาที = กดรับเข้าคลังซ้ำ (ลบแถวซ้ำ ต้อง back up ก่อน)
+SELECT w.id, w.piece || ' / ' || w.weight AS pcs_wt, w.created_at::text AS created, w.updated_at::text AS updated
+FROM ${S}kn_cargo_booking_warehouses w
+WHERE w.booking_id IN (SELECT id FROM ${S}kn_cargo_bookings WHERE prefix = '${prefix}' AND awb = '${awb}')
+ORDER BY w.id;`;
+}
+
+function AmendHelper({ c }) {
+  const [dir, setDir] = useState("in");
+  const [awbText, setAwbText] = useState("");
+  const [pcs, setPcs] = useState("");
+  const [wt, setWt] = useState("");
+  const [vol, setVol] = useState("");
+  const [uid, setUid] = useState("129");
+  const [copied, copy] = useCopy();
+
+  const m = awbText.replace(/\s/g, "").match(/^(\d{3})-?(\d{8})$/);
+  const prefix = m?.[1], awb = m?.[2];
+  const num = (x) => /^\d+(\.\d+)?$/.test(String(x).trim());
+  const ok = m && /^\d+$/.test(pcs.trim()) && num(wt) && (vol.trim() === "" || num(vol)) && /^\d+$/.test(uid.trim());
+
+  const IS = { border: `1px solid ${c.border}`, borderRadius: 10, padding: "9px 12px", fontSize: 13.5, fontFamily: "inherit", outline: "none",
+    background: c.card, color: c.text900, boxSizing: "border-box", width: "100%" };
+  const LB = { fontSize: 12, color: c.text500, fontWeight: 700, marginBottom: 4, display: "block" };
+  const chip = (on) => ({ padding: "8px 14px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+    border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card, color: on ? c.onInk : c.text500 });
+
+  const steps = [];
+  if (ok) {
+    const t = sqlTemplates(prefix, awb);
+    const find = t.find((x) => x.key === (dir === "in" ? "find-in" : "find-ex")).sql;
+    steps.push({ key: "s1", title: "ขั้นที่ 1 — ค้นดูค่าปัจจุบัน", note: "รันแล้วดูคอลัมน์ pcs_wt ว่าแถวไหนผิด" + (dir === "in" ? "" : " และดูว่ามีแถว warehouse เกิน 1 แถวไหม"), sql: find, kind: "read" });
+    if (dir === "ex") steps.push({ key: "s1b", title: "ขั้นที่ 1.1 — เช็กแถวรับเข้าคลังซ้ำ", note: "ถ้ามีมากกว่า 1 แถว ให้ส่งเคสให้ admin/dev ลบแถวซ้ำ (back up ก่อน) — แก้ตัวเลขอย่างเดียวไม่หาย", sql: warehouseCheckSql(prefix, awb), kind: "read" });
+    steps.push({ key: "s2", title: "ขั้นที่ 2 — แก้ทุกตารางในคำสั่งเดียว", note: "ผลจะบอกจำนวนแถวที่แก้ในแต่ละตาราง ถ้าได้ 0 ทั้งหมด = ไม่ได้แก้ (AWB ไม่พบ / มีหลาย shipment ต้องแก้มือ)", sql: amendSql(dir, prefix, awb, pcs.trim(), wt.trim(), vol.trim(), uid.trim()), kind: "danger" });
+    steps.push({ key: "s3", title: "ขั้นที่ 3 — ค้นซ้ำให้ทุกแถวถูก", note: "pcs_wt ทุกแถวต้องเป็น " + `${pcs} / ${wt}` + " แล้วบอกหน้างานปิดหน้าจอเปิดใหม่เช็ก", sql: find, kind: "read" });
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 14, display: "grid", gap: 10 }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={() => setDir("in")} style={chip(dir === "in")}>ขาเข้า (Import)</button>
+          <button onClick={() => setDir("ex")} style={chip(dir === "ex")}>ขาออก (Export)</button>
+        </div>
+        <div>
+          <label style={LB}>เลข AWB</label>
+          <input value={awbText} onChange={(e) => setAwbText(e.target.value)} placeholder="เช่น 829-05306136" style={{ ...IS, fontFamily: "ui-monospace,Consolas,monospace" }} />
+          {awbText.trim() && !m && <div style={{ fontSize: 12, color: c.danger, marginTop: 4 }}>รูปแบบต้องเป็น prefix 3 หลัก - เลข AWB 8 หลัก</div>}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 8 }}>
+          <div><label style={LB}>ชิ้นที่ถูก</label><input value={pcs} onChange={(e) => setPcs(e.target.value)} inputMode="numeric" placeholder="1" style={IS} /></div>
+          <div><label style={LB}>น้ำหนักที่ถูก (กก.)</label><input value={wt} onChange={(e) => setWt(e.target.value)} inputMode="decimal" placeholder="8" style={IS} /></div>
+          <div><label style={LB}>ลบ.ม. (ไม่บังคับ)</label><input value={vol} onChange={(e) => setVol(e.target.value)} inputMode="decimal" placeholder="เว้นว่าง = ไม่แก้" style={IS} /></div>
+          <div><label style={LB}>user id ผู้แก้</label><input value={uid} onChange={(e) => setUid(e.target.value)} inputMode="numeric" style={IS} /></div>
+        </div>
+        <div style={{ fontSize: 12, color: c.text400, lineHeight: 1.6 }}>
+          {dir === "in" ? "จะแก้: booking · shipment · breakdown · AWB D/O (ถ้ามี)" : "จะแก้: booking · shipment · handling rating (หน้า Document Details) — ไม่แตะตารางรับเข้าคลัง"}
+        </div>
+      </div>
+
+      {!ok ? (
+        <div style={{ textAlign: "center", color: c.text400, padding: "26px 10px", fontSize: 13 }}>ใส่เลข AWB + ชิ้น + น้ำหนักที่ถูก แล้วจะได้ SQL ทีละขั้น</div>
+      ) : steps.map((st) => (
+        <div key={st.key} style={{ background: c.card, border: `1px solid ${st.kind === "danger" ? c.danger : c.border}`, borderRadius: 12, overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${c.borderSoft}` }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: st.kind === "danger" ? c.danger : c.text900 }}>{st.title}</div>
+              <div style={{ fontSize: 12, color: c.text500, marginTop: 2, lineHeight: 1.5 }}>{st.note}</div>
+            </div>
+            <button onClick={() => copy(st.key, st.sql)} style={{ background: st.kind === "danger" ? c.danger : c.ink, border: "none", color: "#fff", borderRadius: 8,
+              padding: "6px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+              {copied === st.key ? "✓ คัดลอกแล้ว" : "คัดลอก"}
+            </button>
+          </div>
+          <pre style={{ margin: 0, padding: "10px 12px", fontSize: 11.5, lineHeight: 1.55, color: c.text900, background: c.bg, overflowX: "auto",
+            fontFamily: "ui-monospace,Consolas,monospace", maxHeight: 220 }}>{st.sql}</pre>
+        </div>
+      ))}
+      <div style={{ fontSize: 12, color: c.text400, lineHeight: 1.6 }}>วิธีรัน: กดคัดลอก → Dataflare หน้า SQL Query → Ctrl+A แล้ว Ctrl+V → Ctrl+Enter</div>
+    </div>
+  );
+}
+
 export default function WmsToolkit() {
   const { c } = useTheme();
   const [tab, setTab] = useState("ffm");
-  const tabs = [["ffm", "ตรวจ FFM"], ["sop", "SOP"], ["sql", "SQL template"]];
+  const tabs = [["ffm", "ตรวจ FFM"], ["amend", "⚖️ แก้น้ำหนัก"], ["sop", "SOP"], ["sql", "SQL template"]];
   const chip = (on) => ({ padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
     whiteSpace: "nowrap", border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card, color: on ? c.onInk : c.text500 });
   return (
@@ -531,6 +673,7 @@ export default function WmsToolkit() {
       </div>
       {tab === "ffm" && <FfmChecker c={c} />}
       {tab === "sop" && <SopList c={c} />}
+      {tab === "amend" && <AmendHelper c={c} />}
       {tab === "sql" && <SqlTemplates c={c} />}
     </div>
   );
