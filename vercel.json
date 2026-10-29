@@ -1,6 +1,13 @@
 {
   "functions": {
-    "api/robot-stats.js": { "maxDuration": 30 },
-    "api/sheet-sync.js": { "maxDuration": 60 }
+    "api/robot-stats.js": {
+      "maxDuration": 30
+    },
+    "api/sheet-sync.js": {
+      "maxDuration": 60
+    },
+    "api/smartpole.js": {
+      "maxDuration": 60
+    }
   }
 }

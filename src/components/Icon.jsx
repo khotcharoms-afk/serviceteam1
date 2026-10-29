@@ -18,6 +18,7 @@ const PATHS = {
   wrench: "M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4 2.6-2.6Z",
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v4l3 2",
   calendar: "M4 6h16v14H4zM4 10h16M9 3v4m6-4v4",
+  camera: "M4 8h3l2-3h6l2 3h3v11H4V8Zm8 9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
   leave: "M9 4h6M8 4h8v16H8zM11 9h2M10 13h4",
 };
 export default function Icon({ name, size = 16, stroke = 1.9 }) {

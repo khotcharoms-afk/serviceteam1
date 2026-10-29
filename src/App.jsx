@@ -23,6 +23,7 @@ const CaseLogPage = lazy(() => import("./CaseLogPage.jsx"));
 const KnowledgeHub = lazy(() => import("./KnowledgeHub.jsx"));
 const DevicesPage = lazy(() => import("./DevicesPage.jsx"));
 const RequisitionPage = lazy(() => import("./RequisitionPage.jsx"));
+const SmartPolePage = lazy(() => import("./SmartPolePage.jsx"));
 const CaseToKnowledge = lazy(() => import("./components/CaseToKnowledge.jsx"));
 const ProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const TaskBoard = lazy(() => import("./TaskBoard.jsx"));
@@ -57,6 +58,7 @@ export default function App({ currentUser, onSignOut }) {
   const [robotIssuesPage,setRobotIssuesPage] = useState(false);
   const [devicesPage,setDevicesPage] = useState(false);
   const [requisitionPage,setRequisitionPage] = useState(false);
+  const [smartPolePage,setSmartPolePage] = useState(false);
   // ผู้ช่วย AI เป็นแผงด้านซ้าย ไม่ใช่หน้าแยก — mount ครั้งแรกที่เปิด แล้วค้างไว้ให้แชทไม่หาย
   const [assistantOpen,setAssistantOpen] = useState(false);
   const [assistantMounted,setAssistantMounted] = useState(false);
@@ -78,7 +80,7 @@ export default function App({ currentUser, onSignOut }) {
     ["ot", otPage, setOtPage], ["tasks", taskPage, setTaskPage], ["onsite", onsitePage, setOnsitePage],
     ["shift", shiftPage, setShiftPage], ["knowledge", knowledgePage, setKnowledgePage],
     ["robot-stats", robotStatsPage, setRobotStatsPage], ["case-log", caseLogPage, setCaseLogPage],
-    ["robot-issues", robotIssuesPage, setRobotIssuesPage], ["devices", devicesPage, setDevicesPage], ["requisition", requisitionPage, setRequisitionPage],
+    ["robot-issues", robotIssuesPage, setRobotIssuesPage], ["devices", devicesPage, setDevicesPage], ["requisition", requisitionPage, setRequisitionPage], ["smartpole", smartPolePage, setSmartPolePage],
     ["dashboard", dashboardPage, setDashboardPage],
   ];
   useEffect(() => {
@@ -802,6 +804,7 @@ export default function App({ currentUser, onSignOut }) {
   if(robotIssuesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotIssuesPage onBack={()=>setRobotIssuesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(devicesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><DevicesPage onBack={()=>setDevicesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(requisitionPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RequisitionPage onBack={()=>setRequisitionPage(false)} currentUser={currentUser} projects={projects}/></Suspense></ThemeContext.Provider>;
+  if(smartPolePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><SmartPolePage onBack={()=>setSmartPolePage(false)}/></Suspense></ThemeContext.Provider>;
   if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></Suspense></ThemeContext.Provider>;
 
   return (
@@ -861,6 +864,7 @@ export default function App({ currentUser, onSignOut }) {
         setRobotIssuesPage={setRobotIssuesPage}
         setDevicesPage={setDevicesPage}
         setRequisitionPage={setRequisitionPage}
+        setSmartPolePage={setSmartPolePage}
         setAssistantPage={openAssistant}
         setCaseLogPage={setCaseLogPage}
         isDev={currentUser?.role==="dev"}
