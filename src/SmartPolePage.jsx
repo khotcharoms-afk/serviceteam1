@@ -9,12 +9,72 @@ const fmtDay = (s) => { const [y, m, d] = s.split("-"); return `${Number(d)}/${N
 const fmtLong = (s) => { const [y, m, d] = s.split("-"); return `${Number(d)} ${TH_MONTH[Number(m) - 1]} ${Number(y) + 543}`; };
 const num = (v) => (v === null || v === undefined ? "–" : Number(v).toLocaleString());
 
-export function buildSmartPoleReport(date, sites) {
-  const lines = [`รายงาน Smart Pole ประจำวันที่ ${fmtDay(date)}`, ""];
-  for (const s of sites) {
-    lines.push(s.site);
-    if (s.faces === null && s.vip === null && s.blacklist === null) lines.push("ไม่มีข้อมูล");
-    else lines.push(`ใบหน้า ${num(s.faces)} | VIP ${num(s.vip)} | Blacklist ${num(s.blacklist)}`);
+// ── รูปแบบรายงานสถานะอุปกรณ์ (ตามที่ทีมส่งในไลน์) ──
+// kind: face = ตรวจจับใบหน้า (ดึงตัวเลขจาก dashboard ใน src) · incident = ตรวจจับ Incident
+//       intrusion = มีแค่ Intrusion · standalone = เครื่อง Stand alone (ไม่มีข้อมูลใน Grafana)
+// offline / stale / note = ค่าเริ่มต้น (ตามรายงานวันที่ 29/10/69) — กดเปลี่ยนในหน้าเว็บแล้วระบบจำค่าใหม่
+// src = ชื่อ dashboard ใน Grafana (ตรงกับ SITES ใน api/_grafana.js) — ไม่มี = กรอกเอง
+export const REPORT_SITES = [
+  { label: "SINGHA COMPLEX", kind: "face", src: "[METTRIQ] Singha Complex", stale: true },
+  { label: "CSD DAD 1", kind: "face", src: "[MIOC] DAD" },
+  { label: "CSD DAD 2", kind: "intrusion" },
+  { label: "KKP 1", kind: "standalone", offline: true },
+  { label: "KKP 2", kind: "standalone", offline: true },
+  { label: "SCG  1", kind: "face", src: "[METTRIQ] SCG", unit: " คน", stale: true, note: "(ยังไม่มีข้อมูล Backlist,VIP)" },
+  { label: "SCG  2", kind: "face", unit: " คน" },
+  { label: "MDES", kind: "face", src: "[METTRIQ] MDES", stale: true },
+  { label: "PTT AREAR-04", kind: "intrusion" },
+  { label: "PTT AREAR-06", kind: "intrusion" },
+  { label: "AOTGA-BKK", kind: "face", src: "[METTRIQ] AOTGA-BKK", offline: true },
+  { label: "AOTGA-HKT", kind: "face", src: "[METTRIQ] AOTGA-HKT" },
+  { label: "TRUE Rangsit", kind: "face", src: "[METTRIQ] TRUE Call Center Rangsit", stale: true },
+  { label: "TRUE Srinakarin", kind: "face", src: "[METTRIQ] TRUE Call Center Srinakarin" },
+  { label: "PTT 11 chai nat", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Chai Nat", offline: true, stale: true },
+  { label: "PTT 11 nakhon sawan", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Nakhon Sawan", offline: true, stale: true },
+];
+
+const PREF_KEY = "smartpole-report-prefs"; // สถานะออนไลน์/หมายเหตุล่าสุดของแต่ละไซต์ (จำไว้ใช้วันถัดไป)
+function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY) || "{}") || {}; } catch { return {}; } }
+function savePrefs(p) { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* ไม่เป็นไร */ } }
+
+const n0 = (v) => (v === null || v === undefined || v === "" ? 0 : v);
+
+// แถวของรายงาน: ค่าจาก Grafana + สิ่งที่ผู้ใช้แก้ (edits)
+export function reportRows(sites, edits = {}, prefs = {}) {
+  return REPORT_SITES.map((r) => {
+    const g = r.src ? sites.find((s) => s.site === r.src) : null;
+    const p = prefs[r.label] || {};
+    const e = edits[r.label] || {};
+    return {
+      ...r,
+      offline: e.offline ?? p.offline ?? !!r.offline,
+      stale: e.stale ?? p.stale ?? !!r.stale,
+      note: e.note ?? p.note ?? (r.note || ""),
+      faces: e.faces ?? g?.faces ?? null,
+      vip: e.vip ?? g?.vip ?? null,
+      blacklist: e.blacklist ?? g?.blacklist ?? null,
+      fromGrafana: !!g,
+    };
+  });
+}
+
+const BE2 = (date) => { const [y, m, d] = date.split("-"); return `${Number(d)}/${Number(m)}/${String(Number(y) + 543).slice(-2)}`; };
+
+export function buildSmartPoleReport(date, rows, shift = "เช้า") {
+  const lines = [`รายงานสถานะอุปกรณ์กะ${shift} วันที่ ${BE2(date)}`, "", "Smart Pole", "Site"];
+  for (const r of rows) {
+    lines.push(r.label);
+    const dot = r.offline ? "🔴ออฟไลน์ " : "🟢";
+    let body;
+    if (r.kind === "intrusion") body = `${dot}Intrution`;
+    else if (r.kind === "standalone") body = `${dot}Stand alone`;
+    else {
+      const what = r.kind === "incident" ? "ตรวจจับ Incident" : "ตรวจจับใบหน้าทั่วไป";
+      body = `${dot}${what} ${n0(r.faces)}${r.unit || ""} VIP ${n0(r.vip)} Backlist ${n0(r.blacklist)}`;
+    }
+    if (r.note) body += ` ${r.note}`;
+    if (r.stale) body += " **Grafana ไม่อัปเดตข้อมูล**";
+    lines.push(body);
   }
   return lines.join("\n");
 }
@@ -28,6 +88,9 @@ export default function SmartPolePage({ onBack }) {
   const [showReport, setShowReport] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shift, setShift] = useState(() => (new Date().getHours() < 12 ? "เช้า" : "เย็น"));
+  const [edits, setEdits] = useState({});      // ค่าที่แก้ในรายงานวันนี้ (ล้างเมื่อเปลี่ยนวัน)
+  const [prefs, setPrefs] = useState(loadPrefs); // สถานะออนไลน์/หมายเหตุ จำข้ามวัน
   const narrow = typeof window !== "undefined" && window.innerWidth < 720;
 
   useEffect(() => {
@@ -50,10 +113,15 @@ export default function SmartPolePage({ onBack }) {
     })();
     return () => { cancelled = true; };
   }, [date]);
+  useEffect(() => { setEdits({}); }, [date]);
 
   const sites = data?.sites || [];
   const total = (k) => sites.reduce((s, x) => s + (Number(x[k]) || 0), 0);
-  const report = data ? buildSmartPoleReport(date, sites) : "";
+  const rows = reportRows(sites, edits, prefs);
+  const report = data ? buildSmartPoleReport(date, rows, shift) : "";
+  // สถานะ/หมายเหตุ: จำไว้ใช้วันถัดไปด้วย · ตัวเลข: แก้เฉพาะวันนี้
+  const setPref = (label, patch) => { const next = { ...prefs, [label]: { ...(prefs[label] || {}), ...patch } }; setPrefs(next); savePrefs(next); };
+  const setEdit = (label, patch) => setEdits((e) => ({ ...e, [label]: { ...(e[label] || {}), ...patch } }));
   const isToday = date >= today();
 
   async function copy() {
@@ -107,12 +175,43 @@ export default function SmartPolePage({ onBack }) {
 
           {showReport && (
             <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, flex: 1 }}>รายงานประจำวัน</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, flex: 1 }}>รายงานสถานะอุปกรณ์</span>
+                {["เช้า", "เย็น"].map((k) => <button key={k} onClick={() => setShift(k)} style={btn(shift === k)}>กะ{k}</button>)}
                 <button onClick={copy} style={btn(true)}>{copied ? "✓ คัดลอกแล้ว" : "คัดลอกข้อความ"}</button>
               </div>
+              <div style={{ fontSize: 11.5, color: c.text400, marginBottom: 8 }}>
+                ตัวเลขดึงจาก Grafana แก้ได้ · สถานะออนไลน์/ออฟไลน์ และหมายเหตุ ระบบจำไว้ใช้วันถัดไป
+              </div>
+              <div style={{ display: "grid", gap: 6, marginBottom: 12 }}>
+                {rows.map((r) => {
+                  const hasNums = r.kind === "face" || r.kind === "incident";
+                  const inp = (k) => (
+                    <input type="number" min="0" value={r[k] ?? ""} placeholder="0" onChange={(e) => setEdit(r.label, { [k]: e.target.value === "" ? null : Number(e.target.value) })}
+                      style={{ width: 64, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
+                  );
+                  return (
+                    <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "6px 0", borderTop: `1px solid ${c.borderSoft}` }}>
+                      <span style={{ width: narrow ? "100%" : 150, fontSize: 13, fontWeight: 600, color: c.text900 }}>
+                        {r.label}{hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
+                      </span>
+                      <button onClick={() => setPref(r.label, { offline: !r.offline })}
+                        style={{ ...btn(false), padding: "4px 10px", color: r.offline ? c.danger : c.text900 }}>{r.offline ? "🔴 ออฟไลน์" : "🟢 ออนไลน์"}</button>
+                      {hasNums && <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: c.text500 }}>
+                        {r.kind === "incident" ? "Incident" : "ใบหน้า"} {inp("faces")} VIP {inp("vip")} Blacklist {inp("blacklist")}
+                      </span>}
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: c.text500, cursor: "pointer" }}>
+                        <input type="checkbox" checked={r.stale} onChange={(e) => setPref(r.label, { stale: e.target.checked })} style={{ accentColor: c.ink }} />
+                        Grafana ไม่อัปเดต
+                      </label>
+                      <input value={r.note} placeholder="หมายเหตุ" onChange={(e) => setPref(r.label, { note: e.target.value })}
+                        style={{ flex: 1, minWidth: 120, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 8px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
+                    </div>
+                  );
+                })}
+              </div>
               <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13.5, color: c.text900, background: c.bg, borderRadius: 8,
-                padding: 12, margin: 0, lineHeight: 1.7, maxHeight: 420, overflowY: "auto" }}>{report}</pre>
+                padding: 12, margin: 0, lineHeight: 1.7, maxHeight: 520, overflowY: "auto" }}>{report}</pre>
             </div>
           )}
 
