@@ -55,6 +55,7 @@ export default function Drawer({
   setDevicesPage,
   setRequisitionPage,
   setSmartPolePage,
+  setDeviceReportPage,
   setAssistantPage,
   setCaseLogPage,
   isDev, onlineCount, setShowOnlineUsers,
@@ -132,6 +133,8 @@ export default function Drawer({
 
         {/* ระบบหน้างาน */}
         <Section title="หุ่นยนต์ / Smart Pole"/>
+        <DrawerItem active={false} icon="board" label="รายงานสถานะอุปกรณ์" count={""}
+          onClick={()=>{ setDeviceReportPage(true); onClose(); }}/>
         <DrawerItem active={false} icon="activity" label="สถิติหุ่นยนต์" count={""}
           onClick={()=>{ setRobotStatsPage(true); onClose(); }}/>
         <DrawerItem active={false} icon="wrench" label="แจ้งเหตุ/แจ้งซ่อม" count={""}
