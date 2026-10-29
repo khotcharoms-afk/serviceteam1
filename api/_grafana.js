@@ -139,7 +139,8 @@ export function valueForDay(result, date) {
       }
     }
   }
-  return found ? total : 0;
+  // บาง panel คำนวณแบบ rate/increase ทำให้ได้เศษ — จำนวนคนต้องเป็นจำนวนเต็ม
+  return found ? Math.round(total) : 0;
 }
 
 async function queryPanel(client, dash, panel, from, to) {
