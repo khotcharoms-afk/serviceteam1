@@ -8,6 +8,9 @@
     },
     "api/smartpole.js": {
       "maxDuration": 60
+    },
+    "api/imou.js": {
+      "maxDuration": 60
     }
   }
 }

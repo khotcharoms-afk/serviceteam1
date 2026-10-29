@@ -109,6 +109,9 @@ export default function SmartPolePage({ onBack }) {
   const [shift, setShift] = useState(() => (new Date().getHours() < 12 ? "เช้า" : "เย็น"));
   const [edits, setEdits] = useState({});      // ค่าที่แก้ในรายงานวันนี้ (ล้างเมื่อเปลี่ยนวัน)
   const [prefs, setPrefs] = useState(loadPrefs); // สถานะออนไลน์/หมายเหตุ จำข้ามวัน
+  const [imou, setImou] = useState(null);        // ผลจาก /api/imou { cars, ... }
+  const [imouBusy, setImouBusy] = useState(false);
+  const [imouErr, setImouErr] = useState(null);
   const narrow = typeof window !== "undefined" && window.innerWidth < 720;
 
   useEffect(() => {
@@ -139,6 +142,28 @@ export default function SmartPolePage({ onBack }) {
   const report = data ? buildSmartPoleReport(date, rows, shift) : "";
   // สถานะ/หมายเหตุ: จำไว้ใช้วันถัดไปด้วย · ตัวเลข: แก้เฉพาะวันนี้
   const setPref = (label, patch) => { const next = { ...prefs, [label]: { ...(prefs[label] || {}), ...patch } }; setPrefs(next); savePrefs(next); };
+  // ดึงสถานะกล้องรถ EV จาก Imou แล้วตั้ง 🟢/🔴 ให้ทุกคันที่รู้สถานะ (กดเปลี่ยนเองต่อได้)
+  async function pullImou() {
+    setImouBusy(true); setImouErr(null);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("กรุณาเข้าสู่ระบบใหม่");
+      const res = await fetch("/api/imou", { headers: { Authorization: `Bearer ${await user.getIdToken()}` } });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `ดึงสถานะไม่สำเร็จ (HTTP ${res.status})`);
+      setImou(json);
+      const next = { ...prefs };
+      for (const r of REPORT_SITES.filter((x) => x.section === "ev")) {
+        const car = json.cars?.[r.key];
+        if (car && car.online !== null) next[r.key] = { ...(next[r.key] || {}), offline: !car.online };
+      }
+      setPrefs(next); savePrefs(next);
+    } catch (e) {
+      setImouErr(e.message);
+    } finally {
+      setImouBusy(false);
+    }
+  }
   const setEdit = (label, patch) => setEdits((e) => ({ ...e, [label]: { ...(e[label] || {}), ...patch } }));
   const isToday = date >= today();
 
@@ -211,11 +236,22 @@ export default function SmartPolePage({ onBack }) {
                   return (
                     <React.Fragment key={r.key}>
                     {r.section === "ev" && rows.findIndex((x) => x.section === "ev") === rows.indexOf(r) && (
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text500, padding: "10px 0 2px" }}>EV Car <span style={{ fontWeight: 400, color: c.text400 }}>· ดูสถานะในโปรแกรม Imou แล้วกดสลับ</span></div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text500, padding: "10px 0 2px" }}>EV Car <span style={{ fontWeight: 400, color: c.text400 }}>· ดึงสถานะกล้องจาก Imou หรือกดสลับเอง</span>
+                        <button onClick={pullImou} disabled={imouBusy} style={{ ...btn(false), padding: "3px 10px", marginLeft: 8 }}>{imouBusy ? "กำลังดึง…" : "ดึงสถานะจาก Imou"}</button>
+                        {imouErr && <div style={{ color: c.danger, fontWeight: 400, fontSize: 12, marginTop: 4 }}>{imouErr}</div>}
+                        {imou?.errors?.length > 0 && <div style={{ color: c.text400, fontWeight: 400, fontSize: 11.5, marginTop: 4 }}>{imou.errors.join(" · ")}</div>}
+                        {imou && <div style={{ color: c.text400, fontWeight: 400, fontSize: 11.5, marginTop: 2 }}>บัญชี Imou เห็นอุปกรณ์ {imou.deviceCount} ตัว · ใช้ API {imou.apiCalls} ครั้ง</div>}
+                      </div>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "6px 0", borderTop: `1px solid ${c.borderSoft}` }}>
                       <span style={{ width: narrow ? "100%" : 150, fontSize: 13, fontWeight: 600, color: c.text900 }}>
-                        {r.label}{r.car && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> {r.car}</span>}{hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
+                        {r.label}{r.car && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> {r.car}</span>}
+                        {r.section === "ev" && imou?.cars?.[r.key] && (
+                          <span title={imou.cars[r.key].cams.map((x) => `${x.name || x.sn}: ${x.online === null ? "ไม่ทราบ" : x.online ? "ออนไลน์" : "ออฟไลน์"}`).join("\n")}
+                            style={{ display: "block", fontSize: 10.5, color: c.text400, fontWeight: 400 }}>
+                            {imou.cars[r.key].online === null ? "Imou: ไม่พบกล้อง" : `Imou: กล้องออนไลน์ ${imou.cars[r.key].camsOnline}/4`}
+                          </span>
+                        )}{hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
                       </span>
                       <button onClick={() => setPref(r.key, { offline: !r.offline })}
                         style={{ ...btn(false), padding: "4px 10px", color: r.offline ? c.danger : c.text900 }}>{r.offline ? "🔴 ออฟไลน์" : "🟢 ออนไลน์"}</button>
