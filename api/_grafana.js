@@ -156,20 +156,32 @@ async function siteReport(client, site, dashMeta, date) {
   const dash = (await client.api(`/api/dashboards/uid/${encodeURIComponent(dashMeta.uid)}`))?.dashboard || {};
   const panels = allPanels(dash.panels).filter((p) => p.targets?.length && !SKIP_TYPES.has(p.type));
   const { start, end } = dayRange(date);
+  // ไซต์ที่มีหลายเสา (เช่น SCG) จะมี panel แยกเสา ชื่อขึ้นต้น [SCG01] / [SCG02]
+  // → เก็บเป็นรายเสาใน parts (tag = ข้อความในวงเล็บเหลี่ยม) และค่ารวมของไซต์ = ผลรวมทุกเสา
+  const tagOf = (title) => (/^\s*\[([^\]]+)\]/.exec(title || "") || [])[1] || "";
+  out.parts = {};
   for (const [key, matchers] of Object.entries(METRICS)) {
-    let panel = null;
-    for (const m of matchers) { panel = panels.find((p) => m(norm(p.title))); if (panel) break; }
-    if (!panel) continue;
-    out.panels[key] = panel.title;
-    try {
-      // ใบหน้า: panel เป็นกราฟรายวัน 30 วัน → query ย้อนหลังแล้วหยิบวันที่ต้องการ
-      // VIP/Blacklist: query เฉพาะวันนั้น
-      const from = key === "faces" ? start - 30 * DAY_MS : start;
-      const res = await queryPanel(client, dash, panel, from, end);
-      out[key] = valueForDay(res, date);
-    } catch (e) {
-      out.errors.push(`${panel.title}: ${e.message}`);
+    let found = [];
+    for (const m of matchers) { found = panels.filter((p) => m(norm(p.title))); if (found.length) break; }
+    if (!found.length) continue;
+    // ถ้าเจอหลาย panel แต่ไม่มีป้ายเสา ใช้ตัวแรกตัวเดียว (กันนับซ้ำ)
+    const tagged = found.filter((p) => tagOf(p.title));
+    const use = tagged.length > 1 ? tagged : [found[0]];
+    out.panels[key] = use.map((p) => p.title).join(" + ");
+    // ใบหน้า: panel เป็นกราฟรายวัน 30 วัน → query ย้อนหลังแล้วหยิบวันที่ต้องการ · VIP/Blacklist: query เฉพาะวันนั้น
+    const from = key === "faces" ? start - 30 * DAY_MS : start;
+    let sum = null;
+    for (const panel of use) {
+      try {
+        const v = valueForDay(await queryPanel(client, dash, panel, from, end), date);
+        sum = (sum || 0) + v;
+        const tag = tagOf(panel.title);
+        if (use.length > 1 && tag) (out.parts[tag] = out.parts[tag] || {})[key] = v;
+      } catch (e) {
+        out.errors.push(`${panel.title}: ${e.message}`);
+      }
     }
+    out[key] = sum;
   }
   if (!Object.keys(out.panels).length) out.errors.push("ไม่พบ panel ใบหน้า/VIP/Blacklist ใน dashboard นี้");
   // ไซต์ที่หา panel ไม่ครบ: ส่งรายชื่อ panel ทั้งหมดกลับไปให้ดูว่าควรใช้ตัวไหน

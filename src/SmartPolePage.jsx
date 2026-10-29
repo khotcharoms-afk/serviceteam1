@@ -14,6 +14,7 @@ const num = (v) => (v === null || v === undefined ? "–" : Number(v).toLocaleSt
 // kind: face = ตรวจจับใบหน้า (ดึงตัวเลขจาก dashboard ใน src) · incident = ตรวจจับ Incident
 //       intrusion = มีแค่ Intrusion · standalone = เครื่อง Stand alone (ไม่มีข้อมูลใน Grafana)
 // offline / stale / note = ค่าเริ่มต้น (ตามรายงานวันที่ 29/10/69) — กดเปลี่ยนในหน้าเว็บแล้วระบบจำค่าใหม่
+// part = ป้ายเสาในชื่อ panel เช่น [SCG01] (ไซต์ที่ dashboard เดียวมีหลายเสา)
 // src = ชื่อ dashboard ใน Grafana (ตรงกับ SITES ใน api/_grafana.js) — ไม่มี = กรอกเอง
 export const REPORT_SITES = [
   { label: "SINGHA COMPLEX", kind: "face", src: "[METTRIQ] Singha Complex", stale: true },
@@ -21,8 +22,8 @@ export const REPORT_SITES = [
   { label: "CSD DAD 2", kind: "intrusion" },
   { label: "KKP 1", kind: "standalone", offline: true },
   { label: "KKP 2", kind: "standalone", offline: true },
-  { label: "SCG  1", kind: "face", src: "[METTRIQ] SCG", unit: " คน", stale: true, note: "(ยังไม่มีข้อมูล Backlist,VIP)" },
-  { label: "SCG  2", kind: "face", unit: " คน" },
+  { label: "SCG  1", kind: "face", src: "[METTRIQ] SCG", part: "SCG01", unit: " คน", stale: true, note: "(ยังไม่มีข้อมูล Backlist,VIP)" },
+  { label: "SCG  2", kind: "face", src: "[METTRIQ] SCG", part: "SCG02", unit: " คน" },
   { label: "MDES", kind: "face", src: "[METTRIQ] MDES", stale: true },
   { label: "PTT AREAR-04", kind: "intrusion" },
   { label: "PTT AREAR-06", kind: "intrusion" },
@@ -58,7 +59,9 @@ export function reportRows(sites, edits = {}, prefs = {}) {
   const order = [...REPORT_SITES.filter((r) => r.section !== "ev"), ...REPORT_SITES.filter((r) => r.section === "ev")];
   return order.map((r) => {
     const key = r.key || r.label;
-    const g = r.src ? sites.find((s) => s.site === r.src) : null;
+    const site = r.src ? sites.find((s) => s.site === r.src) : null;
+    // ไซต์หลายเสา: ใช้ตัวเลขของเสานั้น (part = ป้าย [SCG01] ในชื่อ panel) ถ้ายังไม่มีข้อมูลรายเสา → ไม่เดา
+    const g = site && r.part ? (site.parts?.[r.part] ? { faces: null, vip: null, blacklist: null, ...site.parts[r.part] } : null) : site;
     const p = prefs[key] || {};
     const e = edits[key] || {};
     return {
