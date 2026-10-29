@@ -30,6 +30,12 @@ export const REPORT_SITES = [
   { label: "TRUE Rangsit", kind: "face", src: "[METTRIQ] TRUE Call Center Rangsit", stale: true },
   { label: "TRUE Srinakarin", kind: "face", src: "[METTRIQ] TRUE Call Center Srinakarin" },
   { label: "PTT 11 chai nat", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Chai Nat", offline: true, stale: true },
+  // ── รถ EV: ดูสถานะกล้องในโปรแกรม Imou บนคอม แล้วกดสลับในหน้านี้ (ยังไม่ได้ดึงอัตโนมัติ) ──
+  { key: "ev-front-01", section: "ev", label: "EV_FRONT_01", kind: "ev", offline: true },
+  { key: "ev-front-02", section: "ev", label: "EV_FRONT_02", kind: "ev", offline: true },
+  { key: "ev-rear-03", section: "ev", label: "EV_REAR_03", kind: "ev", offline: true },
+  { key: "ev-rear-04", section: "ev", label: "EV_REAR_04", kind: "ev", offline: true },
+  { key: "ev-rear-04b", section: "ev", label: "EV_REAR_04", kind: "ev", offline: true },
   { label: "PTT 11 nakhon sawan", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Nakhon Sawan", offline: true, stale: true },
 ];
 
@@ -41,12 +47,14 @@ const n0 = (v) => (v === null || v === undefined || v === "" ? 0 : v);
 
 // แถวของรายงาน: ค่าจาก Grafana + สิ่งที่ผู้ใช้แก้ (edits)
 export function reportRows(sites, edits = {}, prefs = {}) {
-  return REPORT_SITES.map((r) => {
+  const order = [...REPORT_SITES.filter((r) => r.section !== "ev"), ...REPORT_SITES.filter((r) => r.section === "ev")];
+  return order.map((r) => {
+    const key = r.key || r.label;
     const g = r.src ? sites.find((s) => s.site === r.src) : null;
-    const p = prefs[r.label] || {};
-    const e = edits[r.label] || {};
+    const p = prefs[key] || {};
+    const e = edits[key] || {};
     return {
-      ...r,
+      ...r, key,
       offline: e.offline ?? p.offline ?? !!r.offline,
       stale: e.stale ?? p.stale ?? !!r.stale,
       note: e.note ?? p.note ?? (r.note || ""),
@@ -62,11 +70,14 @@ const BE2 = (date) => { const [y, m, d] = date.split("-"); return `${Number(d)}/
 
 export function buildSmartPoleReport(date, rows, shift = "เช้า") {
   const lines = [`รายงานสถานะอุปกรณ์กะ${shift} วันที่ ${BE2(date)}`, "", "Smart Pole", "Site"];
+  let evHeader = false;
   for (const r of rows) {
+    if (r.section === "ev" && !evHeader) { lines.push("", "รถ EV"); evHeader = true; }
     lines.push(r.label);
     const dot = r.offline ? "🔴ออฟไลน์ " : "🟢";
     let body;
-    if (r.kind === "intrusion") body = `${dot}Intrution`;
+    if (r.kind === "ev") body = r.offline ? "🔴ออฟไลน์" : "🟢ออนไลน์";
+    else if (r.kind === "intrusion") body = `${dot}Intrution`;
     else if (r.kind === "standalone") body = `${dot}Stand alone`;
     else {
       const what = r.kind === "incident" ? "ตรวจจับ Incident" : "ตรวจจับใบหน้าทั่วไป";
@@ -187,26 +198,31 @@ export default function SmartPolePage({ onBack }) {
                 {rows.map((r) => {
                   const hasNums = r.kind === "face" || r.kind === "incident";
                   const inp = (k) => (
-                    <input type="number" min="0" value={r[k] ?? ""} placeholder="0" onChange={(e) => setEdit(r.label, { [k]: e.target.value === "" ? null : Number(e.target.value) })}
+                    <input type="number" min="0" value={r[k] ?? ""} placeholder="0" onChange={(e) => setEdit(r.key, { [k]: e.target.value === "" ? null : Number(e.target.value) })}
                       style={{ width: 64, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
                   );
                   return (
-                    <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "6px 0", borderTop: `1px solid ${c.borderSoft}` }}>
+                    <React.Fragment key={r.key}>
+                    {r.section === "ev" && rows.findIndex((x) => x.section === "ev") === rows.indexOf(r) && (
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text500, padding: "10px 0 2px" }}>รถ EV <span style={{ fontWeight: 400, color: c.text400 }}>· ดูสถานะในโปรแกรม Imou แล้วกดสลับ</span></div>
+                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "6px 0", borderTop: `1px solid ${c.borderSoft}` }}>
                       <span style={{ width: narrow ? "100%" : 150, fontSize: 13, fontWeight: 600, color: c.text900 }}>
                         {r.label}{hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
                       </span>
-                      <button onClick={() => setPref(r.label, { offline: !r.offline })}
+                      <button onClick={() => setPref(r.key, { offline: !r.offline })}
                         style={{ ...btn(false), padding: "4px 10px", color: r.offline ? c.danger : c.text900 }}>{r.offline ? "🔴 ออฟไลน์" : "🟢 ออนไลน์"}</button>
                       {hasNums && <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: c.text500 }}>
                         {r.kind === "incident" ? "Incident" : "ใบหน้า"} {inp("faces")} VIP {inp("vip")} Blacklist {inp("blacklist")}
                       </span>}
-                      <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: c.text500, cursor: "pointer" }}>
-                        <input type="checkbox" checked={r.stale} onChange={(e) => setPref(r.label, { stale: e.target.checked })} style={{ accentColor: c.ink }} />
+                      {r.kind !== "ev" && <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: c.text500, cursor: "pointer" }}>
+                        <input type="checkbox" checked={r.stale} onChange={(e) => setPref(r.key, { stale: e.target.checked })} style={{ accentColor: c.ink }} />
                         Grafana ไม่อัปเดต
-                      </label>
-                      <input value={r.note} placeholder="หมายเหตุ" onChange={(e) => setPref(r.label, { note: e.target.value })}
+                      </label>}
+                      <input value={r.note} placeholder="หมายเหตุ" onChange={(e) => setPref(r.key, { note: e.target.value })}
                         style={{ flex: 1, minWidth: 120, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 8px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
                     </div>
+                    </React.Fragment>
                   );
                 })}
               </div>
