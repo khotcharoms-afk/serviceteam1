@@ -30,12 +30,19 @@ export const REPORT_SITES = [
   { label: "TRUE Rangsit", kind: "face", src: "[METTRIQ] TRUE Call Center Rangsit", stale: true },
   { label: "TRUE Srinakarin", kind: "face", src: "[METTRIQ] TRUE Call Center Srinakarin" },
   { label: "PTT 11 chai nat", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Chai Nat", offline: true, stale: true },
-  // ── รถ EV: ดูสถานะกล้องในโปรแกรม Imou บนคอม แล้วกดสลับในหน้านี้ (ยังไม่ได้ดึงอัตโนมัติ) ──
-  { key: "ev-front-01", section: "ev", label: "EV_FRONT_01", kind: "ev", offline: true },
-  { key: "ev-front-02", section: "ev", label: "EV_FRONT_02", kind: "ev", offline: true },
-  { key: "ev-rear-03", section: "ev", label: "EV_REAR_03", kind: "ev", offline: true },
-  { key: "ev-rear-04", section: "ev", label: "EV_REAR_04", kind: "ev", offline: true },
-  { key: "ev-rear-04b", section: "ev", label: "EV_REAR_04", kind: "ev", offline: true },
+  // ── EV Car: 1 คัน = 1 ไซต์ (router Metthier_EVxx + กล้อง EVxx_FRONT_01/02, EVxx_REAR_03/04 ในโปรแกรม Imou)
+  //    ดูสถานะใน Imou บนคอม แล้วกดสลับในหน้านี้ (ยังไม่ได้ดึงอัตโนมัติ) — รายการตาม inventory_EVMT
+  { key: "ev01", section: "ev", label: "หัวหินวิลล่า", car: "EV01", kind: "ev", offline: true },
+  { key: "ev02", section: "ev", label: "ปท.9ปทุมธานี", car: "EV02", kind: "ev", offline: true },
+  { key: "ev03", section: "ev", label: "ปท.2อยุธยา", car: "EV03", kind: "ev", offline: true },
+  { key: "ev04", section: "ev", label: "ปท.11สิงห์บุรี (วังน้อย)", car: "EV04", kind: "ev", offline: true },
+  { key: "ev05", section: "ev", label: "ปท.5ราชบุรี", car: "EV05", kind: "ev", offline: true },
+  { key: "ev06", section: "ev", label: "ปท.8กาญจนบุรี", car: "EV06", kind: "ev", offline: true },
+  { key: "ev07", section: "ev", label: "SCG บางซื่อ", car: "EV07", kind: "ev", offline: false },
+  { key: "ev08", section: "ev", label: "ปท.4ขอนแก่น", car: "EV08", kind: "ev", offline: true },
+  { key: "ev09", section: "ev", label: "AECตลาดต่อยอด", car: "EV09", kind: "ev", offline: true },
+  { key: "ev10", section: "ev", label: "ลู่ปั่น", car: "EV10", kind: "ev", offline: true },
+  { key: "ev11", section: "ev", label: "Fabrinet Chonburi", car: "EV11", kind: "ev", offline: true },
   { label: "PTT 11 nakhon sawan", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Nakhon Sawan", offline: true, stale: true },
 ];
 
@@ -72,11 +79,11 @@ export function buildSmartPoleReport(date, rows, shift = "เช้า") {
   const lines = [`รายงานสถานะอุปกรณ์กะ${shift} วันที่ ${BE2(date)}`, "", "Smart Pole", "Site"];
   let evHeader = false;
   for (const r of rows) {
-    if (r.section === "ev" && !evHeader) { lines.push("", "รถ EV"); evHeader = true; }
+    if (r.section === "ev" && !evHeader) { lines.push("", "EV Car", "Site"); evHeader = true; }
     lines.push(r.label);
     const dot = r.offline ? "🔴ออฟไลน์ " : "🟢";
     let body;
-    if (r.kind === "ev") body = r.offline ? "🔴ออฟไลน์" : "🟢ออนไลน์";
+    if (r.kind === "ev") body = r.offline ? "🔴ออฟไลน์" : "🟢ออนไลน์ปกติ";
     else if (r.kind === "intrusion") body = `${dot}Intrution`;
     else if (r.kind === "standalone") body = `${dot}Stand alone`;
     else {
@@ -204,11 +211,11 @@ export default function SmartPolePage({ onBack }) {
                   return (
                     <React.Fragment key={r.key}>
                     {r.section === "ev" && rows.findIndex((x) => x.section === "ev") === rows.indexOf(r) && (
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text500, padding: "10px 0 2px" }}>รถ EV <span style={{ fontWeight: 400, color: c.text400 }}>· ดูสถานะในโปรแกรม Imou แล้วกดสลับ</span></div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text500, padding: "10px 0 2px" }}>EV Car <span style={{ fontWeight: 400, color: c.text400 }}>· ดูสถานะในโปรแกรม Imou แล้วกดสลับ</span></div>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "6px 0", borderTop: `1px solid ${c.borderSoft}` }}>
                       <span style={{ width: narrow ? "100%" : 150, fontSize: 13, fontWeight: 600, color: c.text900 }}>
-                        {r.label}{hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
+                        {r.label}{r.car && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> {r.car}</span>}{hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
                       </span>
                       <button onClick={() => setPref(r.key, { offline: !r.offline })}
                         style={{ ...btn(false), padding: "4px 10px", color: r.offline ? c.danger : c.text900 }}>{r.offline ? "🔴 ออฟไลน์" : "🟢 ออนไลน์"}</button>
