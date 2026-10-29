@@ -5,100 +5,8 @@ import { useTheme } from "./theme.js";
 import { today, addDays } from "./utils.js";
 
 const TH_MONTH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-const fmtDay = (s) => { const [y, m, d] = s.split("-"); return `${Number(d)}/${Number(m)}/${Number(y) + 543}`; };
 const fmtLong = (s) => { const [y, m, d] = s.split("-"); return `${Number(d)} ${TH_MONTH[Number(m) - 1]} ${Number(y) + 543}`; };
 const num = (v) => (v === null || v === undefined ? "–" : Number(v).toLocaleString());
-
-// ── รูปแบบรายงานสถานะอุปกรณ์ (ตามที่ทีมส่งในไลน์) ──
-// kind: face = ตรวจจับใบหน้า (ดึงตัวเลขจาก dashboard ใน src) · incident = ตรวจจับ Incident
-//       intrusion = มีแค่ Intrusion · standalone = เครื่อง Stand alone (ไม่มีข้อมูลใน Grafana)
-// offline / stale / note = ค่าเริ่มต้น (ตามรายงานวันที่ 29/10/69) — กดเปลี่ยนในหน้าเว็บแล้วระบบจำค่าใหม่
-// part = ป้ายเสาในชื่อ panel เช่น [SCG01] (ไซต์ที่ dashboard เดียวมีหลายเสา)
-// src = ชื่อ dashboard ใน Grafana (ตรงกับ SITES ใน api/_grafana.js) — ไม่มี = กรอกเอง
-export const REPORT_SITES = [
-  { label: "SINGHA COMPLEX", kind: "face", src: "[METTRIQ] Singha Complex", stale: true },
-  { label: "CSD DAD 1", kind: "face", src: "[MIOC] DAD" },
-  { label: "CSD DAD 2", kind: "intrusion" },
-  { label: "KKP 1", kind: "standalone", offline: true },
-  { label: "KKP 2", kind: "standalone", offline: true },
-  { label: "SCG  1", kind: "face", src: "[METTRIQ] SCG", part: "SCG01", unit: " คน", stale: true, note: "(ยังไม่มีข้อมูล Backlist,VIP)" },
-  { label: "SCG  2", kind: "face", src: "[METTRIQ] SCG", part: "SCG02", unit: " คน" },
-  { label: "MDES", kind: "face", src: "[METTRIQ] MDES", stale: true },
-  { label: "PTT AREAR-04", kind: "intrusion" },
-  { label: "PTT AREAR-06", kind: "intrusion" },
-  { label: "AOTGA-BKK", kind: "face", src: "[METTRIQ] AOTGA-BKK", offline: true },
-  { label: "AOTGA-HKT", kind: "face", src: "[METTRIQ] AOTGA-HKT" },
-  { label: "TRUE Rangsit", kind: "face", src: "[METTRIQ] TRUE Call Center Rangsit", stale: true },
-  { label: "TRUE Srinakarin", kind: "face", src: "[METTRIQ] TRUE Call Center Srinakarin" },
-  { label: "PTT 11 chai nat", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Chai Nat", offline: true, stale: true },
-  // ── EV Car: 1 คัน = 1 ไซต์ (router Metthier_EVxx + กล้อง EVxx_FRONT_01/02, EVxx_REAR_03/04 ในโปรแกรม Imou)
-  //    ดูสถานะใน Imou บนคอม แล้วกดสลับในหน้านี้ (ยังไม่ได้ดึงอัตโนมัติ) — รายการตาม inventory_EVMT
-  { key: "ev01", section: "ev", label: "หัวหินวิลล่า", car: "EV01", kind: "ev", offline: true },
-  { key: "ev02", section: "ev", label: "ปท.9ปทุมธานี", car: "EV02", kind: "ev", offline: true },
-  { key: "ev03", section: "ev", label: "ปท.2อยุธยา", car: "EV03", kind: "ev", offline: true },
-  { key: "ev04", section: "ev", label: "ปท.11สิงห์บุรี (วังน้อย)", car: "EV04", kind: "ev", offline: true },
-  { key: "ev05", section: "ev", label: "ปท.5ราชบุรี", car: "EV05", kind: "ev", offline: true },
-  { key: "ev06", section: "ev", label: "ปท.8กาญจนบุรี", car: "EV06", kind: "ev", offline: true },
-  { key: "ev07", section: "ev", label: "SCG บางซื่อ", car: "EV07", kind: "ev", offline: false },
-  { key: "ev08", section: "ev", label: "ปท.4ขอนแก่น", car: "EV08", kind: "ev", offline: true },
-  { key: "ev09", section: "ev", label: "AECตลาดต่อยอด", car: "EV09", kind: "ev", offline: true },
-  { key: "ev10", section: "ev", label: "ลู่ปั่น", car: "EV10", kind: "ev", offline: true },
-  { key: "ev11", section: "ev", label: "Fabrinet Chonburi", car: "EV11", kind: "ev", offline: true },
-  { label: "PTT 11 nakhon sawan", kind: "incident", src: "[METTRIQ] Smart Pole – PTT 11 Nakhon Sawan", offline: true, stale: true },
-];
-
-const PREF_KEY = "smartpole-report-prefs"; // สถานะออนไลน์/หมายเหตุล่าสุดของแต่ละไซต์ (จำไว้ใช้วันถัดไป)
-function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY) || "{}") || {}; } catch { return {}; } }
-function savePrefs(p) { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* ไม่เป็นไร */ } }
-
-const n0 = (v) => (v === null || v === undefined || v === "" ? 0 : v);
-
-// แถวของรายงาน: ค่าจาก Grafana + สิ่งที่ผู้ใช้แก้ (edits)
-export function reportRows(sites, edits = {}, prefs = {}) {
-  const order = [...REPORT_SITES.filter((r) => r.section !== "ev"), ...REPORT_SITES.filter((r) => r.section === "ev")];
-  return order.map((r) => {
-    const key = r.key || r.label;
-    const site = r.src ? sites.find((s) => s.site === r.src) : null;
-    // ไซต์หลายเสา: ใช้ตัวเลขของเสานั้น (part = ป้าย [SCG01] ในชื่อ panel) ถ้ายังไม่มีข้อมูลรายเสา → ไม่เดา
-    const g = site && r.part ? (site.parts?.[r.part] ? { faces: null, vip: null, blacklist: null, ...site.parts[r.part] } : null) : site;
-    const p = prefs[key] || {};
-    const e = edits[key] || {};
-    return {
-      ...r, key,
-      offline: e.offline ?? p.offline ?? !!r.offline,
-      stale: e.stale ?? p.stale ?? !!r.stale,
-      note: e.note ?? p.note ?? (r.note || ""),
-      faces: e.faces ?? g?.faces ?? null,
-      vip: e.vip ?? g?.vip ?? null,
-      blacklist: e.blacklist ?? g?.blacklist ?? null,
-      fromGrafana: !!g,
-    };
-  });
-}
-
-const BE2 = (date) => { const [y, m, d] = date.split("-"); return `${Number(d)}/${Number(m)}/${String(Number(y) + 543).slice(-2)}`; };
-
-export function buildSmartPoleReport(date, rows, shift = "เช้า") {
-  const lines = [`รายงานสถานะอุปกรณ์กะ${shift} วันที่ ${BE2(date)}`, "", "Smart Pole", "Site"];
-  let evHeader = false;
-  for (const r of rows) {
-    if (r.section === "ev" && !evHeader) { lines.push("", "EV Car", "Site"); evHeader = true; }
-    lines.push(r.label);
-    const dot = r.offline ? "🔴ออฟไลน์ " : "🟢";
-    let body;
-    if (r.kind === "ev") body = r.offline ? "🔴ออฟไลน์" : "🟢ออนไลน์ปกติ";
-    else if (r.kind === "intrusion") body = `${dot}Intrution`;
-    else if (r.kind === "standalone") body = `${dot}Stand alone`;
-    else {
-      const what = r.kind === "incident" ? "ตรวจจับ Incident" : "ตรวจจับใบหน้าทั่วไป";
-      body = `${dot}${what} ${n0(r.faces)}${r.unit || ""} VIP ${n0(r.vip)} Backlist ${n0(r.blacklist)}`;
-    }
-    if (r.note) body += ` ${r.note}`;
-    if (r.stale) body += " **Grafana ไม่อัปเดตข้อมูล**";
-    lines.push(body);
-  }
-  return lines.join("\n");
-}
 
 export default function SmartPolePage({ onBack }) {
   const { c } = useTheme();
@@ -106,16 +14,7 @@ export default function SmartPolePage({ onBack }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showReport, setShowReport] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [shift, setShift] = useState(() => (new Date().getHours() < 12 ? "เช้า" : "เย็น"));
-  const [edits, setEdits] = useState({});      // ค่าที่แก้ในรายงานวันนี้ (ล้างเมื่อเปลี่ยนวัน)
-  const [prefs, setPrefs] = useState(loadPrefs); // สถานะออนไลน์/หมายเหตุ จำข้ามวัน
-  const [imou, setImou] = useState(null);        // ผลจาก /api/imou { cars, ... }
-  const [imouBusy, setImouBusy] = useState(false);
-  const [imouErr, setImouErr] = useState(null);
-  const narrow = typeof window !== "undefined" && window.innerWidth < 720;
 
   useEffect(() => {
     let cancelled = false;
@@ -137,43 +36,10 @@ export default function SmartPolePage({ onBack }) {
     })();
     return () => { cancelled = true; };
   }, [date]);
-  useEffect(() => { setEdits({}); }, [date]);
 
   const sites = data?.sites || [];
   const total = (k) => sites.reduce((s, x) => s + (Number(x[k]) || 0), 0);
-  const rows = reportRows(sites, edits, prefs);
-  const report = data ? buildSmartPoleReport(date, rows, shift) : "";
-  // สถานะ/หมายเหตุ: จำไว้ใช้วันถัดไปด้วย · ตัวเลข: แก้เฉพาะวันนี้
-  const setPref = (label, patch) => { const next = { ...prefs, [label]: { ...(prefs[label] || {}), ...patch } }; setPrefs(next); savePrefs(next); };
-  // ดึงสถานะกล้องรถ EV จาก Imou แล้วตั้ง 🟢/🔴 ให้ทุกคันที่รู้สถานะ (กดเปลี่ยนเองต่อได้)
-  async function pullImou() {
-    setImouBusy(true); setImouErr(null);
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("กรุณาเข้าสู่ระบบใหม่");
-      const res = await fetch("/api/imou", { headers: { Authorization: `Bearer ${await user.getIdToken()}` } });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || `ดึงสถานะไม่สำเร็จ (HTTP ${res.status})`);
-      setImou(json);
-      const next = { ...prefs };
-      for (const r of REPORT_SITES.filter((x) => x.section === "ev")) {
-        const car = json.cars?.[r.key];
-        if (car && car.online !== null) next[r.key] = { ...(next[r.key] || {}), offline: !car.online };
-      }
-      setPrefs(next); savePrefs(next);
-    } catch (e) {
-      setImouErr(e.message);
-    } finally {
-      setImouBusy(false);
-    }
-  }
-  const setEdit = (label, patch) => setEdits((e) => ({ ...e, [label]: { ...(e[label] || {}), ...patch } }));
   const isToday = date >= today();
-
-  async function copy() {
-    try { await navigator.clipboard.writeText(report); setCopied(true); setTimeout(() => setCopied(false), 1800); }
-    catch { alert("คัดลอกไม่สำเร็จ ลองกดค้างที่ข้อความเพื่อเลือกเอง"); }
-  }
 
   const btn = (primary, extra = {}) => ({ border: primary ? "none" : `1px solid ${c.border}`, background: primary ? c.ink : c.card,
     color: primary ? c.onInk : c.text900, borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
@@ -202,7 +68,6 @@ export default function SmartPolePage({ onBack }) {
           {!isToday && <button onClick={() => setDate(today())} style={{ ...btn(false), border: "none", background: "transparent", color: c.ink }}>วันนี้</button>}
           <span style={{ fontSize: 12.5, color: c.text500 }}>{fmtLong(date)}</span>
           <div style={{ flex: 1 }} />
-          {data && <button onClick={() => setShowReport((v) => !v)} style={btn(showReport)}>{showReport ? "ซ่อนรายงาน" : "สร้างรายงานประจำวัน"}</button>}
         </div>
 
         {loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: c.text400, fontSize: 13.5 }}>
@@ -218,64 +83,6 @@ export default function SmartPolePage({ onBack }) {
               </div>
             ))}
           </div>
-
-          {showReport && (
-            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, flex: 1 }}>รายงานสถานะอุปกรณ์</span>
-                {["เช้า", "เย็น"].map((k) => <button key={k} onClick={() => setShift(k)} style={btn(shift === k)}>กะ{k}</button>)}
-                <button onClick={copy} style={btn(true)}>{copied ? "✓ คัดลอกแล้ว" : "คัดลอกข้อความ"}</button>
-              </div>
-              <div style={{ fontSize: 11.5, color: c.text400, marginBottom: 8 }}>
-                ตัวเลขดึงจาก Grafana แก้ได้ · สถานะออนไลน์/ออฟไลน์ และหมายเหตุ ระบบจำไว้ใช้วันถัดไป
-              </div>
-              <div style={{ display: "grid", gap: 6, marginBottom: 12 }}>
-                {rows.map((r) => {
-                  const hasNums = r.kind === "face" || r.kind === "incident";
-                  const inp = (k) => (
-                    <input type="number" min="0" value={r[k] ?? ""} placeholder="0" onChange={(e) => setEdit(r.key, { [k]: e.target.value === "" ? null : Number(e.target.value) })}
-                      style={{ width: 64, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
-                  );
-                  return (
-                    <React.Fragment key={r.key}>
-                    {r.section === "ev" && rows.findIndex((x) => x.section === "ev") === rows.indexOf(r) && (
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text500, padding: "10px 0 2px" }}>EV Car <span style={{ fontWeight: 400, color: c.text400 }}>· ดึงสถานะกล้องจาก Imou หรือกดสลับเอง</span>
-                        <button onClick={pullImou} disabled={imouBusy} style={{ ...btn(false), padding: "3px 10px", marginLeft: 8 }}>{imouBusy ? "กำลังดึง…" : "ดึงสถานะจาก Imou"}</button>
-                        {imouErr && <div style={{ color: c.danger, fontWeight: 400, fontSize: 12, marginTop: 4 }}>{imouErr}</div>}
-                        {imou?.errors?.length > 0 && <div style={{ color: c.text400, fontWeight: 400, fontSize: 11.5, marginTop: 4 }}>{imou.errors.join(" · ")}</div>}
-                        {imou && <div style={{ color: c.text400, fontWeight: 400, fontSize: 11.5, marginTop: 2 }}>บัญชี Imou เห็นอุปกรณ์ {imou.deviceCount} ตัว · ใช้ API {imou.apiCalls} ครั้ง</div>}
-                      </div>
-                    )}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "6px 0", borderTop: `1px solid ${c.borderSoft}` }}>
-                      <span style={{ width: narrow ? "100%" : 150, fontSize: 13, fontWeight: 600, color: c.text900 }}>
-                        {r.label}{r.car && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> {r.car}</span>}
-                        {r.section === "ev" && imou?.cars?.[r.key] && (
-                          <span title={imou.cars[r.key].cams.map((x) => `${x.name || x.sn}: ${x.online === null ? "ไม่ทราบ" : x.online ? "ออนไลน์" : "ออฟไลน์"}`).join("\n")}
-                            style={{ display: "block", fontSize: 10.5, color: c.text400, fontWeight: 400 }}>
-                            {imou.cars[r.key].online === null ? "Imou: ไม่พบกล้อง" : `Imou: กล้องออนไลน์ ${imou.cars[r.key].camsOnline}/4`}
-                          </span>
-                        )}{hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
-                      </span>
-                      <button onClick={() => setPref(r.key, { offline: !r.offline })}
-                        style={{ ...btn(false), padding: "4px 10px", color: r.offline ? c.danger : c.text900 }}>{r.offline ? "🔴 ออฟไลน์" : "🟢 ออนไลน์"}</button>
-                      {hasNums && <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: c.text500 }}>
-                        {r.kind === "incident" ? "Incident" : "ใบหน้า"} {inp("faces")} VIP {inp("vip")} Blacklist {inp("blacklist")}
-                      </span>}
-                      {r.kind !== "ev" && <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: c.text500, cursor: "pointer" }}>
-                        <input type="checkbox" checked={r.stale} onChange={(e) => setPref(r.key, { stale: e.target.checked })} style={{ accentColor: c.ink }} />
-                        Grafana ไม่อัปเดต
-                      </label>}
-                      <input value={r.note} placeholder="หมายเหตุ" onChange={(e) => setPref(r.key, { note: e.target.value })}
-                        style={{ flex: 1, minWidth: 120, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 8px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
-                    </div>
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13.5, color: c.text900, background: c.bg, borderRadius: 8,
-                padding: 12, margin: 0, lineHeight: 1.7, maxHeight: 520, overflowY: "auto" }}>{report}</pre>
-            </div>
-          )}
 
           <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
