@@ -159,7 +159,7 @@ export default function DeviceReportPage({ onBack }) {
         <button onClick={() => setPref(r.key, { offline: !r.offline })}
           style={{ ...small, color: r.offline ? c.danger : c.text900 }}>{r.offline ? "🔴 ออฟไลน์" : "🟢 ออนไลน์"}</button>
         {hasNums && <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: c.text500, flexWrap: "wrap" }}>
-          {r.kind === "incident" ? "Incident" : "ใบหน้า"} {inp("faces")} VIP {inp("vip")} Blacklist {inp("blacklist")}
+          {r.kind === "incident" ? <>Incident {inp("faces")}</> : <>ใบหน้า {inp("faces")} VIP {inp("vip")} Blacklist {inp("blacklist")}</>}
         </span>}
         {r.kind !== "ev" && <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: c.text500, cursor: "pointer" }}>
           <input type="checkbox" checked={r.stale} onChange={(e) => setPref(r.key, { stale: e.target.checked })} style={{ accentColor: c.ink }} />

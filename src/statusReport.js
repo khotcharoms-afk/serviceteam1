@@ -80,10 +80,9 @@ export function buildStatusReport(date, rows, shift = "เช้า", robotText 
     if (r.kind === "ev") body = r.offline ? "🔴ออฟไลน์" : "🟢ออนไลน์ปกติ";
     else if (r.kind === "intrusion") body = `${dot}Intrution`;
     else if (r.kind === "standalone") body = `${dot}Stand alone`;
-    else {
-      const what = r.kind === "incident" ? "ตรวจจับ Incident" : "ตรวจจับใบหน้าทั่วไป";
-      body = `${dot}${what} ${n0(r.faces)}${r.unit || ""} VIP ${n0(r.vip)} Backlist ${n0(r.blacklist)}`;
-    }
+    // กล้อง Intrusion ที่ไม่มี AI ใบหน้า — นับได้แค่เหตุการณ์ ไม่มี VIP/Backlist
+    else if (r.kind === "incident") body = `${dot}ตรวจจับ Incident ${n0(r.faces)}`;
+    else body = `${dot}ตรวจจับใบหน้าทั่วไป ${n0(r.faces)}${r.unit || ""} VIP ${n0(r.vip)} Backlist ${n0(r.blacklist)}`;
     if (r.note) body += ` ${r.note}`;
     if (r.stale) body += " **Grafana ไม่อัปเดตข้อมูล**";
     lines.push(body);
