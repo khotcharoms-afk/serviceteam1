@@ -22,12 +22,20 @@ export const SITES = [
   "[MIOC] DAD ms_mioc",
 ];
 
-// panel ที่ต้องการ — เทียบจากชื่อ panel (ตัวพิมพ์เล็ก)
+// panel ที่ต้องการ — เทียบจากชื่อ panel (ตัวพิมพ์เล็ก) ไล่จากแบบตรงที่สุดไปหาแบบกว้าง
+// (บางไซต์ เช่น SCG / DAD ตั้งชื่อ panel ใบหน้าไม่เหมือนไซต์อื่น)
+const isVip = (t) => /\bvip\b/.test(t);
+const isBlack = (t) => t.includes("blacklist") || t.includes("black list") || t.includes("แบล็คลิสต์") || t.includes("แบล็กลิสต์") || t.includes("บัญชีดำ");
+const isFace = (t) => t.includes("ใบหน้า") || /\bfaces?\b/.test(t);
 const METRICS = {
-  faces: (t) => t.includes("จำนวนใบหน้าที่กล้อง ai สามารถตรวจจับได้ในแต่ละวัน")
-    || (t.includes("กล้อง ai") && t.includes("ใบหน้า") && t.includes("แต่ละวัน")),
-  vip: (t) => /\bvip\b/.test(t),
-  blacklist: (t) => t.includes("blacklist") || t.includes("black list") || t.includes("แบล็คลิสต์") || t.includes("แบล็กลิสต์") || t.includes("บัญชีดำ"),
+  faces: [
+    (t) => t.includes("จำนวนใบหน้าที่กล้อง ai สามารถตรวจจับได้ในแต่ละวัน"),
+    (t) => t.includes("กล้อง ai") && t.includes("ใบหน้า") && t.includes("แต่ละวัน"),
+    (t) => isFace(t) && !isVip(t) && !isBlack(t) && /(แต่ละวัน|รายวัน|ต่อวัน|daily|per day|30 วัน)/.test(t),
+    (t) => isFace(t) && !isVip(t) && !isBlack(t) && /(จำนวน|ตรวจจับ|detect|count|total)/.test(t),
+  ],
+  vip: [isVip],
+  blacklist: [isBlack],
 };
 // panel ที่ไม่ใช่ตัวเลข (ภาพ/ข้อความ) ข้ามไป
 const SKIP_TYPES = new Set(["text", "row", "news", "dashlist", "alertlist", "annolist", "welcome"]);
@@ -148,8 +156,9 @@ async function siteReport(client, site, dashMeta, date) {
   const dash = (await client.api(`/api/dashboards/uid/${encodeURIComponent(dashMeta.uid)}`))?.dashboard || {};
   const panels = allPanels(dash.panels).filter((p) => p.targets?.length && !SKIP_TYPES.has(p.type));
   const { start, end } = dayRange(date);
-  for (const [key, match] of Object.entries(METRICS)) {
-    const panel = panels.find((p) => match(norm(p.title)));
+  for (const [key, matchers] of Object.entries(METRICS)) {
+    let panel = null;
+    for (const m of matchers) { panel = panels.find((p) => m(norm(p.title))); if (panel) break; }
     if (!panel) continue;
     out.panels[key] = panel.title;
     try {
@@ -163,6 +172,9 @@ async function siteReport(client, site, dashMeta, date) {
     }
   }
   if (!Object.keys(out.panels).length) out.errors.push("ไม่พบ panel ใบหน้า/VIP/Blacklist ใน dashboard นี้");
+  // ไซต์ที่หา panel ไม่ครบ: ส่งรายชื่อ panel ทั้งหมดกลับไปให้ดูว่าควรใช้ตัวไหน
+  if (Object.keys(out.panels).length < 3) out.allPanels = panels.map((p) => p.title).filter(Boolean).slice(0, 60);
+  out.dashboard = dash.title || dashMeta.title || "";
   return out;
 }
 

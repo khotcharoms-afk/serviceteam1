@@ -153,6 +153,13 @@ export default function SmartPolePage({ onBack }) {
                     <div key={k}>{{ faces: "ใบหน้า", vip: "VIP", blacklist: "Blacklist" }[k]}: {s.panels?.[k] || "— ไม่พบ panel"}</div>
                   ))}
                   {(s.errors || []).map((e, i) => <div key={i} style={{ color: c.danger }}>{e}</div>)}
+                  {s.dashboard && <div style={{ color: c.text400 }}>dashboard: {s.dashboard}</div>}
+                  {s.allPanels?.length > 0 && (
+                    <details style={{ marginTop: 2 }}>
+                      <summary style={{ cursor: "pointer", color: c.text500 }}>panel ทั้งหมดใน dashboard นี้ ({s.allPanels.length})</summary>
+                      <ol style={{ margin: "4px 0 4px 18px", padding: 0 }}>{s.allPanels.map((t, i) => <li key={i}>{t}</li>)}</ol>
+                    </details>
+                  )}
                 </div>
               ))}
             </div>
