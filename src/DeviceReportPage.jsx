@@ -21,7 +21,7 @@ async function authFetch(url) {
 export default function DeviceReportPage({ onBack }) {
   const { c } = useTheme();
   const [date, setDate] = useState(today());
-  const [shift, setShift] = useState(() => (new Date().getHours() < 12 ? "เช้า" : "เย็น"));
+  const [shift, setShift] = useState(() => (new Date().getHours() < 12 ? "เช้า" : "บ่าย"));
   const [copied, setCopied] = useState(false);
   // Smart Pole
   const [pole, setPole] = useState(null);
@@ -192,7 +192,7 @@ export default function DeviceReportPage({ onBack }) {
           {!isToday && <button onClick={() => setDate(today())} style={{ ...btn(false), border: "none", background: "transparent", color: c.ink }}>วันนี้</button>}
           <span style={{ fontSize: 12.5, color: c.text500 }}>{fmtLong(date)}</span>
           <div style={{ flex: 1 }} />
-          {["เช้า", "เย็น"].map((k) => <button key={k} onClick={() => setShift(k)} style={btn(shift === k)}>กะ{k}</button>)}
+          {["เช้า", "บ่าย"].map((k) => <button key={k} onClick={() => setShift(k)} style={btn(shift === k)}>กะ{k}</button>)}
         </div>
 
         {/* 1. Smart Pole */}
@@ -225,7 +225,7 @@ export default function DeviceReportPage({ onBack }) {
           {open.robot && robots && (
             <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 12.5, color: c.text500, margin: "8px 0 0", lineHeight: 1.7 }}>{robotText || "ไม่มีข้อมูล"}</pre>
           )}
-          <div style={{ ...sub, marginTop: 6 }}>กะเช้า = สถานะออนไลน์ · กะเย็น = พร้อมพื้นที่ที่ทำความสะอาด (ตามปุ่มกะด้านบน)</div>
+          <div style={{ ...sub, marginTop: 6 }}>กะเช้า = สถานะออนไลน์ · กะบ่าย = พร้อมพื้นที่ที่ทำความสะอาด (ตามปุ่มกะด้านบน)</div>
         </div>
 
         {/* ข้อความรวม */}
