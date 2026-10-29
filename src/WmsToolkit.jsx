@@ -83,7 +83,7 @@ export function parseFFM(raw) {
 
 // อัปเดต SOP ทุกครั้งที่เคสใหม่สอนอะไรใหม่ — แก้ SOP_UPDATED ด้วย
 // when = ใช้เมื่อไหร่ (ภาษาหน้างาน), steps = ทีละขั้น อ้างชื่อปุ่ม/template ในหน้านี้ให้มากที่สุด
-const SOP_UPDATED = "28 ต.ค. 2569";
+const SOP_UPDATED = "29 ต.ค. 2569";
 
 export const SOPS = [
   {
@@ -229,6 +229,20 @@ export const SOPS = [
       "วิธีแก้: นำ flight_id ของเที่ยวที่ต้องการย้ายไป มาเปลี่ยนที่ routing ของ AWB นั้น",
       "ค้นซ้ำให้ routing ชี้ไปเที่ยวบินใหม่แล้ว → ให้หน้างานเปิดหน้าจอเช็ก",
       "ที่มา: บทความ 'WMS Partial Shipment' ใน Knowledge Hub (Sayan, 13/9/2569)",
+    ],
+  },
+  {
+    key: "reopen", title: "🔓 กด Re-Open Flight (ขาออก) ไม่ได้",
+    when: "หน้างานปิด manifest ไปแล้ว อยากเปิดเที่ยวบินใหม่ แต่กดปุ่ม RE-OPEN FLIGHT ไม่ได้",
+    steps: [
+      "สาเหตุ (ผู้พัฒนายืนยัน): shipment ในเที่ยวบินนั้นมีสถานะไม่เท่ากัน ระบบเลยไม่ยอมให้ Re-Open",
+      "หา flight id: ค้นตาราง kn_cargo_flights ด้วย airline_prefix + flight_no + วันที่ (std เก็บเป็นเวลา UTC = เวลาไทยลบ 7 ชม.)",
+      "ดูทุก booking ในเที่ยวบิน: SELECT b.id, b.prefix||'-'||b.awb, b.piece, b.mvt_status, b.split_status, (SELECT count(*) FROM aotga.kn_cargo_shipments s WHERE s.booking_id=b.id) AS ships FROM aotga.kn_cargo_bookings b JOIN aotga.kn_cargo_booking_routings r ON r.booking_id=b.id WHERE r.flight_id=<flight_id>;",
+      "มองหาตัวที่แปลก: สถานะ (mvt_status) ไม่เหมือนเพื่อน หรือเป็น MAN แต่ไม่มี shipment (ships = 0) — มักเป็น booking ที่ split แล้วค้าง (split_status = Newest) โดยของจริงบินไปอีกเที่ยวแล้ว",
+      "เช็ก AWB เดียวกันซ้ำ: booking อีกอัน (split_status = Spited) ผูกกับเที่ยวไหน, สถานะ DEP แล้วหรือยัง",
+      "ตัวอย่างเคส HKT-202610095: SU279/28OCT — AWB 555-19885714 มี 2 booking: ตัวจริงบินไปกับ SU285 (DEP) ส่วนตัว Newest ค้างที่ SU279 เป็น MAN แต่ไม่มี shipment",
+      "การแก้: ส่งให้ผู้พัฒนา (dev) แก้สถานะให้ตรงกัน — เคสนี้ dev เป็นคนแก้ ไม่ได้แก้เอง ถ้าจะแก้เองต้อง back up ก่อนทุกครั้ง",
+      "หลังแก้ ให้หน้างานลองกด Re-Open อีกครั้ง",
     ],
   },
   {
