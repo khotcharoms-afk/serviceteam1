@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { auth } from "./firebase";
 import { useTheme } from "./theme.js";
 import { today, addDays } from "./utils.js";
+import { buildDailyReport as buildRobotReport, EXCLUDED_CODES } from "./robotReport.js";
 
 const TH_MONTH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 const fmtDay = (s) => { const [y, m, d] = s.split("-"); return `${Number(d)}/${Number(m)}/${Number(y) + 543}`; };
@@ -75,8 +76,11 @@ export function reportRows(sites, edits = {}, prefs = {}) {
 
 const BE2 = (date) => { const [y, m, d] = date.split("-"); return `${Number(d)}/${Number(m)}/${String(Number(y) + 543).slice(-2)}`; };
 
-export function buildSmartPoleReport(date, rows, shift = "เช้า") {
-  const lines = [`รายงานสถานะอุปกรณ์กะ${shift} วันที่ ${BE2(date)}`, "", "Smart Pole", "Site"];
+// robotText = ข้อความรายงานหุ่นยนต์ (จาก robotReport.js) — ใส่ไว้ก่อนส่วน Smart Pole
+export function buildSmartPoleReport(date, rows, shift = "เช้า", robotText = "") {
+  const lines = [`รายงานสถานะอุปกรณ์กะ${shift} วันที่ ${BE2(date)}`, ""];
+  if (robotText) lines.push("หุ่นยนต์ทำความสะอาด", "Site", ...robotText.split("\n"), "");
+  lines.push("Smart Pole", "Site");
   let evHeader = false;
   for (const r of rows) {
     if (r.section === "ev" && !evHeader) { lines.push("", "EV Car", "Site"); evHeader = true; }
@@ -112,6 +116,9 @@ export default function SmartPolePage({ onBack }) {
   const [imou, setImou] = useState(null);        // ผลจาก /api/imou { cars, ... }
   const [imouBusy, setImouBusy] = useState(false);
   const [imouErr, setImouErr] = useState(null);
+  const [withRobots, setWithRobots] = useState(true); // รวมรายงานหุ่นยนต์ไว้ด้านบน
+  const [robots, setRobots] = useState(null);         // { date, rows } จาก /api/robot-stats
+  const [robotErr, setRobotErr] = useState(null);
   const narrow = typeof window !== "undefined" && window.innerWidth < 720;
 
   useEffect(() => {
@@ -135,11 +142,29 @@ export default function SmartPolePage({ onBack }) {
     return () => { cancelled = true; };
   }, [date]);
   useEffect(() => { setEdits({}); }, [date]);
+  // ข้อมูลหุ่นยนต์ของวันเดียวกัน (ดึงเมื่อเปิดรายงาน)
+  useEffect(() => {
+    if (!showReport || !withRobots || robots?.date === date) return;
+    let cancelled = false;
+    (async () => {
+      setRobotErr(null);
+      try {
+        const res = await fetch(`/api/robot-stats?start_time=${date}&end_time=${date}&page=1&size=100`);
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || `ดึงข้อมูลหุ่นยนต์ไม่สำเร็จ (HTTP ${res.status})`);
+        if (!cancelled) setRobots({ date, rows: (json.result || []).filter((r) => !EXCLUDED_CODES.includes(r.project_name)) });
+      } catch (e) {
+        if (!cancelled) setRobotErr(e.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [showReport, withRobots, date, robots?.date]);
 
   const sites = data?.sites || [];
   const total = (k) => sites.reduce((s, x) => s + (Number(x[k]) || 0), 0);
   const rows = reportRows(sites, edits, prefs);
-  const report = data ? buildSmartPoleReport(date, rows, shift) : "";
+  const robotText = withRobots && robots?.date === date ? buildRobotReport(robots.rows, shift === "เย็น" ? "evening" : "morning") : "";
+  const report = data ? buildSmartPoleReport(date, rows, shift, robotText) : "";
   // สถานะ/หมายเหตุ: จำไว้ใช้วันถัดไปด้วย · ตัวเลข: แก้เฉพาะวันนี้
   const setPref = (label, patch) => { const next = { ...prefs, [label]: { ...(prefs[label] || {}), ...patch } }; setPrefs(next); savePrefs(next); };
   // ดึงสถานะกล้องรถ EV จาก Imou แล้วตั้ง 🟢/🔴 ให้ทุกคันที่รู้สถานะ (กดเปลี่ยนเองต่อได้)
@@ -220,11 +245,16 @@ export default function SmartPolePage({ onBack }) {
             <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, flex: 1 }}>รายงานสถานะอุปกรณ์</span>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: c.text500, cursor: "pointer" }}>
+                  <input type="checkbox" checked={withRobots} onChange={(e) => setWithRobots(e.target.checked)} style={{ accentColor: c.ink }} /> รวมหุ่นยนต์
+                </label>
                 {["เช้า", "เย็น"].map((k) => <button key={k} onClick={() => setShift(k)} style={btn(shift === k)}>กะ{k}</button>)}
                 <button onClick={copy} style={btn(true)}>{copied ? "✓ คัดลอกแล้ว" : "คัดลอกข้อความ"}</button>
               </div>
               <div style={{ fontSize: 11.5, color: c.text400, marginBottom: 8 }}>
                 ตัวเลขดึงจาก Grafana แก้ได้ · สถานะออนไลน์/ออฟไลน์ และหมายเหตุ ระบบจำไว้ใช้วันถัดไป
+                {withRobots && <> · ส่วนหุ่นยนต์มาจากหน้าสถิติหุ่นยนต์ (VIGGO){robots?.date !== date && !robotErr && " — กำลังโหลด…"}</>}
+                {robotErr && <span style={{ color: c.danger }}> · {robotErr}</span>}
               </div>
               <div style={{ display: "grid", gap: 6, marginBottom: 12 }}>
                 {rows.map((r) => {
