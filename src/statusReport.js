@@ -62,6 +62,7 @@ export function reportRows(sites, edits = {}, prefs = {}) {
       vip: e.vip ?? g?.vip ?? null,
       blacklist: e.blacklist ?? g?.blacklist ?? null,
       fromGrafana: !!g,
+      undated: !!(site && Object.keys(site.undated || {}).length),
     };
   });
 }

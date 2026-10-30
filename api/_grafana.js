@@ -114,8 +114,10 @@ function applyVars(target, dash) {
 // ผลจาก /api/ds/query → ตัวเลขของวันนั้น
 // - ถ้ามีคอลัมน์เวลา: รวมค่าของแถวที่ตรงวัน (ตามเวลาไทย)
 // - ถ้าไม่มีคอลัมน์เวลา: รวมคอลัมน์ตัวเลขแรก หรือนับแถวถ้าเป็นตารางรายการ
-export function valueForDay(result, date) {
-  let total = 0, found = false;
+export function valueForDay(result, date) { return dayValue(result, date).value; }
+// dated = ผลมีคอลัมน์เวลาให้เลือกวัน · false = ตัวเลขรวมก้อนเดียว (ถ้า query ใช้ now() ตัวเลขจะไม่เปลี่ยนตามวันที่เลือก)
+export function dayValue(result, date) {
+  let total = 0, found = false, dated = false, undated = false;
   for (const r of Object.values(result?.results || {})) {
     if (r.error) throw new Error(r.error);
     for (const f of r.frames || []) {
@@ -126,13 +128,16 @@ export function valueForDay(result, date) {
       const ni = fields.findIndex((x, i) => i !== ti && x.type === "number");
       const rows = (values[0] || []).length;
       if (ti >= 0 && ni >= 0) {
+        dated = true;
         values[ti].forEach((t, i) => {
           const ms = typeof t === "number" ? t : Date.parse(t);
           if (bkkDate(ms) === date) { total += Number(values[ni][i]) || 0; found = true; }
         });
       } else if (ni >= 0) {
+        undated = true;
         total += values[ni].reduce((s, v) => s + (Number(v) || 0), 0); found = true;
       } else if (rows) {
+        undated = true;
         total += rows; found = true;
       } else {
         found = true;
@@ -140,7 +145,7 @@ export function valueForDay(result, date) {
     }
   }
   // บาง panel คำนวณแบบ rate/increase ทำให้ได้เศษ — จำนวนคนต้องเป็นจำนวนเต็ม
-  return found ? Math.round(total) : 0;
+  return { value: found ? Math.round(total) : 0, dated: dated || !undated };
 }
 
 async function queryPanel(client, dash, panel, from, to) {
@@ -161,6 +166,7 @@ async function siteReport(client, site, dashMeta, date) {
   // → เก็บเป็นรายเสาใน parts (tag = ข้อความในวงเล็บเหลี่ยม) และค่ารวมของไซต์ = ผลรวมทุกเสา
   const tagOf = (title) => (/^\s*\[([^\]]+)\]/.exec(title || "") || [])[1] || "";
   out.parts = {};
+  out.undated = {};
   for (const [key, matchers] of Object.entries(METRICS)) {
     let found = [];
     for (const m of matchers) { found = panels.filter((p) => m(norm(p.title))); if (found.length) break; }
@@ -174,7 +180,8 @@ async function siteReport(client, site, dashMeta, date) {
     let sum = null;
     for (const panel of use) {
       try {
-        const v = valueForDay(await queryPanel(client, dash, panel, from, end), date);
+        const { value: v, dated } = dayValue(await queryPanel(client, dash, panel, from, end), date);
+        if (!dated) out.undated[key] = true;
         sum = (sum || 0) + v;
         const tag = tagOf(panel.title);
         if (use.length > 1 && tag) (out.parts[tag] = out.parts[tag] || {})[key] = v;
