@@ -44,7 +44,8 @@ export default function DeviceReportPage({ onBack }) {
 
   useEffect(() => {
     let cancelled = false;
-    setEdits({}); setRawMsg(null);
+    // ล้างข้อมูลวันเก่าทันที — กันรายงานแสดงตัวเลขของวันก่อนระหว่างรอ
+    setEdits({}); setRawMsg(null); setPole(null); setRobots(null);
     (async () => {
       setPoleBusy(true); setPoleErr(null);
       try { const j = await authFetch(`/api/smartpole?date=${date}`); if (!cancelled) setPole(j); }
@@ -109,6 +110,7 @@ export default function DeviceReportPage({ onBack }) {
   const setPref = (key, patch) => { const next = { ...prefs, [key]: { ...(prefs[key] || {}), ...patch } }; setPrefs(next); savePrefs(next); };
   const setEdit = (key, patch) => setEdits((e) => ({ ...e, [key]: { ...(e[key] || {}), ...patch } }));
   const isToday = date >= today();
+  const loadingAny = poleBusy || robotBusy;
 
   async function copy() {
     try { await navigator.clipboard.writeText(report); setCopied(true); setTimeout(() => setCopied(false), 1800); }
@@ -154,6 +156,7 @@ export default function DeviceReportPage({ onBack }) {
               {cam.online === null ? "Imou: ไม่พบกล้อง" : `Imou: กล้องออนไลน์ ${cam.camsOnline}/4`}
             </span>
           )}
+          {hasNums && r.undated && <span title="query ของ panel นี้ไม่ได้แยกตามวัน — ตัวเลขอาจเป็นของวันนี้เสมอ ไม่ว่าจะเลือกวันไหน" style={{ display: "block", fontSize: 10.5, color: c.warn, fontWeight: 400 }}>⚠ ตัวเลขอาจไม่เปลี่ยนตามวันที่</span>}
           {hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
         </span>
         <button onClick={() => setPref(r.key, { offline: !r.offline })}
@@ -210,6 +213,7 @@ export default function DeviceReportPage({ onBack }) {
           </Head>
           {imouErr && <div style={{ fontSize: 12, color: c.danger, marginTop: 6 }}>{imouErr}</div>}
           {imou?.errors?.length > 0 && <div style={{ ...sub, marginTop: 4 }}>{imou.errors.join(" · ")}</div>}
+          {!isToday && <div style={{ ...sub, marginTop: 4 }}>Imou บอกได้แค่สถานะ ณ ตอนนี้ — ถ้ารายงานย้อนหลัง ให้ตรวจสถานะรถเอง</div>}
           {imou && <div style={{ ...sub, marginTop: 4 }}>บัญชี Imou เห็นอุปกรณ์ {imou.deviceCount} ตัว · ใช้ API {imou.apiCalls} ครั้ง</div>}
           {open.ev && <div style={{ marginTop: 6 }}>{evRows.map(RowEdit)}</div>}
         </div>
@@ -232,7 +236,8 @@ export default function DeviceReportPage({ onBack }) {
         <div style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: c.text900, flex: 1 }}>ข้อความรายงาน</span>
-            <button onClick={copy} style={btn(true)}>{copied ? "✓ คัดลอกแล้ว" : "คัดลอกข้อความ"}</button>
+            {loadingAny && <span style={sub}>กำลังโหลดข้อมูลวันที่ {fmtLong(date)}…</span>}
+            <button onClick={copy} disabled={loadingAny} style={btn(true, { opacity: loadingAny ? 0.5 : 1 })}>{copied ? "✓ คัดลอกแล้ว" : "คัดลอกข้อความ"}</button>
           </div>
           <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13.5, color: c.text900, background: c.bg, borderRadius: 8,
             padding: 12, margin: 0, lineHeight: 1.7, maxHeight: 640, overflowY: "auto" }}>{report}</pre>
