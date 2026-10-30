@@ -248,6 +248,20 @@ export const SOPS = [
     ],
   },
   {
+    key: "dup-ex", title: "👯 AWB ขาออกมี booking ซ้ำ / Total of AWB เกิน",
+    when: "หน้างานแจ้ง AWB ขาออกขึ้นซ้ำ 2 record หรือ Total of AWB ในเที่ยวบินมากกว่าจริง",
+    steps: [
+      "ค้นทุก booking ของ AWB: kn_cargo_bookings (prefix + awb) — ดู mvt_status, split_status, ref_split, created_at, จำนวน shipment / warehouse ของแต่ละอัน",
+      "แบบที่ 1 — กดบันทึกซ้ำ (created_at วินาทีเดียวกัน): ตัวจริงมี shipment / DEP แล้ว ตัวซ้ำเป็น ACC ไม่มี shipment → back up แล้วลบตัวซ้ำ (เคส 176-65399740 EK397/29OCT, 30/10/2569)",
+      "แบบที่ 2 — ของ transit มา 2 ล็อต + split: เที่ยวเดียวกันมี AWB เดียวกัน 2 booking (Newest จาก split + booking ใหม่ของล็อต 2) → รวมเป็น booking เดียว: แก้ shipment ของตัวที่เก็บให้เป็นยอดรวม, ย้าย warehouse มา, ลบ shipment / routing / booking flight / customers / preman ของอีกตัว (เคส 807-39165114 AK827/29OCT)",
+      "เก็บตัวที่อยู่ในสาย split ไว้ (ref_split ชี้ไป booking เดิม) อย่าลบตัว Newest ถ้ามีตัวอื่นชี้มา",
+      "ตารางลูกของ booking ขาออกที่ต้องลบตามก่อนลบ booking: booking_routings, booking_flights, booking_customers, booking_dimensions, booking_warehouses, preman_history_details, re_routing_histories, (shipments ถ้ามี)",
+      "ถ้าลบ booking แล้ว error foreign key จาก kn_cargo_transit_history_details (to_out_booking_id) = เป็นของ transit — ต้องให้ประวัตินั้นชี้ไป booking ที่เก็บไว้ก่อน หรือปล่อย booking ไว้แบบไม่มี routing (ไม่กระทบ Total)",
+      "ไม่ต้องลบ message_centers (ประวัติ FSU) แต่ใส่ไว้ในไฟล์ back up ด้วย · rating / e-weight ผูกกับเลข AWB ไม่ต้องแตะ",
+      "Back up ทุกแถวเป็น JSON ก่อนทุกครั้ง แล้วค้นซ้ำว่าเที่ยวบินเหลือจำนวน AWB ถูกต้อง",
+    ],
+  },
+  {
     key: "restore", title: "♻️ Back up / คืนข้อมูลที่ลบไป",
     when: "ลบไปแล้วมีปัญหา ต้องเอาข้อมูลกลับ",
     steps: [
