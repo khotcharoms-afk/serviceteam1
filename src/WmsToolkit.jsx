@@ -83,7 +83,7 @@ export function parseFFM(raw) {
 
 // อัปเดต SOP ทุกครั้งที่เคสใหม่สอนอะไรใหม่ — แก้ SOP_UPDATED ด้วย
 // when = ใช้เมื่อไหร่ (ภาษาหน้างาน), steps = ทีละขั้น อ้างชื่อปุ่ม/template ในหน้านี้ให้มากที่สุด
-const SOP_UPDATED = "29 ต.ค. 2569";
+const SOP_UPDATED = "30 ต.ค. 2569";
 
 export const SOPS = [
   {
@@ -143,6 +143,8 @@ export const SOPS = [
       "SQL template 'ค้น AWB ขาเข้า' → ดู pcs_wt ทุกแถว",
       "จุดที่ต้องแก้ (ถ้ามี): booking → shipment → breakdown → awb_do (D/O)",
       "ถ้าจำนวนชิ้นเปลี่ยน ลบ.ม. มักต้องแก้ตามด้วย",
+      "ถ้า AWB มาแบ่งหลายเที่ยว (มีหลาย shipment / routing หลาย flight) → ตัวช่วยแก้น้ำหนักจะไม่แก้ให้: ดู manifest/D/O ที่หน้างานแนบว่าเป็นของเที่ยวไหน แล้วแก้เฉพาะ shipment + breakdown + awb_do ของเที่ยวนั้น ไม่แก้ booking (booking = ยอดรวมทั้ง AWB) และไม่แตะ shipment ของเที่ยวอื่น",
+      "ตัวอย่าง HKT 30/10/2569: 089-01504823 เที่ยว 9C8521/28OCT ลงไว้ 12/304 แต่ของจริง 8/212 อีก 4 ชิ้นมากับ 9C8521/30OCT → แก้ shipment, breakdown, D/O ของ 28OCT เป็น 8/212, booking คง 12/304",
       "ค้นซ้ำให้ทุกแถวตรงกัน แล้วให้หน้างานเปิดหน้าจอใหม่เช็ก",
     ],
   },
