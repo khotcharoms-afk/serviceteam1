@@ -53,7 +53,7 @@ export default function WeeklySlidesPanel({ onClose }) {
 
   const groups = data ? groupColumns(data.columns) : [];
   const slides = slideList(groups);
-  const fname = (i, s) => `METTBOT_${date}_${String(i + 1).padStart(2, "0")}_${s.kind === "table" ? "table" : s.days[0] === 0 ? "chart-mon-wed" : "chart-thu-sun"}.png`;
+  const fname = (i, s) => `METTBOT_${date}_${String(i + 1).padStart(2, "0")}_${s.kind === "table" ? "table" : "chart"}.png`;
 
   async function downloadAll() {
     setZipBusy(true);
@@ -90,7 +90,7 @@ export default function WeeklySlidesPanel({ onClose }) {
         {data && !busy && (<>
           <div style={{ fontSize: 12.5, color: c.text500, marginBottom: 12 }}>
             {data.title && <b style={{ color: c.text900 }}>{data.title}</b>} · {data.columns.length} ไซต์ที่มีตัวเลข · {groups.length} ชุด
-            <div style={{ marginTop: 4 }}>ตัวเลขดึงจากชีตตามที่เขียนไว้ ถ้ายังไม่ได้ส่งยอดของวันไหนเข้าชีต ให้กด "ส่งเข้า Google Sheet" ก่อน · ช่องสีแดง = ต่ำกว่า target · กดที่ตัวเลขในตารางด้านล่างเพื่อใส่ * หรือ **</div>
+            <div style={{ marginTop: 4 }}>ตัวเลขดึงจากชีตตามที่เขียนไว้ ถ้ายังไม่ได้ส่งยอดของวันไหนเข้าชีต ให้กด "ส่งเข้า Google Sheet" ก่อน · ตัวเลขสีแดง (ทั้งตารางและกราฟ) = ต่ำกว่า target · กดที่ตัวเลขในตารางด้านล่างเพื่อใส่ * หรือ **</div>
           </div>
           {slides.map((s, i) => (
             <div key={s.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 12, marginBottom: 12 }}>
