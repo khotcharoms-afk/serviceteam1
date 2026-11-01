@@ -112,7 +112,17 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
   const { c } = useTheme();
   const isAdminOrDev = ["admin", "dev"].includes(currentUser?.role);
   // history = ข้อความรูปแบบ Anthropic Messages API ที่ส่งไป server
-  const [history, setHistory] = useState([]);
+  // เก็บบทสนทนาไว้ใน sessionStorage ของแท็บนี้ — เปลี่ยนไปหน้าอื่นแล้วกลับมาแชทยังอยู่ (ปิดแท็บ/กดจบแชท = ล้าง)
+  const chatKey = `ai-chat:${currentUser?.uid || currentUser?.email || "me"}`;
+  const [history, setHistory] = useState(() => {
+    try { const v = JSON.parse(sessionStorage.getItem(chatKey) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
+  });
+  useEffect(() => {
+    try {
+      if (!history.length) sessionStorage.removeItem(chatKey);
+      else sessionStorage.setItem(chatKey, JSON.stringify(history));
+    } catch { /* พื้นที่เต็มหรือเบราว์เซอร์ไม่ให้เก็บ — แชทยังใช้ได้ แค่ไม่จำข้ามหน้า */ }
+  }, [history, chatKey]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [activity, setActivity] = useState("");
