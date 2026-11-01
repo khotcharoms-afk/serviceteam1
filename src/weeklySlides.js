@@ -150,7 +150,8 @@ export function drawChart(ctx, group, dayIdx) {
   // สเกล
   const maxV = Math.max(1, ...cols.flatMap((c) => dayIdx.map((d) => c.cells[d].value || 0)));
   const step = [500, 1000, 2000, 2500, 5000, 10000, 20000].find((s) => maxV / s <= 6) || 50000;
-  const top = Math.ceil(maxV / step) * step;
+  // เผื่อที่ด้านบนให้ตัวเลขแนวตั้ง
+  const top = Math.ceil((maxV * (cols.length * dayIdx.length > 30 ? 1.12 : 1)) / step) * step;
   const yOf = (v) => py1 - (v / top) * (py1 - py0);
   ctx.textAlign = "right"; ctx.font = `400 20px ${FONT}`;
   for (let v = 0; v <= top; v += step) {
@@ -160,18 +161,29 @@ export function drawChart(ctx, group, dayIdx) {
   }
   // แท่ง
   const gw = (px1 - px0) / dayIdx.length;
-  const bw = Math.min(64, (gw * 0.86) / cols.length - 6);
+  const gap = cols.length * dayIdx.length > 30 ? 3 : 6;
+  const bw = Math.min(64, (gw * 0.88) / cols.length - gap);
   dayIdx.forEach((d, gi) => {
-    const gx = px0 + gi * gw + (gw - cols.length * (bw + 6)) / 2;
+    const gx = px0 + gi * gw + (gw - cols.length * (bw + gap)) / 2;
     cols.forEach((c, i) => {
       const v = c.cells[d].value || 0;
-      const x = gx + i * (bw + 6), y = yOf(v);
+      const x = gx + i * (bw + gap), y = yOf(v);
       ctx.fillStyle = BAR_COLORS[i % BAR_COLORS.length];
       const r = Math.min(6, bw / 2, (py1 - y) / 2);
       ctx.beginPath(); ctx.moveTo(x, py1); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.lineTo(x + bw - r, y); ctx.arcTo(x + bw, y, x + bw, y + r, r); ctx.lineTo(x + bw, py1); ctx.closePath(); ctx.fill();
       if (c.cells[d].value !== null) {
-        ctx.fillStyle = "#222"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
-        ctx.font = `400 ${bw < 40 ? 15 : 18}px ${FONT}`; ctx.fillText(v.toLocaleString(), x + bw / 2, y - 6);
+        // ต่ำกว่า target = ตัวเลขสีแดงตัวหนา
+        const low = below(c, d);
+        ctx.fillStyle = low ? "#e01b1b" : "#222";
+        if (bw < 34) {
+          // แท่งแคบ (ทั้งสัปดาห์ในหน้าเดียว): เขียนตัวเลขแนวตั้งเหนือแท่ง
+          ctx.save(); ctx.translate(x + bw / 2, y - 6); ctx.rotate(-Math.PI / 2);
+          ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.font = `${low ? 700 : 400} 16px ${FONT}`;
+          ctx.fillText(v.toLocaleString(), 0, 0); ctx.restore();
+        } else {
+          ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+          ctx.font = `${low ? 700 : 400} ${bw < 40 ? 15 : 18}px ${FONT}`; ctx.fillText(v.toLocaleString(), x + bw / 2, y - 6);
+        }
       }
     });
     ctx.fillStyle = "#222"; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.font = `700 21px ${FONT}`;
@@ -180,12 +192,11 @@ export function drawChart(ctx, group, dayIdx) {
   ctx.strokeStyle = "#999"; ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px1, py1); ctx.stroke();
 }
 
-// รายการสไลด์ทั้งหมดของสัปดาห์: ต่อกลุ่ม = ตาราง + กราฟ จ.–พ. + กราฟ พฤ.–อา.
+// รายการสไลด์ทั้งหมดของสัปดาห์: ต่อกลุ่ม = ตาราง + กราฟทั้งสัปดาห์ (จ.–อา.)
 export function slideList(groups) {
   return groups.flatMap((g, gi) => [
     { id: `${gi}-t`, group: g, kind: "table", label: `${g.title} · ตาราง` },
-    { id: `${gi}-a`, group: g, kind: "chart", days: [0, 1, 2], label: `${g.title} · กราฟ จ.–พ.` },
-    { id: `${gi}-b`, group: g, kind: "chart", days: [3, 4, 5, 6], label: `${g.title} · กราฟ พฤ.–อา.` },
+    { id: `${gi}-c`, group: g, kind: "chart", days: [0, 1, 2, 3, 4, 5, 6], label: `${g.title} · กราฟทั้งสัปดาห์` },
   ]);
 }
 export function renderSlide(canvas, slide, marks) {
