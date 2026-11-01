@@ -83,7 +83,7 @@ export function parseFFM(raw) {
 
 // อัปเดต SOP ทุกครั้งที่เคสใหม่สอนอะไรใหม่ — แก้ SOP_UPDATED ด้วย
 // when = ใช้เมื่อไหร่ (ภาษาหน้างาน), steps = ทีละขั้น อ้างชื่อปุ่ม/template ในหน้านี้ให้มากที่สุด
-const SOP_UPDATED = "30 ต.ค. 2569";
+const SOP_UPDATED = "1 พ.ย. 2569";
 
 export const SOPS = [
   {
@@ -97,6 +97,8 @@ export const SOPS = [
       "จะลบอะไร = back up ก่อนเสมอ แล้วเปิดไฟล์เช็กว่าครบ (ดู SOP 'Back up / คืนข้อมูล')",
       "แก้เสร็จ → ค้นซ้ำอีกรอบให้ทุกแถวถูก → บอกหน้างานให้ปิดหน้าจอแล้วเปิดใหม่ (หรือ refresh) แล้วเช็ก",
       "Dataflare: Ctrl+Enter = รันคำสั่ง · ปุ่มดาวน์โหลดมุมขวาล่าง = เซฟผลลัพธ์เป็นไฟล์ · ถ้าพิมพ์แล้วไม่ติด ให้คลิกหน้าต่าง Dataflare ก่อน (อาจถูกย่ออยู่)",
+      "แก้เฉพาะ AWB ที่หน้างานเปิดเคสมาเท่านั้น — เจอ AWB อื่นผิดแบบเดียวกันให้แจ้งไว้ แต่ไม่แก้จนกว่าจะมีเคส",
+      "ย้าย invoice ไปอีก AWB: ห้ามแก้ awb/prefix ใน handling_ratings ตรงๆ — ให้หน้างานยกเลิก rating เดิมแล้วออก rating + invoice ใหม่ผ่านหน้าจอ",
     ],
   },
   {
@@ -259,6 +261,18 @@ export const SOPS = [
       "ถ้าลบ booking แล้ว error foreign key จาก kn_cargo_transit_history_details (to_out_booking_id) = เป็นของ transit — ต้องให้ประวัตินั้นชี้ไป booking ที่เก็บไว้ก่อน หรือปล่อย booking ไว้แบบไม่มี routing (ไม่กระทบ Total)",
       "ไม่ต้องลบ message_centers (ประวัติ FSU) แต่ใส่ไว้ในไฟล์ back up ด้วย · rating / e-weight ผูกกับเลข AWB ไม่ต้องแตะ",
       "Back up ทุกแถวเป็น JSON ก่อนทุกครั้ง แล้วค้นซ้ำว่าเที่ยวบินเหลือจำนวน AWB ถูกต้อง",
+    ],
+  },
+  {
+    key: "do-blank", title: "📄 หน้า D/O ไม่ขึ้นข้อมูล (ขาเข้า)",
+    when: "หน้างานออก D/O แล้วหน้า D/O ว่าง / ไม่ขึ้นข้อมูลผู้รับ",
+    steps: [
+      "ค้น AWB ขาเข้า → ดูแถว customer: ต้องมี 3 แถวที่มี type ครบ Shipper / Consignee / Agent",
+      "ถ้าแถวไหน type ว่าง (NULL) = ต้นเหตุ — แม้ FWB จะมี CNE ระบบอาจไม่ได้ใส่ type ให้",
+      "แก้: kn_cargo_in_booking_customers ใส่ type ให้แถวที่ว่าง (Consignee / Agent) ให้ครบ 3 แบบ",
+      "ตัวอย่าง 018-93076944 HO1369/01NOV (1/11/2569): 196645 Shipper, 196646 → Agent, 196647 → Consignee แล้วหน้า D/O ขึ้น",
+      "AWB อื่นในเที่ยวเดียวกันอาจเป็นแบบเดียวกัน — แต่แก้เฉพาะ AWB ที่หน้างานเปิดเคสมาเท่านั้น",
+      "ให้หน้างานเปิดหน้า D/O ใหม่เช็ก",
     ],
   },
   {
