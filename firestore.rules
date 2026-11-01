@@ -155,6 +155,11 @@ service cloud.firestore {
         || (isApproved() && resource.data.createdByUid == request.auth.uid);
     }
 
+    // ── ค่าตั้งของระบบ (เช่น target หุ่นยนต์ของสไลด์รายสัปดาห์) ──
+    match /settings/{id} {
+      allow read, write: if isApproved();
+    }
+
     // ── อื่นๆ ──────────────────────────────────────────────────
     match /knowledge/{docId} {
       allow read: if isLoggedIn();
