@@ -205,6 +205,8 @@ export default async function handler(req, res) {
           currentValue: rows[dayRowIndex]?.[colIdx] ?? '',
           newValue: Math.round(value),
           target: (targetVal !== null && !isNaN(targetVal) && targetVal > 0) ? targetVal : null,
+          row: dayRowIndex,
+          col: colIdx,
         };
         updates.push(update);
         allUpdates.push(update);
@@ -235,11 +237,33 @@ export default async function handler(req, res) {
       });
     }
 
+    // สีตัวอักษรตาม target: ต่ำกว่า target = แดง · ถึง target = ดำ · คอลัมน์ที่ไม่มี target ไม่แตะสี
+    const withTarget = allUpdates.filter((u) => u.target !== null);
+    let colored = 0;
+    if (withTarget.length > 0) {
+      const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID, fields: 'sheets.properties(sheetId,title)' });
+      const tab = (meta.data.sheets || []).find((x) => x.properties?.title === TAB_NAME);
+      if (tab) {
+        const RED = { red: 0.85, green: 0.1, blue: 0.1 };
+        const BLACK = { red: 0, green: 0, blue: 0 };
+        const requests = withTarget.map((u) => ({
+          repeatCell: {
+            range: { sheetId: tab.properties.sheetId, startRowIndex: u.row, endRowIndex: u.row + 1, startColumnIndex: u.col, endColumnIndex: u.col + 1 },
+            cell: { userEnteredFormat: { textFormat: { foregroundColorStyle: { rgbColor: u.newValue < u.target ? RED : BLACK } } } },
+            fields: 'userEnteredFormat.textFormat.foregroundColorStyle',
+          },
+        }));
+        await sheets.spreadsheets.batchUpdate({ spreadsheetId: SHEET_ID, requestBody: { requests } });
+        colored = withTarget.filter((u) => u.newValue < u.target).length;
+      }
+    }
+
     res.status(200).json({
       mode: 'written',
       startDate: startParam,
       endDate: endParam,
       updated: allUpdates.length,
+      belowTarget: colored,
       perDate,
     });
   } catch (err) {
