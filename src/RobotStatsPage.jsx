@@ -546,7 +546,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       const res = await fetch(`/api/sheet-sync?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error((data.error || 'เขียนข้อมูลไม่สำเร็จ') + (data.detail ? ` — ${data.detail}` : ''));
-      setSheetWriteDone(true);
+      setSheetWriteDone(data.belowTarget > 0 ? data.belowTarget : true);
     } catch (err) {
       setSheetSyncError(err.message);
     } finally {
@@ -727,7 +727,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
             {sheetWriteDone && (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: c.green, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 13, fontWeight: 700 }}>
-                ✓ เขียนข้อมูลเข้า Google Sheet เรียบร้อยแล้ว ({sheetPreview?.totalCells || 0} ช่อง)
+                ✓ เขียนข้อมูลเข้า Google Sheet เรียบร้อยแล้ว ({sheetPreview?.totalCells || 0} ช่อง){typeof sheetWriteDone === 'number' && sheetWriteDone > 0 ? ` · ต่ำกว่า target ${sheetWriteDone} ช่อง (ทำตัวแดงในชีตแล้ว)` : ''}
               </div>
             )}
 
