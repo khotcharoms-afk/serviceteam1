@@ -113,6 +113,38 @@ function findBlockForDate(rows, targetDate) {
   return null;
 }
 
+// ตารางของสัปดาห์ที่มีวันนั้นอยู่: หัวคอลัมน์ไซต์ตามลำดับในชีต + ค่า 7 วัน (จันทร์→อาทิตย์) + target
+// ค่าในชีตอาจมี * / ** นำหน้า (หมายเหตุ) — แยกออกมาเป็น mark
+function readWeek(rows, targetDate) {
+  const block = findBlockForDate(rows, targetDate);
+  if (!block) return { error: 'ไม่พบบล็อกสัปดาห์ที่ตรงกับวันที่นี้ใน Sheet', columns: [] };
+  const header = rows[block.headerRow] || [];
+  const order = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+  const dayRows = order.map((name) => {
+    for (let r = block.dataStartRow; r < block.dataStartRow + 8; r++) if ((rows[r]?.[0] || '').trim() === name) return r;
+    return null;
+  });
+  const tRow = block.dataStartRow + 7;
+  const hasTarget = (rows[tRow]?.[0] || '').trim().toLowerCase() === 'target';
+  const parse = (v) => {
+    const t = String(v ?? '').trim();
+    if (!t) return { value: null, mark: '' };
+    const mark = (/^\*+/.exec(t) || [''])[0].slice(0, 2);
+    const n = Number(t.replace(/[^0-9.\-]/g, ''));
+    return { value: t.replace(/[*\s,]/g, '') === '' || isNaN(n) ? null : Math.round(n), mark };
+  };
+  const columns = [];
+  header.forEach((label, ci) => {
+    const name = String(label || '').trim();
+    if (!ci || !name) return;
+    const cells = dayRows.map((r) => (r === null ? { value: null, mark: '' } : parse(rows[r]?.[ci])));
+    if (!cells.some((x) => x.value !== null)) return; // ไซต์ที่ทั้งสัปดาห์ไม่มีตัวเลข ข้าม
+    const t = hasTarget ? parse(rows[tRow]?.[ci]).value : null;
+    columns.push({ name, cells, target: t && t > 0 ? t : null });
+  });
+  return { title: String(rows[block.titleRow]?.[0] || '').trim(), columns };
+}
+
 function toISO(d) {
   return d.toISOString().split('T')[0];
 }
@@ -140,6 +172,17 @@ export default async function handler(req, res) {
   const robotToken = process.env.ROBOT_API_TOKEN;
   if (!robotToken) {
     return res.status(500).json({ error: 'ยังไม่ได้ตั้งค่า ROBOT_API_TOKEN บน Vercel' });
+  }
+
+  // โหมดอ่านอย่างเดียว: ตารางทั้งสัปดาห์จากชีต (ไว้ทำสไลด์รายสัปดาห์) — ไม่ต้องใช้ ROBOT_API_TOKEN
+  if (req.query.mode === 'week') {
+    try {
+      const sheets = google.sheets({ version: 'v4', auth: getAuth() });
+      const readRes = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB_NAME}'!A1:CZ3000` });
+      return res.status(200).json(readWeek(readRes.data.values || [], new Date(startParam + 'T00:00:00')));
+    } catch (err) {
+      return res.status(500).json({ error: 'อ่าน Google Sheet ไม่สำเร็จ', detail: err.message });
+    }
   }
 
   const startDateObj = new Date(startParam + 'T00:00:00');
