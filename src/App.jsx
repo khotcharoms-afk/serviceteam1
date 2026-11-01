@@ -286,12 +286,12 @@ export default function App({ currentUser, onSignOut }) {
     XLSX.writeFile(wb, fname);
   }
 
+  // วันที่เหลือน้อยที่สุดของประกัน/สัญญาเช่า/เช่าซื้อ (ยังไม่หมด) — ใช้ร่วมกันทั้งแถบแจ้งเตือน ตัวกรอง และตัวนับ
+  const soonestEnd = (c) => Math.min(...[daysLeft(c.warrantyEnd), daysLeft(c.leaseEnd), daysLeft(c.hirePurchaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
   const visibleCases = cases.filter(c=>{
     if(view!=="overview"&&c.projectId!==view) return false;
     if(filterStat==="__exp"){
-      const wd=daysLeft(c.warrantyEnd), ld=daysLeft(c.leaseEnd);
-      const wExp=(wd!==null&&wd>=0&&wd<=90), lExp=(ld!==null&&ld>=0&&ld<=90);
-      if(!wExp&&!lExp) return false;
+      if(soonestEnd(c)>90) return false;
     } else if(filterStat!=="all"&&c.status!==filterStat) return false;
     if(dateFrom && c.date && c.date < dateFrom) return false;
     if(dateTo   && c.date && c.date > dateTo)   return false;
@@ -301,9 +301,7 @@ export default function App({ currentUser, onSignOut }) {
     return !q||[c.title,c.type,c.tech,c.site,c.note,proj?.name].some(x=>x?.toLowerCase().includes(q));
   }).sort((a,b)=>{
     if(filterStat==="__exp"){
-      const da = Math.min(...[daysLeft(a.warrantyEnd),daysLeft(a.leaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
-      const db = Math.min(...[daysLeft(b.warrantyEnd),daysLeft(b.leaseEnd)].filter(x=>x!==null&&x>=0).concat([9999]));
-      return da - db;
+      return soonestEnd(a) - soonestEnd(b);
     }
     const ta = b.activityAt||b.updatedAt||b.id;
     const tb = a.activityAt||a.updatedAt||a.id;
@@ -698,7 +696,7 @@ export default function App({ currentUser, onSignOut }) {
     open:scopeCases.filter(c=>c.status==="open").length,
     done:scopeCases.filter(c=>c.status==="done").length,
     hold:scopeCases.filter(c=>c.status==="hold").length,
-    expiringSoon:scopeCases.filter(c=>{ const d=daysLeft(c.warrantyEnd); return d!==null&&d>=0&&d<=90; }).length,
+    expiringSoon:scopeCases.filter(c=>soonestEnd(c)<=90).length,
   };
 
   if(loading) return (
@@ -927,6 +925,7 @@ export default function App({ currentUser, onSignOut }) {
           if(warn.length===0) return null;
           warn.sort((a,b)=>a.days-b.days);
           const soonest = warn[0];
+          const caseCount = new Set(warn.map(w=>w.id)).size; // เคสเดียวอาจมีทั้งประกันและสัญญาเช่าใกล้หมด
           return (
             <div onClick={()=>setFilterStat("__exp")}
               style={{ background:themeC.card,borderStyle:"solid",borderWidth:"1px 1px 1px 3px",borderColor:`${themeC.border} ${themeC.border} ${themeC.border} ${themeC.warn}`,borderRadius:10,
@@ -934,7 +933,7 @@ export default function App({ currentUser, onSignOut }) {
                 alignItems:"center",gap:12 }}>
               <div style={{ flex:1,minWidth:0 }}>
                 <div style={{ fontSize:13,fontWeight:700,color:themeC.text900 }}>
-                  มี {warn.length} รายการใกล้หมดภายใน 30 วัน
+                  มี {caseCount} เคสใกล้หมดภายใน 30 วัน{warn.length>caseCount ? ` (${warn.length} รายการ)` : ""}
                 </div>
                 <div style={{ fontSize:12,color:themeC.text500,marginTop:2,overflow:"hidden",
                   textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
