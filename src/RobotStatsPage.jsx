@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useTheme } from './theme.js';
@@ -6,6 +6,7 @@ import { useTheme } from './theme.js';
 // พื้นหลังแถวที่ต่ำกว่าเป้า/ไม่ได้ทำงาน — อ่อนใน light, เข้มใน dark
 const redBgFor = (dark) => (dark ? '#3f1d1d' : '#fffafa');
 
+const WeeklySlidesPanel = lazy(() => import('./WeeklySlidesPanel.jsx'));
 import { SITE_CONFIG, SITE_ORDER, orderIndex, EXCLUDED_CODES, siteName, siteLabel, isWorked, buildDailyReport } from './robotReport.js';
 
 function formatIdleDays(n, lookback) {
@@ -344,6 +345,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   const [reportError, setReportError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showSheetSync, setShowSheetSync] = useState(false);
+  const [showSlides, setShowSlides] = useState(false);
   const [sheetSyncStart, setSheetSyncStart] = useState(todayStr());
   const [sheetSyncEnd, setSheetSyncEnd] = useState(todayStr());
   const [sheetPreview, setSheetPreview] = useState(null);
@@ -698,9 +700,21 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
               >
                 📤 {showSheetSync ? 'ซ่อน Sheet Sync' : (isMobile ? 'Sheet Sync' : 'ส่งเข้า Google Sheet')}
               </button>
+              <button
+                onClick={() => setShowSlides(true)}
+                style={{
+                  background: c.card, color: c.ink, border: `1px solid ${c.ink}`, borderRadius: 8, padding: '8px 13px',
+                  fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  flex: isMobile ? 1 : 'none',
+                }}
+              >
+                🖼 สไลด์รายสัปดาห์
+              </button>
             </div>
           </div>
         )}
+
+        {showSlides && <Suspense fallback={null}><WeeklySlidesPanel onClose={() => setShowSlides(false)} /></Suspense>}
 
         {/* Google Sheet sync panel */}
         {showSheetSync && (
