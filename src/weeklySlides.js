@@ -7,35 +7,64 @@ const PURPLE = "#46336b";
 const FONT = "'Noto Sans Thai', sans-serif";
 const BAR_COLORS = ["#4f7ff5", "#ad91f3", "#f3b56c", "#ffd84f", "#ef7178", "#e87cc6", "#5ad2d4", "#5fc77f", "#8f6bd8", "#ff9f43"];
 
-// จัดกลุ่มคอลัมน์จากชีตเป็นชุดสไลด์ (เรียงตามลำดับที่เจอในชีต) — กลุ่มเกิน 8 ไซต์แบ่งเป็นหลายชุด
-const GROUPS = [
-  { re: /^ARL/i, title: (n) => `ARL ${n} STATION` },
-  { re: /THAMC/i, title: () => "ศูนย์การแพทย์ธรรมศาสตร์" },
-  { re: /^SET/i, title: () => "SET" },
-  { re: /AOTGA/i, title: () => "AOTGA" },
-  { re: /^SCB/i, title: () => "SCB" },
-  { re: /^PDR|PANDORA/i, title: () => "PANDORA ลำพูน" },
-  { re: /VIBHA|AMATA/i, title: () => "วิภาราม" },
+// ── กลุ่มสไลด์ตามที่ทีมใช้ใน Weekly Update (Canva) ──
+const norm = (x) => String(x || "").toLowerCase().replace(/[\s_.\-]/g, "");
+export const SLIDE_GROUPS = [
+  { title: (n) => `METTBOT - ARL ${n} STATION`, match: (name) => /^arl/i.test(name.trim()) },
+  { title: () => "METTBOT - ALL SITE SERVICE", names: ["DAD_BB_SC80", "PDR_LPN_Prod", "PDR_LPN_OPMM", "VIBHA_BKK_SC50S", "RAV_CHM", "RAM2_SC50S", "KKP_ASOKE"] },
+  { title: () => "METTBOT - ALL SITE SERVICE", names: ["SCB_East", "SCB_West", "THAMC_FL1", "THAMC_FL2", "THAMC_FL4", "THAMC_FL5", "SP_Srinakarin", "AMATA"] },
+  { title: () => "METTBOT - ALL SITE SERVICE", names: ["CP MEJI", "AOTGA_FL.B_East", "AOTGA_FL.B_West", "AOTGA_FL.2_West"] },
+  { title: () => "METTBOT MIX1 - ALL SITE SERVICE", names: ["SET RatchadaA", "SET RatchadaB", "SET RatchadaC", "SET Northpark1", "SET Northpark2", "SCB_HQ", "VIBHA_LCB"] },
 ];
+const groupOf = (name) => SLIDE_GROUPS.findIndex((g) => (g.match ? g.match(name) : g.names.some((n) => norm(n) === norm(name))));
+
+// target ตั้งต้น (ตาม Weekly Update ใน Canva) — ไซต์ที่ไม่มีในนี้/เป็น 0 = ไม่มี target
+export const DEFAULT_TARGETS = {
+  "ARL - Ban Thap Chang": 3292, "ARL - Hua Mak": 2910, "ARL - Lat Krabang": 2593, "ARL - Makkasan": 6610,
+  "ARL - Phaya Thai": 3779, "ARL - Ramkhamhaeng": 3300, "ARL - Ratchaprarop": 2520, "ARL - Suvarnabhumi": 4779,
+  DAD_BB_SC80: 5000, PDR_LPN_Prod: 1118, PDR_LPN_OPMM: 250, VIBHA_BKK_SC50S: 125, RAV_CHM: 800, RAM2_SC50S: 575, KKP_ASOKE: 600,
+  SCB_East: 800, SCB_West: 800, THAMC_FL1: 600, THAMC_FL2: 600, THAMC_FL4: 600, THAMC_FL5: 600, SP_Srinakarin: 800, AMATA: 800,
+  "CP MEJI": 800,
+  "SET RatchadaA": 600, "SET RatchadaB": 600, "SET RatchadaC": 600, "SET Northpark1": 600, "SET Northpark2": 600, SCB_HQ: 600, VIBHA_LCB: 600,
+};
+export function targetFor(name, saved = {}) {
+  const k = Object.keys(saved).find((x) => norm(x) === norm(name)) ?? Object.keys(DEFAULT_TARGETS).find((x) => norm(x) === norm(name));
+  const v = k === undefined ? null : Number(saved[k] ?? DEFAULT_TARGETS[k]);
+  return v > 0 ? v : null;
+}
+// target จากชีตมาก่อน ถ้าชีตไม่มีใช้ค่าที่ตั้งไว้ในระบบ
+export function applyTargets(columns, saved) {
+  return columns.map((c) => ({ ...c, targetSource: c.target ? "sheet" : "setting", target: c.target || targetFor(c.name, saved) }));
+}
+
 export function groupColumns(columns) {
-  const groups = [];
-  const byKey = {};
+  const byKey = {}; const order = [];
   for (const col of columns) {
-    const gi = GROUPS.findIndex((g) => g.re.test(col.name));
+    const gi = groupOf(col.name);
     const key = gi >= 0 ? gi : "other";
-    if (!byKey[key]) { byKey[key] = { key, cols: [] }; groups.push(byKey[key]); }
-    byKey[key].cols.push(col);
+    if (!byKey[key]) { byKey[key] = []; order.push(key); }
+    byKey[key].push(col);
   }
   const out = [];
-  for (const g of groups) {
-    const base = g.key === "other" ? "ไซต์อื่น ๆ" : GROUPS[g.key].title(g.cols.length);
-    const parts = Math.ceil(g.cols.length / 8);
+  for (const key of order) {
+    const cols = byKey[key];
+    const base = key === "other" ? "METTBOT - ALL SITE SERVICE" : SLIDE_GROUPS[key].title(cols.length);
+    const parts = Math.ceil(cols.length / 8);
     for (let p = 0; p < parts; p++) {
-      const cols = g.cols.slice(Math.ceil((g.cols.length / parts) * p), Math.ceil((g.cols.length / parts) * (p + 1)));
-      out.push({ title: `METTBOT - ${base}${parts > 1 ? ` (${p + 1}/${parts})` : ""}`, cols });
+      out.push({ id: `${key}-${p}`, title: base, cols: cols.slice(Math.ceil((cols.length / parts) * p), Math.ceil((cols.length / parts) * (p + 1))) });
     }
   }
   return out;
+}
+
+// หมายเหตุของช่อง: "" | "*" | "**" | "***" | "หยุด"
+export const MARKS = ["", "*", "**", "***", "หยุด"];
+export const markOf = (marks, col, di) => marks[`${col.name}|${di}`] ?? col.cells[di].mark ?? "";
+const DEFAULT_NOTE = { "*": "* = Operation ติดหน้างาน", "**": "** = สภาพอากาศแปรปรวน", "***": "*** = Startup issue" };
+export function defaultNote(group, marks) {
+  const used = new Set(group.cols.flatMap((c) => c.cells.map((_, di) => markOf(marks, c, di))));
+  const parts = ["*", "**", "***"].filter((m) => used.has(m)).map((m) => DEFAULT_NOTE[m]);
+  return parts.length ? `หมายเหตุ ${parts.join(" / ")}` : "";
 }
 
 export const below = (col, i) => col.target !== null && col.cells[i].value !== null && col.cells[i].value < col.target;
@@ -68,7 +97,7 @@ function fitText(ctx, text, maxW, size, weight = 600) {
 }
 
 // ── ตาราง ──
-export function drawTable(ctx, group, marks = {}) {
+export function drawTable(ctx, group, marks = {}, note) {
   frame(ctx, group.title);
   const cols = group.cols;
   const hasTarget = cols.some((c) => c.target !== null);
@@ -101,10 +130,10 @@ export function drawTable(ctx, group, marks = {}) {
       const x = x0 + dayW + i * cw;
       cell(x, y, cw, rh, "#fff");
       const v = c.cells[di].value;
-      const mk = marks[`${c.name}|${di}`] ?? c.cells[di].mark ?? "";
-      ctx.fillStyle = below(c, di) ? "#e01b1b" : "#111";
+      const mk = markOf(marks, c, di);
+      ctx.fillStyle = below(c, di) || mk === "หยุด" ? "#e01b1b" : "#111";
       ctx.font = `700 25px ${FONT}`;
-      ctx.fillText(v === null ? "-" : `${mk}${v}`, x + cw / 2, y + rh / 2);
+      ctx.fillText(mk === "หยุด" ? "หยุด" : v === null ? "-" : `${mk}${v}`, x + cw / 2, y + rh / 2);
     });
   });
   // target
@@ -123,10 +152,9 @@ export function drawTable(ctx, group, marks = {}) {
   let y = y0 + hh + rows * rh + 42;
   ctx.fillStyle = PURPLE; ctx.font = `400 30px ${FONT}`;
   ctx.fillText("สรุปผลการทำงานของหุ่นยนต์ของแต่ละไซต์ (หน่วยเป็นตร.ม.)", W / 2, y);
-  const used = new Set(cols.flatMap((c) => c.cells.map((_, di) => marks[`${c.name}|${di}`] ?? c.cells[di].mark ?? "")).filter(Boolean));
   ctx.fillStyle = "#e01b1b";
-  if (used.has("*")) { y += 42; ctx.fillText("หมายเหตุ * = Operation ติดหน้างาน", W / 2, y); }
-  if (used.has("**")) { y += 42; ctx.fillText(`${used.has("*") ? "" : "หมายเหตุ "}** = สภาพอากาศแปรปรวน`, W / 2, y); }
+  const text = note === undefined ? defaultNote(group, marks) : note;
+  for (const line of String(text || "").split("\n").filter((l) => l.trim())) { y += 42; ctx.fillText(line.trim(), W / 2, y); }
 }
 
 // ── กราฟแท่ง: วัน dayIdx (เช่น [0,1,2]) แต่ละวันมีแท่งของทุกไซต์ ──
@@ -195,12 +223,12 @@ export function drawChart(ctx, group, dayIdx) {
 // รายการสไลด์ทั้งหมดของสัปดาห์: ต่อกลุ่ม = ตาราง + กราฟทั้งสัปดาห์ (จ.–อา.)
 export function slideList(groups) {
   return groups.flatMap((g, gi) => [
-    { id: `${gi}-t`, group: g, kind: "table", label: `${g.title} · ตาราง` },
-    { id: `${gi}-c`, group: g, kind: "chart", days: [0, 1, 2, 3, 4, 5, 6], label: `${g.title} · กราฟทั้งสัปดาห์` },
+    { id: `${g.id}-t`, group: g, kind: "table", label: `${g.title} · ตาราง` },
+    { id: `${g.id}-c`, group: g, kind: "chart", days: [0, 1, 2, 3, 4, 5, 6], label: `${g.title} · กราฟทั้งสัปดาห์` },
   ]);
 }
-export function renderSlide(canvas, slide, marks) {
+export function renderSlide(canvas, slide, marks, notes = {}) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d");
-  if (slide.kind === "table") drawTable(ctx, slide.group, marks); else drawChart(ctx, slide.group, slide.days);
+  if (slide.kind === "table") drawTable(ctx, slide.group, marks, notes[slide.group.id]); else drawChart(ctx, slide.group, slide.days);
 }
