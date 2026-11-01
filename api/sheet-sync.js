@@ -124,8 +124,12 @@ function readWeek(rows, targetDate) {
     for (let r = block.dataStartRow; r < block.dataStartRow + 8; r++) if ((rows[r]?.[0] || '').trim() === name) return r;
     return null;
   });
-  const tRow = block.dataStartRow + 7;
-  const hasTarget = (rows[tRow]?.[0] || '').trim().toLowerCase() === 'target';
+  // แถว Target: หาในช่วงใต้แถววัน เผื่อชื่อเขียนต่างกันเล็กน้อย เช่น "TARGET", "Target (ตร.ม.)", "เป้าหมาย"
+  let tRow = -1;
+  for (let r = block.dataStartRow + 7; r < block.dataStartRow + 10; r++) {
+    if (/^(target|เป้า)/i.test((rows[r]?.[0] || '').trim())) { tRow = r; break; }
+  }
+  const hasTarget = tRow >= 0;
   const parse = (v) => {
     const t = String(v ?? '').trim();
     if (!t) return { value: null, mark: '' };
