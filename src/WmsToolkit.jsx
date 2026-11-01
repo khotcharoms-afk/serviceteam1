@@ -276,6 +276,20 @@ export const SOPS = [
     ],
   },
   {
+    key: "clear-flight", title: "🧹 ล้างไฟลท์ขาเข้า (ลบทุกอย่างเพื่อ import ใหม่)",
+    when: "หน้างานขอ 'ล้างไฟลท์' — ต้องการลบข้อมูลทั้งเที่ยวบินแล้ว import FFM/FWB ใหม่",
+    steps: [
+      "หา flight_id จาก kn_cargo_flights (std เป็น UTC = เวลาไทย −7 ชม.) — แถวเที่ยวบินเองไม่ต้องลบ",
+      "ดูว่ามี booking ไหนผูกเที่ยวอื่นด้วยไหม (routing มากกว่า 1 เที่ยว) — ถ้ามี ห้ามลบ booking นั้น ให้ถามก่อน",
+      "Back up ทุกแถวเป็น JSON (1 query รวมทุกตาราง: tbl, id, to_jsonb) → Export → เปิดไฟล์เช็กจำนวนแถว",
+      "ลบในคำสั่งเดียว ลูกก่อนแม่: notifications → in_awb_delivery_orders → in_delivery_orders (flight_id) → in_breakdowns → in_shipments → in_booking_hawb_customers / hawb_dimensions → in_booking_hawbs → in_booking_customers → in_booking_flights → in_booking_routings → in_bookings → in_manifests → imp_messages (flight_id)",
+      "ถ้า error foreign key = ยังมีตารางลูกที่ไม่ได้ลบ → ระบบยกเลิกทั้งคำสั่ง ไม่มีอะไรหาย → เพิ่มตารางนั้นใน back up + คำสั่งลบ แล้วรันใหม่",
+      "ไม่ลบ message_centers (ประวัติ FSU) แต่ใส่ไว้ในไฟล์ back up",
+      "ค้นซ้ำ: imp_messages / routing / D/O ของ flight_id ต้องเป็น 0 → แจ้งหน้างาน import ใหม่ได้",
+      "ตัวอย่าง HO1369/01NOV (flight 744478, 1/11/2569): back up 88 แถว ลบ 61 แถว (3 booking, 9 D/O, 5 message)",
+    ],
+  },
+  {
     key: "restore", title: "♻️ Back up / คืนข้อมูลที่ลบไป",
     when: "ลบไปแล้วมีปัญหา ต้องเอาข้อมูลกลับ",
     steps: [
