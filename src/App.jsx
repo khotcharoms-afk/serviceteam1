@@ -710,9 +710,10 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></Suspense></ThemeContext.Provider>;
-  if(leavePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></Suspense></ThemeContext.Provider>;
+  // OT / Onsite / ใบลา เปิดเฉพาะ admin/dev (ผู้ใช้ทั่วไปไม่เห็นเมนูและเข้าทางลิงก์ไม่ได้)
+  if(leavePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></Suspense></ThemeContext.Provider>;
   if(profilePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/></Suspense></ThemeContext.Provider>;
-  if(otPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OTPage onBack={()=>setOtPage(false)}
+  if(otPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OTPage onBack={()=>setOtPage(false)}
     projects={projects} users={users} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(taskPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><TaskBoard onBack={()=>setTaskPage(false)}
     projects={projects} users={users} cases={cases} currentUser={currentUser}
@@ -796,7 +797,7 @@ export default function App({ currentUser, onSignOut }) {
       await setDoc(doc(db,"tasks",task.id),{caseId:cid,updatedAt:now},{merge:true});
       showToast("📁 สร้างเคสจากงานแล้ว","success");
     }}/></Suspense></ThemeContext.Provider>;
-  if(onsitePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></Suspense></ThemeContext.Provider>;
+  if(onsitePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></Suspense></ThemeContext.Provider>;
   if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></Suspense></ThemeContext.Provider>;
   if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
@@ -842,7 +843,7 @@ export default function App({ currentUser, onSignOut }) {
         onMenuOpen={()=>setMenuOpen(true)}
         view={view} activeProj={activeProj}
         onSearch={()=>{ setGlobalSearch(true); setGlobalQ(""); }}
-        onOnsite={()=>setOnsitePage(true)}
+        onOnsite={isAdminOrDev ? ()=>setOnsitePage(true) : null}
         onTaskBoard={()=>setTaskPage(true)} tasks={tasks} currentUser={currentUser}
         onNotif={e=>{ e.stopPropagation(); setNotifOpen(v=>!v); }} unreadCount={unreadCount}
         onNewCase={openAddCase}
@@ -1231,7 +1232,7 @@ export default function App({ currentUser, onSignOut }) {
                 const q = globalQ.trim().toLowerCase();
                 const matchCases = cases.filter(c=>[c.title,c.site,c.note,c.type].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
                 const matchTasks = (tasks||[]).filter(t=>[t.title,t.site,t.note,t.projectName].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
-                const matchOnsite = (onsiteRecords||[]).filter(r=>[r.projectName,r.site,r.detail,r.scope].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
+                const matchOnsite = (isAdminOrDev ? onsiteRecords||[] : []).filter(r=>[r.projectName,r.site,r.detail,r.scope].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
                 const matchProjs = projects.filter(p=>[p.name,p.code,p.customer].some(x=>x?.toLowerCase().includes(q))).slice(0,5);
                 const total = matchCases.length+matchTasks.length+matchOnsite.length+matchProjs.length;
                 if(total===0) return (
