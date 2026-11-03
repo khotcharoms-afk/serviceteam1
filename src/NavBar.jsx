@@ -60,7 +60,7 @@ export default function NavBar({
 
         <button onClick={onSearch} title="ค้นหา" style={iconBtn}><Icon name="search"/></button>
 
-        {!isMobile && (
+        {!isMobile && onOnsite && (
           <button onClick={onOnsite} title="Onsite" style={iconBtn}><Icon name="pin"/></button>
         )}
 
