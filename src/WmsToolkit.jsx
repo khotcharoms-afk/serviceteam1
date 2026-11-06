@@ -659,7 +659,7 @@ function AmendHelper({ c }) {
   const [pcs, setPcs] = useState("");
   const [wt, setWt] = useState("");
   const [vol, setVol] = useState("");
-  const [uid, setUid] = useState("129");
+  const [uid, setUid] = useState("135");
   const [copied, copy] = useCopy();
 
   const m = awbText.replace(/\s/g, "").match(/^(\d{3})-?(\d{8})$/);
