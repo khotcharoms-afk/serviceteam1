@@ -83,7 +83,7 @@ export function parseFFM(raw) {
 
 // อัปเดต SOP ทุกครั้งที่เคสใหม่สอนอะไรใหม่ — แก้ SOP_UPDATED ด้วย
 // when = ใช้เมื่อไหร่ (ภาษาหน้างาน), steps = ทีละขั้น อ้างชื่อปุ่ม/template ในหน้านี้ให้มากที่สุด
-const SOP_UPDATED = "1 พ.ย. 2569";
+const SOP_UPDATED = "8 พ.ย. 2569";
 
 export const SOPS = [
   {
@@ -287,6 +287,38 @@ export const SOPS = [
       "ไม่ลบ message_centers (ประวัติ FSU) แต่ใส่ไว้ในไฟล์ back up",
       "ค้นซ้ำ: imp_messages / routing / D/O ของ flight_id ต้องเป็น 0 → แจ้งหน้างาน import ใหม่ได้",
       "ตัวอย่าง HO1369/01NOV (flight 744478, 1/11/2569): back up 88 แถว ลบ 61 แถว (3 booking, 9 D/O, 5 message)",
+    ],
+  },
+  {
+    key: "msg-postman", title: "📨 อัปเดต HAWB / ข้อมูลจาก message (FHL · FWB · FFM · FSU) ด้วย Postman",
+    when: "หน้างานส่ง message มาให้อัปเดต (เช่น 'รบกวนอัพเดท HAWB') แต่ข้อมูลมีอยู่แล้ว / ออก D/O ไปแล้ว import ทับไม่ได้",
+    steps: [
+      "เปิด Postman → collection 'wms-message-extraction' → เลือก request ตามชนิด message (FHL / FWB / FFM / FSU)",
+      "แท็บ Body (x-www-form-urlencoded): ใส่ message ที่หน้างานส่งมาในช่อง message และตั้ง cargoType = import หรือ export → กด Send",
+      "ผลที่ได้คือ JSON แยกตามตาราง เช่น kn_cargo_in_booking_hawbs, kn_cargo_in_booking_hawb_customers — Postman แค่แปลง message ไม่ได้เขียนลงฐานข้อมูล",
+      "ค้นข้อมูลปัจจุบันใน Dataflare แล้วเทียบกับ JSON ทีละช่อง → แก้เฉพาะช่องที่ต่าง (ค่าเดียวที่รู้ค่าเดิมไม่ต้อง back up ไฟล์ · หลายแถว / ลบ ต้อง back up ก่อน)",
+      "ตัวอย่าง 105-58514433 AY151/08NOV, HAWB 2611601050 (8/11/2569): ต่างกันแค่ SLAC → แก้ kn_cargo_in_booking_hawbs.slac = '3' ค่าเดียว",
+    ],
+  },
+  {
+    key: "split-newest", title: "🧩 Split แล้วส่วนที่เหลือ (Newest) ขึ้น Cancelled / ยอดผิด — Pre-Man / Manifest ไม่ได้",
+    when: "หน้า Booking List ของเที่ยวบินใหม่ AWB ขึ้นจุดสีส้ม (Cancelled) หรือยอดคลังของส่วนที่เหลือไม่ตรง",
+    steps: [
+      "ค้นทุก booking ของ AWB (ขาออก): ดู split_status (Splited / Newest), ref_split, is_active, routing, shipment, booking_warehouses",
+      "ยอดที่เหลือ = ยอดรวม AWB − shipment ที่บินไปแล้ว · booking ตัว Newest ต้องมีแถวคลัง (booking_warehouses) แถวเดียวเท่ากับยอดที่เหลือ — ถ้ามีหลายแถว back up แล้วแก้ให้เหลือแถวเดียว",
+      "จุดสีส้ม = is_active = false ที่ตัว Newest → แก้ kn_cargo_bookings.is_active = true (ค่าเดียว ย้อนกลับได้) · ตัวต้นสาย (Splited) ไม่ต้องแตะ",
+      "ตัวอย่าง 703-13168971 G9688 → G9715/08NOV (8/11/2569): booking 222558 คลังมี 20/200 + 128/1275 → แก้เหลือ 83/827 และ is_active → true",
+    ],
+  },
+  {
+    key: "flight-date", title: "📅 ขาออก: เที่ยวบินลงวันผิด / ขอย้ายไปเที่ยวบินวันที่ไม่มีในระบบ",
+    when: "หน้างานขอ re-route ไปวันที่ย้อนหลังหรือวันที่ไม่มีเที่ยวบินในระบบ",
+    steps: [
+      "หาเที่ยวบินในช่วงวันที่ — ถ้าไม่มีวันที่ขอ ดู created_at / dep_at / FBL ของเที่ยวบินเดิม: ถ้าสร้างและกด departed ในวันอื่น = ตอนสร้างเที่ยวบินใส่วันผิด",
+      "เช็กว่าเที่ยวบินนั้นมี AWB อื่นปนอยู่ไหม — แก้เฉพาะ AWB ที่เปิดเคสมา อย่าเปลี่ยนวันของทั้งเที่ยวบินถ้ามี AWB อื่น",
+      "สร้างเที่ยวบินใหม่โดย copy แถวเดิมใน kn_cargo_flights (แก้ std/sta, ไม่ใส่ atd/ata/dep_at ให้หน้างาน manifest เอง)",
+      "back up ก่อน แล้วย้ายของ AWB นั้นไปเที่ยวใหม่: routing, eweights, handling_ratings (flight_id), preman_histories ที่มีแค่ AWB นี้ · ลบ shipment ออกจาก manifest เดิม · booking mvt_status → PRE-MAN",
+      "ตัวอย่าง 829-05315741 PG274 08NOV → 01NOV (8/11/2569): สร้าง flight 780038 · 829-05305355 ที่อยู่เที่ยวเดียวกันไม่แตะ",
     ],
   },
   {
