@@ -322,6 +322,17 @@ export const SOPS = [
     ],
   },
   {
+    key: "rating-airport", title: "💥 หน้า Handling & Rating ขึ้น Something Wrong ทันทีที่ใส่ AWB",
+    when: "ใส่ Prefix / AWB / Inbound แล้ว error ทันที (ช่อง Flight ยังไม่ขึ้นให้เลือก) ทั้งที่ shipment / breakdown / D/O ครบ",
+    steps: [
+      "ค้น booking ของ AWB แล้วดู origin / destination — มักเป็นรหัสเมือง (เช่น STO = Stockholm) ไม่ใช่รหัสสนามบินจริง (ARN)",
+      "เช็กว่ารหัสนั้นมีในตารางสนามบินกลางไหม: SELECT * FROM aotga_center.kn_cargo_airports WHERE code IN ('<origin>', '<destination>'); (ตาราง aotga.kn_cargo_airports_temp เป็นแค่สำเนา)",
+      "ถ้าไม่มี = สาเหตุ → ส่งผู้พัฒนาเพิ่มรหัสสนามบิน/เมืองนั้นเข้าระบบ (อย่าเพิ่มเอง เป็นข้อมูลกลางของทุกสถานี) แล้วให้หน้างานลองใหม่",
+      "ไม่ใช่สาเหตุ (ตรวจแล้วตัดออกได้): Agent ผูกลูกค้า AOTGA, ไม่มี FWB / charge code, เวลา std อยู่หลัง sta",
+      "ตัวอย่าง 630-08045973 DK2576/31OCT (8/11/2569): origin STO ไม่มีในระบบ → ผู้พัฒนาเพิ่ม STO แล้วออกบิลได้",
+    ],
+  },
+  {
     key: "restore", title: "♻️ Back up / คืนข้อมูลที่ลบไป",
     when: "ลบไปแล้วมีปัญหา ต้องเอาข้อมูลกลับ",
     steps: [
