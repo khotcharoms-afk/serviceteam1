@@ -81,6 +81,20 @@ async function fetchRawByVin(token, start_time, end_time, timeoutMs = 8000) {
 const isZero = (r) => !(Number(r.task_num) > 0) && !(Number(r.actual_clean_area) > 0) && !(Number(r.total_time) > 0);
 
 // สรุปรายคันครบทุกหน้า + เติมคันที่เป็น 0 จากงานดิบ
+// ── ผูกหุ่นกับโค้ดไซต์ด้วย VIN ──
+// โค้ดโปรเจกต์ใน VIGGO ถูกเปลี่ยนได้ (เช่น AOTGA เคยสลับ/เปลี่ยนชื่อ) หรือรถยังอยู่ใต้โค้ดคลัง MTTH_x
+// รถในลิสต์นี้จะถูกตั้ง project_name ตามนี้เสมอ — ทั้งหน้าเว็บ รายงาน และการส่งเข้าชีตใช้ค่าเดียวกัน
+export const VIN_PROJECT = {
+  'IDPWXB416060G40008': 'AOTGA_TH_3', // AOTGA FL.B East
+  'IDPWXB416060G40005': 'AOTGA_TH_2', // AOTGA FL.B West
+  'IDPWXB416060G40002': 'AOTGA_TH_1', // AOTGA FL.2 West
+  'IDPWXB416053EA0014': 'CLOUD11',    // Cloud11
+};
+export function normalizeCar(r) {
+  const code = VIN_PROJECT[String(r?.vin || '').trim().toUpperCase()];
+  return code && r.project_name !== code ? { ...r, project_name: code, viggo_project: r.project_name } : r;
+}
+
 export async function getCars(token, start_time, end_time, { page = 1, pageSize = 100, raw = true, rawTimeout = 8000 } = {}) {
   const first = await fetchSummaryPage(token, start_time, end_time, page, pageSize);
   const result = [...(first.result || [])];
@@ -109,5 +123,5 @@ export async function getCars(token, start_time, end_time, { page = 1, pageSize 
       });
     } catch { rawStatus = 'failed'; /* งานดิบล้มเหลว/ช้าเกิน — ใช้สรุปเดิม */ }
   }
-  return { first, result, filled, rawStatus };
+  return { first, result: result.map(normalizeCar), filled, rawStatus };
 }
