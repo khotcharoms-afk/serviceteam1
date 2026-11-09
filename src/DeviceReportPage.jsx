@@ -4,7 +4,7 @@ import { auth } from "./firebase";
 import { useTheme } from "./theme.js";
 import { today, addDays } from "./utils.js";
 import { REPORT_SITES, loadPrefs, savePrefs, reportRows, buildStatusReport } from "./statusReport.js";
-import { EXCLUDED_CODES, isWorked, buildDailyReport } from "./robotReport.js";
+import { EXCLUDED_CODES, isWorked, buildDailyReport, normalizeRobot } from "./robotReport.js";
 
 const TH_MONTH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 const fmtLong = (s) => { const [y, m, d] = s.split("-"); return `${Number(d)} ${TH_MONTH[Number(m) - 1]} ${Number(y) + 543}`; };
@@ -59,7 +59,7 @@ export default function DeviceReportPage({ onBack }) {
         const res = await fetch(`/api/robot-stats?${params}`);
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || `ดึงข้อมูลหุ่นยนต์ไม่สำเร็จ (HTTP ${res.status})`);
-        if (!cancelled) setRobots((j.result || []).filter((r) => !EXCLUDED_CODES.includes(r.project_name)));
+        if (!cancelled) setRobots((j.result || []).map(normalizeRobot).filter((r) => !EXCLUDED_CODES.includes(r.project_name)));
       } catch (e) { if (!cancelled) { setRobotErr(e.message); setRobots(null); } }
       finally { if (!cancelled) setRobotBusy(false); }
     })();

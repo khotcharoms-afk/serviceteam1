@@ -47,7 +47,18 @@ export const SITE_CONFIG = {
   'VBH_LEAM': { site: 'รพ.วิภารามแหลมฉบัง MIX-1' },
   'CMA_1':   { site: 'SET Northpark 1' },
   'CMA_2':   { site: 'SET Northpark 2' },
+  'CLOUD11': { site: 'Cloud11' },
 };
+
+// ── ผูกหุ่นกับไซต์ด้วย VIN ──
+// ใช้กับรถที่ใน VIGGO ยังไม่ได้ตั้งโปรเจกต์ หรือยังอยู่ใต้โค้ดคลัง (MTTH_x) — ระบบจะถือว่าอยู่ไซต์นี้แทน
+export const VIN_PROJECT = {
+  'IDPWXB416053EA0014': 'CLOUD11',
+};
+export function normalizeRobot(r) {
+  const code = VIN_PROJECT[String(r?.vin || '').trim().toUpperCase()];
+  return code ? { ...r, project_name: code, viggo_project: r.project_name } : r;
+}
 
 // ── ลำดับการแสดงผลในรายงาน (เรียงตามลำดับโค้ดในนี้) ──
 // ไซต์ที่ไม่มีโค้ดอยู่ในลิสต์นี้ จะถูกจัดไว้ท้ายสุดตามลำดับที่มาจาก VIGGO
@@ -60,6 +71,7 @@ export const SITE_ORDER = [
   'SET_1', 'SET_2', 'SET_3', 'CMA_1', 'CMA_2',
   'RAV_CHM', 'CP-meiji',
   'AOTGA_TH_3', 'AOTGA_TH_2', 'AOTGA_TH_1',
+  'CLOUD11',
 ];
 export function orderIndex(code) {
   const i = SITE_ORDER.indexOf(code);

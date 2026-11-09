@@ -7,7 +7,7 @@ import { useTheme } from './theme.js';
 const redBgFor = (dark) => (dark ? '#3f1d1d' : '#fffafa');
 
 const WeeklySlidesPanel = lazy(() => import('./WeeklySlidesPanel.jsx'));
-import { SITE_CONFIG, SITE_ORDER, orderIndex, EXCLUDED_CODES, siteName, siteLabel, isWorked, buildDailyReport } from './robotReport.js';
+import { SITE_CONFIG, SITE_ORDER, orderIndex, EXCLUDED_CODES, siteName, siteLabel, isWorked, buildDailyReport, normalizeRobot } from './robotReport.js';
 
 function formatIdleDays(n, lookback) {
   if (n === undefined || n === null) return null;
@@ -417,7 +417,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       const res = await fetch(`/api/robot-stats?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
-      const allResults = data.result || [];
+      const allResults = (data.result || []).map(normalizeRobot);
       setRows(allResults.filter((r) => !EXCLUDED_CODES.includes(r.project_name)));
     } catch (err) {
       setError(err.message);
@@ -479,7 +479,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         const res = await fetch(`/api/robot-stats?${params.toString()}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
-        if (!cancelled) setReportRows((data.result || []).filter((r) => !EXCLUDED_CODES.includes(r.project_name)));
+        if (!cancelled) setReportRows((data.result || []).map(normalizeRobot).filter((r) => !EXCLUDED_CODES.includes(r.project_name)));
       } catch (err) {
         if (!cancelled) { setReportError(err.message); setReportRows([]); }
       } finally {
