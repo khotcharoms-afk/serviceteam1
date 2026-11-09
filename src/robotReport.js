@@ -50,15 +50,8 @@ export const SITE_CONFIG = {
   'CLOUD11': { site: 'Cloud11' },
 };
 
-// ── ผูกหุ่นกับไซต์ด้วย VIN ──
-// ใช้กับรถที่ใน VIGGO ยังไม่ได้ตั้งโปรเจกต์ หรือยังอยู่ใต้โค้ดคลัง (MTTH_x) — ระบบจะถือว่าอยู่ไซต์นี้แทน
-export const VIN_PROJECT = {
-  'IDPWXB416053EA0014': 'CLOUD11',
-};
-export function normalizeRobot(r) {
-  const code = VIN_PROJECT[String(r?.vin || '').trim().toUpperCase()];
-  return code ? { ...r, project_name: code, viggo_project: r.project_name } : r;
-}
+// การผูกหุ่นกับไซต์ด้วย VIN ทำที่ฝั่งเซิร์ฟเวอร์ (api/_viggo.js → VIN_PROJECT) — ข้อมูลที่มาถึงหน้าเว็บแก้ project_name แล้ว
+export const normalizeRobot = (r) => r;
 
 // ── ลำดับการแสดงผลในรายงาน (เรียงตามลำดับโค้ดในนี้) ──
 // ไซต์ที่ไม่มีโค้ดอยู่ในลิสต์นี้ จะถูกจัดไว้ท้ายสุดตามลำดับที่มาจาก VIGGO
