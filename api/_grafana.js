@@ -168,12 +168,21 @@ async function siteReport(client, site, dashMeta, date) {
   out.parts = {};
   out.undated = {};
   for (const [key, matchers] of Object.entries(METRICS)) {
-    let found = [];
-    for (const m of matchers) { found = panels.filter((p) => m(norm(p.title))); if (found.length) break; }
-    if (!found.length) continue;
-    // ถ้าเจอหลาย panel แต่ไม่มีป้ายเสา ใช้ตัวแรกตัวเดียว (กันนับซ้ำ)
-    const tagged = found.filter((p) => tagOf(p.title));
-    const use = tagged.length > 1 ? tagged : [found[0]];
+    // ไล่ตัวจับคู่จากตรงที่สุดไปกว้างสุด — แต่ละเสา ([SCG01], [SCG02]) เลือก panel ที่ตรงที่สุดของเสานั้นเอง
+    // (เดิมหยุดที่ระดับแรกที่เจอ ทำให้ถ้าชื่อ panel ของสองเสาต่างกันเล็กน้อย จะได้แค่เสาเดียวและไม่มีตัวเลขรายเสา)
+    const byTag = new Map();
+    let firstUntagged = null;
+    for (const m of matchers) {
+      for (const p of panels) {
+        if (!m(norm(p.title))) continue;
+        const tag = tagOf(p.title);
+        if (tag) { if (!byTag.has(tag)) byTag.set(tag, p); }
+        else if (!firstUntagged) firstUntagged = p;
+      }
+    }
+    // หลายเสา (หรือมีแต่ panel ติดป้ายเสา) → ใช้ panel ของทุกเสา · นอกนั้นใช้ panel ไม่ติดป้ายตัวแรกตัวเดียว (กันนับซ้ำ)
+    const use = (byTag.size >= 2 || (byTag.size && !firstUntagged)) ? [...byTag.values()] : firstUntagged ? [firstUntagged] : [];
+    if (!use.length) continue;
     out.panels[key] = use.map((p) => p.title).join(" + ");
     // ใบหน้า: panel เป็นกราฟรายวัน 30 วัน → query ย้อนหลังแล้วหยิบวันที่ต้องการ · VIP/Blacklist: query เฉพาะวันนั้น
     const from = key === "faces" ? start - 30 * DAY_MS : start;
@@ -184,7 +193,7 @@ async function siteReport(client, site, dashMeta, date) {
         if (!dated) out.undated[key] = true;
         sum = (sum || 0) + v;
         const tag = tagOf(panel.title);
-        if (use.length > 1 && tag) (out.parts[tag] = out.parts[tag] || {})[key] = v;
+        if (tag) (out.parts[tag] = out.parts[tag] || {})[key] = v;
       } catch (e) {
         out.errors.push(`${panel.title}: ${e.message}`);
       }
