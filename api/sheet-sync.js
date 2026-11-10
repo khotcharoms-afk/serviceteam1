@@ -41,7 +41,11 @@ const SHEET_SITE_MAP = {
   'SET RatchadaA': ['SET_1'],
   'SET RatchadaB': ['SET_2'],
   'SET RatchadaC': ['SET_3'],
+  'Cloud11': ['CLOUD11'],
 };
+// จับคู่หัวคอลัมน์แบบไม่สนตัวพิมพ์เล็ก/ใหญ่ ช่องว่าง _ - . (เช่น "CLOUD 11" = "Cloud11")
+const normKey = (x) => String(x || '').toLowerCase().replace(/[\s_.\-]/g, '');
+const SITE_MAP_NORM = Object.fromEntries(Object.entries(SHEET_SITE_MAP).map(([k, v]) => [normKey(k), v]));
 
 const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const MAX_SYNC_DAYS = 31; // กันเผลอเลือกช่วงกว้างเกินไปจนยิง request มหาศาล
@@ -241,7 +245,7 @@ export default async function handler(req, res) {
       headerRow.forEach((label, colIdx) => {
         const key = (label || '').trim();
         if (!key) return;
-        const codes = SHEET_SITE_MAP[key];
+        const codes = SHEET_SITE_MAP[key] || SITE_MAP_NORM[normKey(key)];
         if (!codes) { skippedColumnsSet.add(key); return; }
         const value = codes.reduce((sum, c) => sum + (byProject[c] || 0), 0);
         const targetVal = isTargetRow ? Number(rows[targetRowIndex]?.[colIdx]) : null;
