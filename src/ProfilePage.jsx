@@ -5,6 +5,42 @@ import { IS as inputBase } from "./utils.js";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 
+// แปลงรูปลายเซ็น → PNG พื้นโปร่งใส ตัดขอบ ย่อ (สูงไม่เกิน 160px)
+// ปฏิเสธรูปพื้นดำ/พื้นเข้ม เพราะจะเป็นกล่องดำในใบ OR
+function processSignature(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0);
+      const id = cx.getImageData(0, 0, W, H), d = id.data;
+      // ตรวจพื้นหลังจากขอบภาพ
+      let sum = 0, n = 0;
+      const sample = (x, y) => { const i = (y*W + x)*4; if (d[i+3] > 200) { sum += (d[i]+d[i+1]+d[i+2])/3; n++; } };
+      for (let x = 0; x < W; x += Math.max(1, W>>6)) { sample(x, 0); sample(x, H-1); }
+      for (let y = 0; y < H; y += Math.max(1, H>>6)) { sample(0, y); sample(W-1, y); }
+      if (n > 0 && sum/n < 140) return reject(new Error("พื้นหลังเป็นสีเข้ม/ดำ — ใช้รูปพื้นขาวหรือโปร่งใสเท่านั้น"));
+      // ขาว → โปร่งใส + หาขอบเขตลายเซ็น
+      let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = (y*W + x)*4, l = (d[i]+d[i+1]+d[i+2])/3;
+        if (l > 225) d[i+3] = 0;
+        if (d[i+3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      }
+      if (x1 < 0) return reject(new Error("ไม่พบลายเซ็นในรูป"));
+      cx.putImageData(id, 0, 0);
+      const pad = 4; x0 = Math.max(0, x0-pad); y0 = Math.max(0, y0-pad); x1 = Math.min(W-1, x1+pad); y1 = Math.min(H-1, y1+pad);
+      const w = x1-x0+1, h = y1-y0+1, k = Math.min(1, 160/h, 480/w);
+      const out = document.createElement("canvas"); out.width = Math.round(w*k); out.height = Math.round(h*k);
+      out.getContext("2d").drawImage(cv, x0, y0, w, h, 0, 0, out.width, out.height);
+      resolve(out.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error("อ่านไฟล์รูปไม่ได้"));
+    const fr = new FileReader(); fr.onload = () => { img.src = fr.result; }; fr.onerror = () => reject(fr.error); fr.readAsDataURL(file);
+  });
+}
+
 export default function ProfilePage({ onBack, currentUser, onSignOut }) {
   const { c } = useTheme();
   const [tab, setTab] = useState("info");
@@ -20,6 +56,8 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
     supervisor:"", supervisorOT:"", staff:""
   });
   const [otSaving, setOtSaving] = useState(false);
+  const [signatures, setSignatures] = useState([]);
+  const [sigMsg, setSigMsg] = useState("");
   const [otMsg, setOtMsg]       = useState("");
 
   // Password
@@ -51,6 +89,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           supervisorOT: data.supervisorOT||"",
           staff: data.staff||"",
         });
+        setSignatures(Array.isArray(data.signatures) ? data.signatures : []);
       }
     });
   }, [currentUser]);
@@ -83,6 +122,23 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
       setOtMsg("✅ บันทึกแล้ว");
     } catch(err) { setOtMsg("❌ " + err.message); }
     setOtSaving(false);
+  }
+
+  async function saveSignatures(list) {
+    const uid = currentUser?.uid || currentUser?.id;
+    await setDoc(doc(db,"otProfiles",uid), { signatures: list, updatedAt: new Date().toISOString() }, { merge:true });
+    setSignatures(list);
+  }
+  async function onSigFiles(files) {
+    setSigMsg("");
+    const add = [];
+    for (const f of files) {
+      try { add.push(await processSignature(f)); }
+      catch(err) { setSigMsg(`❌ ${f.name}: ${err.message}`); }
+    }
+    if (!add.length) return;
+    try { await saveSignatures([...signatures, ...add].slice(0, 6)); setSigMsg(`✅ เพิ่ม ${add.length} ลายเซ็น`); }
+    catch(err) { setSigMsg("❌ " + err.message); }
   }
 
   async function changePassword() {
@@ -209,6 +265,31 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                     style={IS}/>
                 </div>
               ))}
+              <div style={{ marginBottom:16 }}>
+                <label style={LB}>ลายเซ็นสำหรับใบ OR (วนใช้ทีละหน้า · สูงสุด 6)</label>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+                  {signatures.map((s,i)=>(
+                    <div key={i} style={{ position:"relative", border:`1px solid ${c.border}`, borderRadius:8,
+                      background:"#fff", padding:6, height:64, display:"flex", alignItems:"center" }}>
+                      <img src={s} alt={`ลายเซ็น ${i+1}`} style={{ maxHeight:50, maxWidth:140 }}/>
+                      <span style={{ position:"absolute", left:4, top:2, fontSize:10, color:"#94a3b8" }}>{i+1}</span>
+                      <button onClick={()=>saveSignatures(signatures.filter((_,j)=>j!==i)).catch(e=>setSigMsg("❌ "+e.message))}
+                        title="ลบ" style={{ position:"absolute", right:-6, top:-6, width:20, height:20, borderRadius:"50%",
+                          border:"none", background:"#ef4444", color:"#fff", fontSize:11, cursor:"pointer" }}>✕</button>
+                    </div>
+                  ))}
+                  {signatures.length < 6 && (
+                    <label style={{ border:`1px dashed ${c.border}`, borderRadius:8, height:64, padding:"0 14px",
+                      display:"flex", alignItems:"center", fontSize:12, color:c.text500, cursor:"pointer" }}>
+                      + อัปโหลด PNG/JPG
+                      <input type="file" accept="image/*" multiple style={{ display:"none" }}
+                        onChange={e=>{ onSigFiles([...e.target.files]); e.target.value=""; }}/>
+                    </label>
+                  )}
+                </div>
+                <div style={{ fontSize:11, color:c.text400 }}>พื้นขาวหรือโปร่งใสเท่านั้น — ระบบลบพื้นขาวและตัดขอบให้อัตโนมัติ</div>
+                {sigMsg && <div style={{ marginTop:6, fontSize:12, color:sigMsg.startsWith("✅")?c.green:c.red }}>{sigMsg}</div>}
+              </div>
               {otMsg && <div style={{ marginBottom:12, fontSize:13,
                 color:otMsg.startsWith("✅")?c.green:c.red }}>{otMsg}</div>}
               <button onClick={saveOT} disabled={otSaving}

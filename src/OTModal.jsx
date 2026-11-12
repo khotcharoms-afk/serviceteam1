@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { today as todayTH } from "./utils.js";
+import { EXAMINER_OPTS, orSettingsFor, orDisplayName, nextPresetIndex, isOvernight, addDays } from "./orConfig.js";
 
 const SITUATION_OPTS = ["Support", "Commissioning"];
-const EXAMINER_OPTS = ["นายณัฐพงศ์ รัตนไชย", "นายพีรพงษ์ คล่องวิชา", "นายเจริญชัย สุวรรณประทีป"];
 
 function calcHours(timeIn, timeOut, dateIn, dateOut) {
   if (!timeIn || !timeOut || !dateIn) return "";
@@ -12,7 +12,7 @@ function calcHours(timeIn, timeOut, dateIn, dateOut) {
   return Math.round((d2-d1)/3600000*2)/2;
 }
 
-export default function OTModal({ onClose, onSave, saving, projects, users, currentUser, editRecord, profile }) {
+export default function OTModal({ onClose, onSave, saving, projects, users, currentUser, editRecord, profile, orCfg, myRecords }) {
   const today = todayTH();
   const thaiName = (users||[]).find(u=>u.id===(currentUser?.id||currentUser?.uid))?.name || currentUser?.name || "";
 
@@ -26,7 +26,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
   const [location,   setLocation]   = useState(editRecord?.location   || "");
   const [situation,  setSituation]  = useState(editRecord?.situation  || "Support");
   const [desc,       setDesc]       = useState(editRecord?.desc       || "");
-  const [name,       setName]       = useState(editRecord?.name       || profile?.name || thaiName);
+  const [name,       setName]       = useState(editRecord?.name       || profile?.nameTH || thaiName);
   const [examiner,   setExaminer]   = useState(editRecord?.examiner   || "");
   const [hours,      setHours]      = useState(editRecord?.hours?.toString() || "");
   const [manualHours,setManualHours]= useState(false);
@@ -35,12 +35,41 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
   const [projDropdown, setProjDropdown] = useState(false);
 
   const selProj = (projects||[]).find(p=>p.id===projId);
+  const orSet = orSettingsFor(selProj, orCfg);
+  const presets = orSet?.presets?.filter(Boolean) || [];
+  const examinerOpts = [...new Set([...EXAMINER_OPTS, ...Object.values(orCfg||{}).map(s=>s?.defaultExaminer).filter(Boolean)])];
+  const examinerMismatch = !!(orSet?.defaultExaminer && examiner && examiner !== orSet.defaultExaminer);
+  const descTooShort = desc.trim().length > 0 && desc.trim().length < 10;
+
+  function pickProject(p) {
+    setProjId(p.id);
+    const s = orSettingsFor(p, orCfg);
+    if (!s) return;
+    if (s.defaultLocation) setLocation(s.defaultLocation);
+    if (s.defaultExaminer) setExaminer(s.defaultExaminer);
+    const ps = (s.presets||[]).filter(Boolean);
+    if (ps.length && (!desc.trim() || ps.includes(desc.trim()))) {
+      // แบบถัดไปต่อจากใบ OR ล่าสุดของโครงการนี้ (ของผู้ใช้คนนี้)
+      const last = (myRecords||[])
+        .filter(r => r.id !== editRecord?.id && orSettingsFor((projects||[]).find(x=>x.id===r.projectId) || { code:r.projectCode, name:r.projectName }, orCfg) === s)
+        .sort((a,b)=>`${b.dateIn||""} ${b.timeIn||""}`.localeCompare(`${a.dateIn||""} ${a.timeIn||""}`))[0];
+      setDesc(ps[nextPresetIndex(ps, last?.desc)]);
+    }
+  }
+
+  // ข้ามเที่ยงคืน → ถึงวันที่ = วันถัดไป
+  function syncDateOut(tIn, tOut, dIn) {
+    const nd = isOvernight(tIn, tOut) ? addDays(dIn, 1) : dIn;
+    setDateOut(nd);
+    return nd;
+  }
   const filteredProjs = (projects||[]).filter(p=>p.id).filter(p=>
     !projSearch || p.name?.toLowerCase().includes(projSearch.toLowerCase()) ||
     p.code?.toLowerCase().includes(projSearch.toLowerCase())
   );
 
   function onTimeChange(tIn, tOut, dIn, dOut) {
+    if (!dOut) dOut = syncDateOut(tIn||timeIn, tOut||timeOut, dIn||dateIn);
     if (!manualHours) {
       const h = calcHours(tIn||timeIn, tOut||timeOut, dIn||dateIn, dOut||dateOut);
       if (h !== "") setHours(String(h));
@@ -48,7 +77,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
   }
 
   function handleSave() {
-    if (!dateIn || !timeIn || !timeOut || !desc.trim() || !name.trim()) return;
+    if (!dateIn || !timeIn || !timeOut || desc.trim().length < 10 || !name.trim()) return;
     const h = parseFloat(hours) || calcHours(timeIn,timeOut,dateIn,dateOut) || 0;
     onSave({
       serviceId: serviceId.trim(),
@@ -58,6 +87,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
       projectId: projId||"",
       projectName: selProj?.name||"",
       projectCode: selProj?.code||"",
+      orProjectName: selProj ? orDisplayName(selProj, orCfg) : (editRecord?.orProjectName||""),
       location: location.trim(),
       situation,
       desc: desc.trim(),
@@ -65,7 +95,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
       examiner: examiner.trim(),
       hours: h,
       remark,
-      createdBy: currentUser?.id||"",
+      createdBy: editRecord?.createdBy || currentUser?.id || currentUser?.uid || "",
       createdAt: editRecord?.createdAt||new Date().toISOString(),
     }, editRecord?.id||null);
   }
@@ -74,7 +104,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
     padding:"8px 12px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#f8fafc" };
   const LB = { fontSize:11, color:"#94a3b8", fontWeight:700, textTransform:"uppercase",
     letterSpacing:.5, marginBottom:4, display:"block" };
-  const canSave = !saving && dateIn && timeIn && timeOut && desc.trim() && name.trim();
+  const canSave = !saving && dateIn && timeIn && timeOut && desc.trim().length >= 10 && name.trim();
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
@@ -173,7 +203,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
                 {filteredProjs.length===0
                   ? <div style={{ padding:"12px",fontSize:13,color:"#94a3b8",textAlign:"center" }}>ไม่พบโครงการ</div>
                   : filteredProjs.map(p=>(
-                    <div key={p.id} onMouseDown={()=>{ setProjId(p.id); setProjDropdown(false); setProjSearch(""); }}
+                    <div key={p.id} onMouseDown={()=>{ pickProject(p); setProjDropdown(false); setProjSearch(""); }}
                       style={{ padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
                         background:projId===p.id?"#fff7ed":"transparent",borderBottom:"1px solid #f8fafc" }}
                       onMouseEnter={e=>{ if(projId!==p.id) e.currentTarget.style.background="#f8fafc"; }}
@@ -204,7 +234,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
             <label style={LB}>สถานะ / Situation</label>
             <div style={{ display:"flex",gap:6 }}>
               {SITUATION_OPTS.map(s=>(
-                <button key={s} type="button" onClick={()=>setSituation(s)}
+                <button key={s} type="button" onClick={()=>setSituation(situation===s?"":s)}
                   style={{ flex:1,padding:"8px",borderRadius:8,fontSize:12,fontWeight:700,
                     fontFamily:"inherit",cursor:"pointer",
                     background:situation===s?"#F97316":"#f8fafc",
@@ -220,9 +250,22 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
         {/* รายละเอียด */}
         <div style={{ marginBottom:14 }}>
           <label style={LB}>Description / รายละเอียด *</label>
+          {presets.length > 0 && (
+            <div style={{ display:"flex",gap:6,marginBottom:6,flexWrap:"wrap" }}>
+              {presets.map((p,i)=>(
+                <button key={i} type="button" onClick={()=>setDesc(p)} title={p}
+                  style={{ padding:"4px 12px",borderRadius:999,fontSize:12,fontWeight:700,fontFamily:"inherit",cursor:"pointer",
+                    background:desc.trim()===p?"#F97316":"#fff7ed",color:desc.trim()===p?"#fff":"#c2410c",
+                    border:`1px solid ${desc.trim()===p?"#F97316":"#fed7aa"}` }}>
+                  แบบ {i+1}
+                </button>
+              ))}
+            </div>
+          )}
           <textarea value={desc} onChange={e=>setDesc(e.target.value)}
             placeholder="อธิบายงานที่ทำในช่วง OT..." rows={4}
-            style={{ ...IS,resize:"vertical" }}/>
+            style={{ ...IS,resize:"vertical",borderColor:descTooShort?"#f87171":"#e2e8f0" }}/>
+          {descTooShort && <div style={{ fontSize:11,color:"#ef4444",marginTop:3 }}>รายละเอียดต้องยาวอย่างน้อย 10 ตัวอักษร</div>}
         </div>
 
         {/* ลายเซ็น */}
@@ -236,20 +279,27 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
             <label style={LB}>ผู้ตรวจสอบ / Examiner</label>
             <select value={examiner} onChange={e=>setExaminer(e.target.value)} style={IS}>
               <option value="">เลือกผู้ตรวจสอบ</option>
-              {EXAMINER_OPTS.map(o=><option key={o} value={o}>{o}</option>)}
+              {examinerOpts.map(o=><option key={o} value={o}>{o}</option>)}
             </select>
           </div>
         </div>
 
         {/* หมายเหตุ */}
         <div style={{ marginBottom:20 }}>
-          <label style={LB}>หมายเหตุ (สำหรับหน้าปก)</label>
+          <label style={LB}>หมายเหตุ (สำหรับหน้าปก — ไม่แสดงในใบ OR)</label>
           <select value={remark} onChange={e=>setRemark(e.target.value)} style={IS}>
             <option value="ปฏิบัติงานในวันหยุดประจำสัปดาห์">ปฏิบัติงานในวันหยุดประจำสัปดาห์</option>
             <option value="ปฏิบัติงานในวันธรรมดา">ปฏิบัติงานในวันธรรมดา</option>
             <option value="ปฏิบัติงานในวันหยุดนักขัตฤกษ์">ปฏิบัติงานในวันหยุดนักขัตฤกษ์</option>
           </select>
         </div>
+
+        {examinerMismatch && (
+          <div style={{ marginBottom:12,background:"#fefce8",border:"1px solid #fde047",color:"#854d0e",
+            borderRadius:8,padding:"8px 12px",fontSize:12 }}>
+            ⚠ ผู้ตรวจสอบไม่ตรงกับค่าเริ่มต้นของโครงการ ({orSet.defaultExaminer}) — บันทึกได้ตามปกติ
+          </div>
+        )}
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
