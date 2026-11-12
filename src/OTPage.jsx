@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { db } from "./firebase.js";
-import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc } from "firebase/firestore";
 import OTModal from "./OTModal.jsx";
+import { ORSettingsPanel, ORMigrateModal, planMigration } from "./ORSettingsPanel.jsx";
 
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
@@ -20,6 +21,14 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [orDateFrom, setOrDateFrom] = useState("");
   const [orDateTo, setOrDateTo]     = useState("");
   const isAdmin = currentUser?.role === "dev";
+  const [orCfg, setOrCfg] = useState(null);
+  const [showORSettings, setShowORSettings] = useState(false);
+  const [migratePlan, setMigratePlan] = useState(null);
+  const [migrating, setMigrating] = useState(false);
+  const uid = currentUser?.id || currentUser?.uid;
+
+  useEffect(() => onSnapshot(doc(db,"settings","orProjects"),
+    d => setOrCfg(d.exists() ? (d.data().projects || null) : null), () => {}), []);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
@@ -46,6 +55,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
             periodStart: data.periodStart||"",
             periodEnd: data.periodEnd||"",
             periodMonth: data.periodMonth||"",
+            signatures: Array.isArray(data.signatures) ? data.signatures : [],
           });
         }
       });
@@ -64,7 +74,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   async function saveProfile() {
     setProfileSaving(true);
     const uid = currentUser?.id || currentUser?.uid;
-    await setDoc(doc(db,"otProfiles",uid), { ...profile, updatedAt: new Date().toISOString() });
+    const { signatures, ...rest } = profile; // ลายเซ็นแก้ที่หน้าโปรไฟล์เท่านั้น
+    await setDoc(doc(db,"otProfiles",uid), { ...rest, updatedAt: new Date().toISOString() }, { merge:true });
     setProfileSaving(false);
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2000);
@@ -136,19 +147,39 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       setTab("profile");
       return;
     }
+    const iso = v => !v ? "" : v.includes("/") ? (([d,m,y])=>`${y}-${m}-${d}`)(v.split("/")) : v;
+    if (!orDateFrom && profile.periodStart) setOrDateFrom(iso(profile.periodStart));
+    if (!orDateTo && profile.periodEnd) setOrDateTo(iso(profile.periodEnd));
     setShowORDatePicker(true);
   }
 
+  // รายการของผู้ใช้คนนี้: createdBy ตรง หรือชื่อผู้เข้าทำงานตรง (กันรายการที่ createdBy หาย/ถูกเขียนทับ)
+  const myNames = [profile.nameTH, currentUser?.name].map(n=>(n||"").trim()).filter(Boolean);
+  const isMine = r => r.createdBy === uid || myNames.includes((r.name||"").trim());
+  const ownRecords = records.filter(isMine);
+  const inRange = r => {
+    const d = (r.dateIn||"").slice(0,10);   // เทียบเป็น string YYYY-MM-DD ไม่แปลงเป็น Date (กันปัญหา timezone)
+    if (orDateFrom && d < orDateFrom) return false;
+    if (orDateTo   && d > orDateTo)   return false;
+    return true;
+  };
+
+  function openMigrate() {
+    const plan = planMigration(ownRecords.filter(inRange), { projects, orCfg, nameTH: profile.nameTH?.trim(), uid });
+    setMigratePlan(plan);
+  }
+  async function runMigrate() {
+    setMigrating(true);
+    try {
+      for (const { r, ch } of migratePlan) await updateDoc(doc(db,"otRecords",r.id), ch);
+      setMigratePlan(null);
+    } catch(err) { alert("ปรับข้อมูลไม่สำเร็จ: " + err.message); }
+    setMigrating(false);
+  }
+
   async function doExportAllOR() {
-    const from = orDateFrom ? new Date(orDateFrom) : null;
-    const to   = orDateTo   ? new Date(orDateTo)   : null;
-    const exportRecords = myRecords.filter(r => {
-      if (r.createdBy !== (currentUser?.id||currentUser?.uid)) return false;
-      const d = new Date(r.dateIn||"");
-      if (from && d < from) return false;
-      if (to   && d > to)   return false;
-      return true;
-    }).sort((a,b)=>(a.dateIn||"").localeCompare(b.dateIn||""));
+    const exportRecords = ownRecords.filter(inRange)
+      .sort((a,b)=>`${a.dateIn||""} ${a.timeIn||""}`.localeCompare(`${b.dateIn||""} ${b.timeIn||""}`));
     if (exportRecords.length === 0) { alert("ไม่มีรายการในช่วงวันที่นี้"); return; }
     setShowORDatePicker(false);
     try {
@@ -217,6 +248,11 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         </button>
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>⏰ บันทึก OT</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
+          <button onClick={()=>setShowORSettings(v=>!v)}
+            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+              borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            ⚙ ตั้งค่าใบ OR
+          </button>
           <button onClick={exportAllOR}
             style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",
               borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -250,6 +286,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
             </button>
           ))}
         </div>
+
+        {showORSettings && <ORSettingsPanel key={JSON.stringify(orCfg)} orCfg={orCfg} projects={projects} onClose={()=>setShowORSettings(false)}/>}
 
         {/* Period Section — แสดงเหนือ list เสมอ */}
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
@@ -452,18 +490,31 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               <button onClick={doExportAllOR}
                 style={{ background:"#1d4ed8",border:"none",color:"#fff",
                   borderRadius:10,padding:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                🖨 Export ใบ OR
+                🖨 Export ใบ OR ({ownRecords.filter(inRange).length} หน้า)
               </button>
             </div>
+            <button onClick={openMigrate}
+              style={{ marginTop:10,width:"100%",background:"#fefce8",border:"1px solid #fde047",color:"#854d0e",
+                borderRadius:10,padding:8,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+              🛠 ปรับข้อมูลเก่าในช่วงนี้ให้ตรงค่าตั้งใบ OR (ดูก่อนยืนยัน)
+            </button>
+            {!(profile.signatures||[]).length && (
+              <div style={{ marginTop:8,fontSize:11,color:"#94a3b8" }}>ยังไม่มีลายเซ็น — อัปโหลดได้ที่ โปรไฟล์ → ข้อมูล OT</div>
+            )}
           </div>
         </div>
+      )}
+
+      {migratePlan && (
+        <ORMigrateModal plan={migratePlan} from={orDateFrom} to={orDateTo} running={migrating}
+          onConfirm={runMigrate} onClose={()=>setMigratePlan(null)}/>
       )}
 
       {showModal && (
         <OTModal onClose={()=>{ setShowModal(false); setEditRecord(null); }}
           onSave={saveOT} saving={saving}
           projects={projects} users={users} currentUser={currentUser}
-          editRecord={editRecord} profile={profile}/>
+          editRecord={editRecord} profile={profile} orCfg={orCfg} myRecords={ownRecords}/>
       )}
     </div>
   );
