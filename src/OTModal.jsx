@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { today as todayTH } from "./utils.js";
-import { EXAMINER_OPTS, orSettingsFor, orDisplayName, nextPresetIndex, isOvernight, addDays } from "./orConfig.js";
+import { EXAMINER_OPTS, orSettingsFor, orDisplayName, nextPresetIndex, presetIndexOf, normPresets, isPresetMode, isOvernight, addDays } from "./orConfig.js";
 
 const SITUATION_OPTS = ["Support", "Commissioning"];
 
@@ -36,24 +36,36 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
 
   const selProj = (projects||[]).find(p=>p.id===projId);
   const orSet = orSettingsFor(selProj, orCfg);
-  const presets = orSet?.presets?.filter(Boolean) || [];
+  const presetMode = isPresetMode(orSet);
+  const presets = presetMode ? normPresets(orSet.presets) : [];
+  const [presetId, setPresetId] = useState(() => {
+    const s0 = orSettingsFor((projects||[]).find(p=>p.id===editRecord?.projectId), orCfg);
+    if (!editRecord || !isPresetMode(s0)) return null;
+    const ps = normPresets(s0.presets), i = presetIndexOf(ps, editRecord);
+    return i >= 0 ? ps[i].id : null;
+  });
+  const selPreset = presets.find(p => p.id === presetId) || null;
   const examinerOpts = [...new Set([...EXAMINER_OPTS, ...Object.values(orCfg||{}).map(s=>s?.defaultExaminer).filter(Boolean)])];
   const examinerMismatch = !!(orSet?.defaultExaminer && examiner && examiner !== orSet.defaultExaminer);
-  const descTooShort = desc.trim().length > 0 && desc.trim().length < 10;
+  const descTooShort = !presetMode && desc.trim().length > 0 && desc.trim().length < 10;
+  const descOk = presetMode ? !!selPreset : desc.trim().length >= 10;
 
   function pickProject(p) {
-    setProjId(p.id);
+    const wasPreset = presetMode;
+    setProjId(p ? p.id : "");
     const s = orSettingsFor(p, orCfg);
-    if (!s) return;
-    if (s.defaultLocation) setLocation(s.defaultLocation);
-    if (s.defaultExaminer) setExaminer(s.defaultExaminer);
-    const ps = (s.presets||[]).filter(Boolean);
-    if (ps.length && (!desc.trim() || ps.includes(desc.trim()))) {
-      // แบบถัดไปต่อจากใบ OR ล่าสุดของโครงการนี้ (ของผู้ใช้คนนี้)
+    if (s?.defaultLocation) setLocation(s.defaultLocation);
+    if (s?.defaultExaminer) setExaminer(s.defaultExaminer);
+    if (isPresetMode(s)) {
+      // เลือกแบบถัดไปไว้ล่วงหน้า ต่อจากใบ OR ล่าสุดของโครงการนี้ของผู้ใช้คนนี้ (เรียงลงวันที่+เวลาเข้า)
+      const ps = normPresets(s.presets);
       const last = (myRecords||[])
-        .filter(r => r.id !== editRecord?.id && orSettingsFor((projects||[]).find(x=>x.id===r.projectId) || { code:r.projectCode, name:r.projectName }, orCfg) === s)
+        .filter(r => r.id !== editRecord?.id && orSettingsFor((projects||[]).find(x=>x.id===r.projectId) || { code:r.projectCode, name:r.projectName, orProjectName:r.orProjectName }, orCfg) === s)
         .sort((a,b)=>`${b.dateIn||""} ${b.timeIn||""}`.localeCompare(`${a.dateIn||""} ${a.timeIn||""}`))[0];
-      setDesc(ps[nextPresetIndex(ps, last?.desc)]);
+      setPresetId(ps[nextPresetIndex(ps, last)].id);
+    } else {
+      setPresetId(null);
+      if (wasPreset) setDesc("");   // ออกจากโหมดสำเร็จรูป → กลับเป็นช่องพิมพ์ว่าง
     }
   }
 
@@ -77,7 +89,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
   }
 
   function handleSave() {
-    if (!dateIn || !timeIn || !timeOut || desc.trim().length < 10 || !name.trim()) return;
+    if (!dateIn || !timeIn || !timeOut || !descOk || !name.trim()) return;
     const h = parseFloat(hours) || calcHours(timeIn,timeOut,dateIn,dateOut) || 0;
     onSave({
       serviceId: serviceId.trim(),
@@ -90,7 +102,8 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
       orProjectName: selProj ? orDisplayName(selProj, orCfg) : (editRecord?.orProjectName||""),
       location: location.trim(),
       situation,
-      desc: desc.trim(),
+      desc: presetMode ? selPreset.text : desc.trim(),
+      description_preset_id: presetMode ? selPreset.id : null,
       name: name.trim(),
       examiner: examiner.trim(),
       hours: h,
@@ -104,7 +117,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
     padding:"8px 12px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#f8fafc" };
   const LB = { fontSize:11, color:"#94a3b8", fontWeight:700, textTransform:"uppercase",
     letterSpacing:.5, marginBottom:4, display:"block" };
-  const canSave = !saving && dateIn && timeIn && timeOut && desc.trim().length >= 10 && name.trim();
+  const canSave = !saving && dateIn && timeIn && timeOut && descOk && name.trim();
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
@@ -192,7 +205,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
                 onFocus={()=>{ setProjDropdown(true); setProjSearch(""); }}
                 onChange={e=>{ setProjSearch(e.target.value); setProjDropdown(true); }}/>
               {selProj && !projDropdown && (
-                <button type="button" onClick={()=>{ setProjId(""); setProjSearch(""); }}
+                <button type="button" onClick={()=>{ pickProject(null); setProjSearch(""); }}
                   style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",padding:"0 10px",fontSize:14 }}>✕</button>
               )}
             </div>
@@ -250,21 +263,34 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
         {/* รายละเอียด */}
         <div style={{ marginBottom:14 }}>
           <label style={LB}>Description / รายละเอียด *</label>
-          {presets.length > 0 && (
-            <div style={{ display:"flex",gap:6,marginBottom:6,flexWrap:"wrap" }}>
-              {presets.map((p,i)=>(
-                <button key={i} type="button" onClick={()=>setDesc(p)} title={p}
-                  style={{ padding:"4px 12px",borderRadius:999,fontSize:12,fontWeight:700,fontFamily:"inherit",cursor:"pointer",
-                    background:desc.trim()===p?"#F97316":"#fff7ed",color:desc.trim()===p?"#fff":"#c2410c",
-                    border:`1px solid ${desc.trim()===p?"#F97316":"#fed7aa"}` }}>
-                  แบบ {i+1}
-                </button>
-              ))}
+          {presetMode ? (
+            <div role="radiogroup" style={{ display:"flex",flexDirection:"column",gap:8 }}>
+              {presets.map(p=>{
+                const on = p.id === presetId;
+                return (
+                  <div key={p.id} role="radio" aria-checked={on} tabIndex={0}
+                    onClick={()=>setPresetId(p.id)}
+                    onKeyDown={e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); setPresetId(p.id); } }}
+                    style={{ display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer",borderRadius:10,padding:"10px 12px",
+                      border:`1.5px solid ${on?"#F97316":"#e2e8f0"}`,background:on?"#fff7ed":"#fff" }}>
+                    <span style={{ width:16,height:16,borderRadius:"50%",flexShrink:0,marginTop:2,
+                      border:`2px solid ${on?"#F97316":"#cbd5e1"}`,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      {on && <span style={{ width:8,height:8,borderRadius:"50%",background:"#F97316" }}/>}
+                    </span>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>แบบ {p.id} · {p.label}</div>
+                      <div style={{ fontSize:12,color:"#64748b",marginTop:2,lineHeight:1.5 }}>{p.text}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {!selPreset && <div style={{ fontSize:11,color:"#ef4444" }}>เลือกรายละเอียด 1 แบบ</div>}
             </div>
+          ) : (
+            <textarea value={desc} onChange={e=>setDesc(e.target.value)}
+              placeholder="อธิบายงานที่ทำในช่วง OT..." rows={4}
+              style={{ ...IS,resize:"vertical",borderColor:descTooShort?"#f87171":"#e2e8f0" }}/>
           )}
-          <textarea value={desc} onChange={e=>setDesc(e.target.value)}
-            placeholder="อธิบายงานที่ทำในช่วง OT..." rows={4}
-            style={{ ...IS,resize:"vertical",borderColor:descTooShort?"#f87171":"#e2e8f0" }}/>
           {descTooShort && <div style={{ fontSize:11,color:"#ef4444",marginTop:3 }}>รายละเอียดต้องยาวอย่างน้อย 10 ตัวอักษร</div>}
         </div>
 
