@@ -43,8 +43,29 @@ export function cleanProjectName(name) {
 }
 
 // "รวมถึง SAT-1" → non-breaking space + non-breaking hyphen
+// + zero-width space ระหว่างคำไทย ให้ Word ตัดบรรทัดตรงขอบคำ (ไม่ตัดกลางคำ)
+// + ไม่แตกบรรทัดในช่วง 2 คำสุดท้าย (กันคำเดียวตกบรรทัด)
 function protectText(s) {
-  return s.replace(/รวมถึง SAT-1/g, "รวมถึง SAT‑1");
+  s = s.replace(/รวมถึง SAT-1/g, "รวมถึง SAT‑1");
+  let segs;
+  try { segs = [...new Intl.Segmenter("th", { granularity: "word" }).segment(s)].map(x => x.segment); }
+  catch { return s; }
+  const endsThai = t => /[฀-๿]$/.test(t);
+  const startsThai = t => /^[฀-๿]/.test(t);
+  // ช่วงท้ายอย่างน้อย ~15 ตัวอักษร / 2 คำ ห้ามแตกบรรทัด
+  let noBreakFrom = segs.length, tailLen = 0, tailWords = 0;
+  while (noBreakFrom > 0 && (tailLen < 15 || tailWords < 2)) {
+    const t = segs[--noBreakFrom];
+    tailLen += t.length;
+    if (/[\u0E00-\u0E7FA-Za-z0-9]{2,}/.test(t)) tailWords++;
+  }
+  let out = "";
+  segs.forEach((t, i) => {
+    if (i > 0 && i < noBreakFrom && endsThai(segs[i - 1]) && startsThai(t)) out += "​";
+    if (i >= noBreakFrom && t === " ") t = " ";
+    out += t;
+  });
+  return out;
 }
 
 function buildData(r, profile) {
