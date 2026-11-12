@@ -40,14 +40,23 @@ export default async function handler(req, res) {
       }
       return d;
     }
-    const sortedRecords = [...records].sort((a,b) => (a.dateIn||"").localeCompare(b.dateIn||""));
+    // วันเวลาแบบ 2026-8-20 6:00 (ค่าวันที่จริงของ Excel + รูปแบบ yyyy-m-d h:mm)
+    function setDateTime(addr, d, t) {
+      const md = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || "");
+      if (!md) { set(addr, ""); return; }
+      const mt = /^(\d{1,2})[:.](\d{2})/.exec(t || "") || [0, 0, 0];
+      const cell = ws.getCell(addr);
+      cell.value = new Date(Date.UTC(+md[1], +md[2] - 1, +md[3], +mt[1], +mt[2]));
+      cell.numFmt = "yyyy-m-d h:mm";
+    }
+    const sortedRecords = [...records].sort((a,b) => `${a.dateIn||""} ${a.timeIn||""}`.localeCompare(`${b.dateIn||""} ${b.timeIn||""}`));
     for (let i = 0; i < 18; i++) {
       const r = sortedRecords[i];
       const row = 9 + i;
       if (r) {
         set(`A${row}`, i+1);
-        set(`B${row}`, `${fmtDateShort(r.dateIn)} ${r.timeIn||""}`);
-        set(`C${row}`, `${fmtDateShort(r.dateOut||r.dateIn)} ${r.timeOut||""}`);
+        setDateTime(`B${row}`, r.dateIn, r.timeIn);
+        setDateTime(`C${row}`, r.dateOut||r.dateIn, r.timeOut);
         set(`D${row}`, r.projectCode||"");
         set(`E${row}`, r.projectName||"");
         set(`F${row}`, r.desc||"");
