@@ -69,7 +69,6 @@ function protectText(s) {
 }
 
 function buildData(r, profile) {
-  const sit = clean(r.situation);
   return {
     serviceId: clean(r.serviceId),
     sidLead:   clean(r.serviceId) ? "....." : "",
@@ -78,8 +77,9 @@ function buildData(r, profile) {
     cntLead:   clean(r.count) ? "....." : "",
     project:   clean(r.orProjectName) || cleanProjectName(r.projectName),
     location:  clean(r.location),
-    sitC:      sit ? (sit === "Commissioning" ? "☒" : "☐") : "",
-    sitS:      sit ? (sit === "Support" ? "☒" : "☐") : "",
+    // สถานะ: เว้นช่องว่างทั้ง 2 ช่องเสมอ (ไม่ติ๊ก)
+    sitC:      "☐",
+    sitS:      "☐",
     timeIn:    fmtTime(r.timeIn),
     timeOut:   fmtTime(r.timeOut),
     desc:      protectText(clean(r.desc).replace(/\s*\n\s*/g, " ")),
