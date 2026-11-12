@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { db } from "./firebase.js";
 import { doc, setDoc } from "firebase/firestore";
-import { DEFAULT_OR_PROJECTS, EXAMINER_OPTS, orSettingsFor, orDisplayName, cleanProjectName } from "./orConfig.js";
+import { EXAMINER_OPTS, orMap, orSettingsFor, orDisplayName, cleanProjectName, normPresets, isPresetMode } from "./orConfig.js";
 
 const IS = { width:"100%", border:"1px solid #e2e8f0", borderRadius:8, padding:"7px 10px",
   fontSize:12, fontFamily:"inherit", outline:"none", background:"#f8fafc", boxSizing:"border-box" };
@@ -11,8 +11,7 @@ const BTN = { border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fo
 // ── ตั้งค่าใบ OR ต่อโครงการ (Firestore settings/orProjects) ─────────────
 export function ORSettingsPanel({ orCfg, projects, onClose }) {
   const [rows, setRows] = useState(() => {
-    const m = { ...DEFAULT_OR_PROJECTS, ...(orCfg || {}) };
-    return Object.entries(m).map(([code, v]) => ({ code, ...v, presetsText: (v.presets || []).join("\n") }));
+    return Object.entries(orMap(orCfg)).map(([code, v]) => ({ code, ...v, presets: normPresets(v.presets) }));
   });
   const [addCode, setAddCode] = useState("");
   const [saving, setSaving] = useState(false);
@@ -32,7 +31,8 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
           displayName: (r.displayName || "").trim(),
           defaultLocation: (r.defaultLocation || "").trim(),
           defaultExaminer: (r.defaultExaminer || "").trim(),
-          presets: (r.presetsText || "").split("\n").map(s => s.trim()).filter(Boolean),
+          descriptionMode: r.descriptionMode === "preset" ? "preset" : "free",
+          presets: (r.presets || []).map((p, k) => ({ id: k + 1, label: (p.label || "").trim(), text: (p.text || "").trim() })).filter(p => p.text),
         };
       });
       await setDoc(doc(db, "settings", "orProjects"), { projects: out, updatedAt: new Date().toISOString() });
@@ -69,9 +69,26 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
             <div><label style={LB}>ผู้ตรวจสอบเริ่มต้น</label>
               <input style={IS} list="or-examiners" value={r.defaultExaminer || ""} onChange={e => set(i, "defaultExaminer", e.target.value)} /></div>
           </div>
-          <label style={LB}>รายละเอียดสำเร็จรูป</label>
-          <textarea style={{ ...IS, resize:"vertical" }} rows={Math.max(2, (r.presetsText || "").split("\n").length)}
-            value={r.presetsText || ""} onChange={e => set(i, "presetsText", e.target.value)} />
+          <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#334155", marginBottom:6, cursor:"pointer" }}>
+            <input type="checkbox" checked={r.descriptionMode === "preset"} style={{ accentColor:"#F97316" }}
+              onChange={e => set(i, "descriptionMode", e.target.checked ? "preset" : "free")} />
+            รายละเอียดแบบเลือกจากสำเร็จรูป (ซ่อนช่องพิมพ์ · วนแบบอัตโนมัติ)
+          </label>
+          {(r.presets || []).map((p, k) => (
+            <div key={k} style={{ display:"grid", gridTemplateColumns:"28px 1fr 24px", gap:6, marginBottom:6, alignItems:"start" }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#94a3b8", paddingTop:7 }}>{k + 1}</div>
+              <div>
+                <input style={{ ...IS, marginBottom:4, fontWeight:700 }} placeholder="ชื่อแบบ (label)" value={p.label}
+                  onChange={e => set(i, "presets", r.presets.map((x, j) => j === k ? { ...x, label: e.target.value } : x))} />
+                <textarea style={{ ...IS, resize:"vertical" }} rows={2} placeholder="ข้อความเต็ม" value={p.text}
+                  onChange={e => set(i, "presets", r.presets.map((x, j) => j === k ? { ...x, text: e.target.value } : x))} />
+              </div>
+              <button onClick={() => set(i, "presets", r.presets.filter((_, j) => j !== k))} title="ลบแบบนี้"
+                style={{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", paddingTop:7 }}>✕</button>
+            </div>
+          ))}
+          <button onClick={() => set(i, "presets", [...(r.presets || []), { id: (r.presets || []).length + 1, label: "", text: "" }])}
+            style={{ ...BTN, background:"#f8fafc", border:"1px dashed #cbd5e1", color:"#64748b", padding:"4px 10px" }}>+ เพิ่มแบบ</button>
         </div>
       ))}
       <datalist id="or-examiners">{EXAMINER_OPTS.map(o => <option key={o} value={o} />)}</datalist>
@@ -80,7 +97,7 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
           <option value="">+ เพิ่มโครงการ...</option>
           {unused.map(p => <option key={p.id} value={p.code}>{p.code} · {cleanProjectName(p.name)}</option>)}
         </select>
-        <button disabled={!addCode} onClick={() => { setRows(rs => [...rs, { code:addCode, label:"", displayName:"", defaultLocation:"", defaultExaminer:"", presetsText:"" }]); setAddCode(""); }}
+        <button disabled={!addCode} onClick={() => { setRows(rs => [...rs, { code:addCode, label:"", displayName:"", defaultLocation:"", defaultExaminer:"", descriptionMode:"free", presets:[] }]); setAddCode(""); }}
           style={{ ...BTN, background:"#eff6ff", color:"#1d4ed8", opacity:addCode ? 1 : .5 }}>เพิ่ม</button>
         <button onClick={save} disabled={saving} style={{ ...BTN, marginLeft:"auto", background:"#F97316", color:"#fff" }}>
           {saving ? "กำลังบันทึก..." : "💾 บันทึกค่าตั้ง"}
@@ -97,7 +114,7 @@ export function planMigration(records, { projects, orCfg, nameTH, uid }) {
   const rot = new Map(); // นับลำดับต่อโครงการที่มีรายละเอียดสำเร็จรูป
   const plan = [];
   for (const r of sorted) {
-    const proj = (projects || []).find(p => p.id === r.projectId) || { code: r.projectCode, name: r.projectName };
+    const proj = (projects || []).find(p => p.id === r.projectId) || { code: r.projectCode, name: r.projectName, orProjectName: r.orProjectName };
     const s = orSettingsFor(proj, orCfg);
     const ch = {};
     if (nameTH && (r.name || "").trim() !== nameTH) ch.name = nameTH;
@@ -105,12 +122,13 @@ export function planMigration(records, { projects, orCfg, nameTH, uid }) {
     if (disp && (r.orProjectName || "") !== disp) ch.orProjectName = disp;
     if (s?.defaultExaminer && (r.examiner || "") !== s.defaultExaminer) ch.examiner = s.defaultExaminer;
     if (s?.defaultLocation && (r.location || "") !== s.defaultLocation) ch.location = s.defaultLocation;
-    const ps = (s?.presets || []).filter(Boolean);
-    if (ps.length) {
+    if (isPresetMode(s)) {
+      // วนแบบ 1→2→3 ตามลำดับรายการของโครงการนี้ในช่วงที่เลือก
+      const ps = normPresets(s.presets);
       const k = rot.get(s) || 0; rot.set(s, k + 1);
-      const d = (r.desc || "").trim();
       const want = ps[k % ps.length];
-      if ((d.length < 10 || ps.includes(d)) && d !== want) ch.desc = want;
+      if ((r.desc || "").trim() !== want.text) ch.desc = want.text;
+      if (Number(r.description_preset_id) !== want.id) ch.description_preset_id = want.id;
     }
     if (!r.createdBy && uid) ch.createdBy = uid;
     if (Object.keys(ch).length) plan.push({ r, ch });
@@ -118,7 +136,7 @@ export function planMigration(records, { projects, orCfg, nameTH, uid }) {
   return plan;
 }
 
-const FIELD_TH = { name:"ผู้เข้าทำงาน", orProjectName:"ชื่อโครงการ (ใบ OR)", examiner:"ผู้ตรวจสอบ", location:"สถานที่", desc:"รายละเอียด", createdBy:"เจ้าของรายการ" };
+const FIELD_TH = { description_preset_id:"แบบรายละเอียด", name:"ผู้เข้าทำงาน", orProjectName:"ชื่อโครงการ (ใบ OR)", examiner:"ผู้ตรวจสอบ", location:"สถานที่", desc:"รายละเอียด", createdBy:"เจ้าของรายการ" };
 const short = v => { const s = String(v ?? ""); return s.length > 48 ? s.slice(0, 48) + "…" : (s || "—"); };
 
 export function ORMigrateModal({ plan, from, to, onConfirm, onClose, running }) {
