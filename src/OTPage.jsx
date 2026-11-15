@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { db } from "./firebase.js";
-import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, query, where } from "firebase/firestore";
 import OTModal from "./OTModal.jsx";
 import { ORSettingsPanel, ORMigrateModal, planMigration } from "./ORSettingsPanel.jsx";
 
@@ -63,14 +63,24 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     }
   }, [currentUser]);
 
+  // ดึงเฉพาะ OT ของตัวเอง (createdBy = uid) + รายการเก่าที่ยังไม่มีเจ้าของ (createdBy = "")
+  // ต้อง query แบบมีเงื่อนไข เพราะ Firestore rules อนุญาตให้อ่านเฉพาะรายการเหล่านี้
   useEffect(() => {
-    const u = onSnapshot(collection(db, "otRecords"), snap => {
-      const data = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      data.sort((a,b) => (b.dateIn||"").localeCompare(a.dateIn||""));
+    if (!uid) return;
+    const parts = { mine: [], orphan: [] };
+    const push = () => {
+      const m = new Map();
+      [...parts.mine, ...parts.orphan].forEach(r => m.set(r.id, r));
+      const data = [...m.values()].sort((a,b) => (b.dateIn||"").localeCompare(a.dateIn||""));
       setRecords(data);
-    });
-    return u;
-  }, []);
+    };
+    const sub = (key, q) => onSnapshot(q, snap => {
+      parts[key] = snap.docs.map(d => ({ id:d.id, ...d.data() })); push();
+    }, err => console.error("otRecords", key, err));
+    const u1 = sub("mine",   query(collection(db, "otRecords"), where("createdBy", "==", uid)));
+    const u2 = sub("orphan", query(collection(db, "otRecords"), where("createdBy", "==", "")));
+    return () => { u1(); u2(); };
+  }, [uid]);
 
   async function saveProfile() {
     setProfileSaving(true);
