@@ -21,6 +21,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [orDateFrom, setOrDateFrom] = useState("");
   const [orDateTo, setOrDateTo]     = useState("");
   const isAdmin = currentUser?.role === "dev";
+  const canEditORSettings = ["admin","dev"].includes(currentUser?.role);
   const [orCfg, setOrCfg] = useState(null);
   const [showORSettings, setShowORSettings] = useState(false);
   const [migratePlan, setMigratePlan] = useState(null);
@@ -248,11 +249,11 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         </button>
         <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>⏰ บันทึก OT</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
-          <button onClick={()=>setShowORSettings(v=>!v)}
+          {canEditORSettings && <button onClick={()=>setShowORSettings(v=>!v)}
             style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
               borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ⚙ ตั้งค่าใบ OR
-          </button>
+          </button>}
           <button onClick={exportAllOR}
             style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",
               borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -287,7 +288,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
           ))}
         </div>
 
-        {showORSettings && <ORSettingsPanel key={JSON.stringify(orCfg)} orCfg={orCfg} projects={projects} onClose={()=>setShowORSettings(false)}/>}
+        {showORSettings && canEditORSettings && <ORSettingsPanel key={JSON.stringify(orCfg)} orCfg={orCfg} projects={projects} onClose={()=>setShowORSettings(false)}/>}
 
         {/* Period Section — แสดงเหนือ list เสมอ */}
         <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
@@ -420,7 +421,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
                     <button onClick={()=>{ setEditRecord(r); setShowModal(true); }}
                       style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
                         borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>✏️</button>
-                    {isAdmin && (
+                    {(isAdmin || r.createdBy === uid) && (
                       <button onClick={()=>setConfirmId(r.id)}
                         style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
                           borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>🗑</button>

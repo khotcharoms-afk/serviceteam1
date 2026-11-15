@@ -99,7 +99,8 @@ service cloud.firestore {
     match /otRecords/{id} {
       allow read: if isApproved();
       allow create, update: if isApproved();
-      allow delete: if isAdminOrDev();
+      // ลบได้: admin/dev หรือเจ้าของรายการ
+      allow delete: if isAdminOrDev() || (isApproved() && resource.data.createdBy == request.auth.uid);
     }
     match /otProfiles/{uid} {
       allow read: if isApproved();

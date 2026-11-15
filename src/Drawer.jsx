@@ -142,13 +142,13 @@ export default function Drawer({
         <DrawerItem active={false} icon="camera" label="Smart Pole" count={""}
           onClick={()=>{ setSmartPolePage(true); onClose(); }}/>
 
-        {/* เวลาทำงาน — Onsite / OT / ใบลา เฉพาะ admin/dev */}
-        {(isAdminOrDev || FEATURE_SHIFT) && <Section title="เวลาทำงาน"/>}
+        {/* เวลาทำงาน — บันทึก OT ทุกคน / Onsite / ใบลา เฉพาะ admin/dev */}
+        <Section title="เวลาทำงาน"/>
+        <DrawerItem active={false} icon="clock" label="บันทึก OT" count={""}
+          onClick={()=>{ setOtPage(true); onClose(); }}/>
         {isAdminOrDev && (<>
           <DrawerItem active={false} icon="pin" label="Onsite" count={""}
             onClick={()=>{ setOnsitePage(true); onClose(); }}/>
-          <DrawerItem active={false} icon="clock" label="บันทึก OT" count={""}
-            onClick={()=>{ setOtPage(true); onClose(); }}/>
           <DrawerItem active={false} icon="leave" label="ใบลา" count={""}
             onClick={()=>{ setLeavePage(true); onClose(); }}/>
         </>)}
