@@ -99,10 +99,11 @@ service cloud.firestore {
     // OT: ทุกคน (รวม admin/dev) อ่าน/แก้/ลบได้เฉพาะของตัวเอง
     // createdBy == "" = รายการเก่าที่ยังไม่มีเจ้าของ (ให้เจ้าของจริงกด "ปรับข้อมูลเก่า" เพื่อรับเป็นของตัวเอง)
     match /otRecords/{id} {
-      allow read:   if isApproved() && (resource.data.createdBy == request.auth.uid || resource.data.createdBy == "");
+      // admin/dev อ่านได้ทั้งหมด (หน้าจอยังแสดงเฉพาะของตัวเอง) เพื่อรับรายการเก่าที่เจ้าของไม่ตรง
+      allow read:   if isAdminOrDev() || (isApproved() && (resource.data.createdBy == request.auth.uid || resource.data.createdBy == ""));
       allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isApproved() && (resource.data.createdBy == request.auth.uid || resource.data.createdBy == "")
-                                    && request.resource.data.createdBy == request.auth.uid;
+      allow update: if (isAdminOrDev() || (isApproved() && (resource.data.createdBy == request.auth.uid || resource.data.createdBy == "")))
+                    && request.resource.data.createdBy == request.auth.uid;
       allow delete: if isApproved() && resource.data.createdBy == request.auth.uid;
     }
     // โปรไฟล์ OT (มีลายเซ็น): อ่าน/เขียนได้เฉพาะเจ้าของ

@@ -130,7 +130,7 @@ export function planMigration(records, { projects, orCfg, nameTH, uid }) {
       if ((r.desc || "").trim() !== want.text) ch.desc = want.text;
       if (Number(r.description_preset_id) !== want.id) ch.description_preset_id = want.id;
     }
-    if (!r.createdBy && uid) ch.createdBy = uid;
+    if (uid && r.createdBy !== uid) ch.createdBy = uid;   // รับรายการที่ชื่อเป็นของเราแต่เจ้าของไม่ตรง
     if (Object.keys(ch).length) plan.push({ r, ch });
   }
   return plan;

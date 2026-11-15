@@ -77,10 +77,15 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     const sub = (key, q) => onSnapshot(q, snap => {
       parts[key] = snap.docs.map(d => ({ id:d.id, ...d.data() })); push();
     }, err => console.error("otRecords", key, err));
+    // admin/dev: rules อนุญาตให้อ่านทั้งหมด → ดึงทั้ง collection แล้วกรองเหลือของตัวเองในหน้าจอ
+    // (กันรายการเก่าที่ createdBy ไม่ตรง uid แต่ชื่อผู้เข้าทำงานเป็นของเรา)
+    if (["admin","dev"].includes(currentUser?.role)) {
+      return sub("mine", collection(db, "otRecords"));
+    }
     const u1 = sub("mine",   query(collection(db, "otRecords"), where("createdBy", "==", uid)));
     const u2 = sub("orphan", query(collection(db, "otRecords"), where("createdBy", "==", "")));
     return () => { u1(); u2(); };
-  }, [uid]);
+  }, [uid, currentUser?.role]);
 
   async function saveProfile() {
     setProfileSaving(true);
@@ -112,7 +117,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   }
 
   // filter
-  const myRecords = records.filter(r => r.createdBy === uid || (!r.createdBy && [profile.nameTH, currentUser?.name].map(n=>(n||"").trim()).filter(Boolean).includes((r.name||"").trim())));
+  const myRecords = records.filter(r => r.createdBy === uid || [profile.nameTH, currentUser?.name].map(n=>(n||"").trim()).filter(Boolean).includes((r.name||"").trim()));
   const filtered = myRecords.filter(r => {
     if (filterName !== "all" && r.name !== filterName) return false;
     if (filterMonth && !(r.dateIn||"").startsWith(filterMonth)) return false;
