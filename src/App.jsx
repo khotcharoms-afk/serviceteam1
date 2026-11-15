@@ -710,10 +710,10 @@ export default function App({ currentUser, onSignOut }) {
   );
 
   if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></Suspense></ThemeContext.Provider>;
-  // OT / Onsite / ใบลา เปิดเฉพาะ admin/dev (ผู้ใช้ทั่วไปไม่เห็นเมนูและเข้าทางลิงก์ไม่ได้)
+  // Onsite / ใบลา เปิดเฉพาะ admin/dev — บันทึก OT เปิดให้ทุกคน (ผู้ใช้ทั่วไปเห็นเฉพาะรายการตัวเอง)
   if(leavePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></Suspense></ThemeContext.Provider>;
   if(profilePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/></Suspense></ThemeContext.Provider>;
-  if(otPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OTPage onBack={()=>setOtPage(false)}
+  if(otPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OTPage onBack={()=>setOtPage(false)}
     projects={projects} users={users} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(taskPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><TaskBoard onBack={()=>setTaskPage(false)}
     projects={projects} users={users} cases={cases} currentUser={currentUser}
