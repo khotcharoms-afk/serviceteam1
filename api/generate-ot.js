@@ -80,6 +80,24 @@ export default async function handler(req, res) {
     set("A34", `วันที่.............${todayTH}........................................`);
     set("F34", `วันที่.............${todayTH}........................................`);
 
+    // ลายเซ็นผู้ขอเบิก (รูปแรกในโปรไฟล์) ลอยบนเส้น "........" ช่อง A32:E32
+    try {
+      const sig = (Array.isArray(profile.signatures) ? profile.signatures : [])
+        .map(x => typeof x === "string" ? x : x?.data).find(x => /^data:image\/png;base64,/.test(x || ""));
+      if (sig) {
+        const buf = Buffer.from(sig.split(",")[1], "base64");
+        const w0 = buf.readUInt32BE(16), h0 = buf.readUInt32BE(20);
+        const H = 50, W = Math.min(220, Math.round(H * w0 / h0));
+        // หาตำแหน่งกึ่งกลางของ A:E (px) แล้วแปลงเป็นคอลัมน์แบบทศนิยม
+        const colPx = c => Math.round(((ws.getColumn(c).width || 8.43) * 7) + 5);
+        const widths = [1,2,3,4,5].map(colPx);
+        let x = widths.reduce((a,b)=>a+b,0) / 2 - W / 2, col = 0;
+        while (col < 4 && x >= widths[col]) { x -= widths[col]; col++; }
+        const imgId = wb.addImage({ buffer: buf, extension: "png" });
+        ws.addImage(imgId, { tl: { col: col + x / widths[col], row: 30.6 }, ext: { width: W, height: H }, editAs: "absolute" });
+      }
+    } catch (e) { console.error("cover signature:", e.message); }
+
     const buffer = await wb.xlsx.writeBuffer();
     const filename = encodeURIComponent(`OT_${profile.nameTH||"export"}_${periodMonth||"all"}.xlsx`);
     res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
