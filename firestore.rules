@@ -96,15 +96,18 @@ service cloud.firestore {
       allow create, update: if isApproved();
       allow delete: if isAdminOrDev();
     }
+    // OT: ทุกคน (รวม admin/dev) อ่าน/แก้/ลบได้เฉพาะของตัวเอง
+    // createdBy == "" = รายการเก่าที่ยังไม่มีเจ้าของ (ให้เจ้าของจริงกด "ปรับข้อมูลเก่า" เพื่อรับเป็นของตัวเอง)
     match /otRecords/{id} {
-      allow read: if isApproved();
-      allow create, update: if isApproved();
-      // ลบได้: admin/dev หรือเจ้าของรายการ
-      allow delete: if isAdminOrDev() || (isApproved() && resource.data.createdBy == request.auth.uid);
+      allow read:   if isApproved() && (resource.data.createdBy == request.auth.uid || resource.data.createdBy == "");
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isApproved() && (resource.data.createdBy == request.auth.uid || resource.data.createdBy == "")
+                                    && request.resource.data.createdBy == request.auth.uid;
+      allow delete: if isApproved() && resource.data.createdBy == request.auth.uid;
     }
+    // โปรไฟล์ OT (มีลายเซ็น): อ่าน/เขียนได้เฉพาะเจ้าของ
     match /otProfiles/{uid} {
-      allow read: if isApproved();
-      allow write: if isLoggedIn() && (request.auth.uid == uid || isAdminOrDev());
+      allow read, write: if isLoggedIn() && request.auth.uid == uid;
     }
     match /leaves/{id} {
       allow read: if isApproved();
