@@ -20,7 +20,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   const [showORDatePicker, setShowORDatePicker] = useState(false);
   const [orDateFrom, setOrDateFrom] = useState("");
   const [orDateTo, setOrDateTo]     = useState("");
-  const isAdmin = currentUser?.role === "dev";
+  const isAdmin = false; // ทุกคน รวม admin/dev เห็นเฉพาะ OT ของตัวเอง
   const canEditORSettings = ["admin","dev"].includes(currentUser?.role);
   const [orCfg, setOrCfg] = useState(null);
   const [showORSettings, setShowORSettings] = useState(false);
@@ -102,7 +102,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   }
 
   // filter
-  const myRecords = isAdmin ? records : records.filter(r => r.createdBy === currentUser?.id);
+  const myRecords = records.filter(r => r.createdBy === uid || (!r.createdBy && [profile.nameTH, currentUser?.name].map(n=>(n||"").trim()).filter(Boolean).includes((r.name||"").trim())));
   const filtered = myRecords.filter(r => {
     if (filterName !== "all" && r.name !== filterName) return false;
     if (filterMonth && !(r.dateIn||"").startsWith(filterMonth)) return false;
