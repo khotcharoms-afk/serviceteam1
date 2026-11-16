@@ -67,24 +67,28 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   // ต้อง query แบบมีเงื่อนไข เพราะ Firestore rules อนุญาตให้อ่านเฉพาะรายการเหล่านี้
   useEffect(() => {
     if (!uid) return;
-    const parts = { mine: [], orphan: [] };
+    const parts = { mine: [], orphan: [], all: [] };
     const push = () => {
       const m = new Map();
-      [...parts.mine, ...parts.orphan].forEach(r => m.set(r.id, r));
+      [...parts.all, ...parts.mine, ...parts.orphan].forEach(r => m.set(r.id, r));
       const data = [...m.values()].sort((a,b) => (b.dateIn||"").localeCompare(a.dateIn||""));
       setRecords(data);
     };
     const sub = (key, q) => onSnapshot(q, snap => {
       parts[key] = snap.docs.map(d => ({ id:d.id, ...d.data() })); push();
     }, err => console.error("otRecords", key, err));
-    // admin/dev: rules อนุญาตให้อ่านทั้งหมด → ดึงทั้ง collection แล้วกรองเหลือของตัวเองในหน้าจอ
-    // (กันรายการเก่าที่ createdBy ไม่ตรง uid แต่ชื่อผู้เข้าทำงานเป็นของเรา)
-    if (["admin","dev"].includes(currentUser?.role)) {
-      return sub("mine", collection(db, "otRecords"));
-    }
+    // ใช้ query แบบมีเงื่อนไขเสมอ (ผ่าน rules ทุกแบบ)
     const u1 = sub("mine",   query(collection(db, "otRecords"), where("createdBy", "==", uid)));
     const u2 = sub("orphan", query(collection(db, "otRecords"), where("createdBy", "==", "")));
-    return () => { u1(); u2(); };
+    // admin/dev: ลองอ่านทั้งหมดเพิ่ม (ถ้า rules อนุญาต) เพื่อเก็บรายการเก่าที่ชื่อเป็นของเราแต่ createdBy ไม่ตรง
+    // ถ้า rules ไม่อนุญาตก็แค่ข้าม ไม่กระทบ 2 query ข้างบน
+    let u3 = () => {};
+    if (["admin","dev"].includes(currentUser?.role)) {
+      u3 = onSnapshot(collection(db, "otRecords"), snap => {
+        parts.all = snap.docs.map(d => ({ id:d.id, ...d.data() })); push();
+      }, () => { parts.all = []; push(); });
+    }
+    return () => { u1(); u2(); u3(); };
   }, [uid, currentUser?.role]);
 
   async function saveProfile() {
