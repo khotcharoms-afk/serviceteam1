@@ -115,15 +115,6 @@ export default function App({ currentUser, onSignOut }) {
     if (!loading && view !== "overview" && projects.length && !projects.some((p) => p.id === view)) setView("overview");
   }, [loading, projects, view]);
   const PageLoader = () => <FullLoader bg={themeC.bg}/>;
-  // ปุ่มสลับโหมดมืด/สว่าง ลอยมุมซ้ายล่าง — ใช้ในทุกหน้าย่อย (หน้าหลักมีปุ่มบนแถบบนอยู่แล้ว)
-  const darkToggle = (
-    <button onClick={()=>setDarkMode(v=>!v)} title={darkMode?"โหมดสว่าง":"โหมดมืด"} aria-label="สลับโหมดมืด/สว่าง"
-      style={{ position:"fixed",left:16,bottom:"calc(16px + env(safe-area-inset-bottom))",zIndex:45,
-        width:40,height:40,borderRadius:"50%",border:`1px solid ${themeC.border}`,background:themeC.card,color:themeC.text500,
-        boxShadow:"0 4px 16px rgba(0,0,0,.10)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
-      <Icon name={darkMode?"sun":"moon"} size={18}/>
-    </button>
-  );
 
   // ตั้งสีให้ input/select/textarea ทั้งแอป (utils.js IS() อ่านตัวแปรพวกนี้)
   // และบอกเบราว์เซอร์ว่าหน้านี้โหมดไหน — คุมป๊อปอัป <select>, ปฏิทิน date picker, scrollbar
@@ -723,6 +714,28 @@ export default function App({ currentUser, onSignOut }) {
 
   if(loading) return <FullLoader bg={themeC.bg} text="กำลังโหลดเคส"/>;
 
+  // แถบบน (เมนู ค้นหา Onsite บอร์ดงาน แจ้งเตือน โหมดมืด) ใช้ในทุกหน้าย่อยด้วย
+  // ปุ่มที่ต้องเปิดของในหน้าหลัก (เมนู ค้นหา แจ้งเตือน เคสใหม่) จะปิดหน้าย่อยก่อนแล้วค่อยเปิด
+  const closeAllPages = () => {
+    setAdminPage(false); setDashboardPage(false); setShiftPage(false); setOnsitePage(false); setTaskPage(false);
+    setKnowledgePage(false); setOtPage(false); setRobotStatsPage(false); setRobotIssuesPage(false); setDevicesPage(false);
+    setRequisitionPage(false); setSmartPolePage(false); setDeviceReportPage(false); setCaseLogPage(false);
+    setProfilePage(false); setLeavePage(false);
+  };
+  const darkToggle = (
+    <NavBar sticky={false}
+      onMenuOpen={()=>{ closeAllPages(); setMenuOpen(true); }}
+      view="overview" activeProj={null}
+      onSearch={()=>{ closeAllPages(); setGlobalSearch(true); setGlobalQ(""); }}
+      onOnsite={isAdminOrDev ? ()=>{ closeAllPages(); setOnsitePage(true); } : null}
+      onTaskBoard={()=>{ closeAllPages(); setTaskPage(true); }} tasks={tasks} currentUser={currentUser}
+      onNotif={e=>{ e.stopPropagation(); closeAllPages(); setNotifOpen(true); }} unreadCount={unreadCount}
+      onNewCase={()=>{ closeAllPages(); openAddCase(); }}
+      onProfile={()=>{ closeAllPages(); setProfilePage(true); }}
+      isMobile={isMobile}
+      darkMode={darkMode} onToggleDark={()=>setDarkMode(v=>!v)}
+    />
+  );
   if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></Suspense></ThemeContext.Provider>;
   // Onsite / ใบลา เปิดเฉพาะ admin/dev — บันทึก OT เปิดให้ทุกคน (ผู้ใช้ทั่วไปเห็นเฉพาะรายการตัวเอง)
   if(leavePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></Suspense></ThemeContext.Provider>;
