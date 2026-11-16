@@ -242,12 +242,12 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
           <button onClick={()=>onEdit(user)}
             style={{ background:`${c.blue}1a`,border:`1px solid ${c.blue}55`,color:c.blue,
               borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:600 }}>
-            ✏️
+            แก้ไข
           </button>
         )}
         {locked ? (
           <span title="เฉพาะ Dev เท่านั้นที่จัดการบัญชี Dev ได้"
-            style={{ fontSize:14, color:c.text400, padding:"6px 10px" }}></span>
+            style={{ fontSize:12, color:c.text400, padding:"6px 10px" }}>ล็อก</span>
         ) : isDisabled ? (
           <button onClick={()=>onRestore(user.id)} title="คืนสิทธิ์การใช้งาน"
             style={{ background:`${c.green}1a`,border:`1px solid ${c.green}55`,color:c.green,
@@ -261,7 +261,7 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
           <button onClick={()=>onDisable(user.id)} title="ระงับการใช้งาน"
             style={{ background:`${c.red}1a`,border:`1px solid ${c.red}55`,color:c.red,
               borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>
-            🚫
+            ระงับ
           </button>
         )}
       </div>
@@ -287,6 +287,7 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
 
 function EditUserModal({ user, onClose, onSave }) {
   const { c } = useTheme();
+  const [name, setName] = useState(user.name||"");
   const [onsiteRate, setOnsiteRate] = useState(user.onsiteRate?.toString()||"");
   const [canEditShift, setCanEditShift] = useState(!!user.canEditShift);
   const q = user.leaveQuota || {};
@@ -299,8 +300,12 @@ function EditUserModal({ user, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
+    const newName = name.trim().replace(/\s+/g," ");
+    if (!newName) { alert("กรุณาใส่ชื่อ"); return; }
+    if (newName !== user.name && !confirm(`เปลี่ยนชื่อ "${user.name||"-"}" เป็น "${newName}"?\n\nเคส งาน Onsite และ OT ที่บันทึกไว้แล้วจะยังแสดงชื่อเดิม`)) return;
     setSaving(true);
     await onSave(user.id, {
+      ...(newName !== user.name ? { name: newName } : {}),
       onsiteRate: parseFloat(onsiteRate)||0,
       canEditShift,
       leaveQuota: {
@@ -341,6 +346,17 @@ function EditUserModal({ user, onClose, onSave }) {
           </div>
           <button onClick={onClose} style={{ background:c.borderSoft,border:"none",color:c.text500,
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
+        </div>
+
+        {/* ชื่อที่แสดง */}
+        <div style={{ marginBottom:16 }}>
+          <label style={LB}>ชื่อผู้ใช้ (ชื่อที่แสดงในระบบ)</label>
+          <input value={name} onChange={e=>setName(e.target.value)} style={IS} placeholder="ชื่อ-นามสกุล"/>
+          {name.trim() && name.trim() !== (user.name||"") && (
+            <div style={{ fontSize:12,color:c.warn,marginTop:6,lineHeight:1.5 }}>
+              ข้อมูลที่บันทึกไปแล้ว (เคส งานที่มอบหมาย Onsite OT) ยังผูกกับชื่อเดิม — งานที่มอบหมายไว้ด้วยชื่อเดิมจะไม่ขึ้นเป็นของคนนี้จนกว่าจะแก้ในงานนั้น
+            </div>
+          )}
         </div>
 
         {/* ค่าแรง Onsite */}
