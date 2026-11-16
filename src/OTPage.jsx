@@ -252,24 +252,24 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     }
   }
 
-  const inputStyle = { border:"1px solid #e2e8f0",borderRadius:8,padding:"6px 10px",
-    fontSize:12,fontFamily:"inherit",background:"#f8fafc",outline:"none" };
+  const inputStyle = { border:"1px solid #e4e4e7",borderRadius:8,padding:"6px 10px",
+    fontSize:12,fontFamily:"inherit",background:"#fafafa",outline:"none" };
 
   return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
+    <div style={{ minHeight:"100vh",background:"#fafafa",fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
 
       {/* Header */}
-      <div style={{ background:"#fff",borderBottom:"1px solid #e2e8f0",padding:"14px 20px",
+      <div style={{ background:"#fff",borderBottom:"1px solid #e4e4e7",padding:"14px 20px",
         display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"#f1f5f9",border:"none",borderRadius:8,
-          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#475569",fontWeight:600 }}>
+        <button onClick={onBack} style={{ background:"#f4f4f5",border:"none",borderRadius:8,
+          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#52525b",fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:600,color:"#0f172a" }}>⏰ บันทึก OT</div>
+        <div style={{ fontSize:16,fontWeight:600,color:"#09090b" }}>⏰ บันทึก OT</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
           {canEditORSettings && <button onClick={()=>setShowORSettings(v=>!v)}
-            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+            style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
               borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ⚙ ตั้งค่าใบ OR
           </button>}
@@ -294,14 +294,14 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       <div style={{ padding:isMobile?"12px 14px 48px":"16px 20px 48px",maxWidth:1100,margin:"0 auto" }}>
 
         {/* Tab bar */}
-        <div style={{ display:"flex",gap:6,marginBottom:16,background:"#fff",border:"1px solid #e2e8f0",
+        <div style={{ display:"flex",gap:6,marginBottom:16,background:"#fff",border:"1px solid #e4e4e7",
           borderRadius:10,padding:6 }}>
           {[{key:"list",label:"📋 รายการ"}].map(t=>(
             <button key={t.key} onClick={()=>setTab(t.key)}
               style={{ flex:1,padding:"7px",borderRadius:7,border:"none",fontSize:12,fontWeight:700,
                 cursor:"pointer",fontFamily:"inherit",
                 background:tab===t.key?"#F97316":"transparent",
-                color:tab===t.key?"#fff":"#64748b" }}>
+                color:tab===t.key?"#fff":"#71717a" }}>
               {t.label}
             </button>
           ))}
@@ -310,19 +310,19 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         {showORSettings && canEditORSettings && <ORSettingsPanel key={JSON.stringify(orCfg)} orCfg={orCfg} projects={projects} onClose={()=>setShowORSettings(false)}/>}
 
         {/* Period Section — แสดงเหนือ list เสมอ */}
-        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
+        <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,
           padding:"16px 20px",marginBottom:16 }}>
-          <div style={{ fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:12 }}>รอบเบิก OT</div>
+          <div style={{ fontSize:13,fontWeight:700,color:"#09090b",marginBottom:12 }}>รอบเบิก OT</div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,alignItems:"end" }}>
             <div>
-              <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>เดือนที่เบิก</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",fontWeight:700,marginBottom:4 }}>เดือนที่เบิก</div>
               <input value={profile.periodMonth||""} placeholder="เช่น กรกฎาคม"
                 onChange={e=>setProfile(p=>({...p,periodMonth:e.target.value}))}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
             </div>
             <div>
-              <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>วันที่เริ่ม</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",fontWeight:700,marginBottom:4 }}>วันที่เริ่ม</div>
               <input type="date"
                 value={profile.periodStart
                   ? (profile.periodStart.includes("/")
@@ -336,11 +336,11 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
                   const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
                   setProfile(p=>({...p, periodStart:fmt, periodMonth:mo||p.periodMonth}));
                 }}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
             </div>
             <div>
-              <div style={{ fontSize:11,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>วันที่สิ้นสุด</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",fontWeight:700,marginBottom:4 }}>วันที่สิ้นสุด</div>
               <input type="date"
                 value={profile.periodEnd
                   ? (profile.periodEnd.includes("/")
@@ -352,8 +352,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
                   const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
                   setProfile(p=>({...p,periodEnd:fmt}));
                 }}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,
-                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,
+                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
             </div>
           </div>
           <button onClick={saveProfile} disabled={profileSaving}
@@ -370,8 +370,8 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
             { label:"ชั่วโมง OT รวม", val:`${totalHours} ชม.`, color:"#6B21A8" },
             { label:"เฉลี่ยต่อครั้ง", val:`${filtered.length>0?(totalHours/filtered.length).toFixed(1):0} ชม.`, color:"#16a34a" },
           ].map(k=>(
-            <div key={k.label} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px 16px" }}>
-              <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>{k.label}</div>
+            <div key={k.label} style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,padding:"14px 16px" }}>
+              <div style={{ fontSize:10,color:"#a1a1aa",fontWeight:700,marginBottom:4 }}>{k.label}</div>
               <div style={{ fontSize:20,fontWeight:600,color:k.color }}>{k.val}</div>
             </div>
           ))}
@@ -379,7 +379,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
         {/* Filters — เฉพาะ tab รายการ */}
         {tab==="list" && <>
-        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
+        <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,
           padding:"12px 16px",marginBottom:14,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
           {isAdmin && (
             <select value={filterName} onChange={e=>setFilterName(e.target.value)} style={inputStyle}>
@@ -402,7 +402,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
         {/* Records */}
         {filtered.length === 0 ? (
-          <div style={{ textAlign:"center",color:"#cbd5e1",padding:48,fontSize:14 }}>
+          <div style={{ textAlign:"center",color:"#d4d4d8",padding:48,fontSize:14 }}>
             ยังไม่มีข้อมูล OT
           </div>
         ) : (
@@ -410,27 +410,27 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
             {filtered.map(r => {
               const proj = projects.find(p=>p.id===r.projectId);
               return (
-                <div key={r.id} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,
+                <div key={r.id} style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,
                   padding:"14px 16px",display:"flex",gap:12,alignItems:"flex-start" }}>
                   <div style={{ width:44,height:44,borderRadius:10,background:"#fff7ed",
                     border:"1px solid #fed7aa",display:"flex",alignItems:"center",
                     justifyContent:"center",fontSize:20,flexShrink:0 }}>⏰</div>
                   <div style={{ flex:1,minWidth:0 }}>
                     <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4 }}>
-                      <span style={{ fontSize:14,fontWeight:700,color:"#0f172a" }}>{r.name}</span>
+                      <span style={{ fontSize:14,fontWeight:700,color:"#09090b" }}>{r.name}</span>
                       <span style={{ fontSize:13,fontWeight:700,color:"#F97316" }}>{r.hours} ชม.</span>
                     </div>
                     {proj && (
-                      <div style={{ fontSize:12,color:"#64748b",display:"flex",alignItems:"center",gap:5,marginBottom:3 }}>
-                        <span style={{ width:8,height:8,borderRadius:"50%",background:proj.color||"#94a3b8" }}/>
+                      <div style={{ fontSize:12,color:"#71717a",display:"flex",alignItems:"center",gap:5,marginBottom:3 }}>
+                        <span style={{ width:8,height:8,borderRadius:"50%",background:proj.color||"#a1a1aa" }}/>
                         {proj.name}
                       </div>
                     )}
-                    <div style={{ fontSize:12,color:"#475569",marginBottom:3 }}>{r.desc}</div>
+                    <div style={{ fontSize:12,color:"#52525b",marginBottom:3 }}>{r.desc}</div>
                     <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
-                      <span style={{ fontSize:11,color:"#94a3b8" }}>📅 {fmtDate(r.dateIn)} {r.timeIn} - {r.timeOut}</span>
-                      {r.location && <span style={{ fontSize:11,color:"#94a3b8" }}>📍 {r.location}</span>}
-                      <span style={{ fontSize:11,color:"#94a3b8" }}>{r.remark}</span>
+                      <span style={{ fontSize:11,color:"#a1a1aa" }}>📅 {fmtDate(r.dateIn)} {r.timeIn} - {r.timeOut}</span>
+                      {r.location && <span style={{ fontSize:11,color:"#a1a1aa" }}>📍 {r.location}</span>}
+                      <span style={{ fontSize:11,color:"#a1a1aa" }}>{r.remark}</span>
                     </div>
                   </div>
                   <div style={{ display:"flex",gap:6,flexShrink:0 }}>
@@ -456,16 +456,16 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
       {/* Confirm delete */}
       {confirmId && (
-        <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(15,23,42,.5)",
+        <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(0,0,0,.5)",
           display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
           <div style={{ background:"#fff",borderRadius:16,padding:24,maxWidth:320,width:"100%",
             textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}>
             <div style={{ fontSize:32,marginBottom:12 }}>🗑</div>
-            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:8 }}>ลบรายการ OT นี้?</div>
-            <div style={{ fontSize:13,color:"#64748b",marginBottom:20 }}>ไม่สามารถกู้คืนได้</div>
+            <div style={{ fontSize:15,fontWeight:700,color:"#09090b",marginBottom:8 }}>ลบรายการ OT นี้?</div>
+            <div style={{ fontSize:13,color:"#71717a",marginBottom:20 }}>ไม่สามารถกู้คืนได้</div>
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
               <button onClick={()=>setConfirmId(null)}
-                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
                   borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
                 ยกเลิก
               </button>
@@ -480,30 +480,30 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       )}
 
       {showORDatePicker && (
-        <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
+        <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
           display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
           onClick={()=>setShowORDatePicker(false)}>
           <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:380,
             padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
             onClick={e=>e.stopPropagation()}>
-            <div style={{ fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:16 }}>🖨 Export ใบ OR — เลือกช่วงวันที่</div>
+            <div style={{ fontSize:15,fontWeight:700,color:"#09090b",marginBottom:16 }}>🖨 Export ใบ OR — เลือกช่วงวันที่</div>
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16 }}>
               <div>
-                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,display:"block",marginBottom:4 }}>ตั้งแต่วันที่</label>
+                <label style={{ fontSize:11,color:"#a1a1aa",fontWeight:700,display:"block",marginBottom:4 }}>ตั้งแต่วันที่</label>
                 <input type="date" value={orDateFrom} onChange={e=>setOrDateFrom(e.target.value)}
-                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 12px",
-                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                  style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 12px",
+                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
               </div>
               <div>
-                <label style={{ fontSize:11,color:"#94a3b8",fontWeight:700,display:"block",marginBottom:4 }}>ถึงวันที่</label>
+                <label style={{ fontSize:11,color:"#a1a1aa",fontWeight:700,display:"block",marginBottom:4 }}>ถึงวันที่</label>
                 <input type="date" value={orDateTo} onChange={e=>setOrDateTo(e.target.value)}
-                  style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 12px",
-                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#f8fafc" }}/>
+                  style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 12px",
+                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
               </div>
             </div>
             <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
               <button onClick={()=>setShowORDatePicker(false)}
-                style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+                style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
                   borderRadius:10,padding:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
                 ยกเลิก
               </button>
@@ -519,7 +519,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
               🛠 ปรับข้อมูลเก่าในช่วงนี้ให้ตรงค่าตั้งใบ OR (ดูก่อนยืนยัน)
             </button>
             {!(profile.signatures||[]).length && (
-              <div style={{ marginTop:8,fontSize:11,color:"#94a3b8" }}>ยังไม่มีลายเซ็น — อัปโหลดได้ที่ โปรไฟล์ → ข้อมูล OT</div>
+              <div style={{ marginTop:8,fontSize:11,color:"#a1a1aa" }}>ยังไม่มีลายเซ็น — อัปโหลดได้ที่ โปรไฟล์ → ข้อมูล OT</div>
             )}
           </div>
         </div>

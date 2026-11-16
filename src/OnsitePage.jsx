@@ -115,8 +115,8 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
   const totalCost = filteredList.reduce((s, r) => s + (r.totalCost || 0), 0);
 
   const inputStyle = {
-    border: "1px solid #e2e8f0", borderRadius: 8, padding: "6px 10px",
-    fontSize: 12, fontFamily: "inherit", background: "#f8fafc", outline: "none",
+    border: "1px solid #e4e4e7", borderRadius: 8, padding: "6px 10px",
+    fontSize: 12, fontFamily: "inherit", background: "#fafafa", outline: "none",
   };
 
   const statusBadge = status => {
@@ -135,18 +135,18 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'Noto Sans Thai',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: "'Noto Sans Thai',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
 
       {/* Header */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "14px 20px",
+      <div style={{ background: "#fff", borderBottom: "1px solid #e4e4e7", padding: "14px 20px",
         display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: "#f1f5f9", border: "none", borderRadius: 8,
+        <button onClick={onBack} style={{ background: "#f4f4f5", border: "none", borderRadius: 8,
           padding: "7px 14px", cursor: "pointer", fontSize: 13, fontFamily: "inherit",
-          color: "#475569", fontWeight: 600 }}>
+          color: "#52525b", fontWeight: 600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize: 16, fontWeight:600, color: "#0f172a" }}>📍 บันทึก Onsite</div>
+        <div style={{ fontSize: 16, fontWeight:600, color: "#09090b" }}>📍 บันทึก Onsite</div>
         <div style={{ marginLeft: "auto" }}>
           <button onClick={() => { setEditRecord(null); setShowModal(true); }}
             style={{ background: "#F97316", border: "none", color: "#fff", borderRadius: 10,
@@ -158,7 +158,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
       </div>
 
       {/* Tabs */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #e2e8f0",
+      <div style={{ background: "#fff", borderBottom: "1px solid #e4e4e7",
         display: "flex", gap: 0, overflowX: "auto" }}>
         {[
           { key: "list",    label: "📋 รายการ" },
@@ -167,7 +167,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             style={{ background: "none", border: "none", borderBottom: tab === t.key ? "3px solid #F97316" : "3px solid transparent",
-              color: tab === t.key ? "#F97316" : "#64748b", fontWeight: tab === t.key ? 700 : 500,
+              color: tab === t.key ? "#F97316" : "#71717a", fontWeight: tab === t.key ? 700 : 500,
               padding: "12px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit",
               whiteSpace: "nowrap", flexShrink: 0 }}>
             {t.label}
@@ -186,16 +186,16 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
               { label: "ต้นทุนรวม", val: `${totalCost.toLocaleString()} ฿`, color: "#6B21A8" },
               { label: "รออนุมัติ", val: isAdmin ? pendingRecords.length : myRecords.filter(r=>r.status==="pending").length, color: "#d97706" },
             ].map(k => (
-              <div key={k.label} style={{ background: "#fff", border: "1px solid #e2e8f0",
+              <div key={k.label} style={{ background: "#fff", border: "1px solid #e4e4e7",
                 borderRadius: 12, padding: "14px 16px" }}>
-                <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>{k.label}</div>
+                <div style={{ fontSize: 10, color: "#a1a1aa", fontWeight: 700, marginBottom: 4 }}>{k.label}</div>
                 <div style={{ fontSize: 20, fontWeight:600, color: k.color }}>{k.val}</div>
               </div>
             ))}
           </div>
 
           {/* Filters */}
-          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12,
+          <div style={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: 12,
             padding: "12px 16px", marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <select value={filterProj} onChange={e => setFilterProj(e.target.value)} style={inputStyle}>
               <option value="all">ทุกโครงการ</option>
@@ -225,7 +225,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
 
           {/* Records */}
           {filteredList.length === 0 ? (
-            <div style={{ textAlign: "center", color: "#cbd5e1", padding: 48, fontSize: 14 }}>
+            <div style={{ textAlign: "center", color: "#d4d4d8", padding: 48, fontSize: 14 }}>
               ยังไม่มีข้อมูล Onsite
             </div>
           ) : (
@@ -233,29 +233,29 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
               {filteredList.map(r => {
                 const proj = projects.find(p => p.id === r.projectId);
                 return (
-                  <div key={r.id} style={{ background: "#fff", border: "1px solid #e2e8f0",
+                  <div key={r.id} style={{ background: "#fff", border: "1px solid #e4e4e7",
                     borderRadius: 12, padding: "14px 16px", display: "flex", gap: 12, alignItems: "flex-start" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "#fff7ed",
                       border: "1px solid #fed7aa", display: "flex", alignItems: "center",
                       justifyContent: "center", fontSize: 20, flexShrink: 0 }}>📍</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: "#09090b" }}>
                           {r.techs?.join(", ") || "-"}
                         </span>
                         {statusBadge(r.status)}
                       </div>
                       {proj && (
-                        <div style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: proj.color || "#94a3b8" }}/>
+                        <div style={{ fontSize: 12, color: "#71717a", display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: proj.color || "#a1a1aa" }}/>
                           {proj.name}
                         </div>
                       )}
-                      {r.site && <div style={{ fontSize: 12, color: "#475569", marginBottom: 2 }}>📌 {r.site}</div>}
-                      {r.scope && <div style={{ fontSize: 12, color: "#64748b", marginBottom: 2 }}>{r.scope}</div>}
-                      {r.detail && <div style={{ fontSize: 12, color: "#64748b", marginBottom: 3 }}>{r.detail}</div>}
+                      {r.site && <div style={{ fontSize: 12, color: "#52525b", marginBottom: 2 }}>📌 {r.site}</div>}
+                      {r.scope && <div style={{ fontSize: 12, color: "#71717a", marginBottom: 2 }}>{r.scope}</div>}
+                      {r.detail && <div style={{ fontSize: 12, color: "#71717a", marginBottom: 3 }}>{r.detail}</div>}
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                        <span style={{ fontSize: 11, color: "#94a3b8" }}>📅 {fmtDate(r.date)}</span>
+                        <span style={{ fontSize: 11, color: "#a1a1aa" }}>📅 {fmtDate(r.date)}</span>
                         {r.totalCost > 0 && (
                           <span style={{ fontSize: 11, color: "#F97316", fontWeight: 700 }}>
                             💰 {r.totalCost.toLocaleString()} ฿
@@ -284,7 +284,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
         {/* ============ TAB: ประวัติเครื่อง ============ */}
         {tab === "machine" && <>
           {Object.keys(byMachine).length === 0 ? (
-            <div style={{ textAlign: "center", color: "#cbd5e1", padding: 48, fontSize: 14 }}>
+            <div style={{ textAlign: "center", color: "#d4d4d8", padding: 48, fontSize: 14 }}>
               ยังไม่มีข้อมูลหุ่นยนต์/เครื่องจักร
             </div>
           ) : (
@@ -292,13 +292,13 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
               {Object.entries(byMachine).map(([serial, recs]) => {
                 const proj = projects.find(p => p.id === recs[0]?.projectId);
                 return (
-                  <div key={serial} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
-                    <div style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0",
+                  <div key={serial} style={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: 12, overflow: "hidden" }}>
+                    <div style={{ background: "#fafafa", borderBottom: "1px solid #e4e4e7",
                       padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
                       <span style={{ fontSize: 20 }}>🤖</span>
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{serial}</div>
-                        {proj && <div style={{ fontSize: 11, color: "#64748b" }}>{proj.name}</div>}
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#09090b" }}>{serial}</div>
+                        {proj && <div style={{ fontSize: 11, color: "#71717a" }}>{proj.name}</div>}
                       </div>
                       <span style={{ marginLeft: "auto", background: "#fff7ed", border: "1px solid #fed7aa",
                         color: "#F97316", borderRadius: 8, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>
@@ -308,15 +308,15 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                     <div style={{ padding: "10px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
                       {recs.map(r => (
                         <div key={r.id} style={{ display: "flex", gap: 10, alignItems: "flex-start",
-                          paddingBottom: 8, borderBottom: "1px solid #f1f5f9" }}>
-                          <div style={{ fontSize: 11, color: "#94a3b8", minWidth: 70, flexShrink: 0 }}>
+                          paddingBottom: 8, borderBottom: "1px solid #f4f4f5" }}>
+                          <div style={{ fontSize: 11, color: "#a1a1aa", minWidth: 70, flexShrink: 0 }}>
                             {fmtDate(r.date)}
                           </div>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 12, color: "#475569", fontWeight: 600 }}>{r.scope}</div>
-                            {r.detail && <div style={{ fontSize: 12, color: "#64748b" }}>{r.detail}</div>}
+                            <div style={{ fontSize: 12, color: "#52525b", fontWeight: 600 }}>{r.scope}</div>
+                            {r.detail && <div style={{ fontSize: 12, color: "#71717a" }}>{r.detail}</div>}
                             {r.techs?.length > 0 && (
-                              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                              <div style={{ fontSize: 11, color: "#a1a1aa", marginTop: 2 }}>
                                 👤 {r.techs.join(", ")}
                               </div>
                             )}
@@ -335,7 +335,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
         {/* ============ TAB: อนุมัติ (admin only) ============ */}
         {tab === "approve" && isAdmin && <>
           {pendingRecords.length === 0 ? (
-            <div style={{ textAlign: "center", color: "#cbd5e1", padding: 48, fontSize: 14 }}>
+            <div style={{ textAlign: "center", color: "#d4d4d8", padding: 48, fontSize: 14 }}>
               ✅ ไม่มีรายการรออนุมัติ
             </div>
           ) : (
@@ -350,19 +350,19 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                         border: "1px solid #fde68a", display: "flex", alignItems: "center",
                         justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📍</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 2 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#09090b", marginBottom: 2 }}>
                           {r.techs?.join(", ") || "-"}
                         </div>
                         {proj && (
-                          <div style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: proj.color || "#94a3b8" }}/>
+                          <div style={{ fontSize: 12, color: "#71717a", display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: proj.color || "#a1a1aa" }}/>
                             {proj.name}
                           </div>
                         )}
-                        {r.site && <div style={{ fontSize: 12, color: "#475569" }}>📌 {r.site}</div>}
-                        <div style={{ fontSize: 12, color: "#64748b" }}>{r.scope}</div>
-                        {r.detail && <div style={{ fontSize: 12, color: "#64748b" }}>{r.detail}</div>}
-                        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>📅 {fmtDate(r.date)}</div>
+                        {r.site && <div style={{ fontSize: 12, color: "#52525b" }}>📌 {r.site}</div>}
+                        <div style={{ fontSize: 12, color: "#71717a" }}>{r.scope}</div>
+                        {r.detail && <div style={{ fontSize: 12, color: "#71717a" }}>{r.detail}</div>}
+                        <div style={{ fontSize: 11, color: "#a1a1aa", marginTop: 4 }}>📅 {fmtDate(r.date)}</div>
                         {r.totalCost > 0 && (
                           <div style={{ fontSize: 12, color: "#F97316", fontWeight: 700, marginTop: 2 }}>
                             💰 {r.totalCost.toLocaleString()} ฿
@@ -395,16 +395,16 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
 
       {/* Confirm delete */}
       {confirmId && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(15,23,42,.5)",
+        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.5)",
           display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 320, width: "100%",
             textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🗑</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>ลบรายการนี้?</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>ไม่สามารถกู้คืนได้</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#09090b", marginBottom: 8 }}>ลบรายการนี้?</div>
+            <div style={{ fontSize: 13, color: "#71717a", marginBottom: 20 }}>ไม่สามารถกู้คืนได้</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <button onClick={() => setConfirmId(null)}
-                style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#475569",
+                style={{ background: "#fafafa", border: "1px solid #e4e4e7", color: "#52525b",
                   borderRadius: 10, padding: "10px", fontSize: 14, fontWeight: 600,
                   cursor: "pointer", fontFamily: "inherit" }}>
                 ยกเลิก

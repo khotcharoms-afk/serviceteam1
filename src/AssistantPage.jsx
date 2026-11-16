@@ -405,7 +405,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       <div style={{ position: "fixed", left: 16, bottom: "calc(20px + env(safe-area-inset-bottom))", zIndex: 40,
         display: "flex", alignItems: "center", maxWidth: "min(340px, calc(100vw - 110px))",
         background: c.card, border: `1px solid ${PURPLE}33`, borderRadius: 999,
-        boxShadow: "0 6px 20px rgba(107,33,168,.25)", fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
+        boxShadow:"none", fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
         <button onClick={onExpand} aria-label="เปิดผู้ช่วย AI"
           style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1, background: "none", border: "none",
             padding: "8px 6px 8px 8px", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
@@ -440,7 +440,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         : { top: 0, bottom: 0, width: isMobile ? "100vw" : "min(420px, 100vw)" }),
       display: open ? "flex" : "none", flexDirection: "column", background: c.bg,
       borderRight: isMobile ? "none" : `1px solid ${c.border}`,
-      boxShadow: isMobile ? "none" : "6px 0 28px rgba(15,23,42,.18)",
+      boxShadow: isMobile ? "none" : "6px 0 28px rgba(0,0,0,.18)",
       fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif", animation: "aiSlide .18s ease-out",
       overscrollBehavior: "contain",
     }}>
@@ -579,7 +579,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
             style={{ flex: 1, resize: "none", minHeight: 44, maxHeight: 132, overflowY: "hidden", padding: "10px 14px", borderRadius: 12, lineHeight: 1.5,
               fontSize: isMobile ? 16 : 14, // ต่ำกว่า 16px iOS จะซูมหน้าจอตอนแตะช่องพิมพ์
-              background: "var(--input-bg, #fff)", color: "var(--input-text, #1e293b)", border: "1px solid var(--input-border, #e2e8f0)",
+              background: "var(--input-bg, #fff)", color: "var(--input-text, #27272a)", border: "1px solid var(--input-border, #e4e4e7)",
               outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
           <button type="submit" disabled={busy || !input.trim()}
             style={{ background: busy || !input.trim() ? c.border : PURPLE, color: "#fff", border: "none", borderRadius: 12,

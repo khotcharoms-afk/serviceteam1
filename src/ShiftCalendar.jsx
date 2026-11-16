@@ -182,8 +182,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         const entries = (shiftMap[dk] || []).filter(e => !e.isOff);
         const isToday = dk === todayKey;
         const bg = isToday ? "#eff6ff" : holiday ? "#fff5f5" : "#fff";
-        const border = isToday ? "2px solid #2563eb" : "0.5px solid #f1f5f9";
-        const dayColor = isToday ? "#1d4ed8" : holiday ? "#ef4444" : "#475569";
+        const border = isToday ? "2px solid #2563eb" : "0.5px solid #f4f4f5";
+        const dayColor = isToday ? "#1d4ed8" : holiday ? "#ef4444" : "#52525b";
 
         const pills = entries.map(e => {
           const type = shiftTypes.find(t => t.id === e.shiftTypeId);
@@ -225,19 +225,19 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 </style>
 </head>
 <body>
-<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#f8fafc;padding:8px 14px;display:flex;gap:10px;border-bottom:1px solid #e2e8f0;z-index:99">
-  <button onclick="window.close()" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:inherit">← ปิด</button>
+<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#fafafa;padding:8px 14px;display:flex;gap:10px;border-bottom:1px solid #e4e4e7;z-index:99">
+  <button onclick="window.close()" style="background:#f4f4f5;border:1px solid #e4e4e7;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:inherit">← ปิด</button>
   <button onclick="window.print()" style="background:#16a34a;border:none;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit;color:#fff;margin-left:auto">🖨 พิมพ์ / Export PDF</button>
 </div>
 <div style="margin-top:36px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <div style="font-size:16pt;font-weight:700;color:#1E3A5F">ตารางกะ — ${monthLabel}</div>
-    <div style="font-size:9px;color:#94a3b8">บริษัท เมทเธียร์ จำกัด · ServiceLog</div>
+    <div style="font-size:9px;color:#a1a1aa">บริษัท เมทเธียร์ จำกัด · ServiceLog</div>
   </div>
   <div style="margin-bottom:10px">${legendHTML}</div>
   <table style="table-layout:fixed">
     <thead>
-      <tr>${dayNames.map(d => `<th style="padding:6px 4px;text-align:center;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid #e2e8f0;background:#f8fafc;width:14.28%">${d}</th>`).join("")}</tr>
+      <tr>${dayNames.map(d => `<th style="padding:6px 4px;text-align:center;font-size:11px;font-weight:600;color:#71717a;border-bottom:1px solid #e4e4e7;background:#fafafa;width:14.28%">${d}</th>`).join("")}</tr>
     </thead>
     <tbody>${weeksHTML}</tbody>
   </table>
@@ -250,17 +250,17 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
   }
 
   return (
-    <div style={{ minHeight:"100vh",background:"#f8fafc",fontFamily:"'Noto Sans Thai',sans-serif" }}>
+    <div style={{ minHeight:"100vh",background:"#fafafa",fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <style>{`.shift-layout { display:flex; gap:14px; align-items:flex-start; } @media(max-width:600px){ .shift-layout { flex-direction:column; } .shift-holiday-table { width:100% !important; } }`}</style>
 
       {/* Header */}
-      <div style={{ background:"#fff",borderBottom:"1px solid #e2e8f0",padding:"14px 20px",
+      <div style={{ background:"#fff",borderBottom:"1px solid #e4e4e7",padding:"14px 20px",
         display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"#f1f5f9",border:"none",borderRadius:8,
-          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#475569",fontWeight:600 }}>
+        <button onClick={onBack} style={{ background:"#f4f4f5",border:"none",borderRadius:8,
+          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#52525b",fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:600,color:"#0f172a" }}>📅 ตารางกะ</div>
+        <div style={{ fontSize:16,fontWeight:600,color:"#09090b" }}>📅 ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
 
           <button onClick={exportCalendarPDF}
@@ -284,8 +284,8 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           )}
           {canEditShift && (
             <button onClick={()=>setShowSettings(true)}
-              style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,
-                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#475569" }}>
+              style={{ background:"#f4f4f5",border:"1px solid #e4e4e7",borderRadius:8,
+                padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#52525b" }}>
               ⚙ ตั้งค่า
             </button>
           )}
@@ -296,13 +296,13 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
         {/* Month nav */}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16 }}>
-          <button onClick={prevMonth} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
-            padding:"7px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,color:"#475569" }}>← ก่อนหน้า</button>
-          <div style={{ fontSize:18,fontWeight:600,color:"#0f172a" }}>
+          <button onClick={prevMonth} style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:8,
+            padding:"7px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,color:"#52525b" }}>← ก่อนหน้า</button>
+          <div style={{ fontSize:18,fontWeight:600,color:"#09090b" }}>
             {MONTH_NAMES[month]} {year + 543}
           </div>
-          <button onClick={nextMonth} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
-            padding:"7px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,color:"#475569" }}>ถัดไป →</button>
+          <button onClick={nextMonth} style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:8,
+            padding:"7px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,color:"#52525b" }}>ถัดไป →</button>
         </div>
 
         {/* Legend */}
@@ -319,9 +319,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                 </span>
               );
             })}
-            <span style={{ display:"inline-flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8" }}>
-              <span style={{ width:10,height:10,borderRadius:2,background:"#f1f5f9",
-                border:"1px solid #e2e8f0",display:"inline-block" }}/>หยุด
+            <span style={{ display:"inline-flex",alignItems:"center",gap:5,fontSize:11,color:"#a1a1aa" }}>
+              <span style={{ width:10,height:10,borderRadius:2,background:"#f4f4f5",
+                border:"1px solid #e4e4e7",display:"inline-block" }}/>หยุด
             </span>
           </div>
         )}
@@ -331,14 +331,14 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
         {/* Calendar */}
         <div style={{ flex:1,minWidth:0 }}>
-        <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,overflow:"hidden" }}>
+        <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:14,overflow:"hidden" }}>
           <table style={{ width:"100%",borderCollapse:"collapse",tableLayout:"fixed" }}>
             <thead>
               <tr>
                 {DAY_NAMES.map(d => (
                   <th key={d} style={{ padding:"8px 4px",textAlign:"center",fontSize:12,
-                    fontWeight:600,color:"#64748b",borderBottom:"1px solid #e2e8f0",
-                    background:"#f8fafc" }}>{d}</th>
+                    fontWeight:600,color:"#71717a",borderBottom:"1px solid #e4e4e7",
+                    background:"#fafafa" }}>{d}</th>
                 ))}
               </tr>
             </thead>
@@ -347,7 +347,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                 <tr key={wi}>
                   {week.map((day, di) => {
                     if (!day) return (
-                      <td key={di} style={{ border:"0.5px solid #f1f5f9",background:"#fafafa",
+                      <td key={di} style={{ border:"0.5px solid #f4f4f5",background:"#fafafa",
                         height:90,verticalAlign:"top",padding:4 }}/>
                     );
                     const dk = dateKey(year, month, day);
@@ -357,7 +357,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                     const holiday = THAI_HOLIDAYS[holidayKey];
                     return (
                       <td key={di} onClick={() => setViewDay(dk)}
-                        style={{ border:isToday?"2px solid #2563eb":"0.5px solid #f1f5f9",
+                        style={{ border:isToday?"2px solid #2563eb":"0.5px solid #f4f4f5",
                           height:90,verticalAlign:"top",
                           padding:isToday?3:4,cursor:"pointer",
                           background:isToday?"#eff6ff":holiday?"#fff5f5":"#fff",
@@ -365,7 +365,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                           transition:"background .15s" }}>
                         <div style={{ display:"flex",alignItems:"center",gap:3,marginBottom:2,padding:"1px 3px" }}>
                           <span style={{ fontSize:11,fontWeight:isToday?700:500,
-                            color:isToday?"#1d4ed8":holiday?"#ef4444":"#475569" }}>{day}</span>
+                            color:isToday?"#1d4ed8":holiday?"#ef4444":"#52525b" }}>{day}</span>
                           {holiday && <span style={{ fontSize:8,color:"#ef4444",fontWeight:600,
                             overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1 }}>
                             {holiday}
@@ -396,7 +396,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
             </tbody>
           </table>
         </div>
-        <div style={{ textAlign:"center",marginTop:8,fontSize:12,color:"#94a3b8" }}>
+        <div style={{ textAlign:"center",marginTop:8,fontSize:12,color:"#a1a1aa" }}>
           กดที่วันเพื่อดูกะ
         </div>
         </div>
@@ -407,12 +407,12 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
             <div style={{ fontSize:12,fontWeight:700,color:"#fff",textAlign:"center" }}>ตารางวันหยุด</div>
             <div style={{ fontSize:10,color:"#93C5FD",textAlign:"center",marginTop:2 }}>{MONTH_NAMES[month].slice(0,3)}. {year+543}</div>
           </div>
-          <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:"0 0 12px 12px",overflow:"hidden" }}>
+          <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:"0 0 12px 12px",overflow:"hidden" }}>
             <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
               <thead>
-                <tr style={{ background:"#f8fafc" }}>
-                  <th style={{ padding:"6px 10px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>ชื่อ</th>
-                  <th style={{ padding:"6px 8px",textAlign:"left",fontSize:10,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>วันหยุด</th>
+                <tr style={{ background:"#fafafa" }}>
+                  <th style={{ padding:"6px 10px",textAlign:"left",fontSize:10,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>ชื่อ</th>
+                  <th style={{ padding:"6px 8px",textAlign:"left",fontSize:10,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>วันหยุด</th>
                 </tr>
               </thead>
               <tbody>
@@ -423,9 +423,9 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
                   const offDays = (sch?.offDays||[]).sort();
                   const dayLabel = offDays.length>0 ? offDays.map(d=>DAY_NAMES[d]).join("-") : "-";
                   return (
-                    <tr key={u.id} style={{ background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #f1f5f9" }}>
-                      <td style={{ padding:"6px 10px",fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{u.name.split(" ")[0]}</td>
-                      <td style={{ padding:"6px 8px",color:"#64748b",whiteSpace:"nowrap" }}>{dayLabel}</td>
+                    <tr key={u.id} style={{ background:i%2===0?"#fff":"#fafafa",borderBottom:"1px solid #f4f4f5" }}>
+                      <td style={{ padding:"6px 10px",fontWeight:600,color:"#09090b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{u.name.split(" ")[0]}</td>
+                      <td style={{ padding:"6px 8px",color:"#71717a",whiteSpace:"nowrap" }}>{dayLabel}</td>
                     </tr>
                   );
                 })}
@@ -573,30 +573,30 @@ function MemberManager({ users, shiftMembers, onClose }) {
   }
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:380,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>👥 สมาชิกทีม CS</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>👥 สมาชิกทีม CS</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
-        <div style={{ fontSize:11,color:"#94a3b8",marginBottom:10 }}>กด ↑↓ เรียงลำดับ · กด ✕ เอาออก</div>
+        <div style={{ fontSize:11,color:"#a1a1aa",marginBottom:10 }}>กด ↑↓ เรียงลำดับ · กด ✕ เอาออก</div>
         <div style={{ display:"flex",flexDirection:"column",gap:5,marginBottom:10 }}>
           {selected.map((name,i)=>(
             <div key={name} style={{ display:"flex",alignItems:"center",gap:8,
               padding:"7px 10px",background:"#eff6ff",
               borderRadius:8,border:"1px solid #bfdbfe" }}>
-              <span style={{ flex:1,fontSize:13,fontWeight:600,color:"#0f172a" }}>{name}</span>
+              <span style={{ flex:1,fontSize:13,fontWeight:600,color:"#09090b" }}>{name}</span>
               <div style={{ display:"flex",gap:4,flexShrink:0 }}>
                 <button onClick={()=>moveUp(i)} disabled={i===0}
-                  style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                  style={{ background:"#f4f4f5",border:"1px solid #e4e4e7",borderRadius:6,
                     width:26,height:26,cursor:"pointer",fontSize:13,opacity:i===0?0.3:1 }}>↑</button>
                 <button onClick={()=>moveDown(i)} disabled={i===selected.length-1}
-                  style={{ background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,
+                  style={{ background:"#f4f4f5",border:"1px solid #e4e4e7",borderRadius:6,
                     width:26,height:26,cursor:"pointer",fontSize:13,opacity:i===selected.length-1?0.3:1 }}>↓</button>
                 <button onClick={()=>remove(name)}
                   style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:6,
@@ -606,14 +606,14 @@ function MemberManager({ users, shiftMembers, onClose }) {
           ))}
         </div>
         {unselected.length > 0 && (
-          <div style={{ borderTop:"1px dashed #e2e8f0",paddingTop:8,marginBottom:14 }}>
-            <div style={{ fontSize:10,color:"#94a3b8",marginBottom:6 }}>กด + เพื่อเพิ่ม</div>
+          <div style={{ borderTop:"1px dashed #e4e4e7",paddingTop:8,marginBottom:14 }}>
+            <div style={{ fontSize:10,color:"#a1a1aa",marginBottom:6 }}>กด + เพื่อเพิ่ม</div>
             <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
               {unselected.map(name=>(
                 <div key={name} style={{ display:"flex",alignItems:"center",gap:8,
-                  padding:"7px 10px",background:"#f8fafc",
-                  borderRadius:8,border:"1px solid #e2e8f0" }}>
-                  <span style={{ flex:1,fontSize:13,color:"#64748b" }}>{name}</span>
+                  padding:"7px 10px",background:"#fafafa",
+                  borderRadius:8,border:"1px solid #e4e4e7" }}>
+                  <span style={{ flex:1,fontSize:13,color:"#71717a" }}>{name}</span>
                   <button onClick={()=>add(name)}
                     style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:6,
                       width:26,height:26,cursor:"pointer",fontSize:14,color:"#16a34a" }}>+</button>
@@ -623,8 +623,8 @@ function MemberManager({ users, shiftMembers, onClose }) {
           </div>
         )}
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+          <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
+            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
@@ -707,44 +707,44 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
   const MONTH_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
   const MONTH_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:520,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"80vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📋 กำหนดวันหยุดประจำ</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📋 กำหนดวันหยุดประจำ</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
-        <div style={{ display:"flex",alignItems:"center",gap:8,background:"#f8fafc",
+        <div style={{ display:"flex",alignItems:"center",gap:8,background:"#fafafa",
           borderRadius:8,padding:"8px 12px",marginBottom:14 }}>
-          <button onClick={prevMonth} style={{ background:"#fff",border:"0.5px solid #e2e8f0",
+          <button onClick={prevMonth} style={{ background:"#fff",border:"0.5px solid #e4e4e7",
             borderRadius:6,padding:"3px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
             ← {MONTH_SHORT[selMonth===0?11:selMonth-1]}
           </button>
           <span style={{ flex:1,textAlign:"center",fontSize:13,fontWeight:600,color:"#1E3A5F" }}>
             {MONTH_TH[selMonth]} {selYear+543}
           </span>
-          <button onClick={nextMonth} style={{ background:"#fff",border:"0.5px solid #e2e8f0",
+          <button onClick={nextMonth} style={{ background:"#fff",border:"0.5px solid #e4e4e7",
             borderRadius:6,padding:"3px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
             {MONTH_SHORT[selMonth===11?0:selMonth+1]} →
           </button>
         </div>
         <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:18 }}>
           <thead>
-            <tr style={{ background:"#f8fafc" }}>
-              <th style={{ padding:"7px 10px",textAlign:"left",fontSize:11,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>ชื่อ</th>
+            <tr style={{ background:"#fafafa" }}>
+              <th style={{ padding:"7px 10px",textAlign:"left",fontSize:11,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>ชื่อ</th>
               {DAY_SHORT.map(d=>(
-                <th key={d} style={{ padding:"7px 6px",textAlign:"center",fontSize:11,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #e2e8f0" }}>{d}</th>
+                <th key={d} style={{ padding:"7px 6px",textAlign:"center",fontSize:11,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>{d}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {schedules.map((sch,i)=>(
-              <tr key={sch.userName} style={{ borderBottom:"1px solid #f1f5f9",background:i%2===0?"#fff":"#f8fafc" }}>
-                <td style={{ padding:"7px 10px",fontWeight:600,color:"#0f172a" }}>{sch.userName.split(" ")[0]}</td>
+              <tr key={sch.userName} style={{ borderBottom:"1px solid #f4f4f5",background:i%2===0?"#fff":"#fafafa" }}>
+                <td style={{ padding:"7px 10px",fontWeight:600,color:"#09090b" }}>{sch.userName.split(" ")[0]}</td>
                 {[0,1,2,3,4,5,6].map(d=>(
                   <td key={d} style={{ padding:"6px",textAlign:"center" }}>
                     <input type="checkbox" checked={sch.offDays.includes(d)}
@@ -757,8 +757,8 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
           </tbody>
         </table>
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+          <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
+            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
@@ -789,15 +789,15 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
   const holiday = THAI_HOLIDAYS[buddhistKey];
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:400,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:holiday?8:16 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📅 {label}</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📅 {label}</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
         {holiday && (
@@ -807,7 +807,7 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
           </div>
         )}
         {(()=>{ const activeEntries = entries.filter(e=>!e.isOff); return activeEntries.length===0 ? (
-          <div style={{ textAlign:"center",color:"#cbd5e1",padding:"24px 0",fontSize:13 }}>ยังไม่มีกะในวันนี้</div>
+          <div style={{ textAlign:"center",color:"#d4d4d8",padding:"24px 0",fontSize:13 }}>ยังไม่มีกะในวันนี้</div>
         ) : (
           <div style={{ display:"flex",flexDirection:"column",gap:8,marginBottom:16 }}>
             {activeEntries.map((e,i)=>{
@@ -818,7 +818,7 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
                 {bg:"#e9d5ff",text:"#4c1d95"},{bg:"#fed7aa",text:"#7c2d12"},
               ];
               const ci = shiftTypes.findIndex(t=>t.id===e.shiftTypeId) % COLORS.length;
-              const c = e.isOff ? {bg:"#f1f5f9",text:"#94a3b8"} : COLORS[Math.max(0,ci)];
+              const c = e.isOff ? {bg:"#f4f4f5",text:"#a1a1aa"} : COLORS[Math.max(0,ci)];
               return (
                 <div key={i} style={{ display:"flex",alignItems:"center",gap:10,
                   padding:"10px 12px",background:c.bg,borderRadius:10 }}>
@@ -856,27 +856,27 @@ function SettingsMenu({ onClose, onMembers, onSchedule, onTypes, onBulk, onClear
     { icon:"⚙", label:"จัดการกะ", desc:"เพิ่ม/ลบประเภทกะและเวลา", action:onTypes },
   ];
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:340,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>⚙ ตั้งค่าตารางกะ</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>⚙ ตั้งค่าตารางกะ</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
         <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
           {items.map(item=>(
             <button key={item.label} onClick={item.action}
               style={{ display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
-                background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,
+                background:"#fafafa",border:"1px solid #e4e4e7",borderRadius:10,
                 cursor:"pointer",fontFamily:"inherit",textAlign:"left",width:"100%" }}>
               <span style={{ fontSize:20 }}>{item.icon}</span>
               <div>
-                <div style={{ fontSize:13,fontWeight:600,color:"#0f172a" }}>{item.label}</div>
-                <div style={{ fontSize:11,color:"#94a3b8",marginTop:1 }}>{item.desc}</div>
+                <div style={{ fontSize:13,fontWeight:600,color:"#09090b" }}>{item.label}</div>
+                <div style={{ fontSize:11,color:"#a1a1aa",marginTop:1 }}>{item.desc}</div>
               </div>
             </button>
           ))}
@@ -921,39 +921,39 @@ function ClearShiftModal({ year, month, users, daysInMonth, onClose }) {
   }
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:420,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"85vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>🗑 เคลียร์กะ</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>🗑 เคลียร์กะ</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
 
         {/* Date range */}
-        <div style={{ background:"#f8fafc",borderRadius:10,padding:"12px 14px",marginBottom:14 }}>
-          <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>
+        <div style={{ background:"#fafafa",borderRadius:10,padding:"12px 14px",marginBottom:14 }}>
+          <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:8 }}>
             ช่วงวันที่ — {MONTH_TH[month]} {year+543}
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>จากวันที่</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",marginBottom:4 }}>จากวันที่</div>
               <select value={dateFrom} onChange={e=>setDateFrom(Number(e.target.value))}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none" }}>
                 {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
             </div>
-            <div style={{ fontSize:16,color:"#94a3b8",paddingTop:18 }}>→</div>
+            <div style={{ fontSize:16,color:"#a1a1aa",paddingTop:18 }}>→</div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>ถึงวันที่</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",marginBottom:4 }}>ถึงวันที่</div>
               <select value={dateTo} onChange={e=>setDateTo(Number(e.target.value))}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none" }}>
                 {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
                   <option key={d} value={d}>{d}</option>
@@ -961,39 +961,39 @@ function ClearShiftModal({ year, month, users, daysInMonth, onClose }) {
               </select>
             </div>
           </div>
-          <div style={{ fontSize:11,color:"#64748b",marginTop:6 }}>
+          <div style={{ fontSize:11,color:"#71717a",marginTop:6 }}>
             จะเคลียร์ {Math.max(0,dateTo-dateFrom+1)} วัน ({dateFrom}–{dateTo} {MONTH_TH[month]})
           </div>
         </div>
 
         {/* User selection */}
-        <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>
+        <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:8 }}>
           เลือกคนที่จะเคลียร์กะ
           <button onClick={()=>setSelectedUsers(users.map(u=>u.name))}
             style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",
               fontSize:11,marginLeft:8,fontFamily:"inherit" }}>เลือกทั้งหมด</button>
           <button onClick={()=>setSelectedUsers([])}
-            style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",
+            style={{ background:"none",border:"none",color:"#a1a1aa",cursor:"pointer",
               fontSize:11,marginLeft:4,fontFamily:"inherit" }}>ล้าง</button>
         </div>
         <div style={{ display:"flex",flexDirection:"column",gap:6,marginBottom:16 }}>
           {users.map(u=>(
             <label key={u.name} style={{ display:"flex",alignItems:"center",gap:10,
-              padding:"8px 12px",background:selectedUsers.includes(u.name)?"#fff5f5":"#f8fafc",
-              borderRadius:8,border:`1px solid ${selectedUsers.includes(u.name)?"#fecaca":"#e2e8f0"}`,
+              padding:"8px 12px",background:selectedUsers.includes(u.name)?"#fff5f5":"#fafafa",
+              borderRadius:8,border:`1px solid ${selectedUsers.includes(u.name)?"#fecaca":"#e4e4e7"}`,
               cursor:"pointer" }}>
               <input type="checkbox" checked={selectedUsers.includes(u.name)}
                 onChange={()=>toggleUser(u.name)}
                 style={{ width:16,height:16,accentColor:"#ef4444",cursor:"pointer" }}/>
               <span style={{ fontSize:13,fontWeight:selectedUsers.includes(u.name)?600:400,
-                color:"#0f172a" }}>{u.name}</span>
+                color:"#09090b" }}>{u.name}</span>
             </label>
           ))}
         </div>
 
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+          <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
+            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={clear}
             disabled={saving||dateFrom>dateTo||selectedUsers.length===0}
@@ -1049,39 +1049,39 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
   }
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:480,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"85vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📆 ลงกะหลายวัน</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📆 ลงกะหลายวัน</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
 
         {/* Date range */}
-        <div style={{ background:"#f8fafc",borderRadius:10,padding:"12px 14px",marginBottom:16 }}>
-          <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>
+        <div style={{ background:"#fafafa",borderRadius:10,padding:"12px 14px",marginBottom:16 }}>
+          <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:8 }}>
             ช่วงวันที่ — {MONTH_TH[month]} {year+543}
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>จากวันที่</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",marginBottom:4 }}>จากวันที่</div>
               <select value={dateFrom} onChange={e=>setDateFrom(Number(e.target.value))}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none" }}>
                 {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
             </div>
-            <div style={{ fontSize:16,color:"#94a3b8",paddingTop:18 }}>→</div>
+            <div style={{ fontSize:16,color:"#a1a1aa",paddingTop:18 }}>→</div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>ถึงวันที่</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",marginBottom:4 }}>ถึงวันที่</div>
               <select value={dateTo} onChange={e=>setDateTo(Number(e.target.value))}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none" }}>
                 {Array.from({length:daysInMonth},(_,i)=>i+1).map(d=>(
                   <option key={d} value={d}>{d}</option>
@@ -1092,17 +1092,17 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
           {dateFrom > dateTo && (
             <div style={{ fontSize:11,color:"#ef4444",marginTop:6 }}>⚠ วันเริ่มต้องน้อยกว่าหรือเท่ากับวันสิ้นสุด</div>
           )}
-          <div style={{ fontSize:11,color:"#64748b",marginTop:6 }}>
+          <div style={{ fontSize:11,color:"#71717a",marginTop:6 }}>
             จะลงกะ {Math.max(0, dateTo-dateFrom+1)} วัน ({dateFrom}–{dateTo} {MONTH_TH[month]})
           </div>
         </div>
 
         {/* Per-user shift selection */}
-        <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>กะของแต่ละคน</div>
+        <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:8 }}>กะของแต่ละคน</div>
         <div style={{ display:"flex",flexDirection:"column",gap:10,marginBottom:18 }}>
           {rows.map((row,i) => (
             <div key={row.userName} style={{ display:"flex",alignItems:"center",gap:10 }}>
-              <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",width:140,flexShrink:0 }}>
+              <div style={{ fontSize:13,fontWeight:600,color:"#09090b",width:140,flexShrink:0 }}>
                 👤 {row.userName}
                 {(()=>{
                   const DAY_TH = ["อา","จ","อ","พ","พฤ","ศ","ส"];
@@ -1117,7 +1117,7 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
               </div>
               <select value={row.shiftTypeId}
                 onChange={e=>setRows(r=>r.map((x,j)=>j===i?{...x,shiftTypeId:e.target.value}:x))}
-                style={{ flex:1,border:"1px solid #e2e8f0",borderRadius:8,padding:"7px 10px",
+                style={{ flex:1,border:"1px solid #e4e4e7",borderRadius:8,padding:"7px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none",cursor:"pointer" }}>
                 <option value="__none">— ไม่เปลี่ยน —</option>
                 <option value="__off">หยุด</option>
@@ -1135,8 +1135,8 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
         </div>
 
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+          <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
+            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving||dateFrom>dateTo}
             style={{ flex:2,background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
@@ -1193,27 +1193,27 @@ function EditDayModal({ date, entries, users, shiftTypes, onClose }) {
   const label = `${d} ${["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."][m]} ${y + 543}`;
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:440,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"80vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>📅 จัดกะ — {label}</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📅 จัดกะ — {label}</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
 
         <div style={{ display:"flex",flexDirection:"column",gap:10,marginBottom:18 }}>
           {rows.map((row, i) => (
             <div key={row.userName} style={{ display:"flex",alignItems:"center",gap:10 }}>
-              <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",width:140,flexShrink:0 }}>
+              <div style={{ fontSize:13,fontWeight:600,color:"#09090b",width:140,flexShrink:0 }}>
                 👤 {row.userName}
               </div>
               <select value={row.shiftTypeId}
                 onChange={e => setRows(r => r.map((x,j) => j===i ? {...x,shiftTypeId:e.target.value} : x))}
-                style={{ flex:1,border:"1px solid #e2e8f0",borderRadius:8,padding:"7px 10px",
+                style={{ flex:1,border:"1px solid #e4e4e7",borderRadius:8,padding:"7px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none",cursor:"pointer" }}>
                 <option value="__none">— ไม่มีกะ —</option>
                 <option value="__off">หยุด</option>
@@ -1226,8 +1226,8 @@ function EditDayModal({ date, entries, users, shiftTypes, onClose }) {
         </div>
 
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={onClose} style={{ flex:1,background:"#f8fafc",border:"1px solid #e2e8f0",
-            color:"#475569",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+          <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
+            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
             color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
@@ -1266,22 +1266,22 @@ function ShiftTypeManager({ shiftTypes, onClose }) {
   }
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:420,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#0f172a" }}>⚙ จัดการประเภทกะ</div>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>⚙ จัดการประเภทกะ</div>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
 
         {/* รายการกะที่มีอยู่ */}
         <div style={{ marginBottom:16 }}>
           {shiftTypes.length === 0 ? (
-            <div style={{ textAlign:"center",color:"#cbd5e1",padding:"16px 0",fontSize:13 }}>ยังไม่มีกะ</div>
+            <div style={{ textAlign:"center",color:"#d4d4d8",padding:"16px 0",fontSize:13 }}>ยังไม่มีกะ</div>
           ) : shiftTypes.map((t, i) => {
             const c = getColorForType(i);
             return (
@@ -1300,23 +1300,23 @@ function ShiftTypeManager({ shiftTypes, onClose }) {
         </div>
 
         {/* เพิ่มกะใหม่ */}
-        <div style={{ borderTop:"1px solid #f1f5f9",paddingTop:14 }}>
-          <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:8 }}>เพิ่มกะใหม่</div>
+        <div style={{ borderTop:"1px solid #f4f4f5",paddingTop:14 }}>
+          <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:8 }}>เพิ่มกะใหม่</div>
           <input value={name} onChange={e=>setName(e.target.value)}
             placeholder="ชื่อกะ เช่น กะเช้า OT"
-            style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 12px",
+            style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 12px",
               fontSize:13,fontFamily:"inherit",outline:"none",marginBottom:8,boxSizing:"border-box" }}/>
           <div style={{ display:"flex",gap:8,marginBottom:10 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>เริ่ม</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",marginBottom:4 }}>เริ่ม</div>
               <input type="time" value={start} onChange={e=>setStart(e.target.value)}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box" }}/>
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#94a3b8",marginBottom:4 }}>สิ้นสุด</div>
+              <div style={{ fontSize:11,color:"#a1a1aa",marginBottom:4 }}>สิ้นสุด</div>
               <input type="time" value={end} onChange={e=>setEnd(e.target.value)}
-                style={{ width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 10px",
+                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 10px",
                   fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box" }}/>
             </div>
           </div>

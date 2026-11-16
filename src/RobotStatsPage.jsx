@@ -889,7 +889,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                       <div style={{ fontSize: 14.5, fontWeight:600, color: c.text900 }}>{r.vehicle_name}</div>
                       <div style={{ fontSize: 12, color: c.text500, marginTop: 1, fontWeight: 600 }}>{siteName(r.project_name)}</div>
                       <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{r.project_name}</div>
-                      <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
+                      <div style={{ fontSize: 10, color: '#d4d4d8', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                       <StatusBadge worked={isWorked(r)} />{r.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706', whiteSpace: 'nowrap' }}>⟲ ย้อนหลัง</span>}
@@ -990,7 +990,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       {/* Create-case modal */}
       {caseModalFor && (
         <div onClick={() => { if (!caseSaving) { setCaseModalFor(null); setProjPickerOpen(false); } }}
-          style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()}
             style={{ background: c.card, borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif", maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
             <div style={{ fontSize: 15, fontWeight:600, color: c.text900, marginBottom: 4 }}>🔧 สร้างเคส</div>

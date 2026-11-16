@@ -117,3 +117,17 @@ export function Field({ label, children }) {
     </div>
   );
 }
+
+// ── ตัวโหลดเต็มหน้า (pixel grid + ข้อความ shimmer) ──────────────
+export function FullLoader({ text = "กำลังโหลด", bg }) {
+  return (
+    <div style={{ minHeight:"100vh",background:bg||"transparent",display:"flex",alignItems:"center",justifyContent:"center" }}>
+      <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+        <div className="sl-pixels" aria-hidden="true">
+          {Array.from({length:9},(_,i)=><i key={i} style={{ animationDelay:`${i*0.1}s` }}/>)}
+        </div>
+        <span className="sl-shimmer" style={{ fontSize:14,fontWeight:500 }}>{text}</span>
+      </div>
+    </div>
+  );
+}

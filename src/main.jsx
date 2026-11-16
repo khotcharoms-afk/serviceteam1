@@ -30,7 +30,7 @@ class ErrorBoundary extends React.Component {
             {this.state.error}
           </div>
           <button onClick={()=>window.location.reload()}
-            style={{ marginTop:16, background:"#2563eb", border:"none", color:"#fff",
+            style={{ marginTop:16, background:"#18181b", border:"none", color:"#fafafa",
               borderRadius:8, padding:"10px 20px", fontSize:14, cursor:"pointer" }}>
             ลองใหม่
           </button>

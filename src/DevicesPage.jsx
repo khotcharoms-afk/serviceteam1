@@ -17,7 +17,7 @@ const RED = "#DC2626";
 
 const TYPE_COLOR = {
   NUC: "#2563EB", PC: "#2563EB", Server: "#7C3AED", Router: "#EA580C", VPN: "#EA580C", Switch: "#0891B2",
-  NVR: "#16A34A", CCTV: "#0F766E", Intrusion: "#DB2777", Ruejai: "#CA8A04", "Face Scan": "#9333EA", Web: "#475569", Robot: "#C026D3",
+  NVR: "#16A34A", CCTV: "#0F766E", Intrusion: "#DB2777", Ruejai: "#CA8A04", "Face Scan": "#9333EA", Web: "#52525b", Robot: "#C026D3",
   SC50: "#2563EB", "SC50 Plus": "#7C3AED", SC80: "#EA580C", Mix1: "#0D9488",
 };
 
@@ -311,7 +311,7 @@ function DeviceModal({ record, projects, onClose, onSave, saving }) {
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
   const canSave = (f.name.trim() || f.ip.trim()) && f.project.trim();
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(15,23,42,.5)", display: "flex",
+    <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(0,0,0,.5)", display: "flex",
       alignItems: "center", justifyContent: "center", padding: 12 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 620,
         maxHeight: "92vh", overflowY: "auto", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.15)" }}>
@@ -364,7 +364,7 @@ function ImportDialog({ data, existingDevices, onClose, onConfirm, busy }) {
   const btn = (bg) => ({ border: "none", background: bg, color: c.card, borderRadius: 10, padding: "10px 12px",
     cursor: busy ? "default" : "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, opacity: busy ? 0.6 : 1 });
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(15,23,42,.5)", display: "flex",
+    <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(0,0,0,.5)", display: "flex",
       alignItems: "center", justifyContent: "center", padding: 12 }}>
       <div style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 20 }}>
         <h2 style={{ margin: "0 0 10px", fontSize: 16, color: c.text900 }}>นำเข้าอุปกรณ์ {data.devices.length} รายการ</h2>
@@ -687,7 +687,7 @@ export default function DevicesPage({ onBack, currentUser }) {
         <ImportDialog data={importData} existingDevices={devices} onClose={() => setImportData(null)} onConfirm={runImport} busy={saving} />
       )}
       {toast && (
-        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "#0f172a", color: "#fff",
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "#09090b", color: "#fff",
           padding: "8px 16px", borderRadius: 999, fontSize: 13, zIndex: 700, boxShadow: "0 6px 20px rgba(0,0,0,.25)" }}>{toast}</div>
       )}
     </div>
