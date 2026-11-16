@@ -8,7 +8,7 @@ function DrawerItem({ active, onClick, label, count, dot, icon }) {
   return (
     <button onClick={onClick} style={{
       display:"flex", alignItems:"center", justifyContent:"space-between",
-      width:"100%", background: active ? c.borderSoft : "transparent",
+      width:"100%", background: active ? c.inkSoft : "transparent",
       border:"none", borderRadius:6, height:32, padding:"0 8px",
       cursor:"pointer", fontFamily:"inherit", marginBottom:2, textAlign:"left",
       position:"relative", overflow:"hidden",
@@ -16,9 +16,9 @@ function DrawerItem({ active, onClick, label, count, dot, icon }) {
       onMouseEnter={e=>{ if(!active) e.currentTarget.style.background=c.borderSoft; }}
       onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
       <span style={{ display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0 }}>
-        {icon && <span style={{ color:active?c.text900:c.text500,flexShrink:0,display:"inline-flex" }}><Icon name={icon} size={16}/></span>}
+        {icon && <span style={{ color:active?c.ink:c.text500,flexShrink:0,display:"inline-flex" }}><Icon name={icon} size={16}/></span>}
         {dot && <span style={{ width:6,height:6,borderRadius:"50%",background:dot,flexShrink:0,margin:"0 5px" }}/>}
-        <span style={{ fontSize:14,color:active?c.text900:c.text500,fontWeight:active?500:400,
+        <span style={{ fontSize:14,color:active?c.ink:c.text500,fontWeight:active?500:400,
           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{label}</span>
       </span>
       {count !== "" && count !== undefined && (

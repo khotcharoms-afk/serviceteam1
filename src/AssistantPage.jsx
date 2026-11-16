@@ -410,7 +410,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
           style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1, background: "none", border: "none",
             padding: "8px 6px 8px 8px", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
           <span style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-            background: "#18181b", color: "#fff", fontSize: 18,
+            background: "#2563eb", color: "#fff", fontSize: 18,
             display: "flex", alignItems: "center", justifyContent: "center" }}>
             🤖
             {(unread || busy) && (

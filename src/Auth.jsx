@@ -108,7 +108,7 @@ export default function Auth() {
       <style>{`
         
         *{box-sizing:border-box}
-        input:focus{border-color:#a1a1aa !important;box-shadow:0 0 0 3px #f4f4f5 !important;outline:none}
+        input:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #eff6ff !important;outline:none}
         .tab-btn:hover{background:#f4f4f5}
       `}</style>
 
@@ -117,9 +117,9 @@ export default function Auth() {
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div style={{ width:48, height:48, borderRadius:12,
-            background:"#18181b",
+            background:"#2563eb",
             display:"inline-flex", alignItems:"center", justifyContent:"center",
-            fontSize:20, color:"#fafafa", fontWeight:600, marginBottom:16,
+            fontSize:20, color:"#fff", fontWeight:600, marginBottom:16,
             boxShadow:"none" }}>S</div>
           <div style={{ fontSize:22, fontWeight:600, color:"#09090b" }}>ServiceLog</div>
           <div style={{ fontSize:13, color:"#a1a1aa", marginTop:4 }}>ระบบบันทึกการเซอร์วิสโครงการ</div>
@@ -226,7 +226,7 @@ export default function Auth() {
 
             {/* Submit */}
             <button type="submit" disabled={loading}
-              style={{ width:"100%",background: loading?"#a1a1aa":"#18181b",
+              style={{ width:"100%",background: loading?"#93c5fd":"#2563eb",
                 border:"none",color:"#fff",borderRadius:8,padding:"13px",fontSize:15,
                 fontWeight:600,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",
                 boxShadow:"none",transition:"all .2s" }}>

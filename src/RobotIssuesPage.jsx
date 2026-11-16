@@ -90,7 +90,7 @@ function AttachmentGallery({ imageUrls = [], videoUrls = [], c }) {
           <div key={`vid-${i}`} onClick={() => setLightbox({ type: "video", url })}
             style={{
               width: 72, height: 72, borderRadius:8, cursor: "pointer",
-              background: "#18181b", display: "flex",
+              background: "#2563eb", display: "flex",
               alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18,
               boxShadow: "0 1px 3px rgba(0,0,0,.15)",
             }}
