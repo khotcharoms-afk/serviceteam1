@@ -178,7 +178,7 @@ export default function Root() {
 
         {docErr && (
           <div style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444",
-            borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:12.5,
+            borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:13,
             lineHeight:1.6, textAlign:"left" }}>
             ⚠ {docErr}
           </div>
@@ -194,7 +194,7 @@ export default function Root() {
 
         <button onClick={hardReload}
           style={{ width:"100%", background:"#fff", border:"1px solid #e4e4e7", color:"#52525b",
-            borderRadius:8, padding:"11px 24px", fontSize:13.5, fontWeight:600,
+            borderRadius:8, padding:"11px 24px", fontSize:14, fontWeight:600,
             cursor:"pointer", fontFamily:"inherit", marginBottom:10 }}>
           ล้างแคชแล้วโหลดใหม่
         </button>

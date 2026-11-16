@@ -101,15 +101,15 @@ export default function CaliperConnector({ onValue, disabled }) {
 
   return (
     <div style={{
-      background: "#fff", border: "1px solid #e4e4e7", borderRadius:8, padding: 12, marginBottom: 12,
+      background:"var(--c-card)", border: "1px solid var(--c-border)", borderRadius:8, padding: 12, marginBottom: 12,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12, fontWeight:600, color: "#52525b" }}>คาลิปเปอร์</span>
+        <span style={{ fontSize: 12, fontWeight:600, color:"var(--c-text500)" }}>คาลิปเปอร์</span>
 
         {!connected ? (
           <>
             <select value={baud} onChange={e => setBaud(Number(e.target.value))} style={{
-              border: "1px solid #e4e4e7", borderRadius: 6, padding: "4px 6px", fontSize: 11, fontFamily: "inherit",
+              border: "1px solid var(--c-border)", borderRadius: 6, padding: "4px 6px", fontSize: 11, fontFamily: "inherit",
             }}>
               {BAUD_OPTIONS.map(b => <option key={b} value={b}>{b} baud</option>)}
             </select>
@@ -126,20 +126,20 @@ export default function CaliperConnector({ onValue, disabled }) {
               border: "1px solid #bbf7d0", borderRadius: 6, padding: "4px 10px",
             }}>● เชื่อมต่อแล้ว</span>
             <button onClick={disconnect} style={{
-              background: "#f4f4f5", color: "#52525b", border: "none", borderRadius: 6,
+              background:"var(--c-soft)", color:"var(--c-text500)", border: "none", borderRadius: 6,
               padding: "5px 12px", fontSize: 11, fontWeight:600, cursor: "pointer", fontFamily: "inherit",
             }}>ตัดการเชื่อมต่อ</button>
           </>
         )}
 
         <button onClick={() => setShowLog(v => !v)} style={{
-          background: "none", border: "none", color: "#a1a1aa", fontSize: 11,
+          background: "none", border: "none", color:"var(--c-text400)", fontSize: 11,
           cursor: "pointer", fontFamily: "inherit", marginLeft: "auto",
         }}>{showLog ? "ซ่อน log" : "ดู raw log"}</button>
       </div>
 
       {connected && (
-        <div style={{ fontSize: 10, color: "#a1a1aa", marginTop: 8 }}>
+        <div style={{ fontSize: 10, color:"var(--c-text400)", marginTop: 8 }}>
           คลิกเลือกช่องที่ต้องการวัด แล้วกดปุ่มส่งค่าที่ตัวคาลิปเปอร์ — ค่าจะเติมลงช่องที่เลือกและเลื่อนไปช่องถัดไปอัตโนมัติ
         </div>
       )}
@@ -150,7 +150,7 @@ export default function CaliperConnector({ onValue, disabled }) {
           fontFamily: "monospace", fontSize: 10, color: "#a3e635", maxHeight: 100, overflowY: "auto",
         }}>
           {rawLog.length === 0
-            ? <div style={{ color: "#71717a" }}>ยังไม่มีข้อมูลเข้ามา...</div>
+            ? <div style={{ color:"var(--c-text500)" }}>ยังไม่มีข้อมูลเข้ามา...</div>
             : rawLog.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       )}

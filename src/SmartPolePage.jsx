@@ -42,7 +42,7 @@ export default function SmartPolePage({ onBack }) {
   const isToday = date >= today();
 
   const btn = (primary, extra = {}) => ({ border: primary ? "none" : `1px solid ${c.border}`, background: primary ? c.ink : c.card,
-    color: primary ? c.onInk : c.text900, borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+    color: primary ? c.onInk : c.text900, borderRadius: 8, padding: "7px 12px", fontSize:13, fontWeight: 600, cursor: "pointer",
     fontFamily: "inherit", whiteSpace: "nowrap", ...extra });
   const cell = { padding: "10px 12px", fontSize: 13, borderTop: `1px solid ${c.borderSoft}` };
   const numCell = { ...cell, textAlign: "right", fontVariantNumeric: "tabular-nums" };
@@ -51,10 +51,10 @@ export default function SmartPolePage({ onBack }) {
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: "14px 16px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 960, margin: "0 auto" }}>
-          <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
+          <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>Smart Pole</div>
-            <div style={{ fontSize: 11.5, color: c.text400 }}>จำนวนใบหน้า / VIP / Blacklist รายวัน · ข้อมูลจาก Grafana</div>
+            <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>Smart Pole</div>
+            <div style={{ fontSize:12, color: c.text400 }}>จำนวนใบหน้า / VIP / Blacklist รายวัน · ข้อมูลจาก Grafana</div>
           </div>
         </div>
       </div>
@@ -66,13 +66,13 @@ export default function SmartPolePage({ onBack }) {
             style={{ border: `1px solid ${c.border}`, borderRadius: 8, padding: "6px 10px", fontSize: 13, background: c.card, color: c.text900, fontFamily: "inherit" }} />
           <button onClick={() => setDate(addDays(date, 1))} disabled={loading || isToday} style={btn(false, { width: 34, padding: "7px 0", opacity: isToday ? 0.4 : 1 })}>›</button>
           {!isToday && <button onClick={() => setDate(today())} style={{ ...btn(false), border: "none", background: "transparent", color: c.ink }}>วันนี้</button>}
-          <span style={{ fontSize: 12.5, color: c.text500 }}>{fmtLong(date)}</span>
+          <span style={{ fontSize:13, color: c.text500 }}>{fmtLong(date)}</span>
           <div style={{ flex: 1 }} />
         </div>
 
-        {loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: c.text400, fontSize: 13.5 }}>
+        {loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: c.text400, fontSize:14 }}>
           กำลังดึงข้อมูลจาก Grafana ทั้ง 16 ไซต์… (อาจใช้เวลาครึ่งนาที)</div>}
-        {error && !loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius:8, padding: "12px 14px", fontSize: 13.5, color: c.text900 }}>{error}</div>}
+        {error && !loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius:8, padding: "12px 14px", fontSize:14, color: c.text900 }}>{error}</div>}
 
         {data && !loading && (<>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 12 }}>
@@ -89,7 +89,7 @@ export default function SmartPolePage({ onBack }) {
               <thead>
                 <tr style={{ background: c.bg }}>
                   {["ไซต์", "ใบหน้า", "VIP", "Blacklist"].map((h, i) => (
-                    <th key={h} style={{ padding: "9px 12px", fontSize: 11.5, color: c.text500, fontWeight:600, textAlign: i ? "right" : "left" }}>{h}</th>
+                    <th key={h} style={{ padding: "9px 12px", fontSize:12, color: c.text500, fontWeight:600, textAlign: i ? "right" : "left" }}>{h}</th>
                   ))}
                 </tr>
               </thead>

@@ -98,17 +98,17 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
 
   const IS = inputBase({ background: c.bg, border: `1px solid ${c.border}`, color: c.text900 });
   const btn = (bg, fg = "#fff", extra = {}) => ({ border: "none", background: bg, color: fg, borderRadius: 9, padding: "8px 13px",
-    fontSize: 12.5, fontWeight:600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", ...extra });
-  const label = { fontSize: 11.5, fontWeight:600, color: c.text500, marginBottom: 4, display: "block" };
+    fontSize:13, fontWeight:600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", ...extra });
+  const label = { fontSize:12, fontWeight:600, color: c.text500, marginBottom: 4, display: "block" };
 
   return (
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: "14px 16px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 1000, margin: "0 auto" }}>
-          <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
+          <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>ใบเบิกของ</div>
-            <div style={{ fontSize: 11.5, color: c.text400 }}>กรอกรายการแล้วดาวน์โหลดใบขอเบิกสินค้าเป็น PDF หรือ Excel</div>
+            <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>ใบเบิกของ</div>
+            <div style={{ fontSize:12, color: c.text400 }}>กรอกรายการแล้วดาวน์โหลดใบขอเบิกสินค้าเป็น PDF หรือ Excel</div>
           </div>
           <button onClick={() => setForm(emptyForm())} style={btn(c.ink, c.onInk)}>+ สร้างใบเบิก</button>
         </div>
@@ -118,7 +118,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
         <input placeholder="ค้นหาโครงการ ไซต์ รายการ serial ผู้เบิก…" value={q} onChange={(e) => setQ(e.target.value)}
           style={{ ...IS, background: c.card, marginBottom: 14 }} />
 
-        {error && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, color: c.text900, borderRadius:8, padding: "12px 16px", marginBottom: 14, fontSize: 13.5 }}>{error}</div>}
+        {error && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, color: c.text900, borderRadius:8, padding: "12px 16px", marginBottom: 14, fontSize:14 }}>{error}</div>}
         {loading ? <div style={{ textAlign: "center", color: c.text400, padding: 40 }}>กำลังโหลด…</div>
           : !shown.length ? (
             <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: "40px 20px", textAlign: "center", color: c.text400 }}>
@@ -128,9 +128,9 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
             <div key={r.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: 14, marginBottom: 10 }}>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontSize: 14, fontWeight:600, color: c.text900 }}>{(() => { const n = normalizeReq(r); return [n.location, n.site].filter(Boolean).join(" · ") || "—"; })()} <span style={{ fontWeight: 500, color: c.text400, fontSize: 12.5 }}>· {thaiDate(r.date)}</span></div>
-                  <div style={{ fontSize: 12.5, color: c.text500, marginTop: 2 }}>{r.project}{r.jobNo ? ` · JOB ${r.jobNo}` : ""}</div>
-                  <div style={{ fontSize: 12.5, color: c.text900, marginTop: 8, lineHeight: 1.7 }}>
+                  <div style={{ fontSize: 14, fontWeight:600, color: c.text900 }}>{(() => { const n = normalizeReq(r); return [n.location, n.site].filter(Boolean).join(" · ") || "—"; })()} <span style={{ fontWeight: 500, color: c.text400, fontSize:13 }}>· {thaiDate(r.date)}</span></div>
+                  <div style={{ fontSize:13, color: c.text500, marginTop: 2 }}>{r.project}{r.jobNo ? ` · JOB ${r.jobNo}` : ""}</div>
+                  <div style={{ fontSize:13, color: c.text900, marginTop: 8, lineHeight: 1.7 }}>
                     {(r.items || []).slice(0, 4).map((it, i) => (
                       <div key={i}>• {it.name} <span style={{ color: c.text500 }}>× {it.qty} {it.unit}</span>{it.serial ? <span style={{ color: c.text400 }}> · SN {it.serial}</span> : null}</div>
                     ))}
@@ -160,7 +160,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
           <div onClick={(e) => e.stopPropagation()}
             style={{ background: c.card, borderRadius: narrow ? 0 : 16, width: "100%", maxWidth: 860, maxHeight: narrow ? "100vh" : "92vh", overflowY: "auto", padding: 18 }}>
             <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900, flex: 1 }}>{form.id ? "แก้ไขใบเบิก" : "สร้างใบเบิก"}</div>
+              <div style={{ fontSize:15, fontWeight:600, color: c.text900, flex: 1 }}>{form.id ? "แก้ไขใบเบิก" : "สร้างใบเบิก"}</div>
               <button onClick={() => setForm(null)} style={{ background: "none", border: "none", fontSize: 18, color: c.text400, cursor: "pointer" }}>✕</button>
             </div>
 
@@ -241,7 +241,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
 
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: toast.ok ? c.ink : c.danger, color: toast.ok ? c.onInk : "#fff",
-          padding: "10px 18px", borderRadius:8, fontSize: 13.5, fontWeight:600, zIndex: 400, boxShadow: "0 6px 20px rgba(0,0,0,.2)" }}>{toast.msg}</div>
+          padding: "10px 18px", borderRadius:8, fontSize:14, fontWeight:600, zIndex: 400, boxShadow: "0 6px 20px rgba(0,0,0,.2)" }}>{toast.msg}</div>
       )}
     </div>
   );

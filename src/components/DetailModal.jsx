@@ -32,7 +32,7 @@ export default function DetailModal({
         </button>
       }>
       <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12,flexWrap:"wrap" }}>
-        <span style={{ display:"inline-flex",alignItems:"center",gap:6,color:c.text500,fontSize:12.5,fontWeight:600 }}>
+        <span style={{ display:"inline-flex",alignItems:"center",gap:6,color:c.text500,fontSize:13,fontWeight:600 }}>
           <span style={{ width:7,height:7,borderRadius:"50%",background:proj?.color||c.text400 }}/>
           {proj?.name}
         </span>
@@ -109,7 +109,7 @@ export default function DetailModal({
 
       {detailCase.status==="done" && onKnowledge && (
         detailCase.knowledgeId ? (
-          <div style={{ fontSize:12.5,color:c.text500,fontWeight:600,marginBottom:16 }}>✓ บันทึกวิธีแก้ของเคสนี้ไว้ใน Knowledge Hub แล้ว</div>
+          <div style={{ fontSize:13,color:c.text500,fontWeight:600,marginBottom:16 }}>✓ บันทึกวิธีแก้ของเคสนี้ไว้ใน Knowledge Hub แล้ว</div>
         ) : (
           <button onClick={onKnowledge} style={{ width:"100%",marginBottom:16,background:"transparent",border:`1px dashed ${c.text400}`,
             color:c.text900,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left" }}>

@@ -118,11 +118,11 @@ export default function DeviceReportPage({ onBack }) {
   }
 
   const btn = (primary, extra = {}) => ({ border: primary ? "none" : `1px solid ${c.border}`, background: primary ? c.ink : c.card,
-    color: primary ? c.onInk : c.text900, borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+    color: primary ? c.onInk : c.text900, borderRadius: 8, padding: "7px 12px", fontSize:13, fontWeight: 600, cursor: "pointer",
     fontFamily: "inherit", whiteSpace: "nowrap", ...extra });
   const small = { ...btn(false), padding: "4px 10px" };
   const card = { background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 10 };
-  const sub = { fontSize: 11.5, color: c.text400, fontWeight: 400 };
+  const sub = { fontSize:12, color: c.text400, fontWeight: 400 };
 
   const Head = ({ id, title, status, children }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -143,21 +143,21 @@ export default function DeviceReportPage({ onBack }) {
     const hasNums = r.kind === "face" || r.kind === "incident";
     const inp = (k) => (
       <input type="number" min="0" value={r[k] ?? ""} placeholder="0" onChange={(e) => setEdit(r.key, { [k]: e.target.value === "" ? null : Number(e.target.value) })}
-        style={{ width: 64, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
+        style={{ width: 64, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize:13, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
     );
     const cam = r.section === "ev" ? imou?.cars?.[r.key] : null;
     return (
       <div key={r.key} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "7px 0", borderTop: `1px solid ${c.borderSoft}` }}>
         <span style={{ width: narrow ? "100%" : 150, fontSize: 13, fontWeight: 600, color: c.text900 }}>
-          {r.label}{r.car && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> {r.car}</span>}
+          {r.label}{r.car && <span style={{ fontSize:11, color: c.text400, fontWeight: 400 }}> {r.car}</span>}
           {cam && (
             <span title={cam.cams.map((x) => `${x.name || x.sn}: ${x.online === null ? "ไม่ทราบ" : x.online ? "ออนไลน์" : "ออฟไลน์"}`).join("\n")}
-              style={{ display: "block", fontSize: 10.5, color: c.text400, fontWeight: 400 }}>
+              style={{ display: "block", fontSize:11, color: c.text400, fontWeight: 400 }}>
               {cam.online === null ? "Imou: ไม่พบกล้อง" : `Imou: กล้องออนไลน์ ${cam.camsOnline}/4`}
             </span>
           )}
-          {hasNums && r.undated && <span title="query ของ panel นี้ไม่ได้แยกตามวัน — ตัวเลขอาจเป็นของวันนี้เสมอ ไม่ว่าจะเลือกวันไหน" style={{ display: "block", fontSize: 10.5, color: c.warn, fontWeight: 400 }}>ตัวเลขอาจไม่เปลี่ยนตามวันที่</span>}
-          {hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
+          {hasNums && r.undated && <span title="query ของ panel นี้ไม่ได้แยกตามวัน — ตัวเลขอาจเป็นของวันนี้เสมอ ไม่ว่าจะเลือกวันไหน" style={{ display: "block", fontSize:11, color: c.warn, fontWeight: 400 }}>ตัวเลขอาจไม่เปลี่ยนตามวันที่</span>}
+          {hasNums && !r.fromGrafana && <span style={{ fontSize:11, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
         </span>
         <button onClick={() => setPref(r.key, { offline: !r.offline })}
           style={{ ...small, color: r.offline ? c.danger : c.text900 }}>{r.offline ? "🔴 ออฟไลน์" : "🟢 ออนไลน์"}</button>
@@ -169,7 +169,7 @@ export default function DeviceReportPage({ onBack }) {
           Grafana ไม่อัปเดต
         </label>}
         <input value={r.note} placeholder="หมายเหตุ" onChange={(e) => setPref(r.key, { note: e.target.value })}
-          style={{ flex: 1, minWidth: 120, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 8px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
+          style={{ flex: 1, minWidth: 120, border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 8px", fontSize:13, background: c.bg, color: c.text900, fontFamily: "inherit" }} />
       </div>
     );
   };
@@ -178,10 +178,10 @@ export default function DeviceReportPage({ onBack }) {
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: "14px 16px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 960, margin: "0 auto" }}>
-          <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
+          <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>รายงานสถานะอุปกรณ์</div>
-            <div style={{ fontSize: 11.5, color: c.text400 }}>Smart Pole · EV Car · หุ่นยนต์ทำความสะอาด — รวมเป็นข้อความเดียวส่งไลน์</div>
+            <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>รายงานสถานะอุปกรณ์</div>
+            <div style={{ fontSize:12, color: c.text400 }}>Smart Pole · EV Car · หุ่นยนต์ทำความสะอาด — รวมเป็นข้อความเดียวส่งไลน์</div>
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@ export default function DeviceReportPage({ onBack }) {
             style={{ border: `1px solid ${c.border}`, borderRadius: 8, padding: "6px 10px", fontSize: 13, background: c.card, color: c.text900, fontFamily: "inherit" }} />
           <button onClick={() => setDate(addDays(date, 1))} disabled={isToday} style={btn(false, { width: 34, padding: "7px 0", opacity: isToday ? 0.4 : 1 })}>›</button>
           {!isToday && <button onClick={() => setDate(today())} style={{ ...btn(false), border: "none", background: "transparent", color: c.ink }}>วันนี้</button>}
-          <span style={{ fontSize: 12.5, color: c.text500 }}>{fmtLong(date)}</span>
+          <span style={{ fontSize:13, color: c.text500 }}>{fmtLong(date)}</span>
           <div style={{ flex: 1 }} />
           {["เช้า", "บ่าย"].map((k) => <button key={k} onClick={() => setShift(k)} style={btn(shift === k)}>กะ{k}</button>)}
         </div>
@@ -202,7 +202,7 @@ export default function DeviceReportPage({ onBack }) {
         <div style={card}>
           <Head id="pole" title="Smart Pole"
             status={poleBusy ? "กำลังดึงจาก Grafana… (อาจใช้เวลาครึ่งนาที)" : poleErr ? "" : `${poleRows.length} ไซต์ · ออฟไลน์ ${poleOff}`} />
-          {poleErr && <div style={{ fontSize: 12.5, color: c.danger, marginTop: 6 }}>{poleErr} — กรอกตัวเลขเองได้</div>}
+          {poleErr && <div style={{ fontSize:13, color: c.danger, marginTop: 6 }}>{poleErr} — กรอกตัวเลขเองได้</div>}
           {open.pole && <div style={{ marginTop: 6 }}>{poleRows.map(RowEdit)}</div>}
         </div>
 
@@ -224,10 +224,10 @@ export default function DeviceReportPage({ onBack }) {
             status={robotBusy ? "กำลังดึงข้อมูล…" : robotErr ? "" : `${robotTotal} คัน · ทำงาน ${robotWorked} · เป็น 0 ${robotZero}`}>
             {robots && robotZero > 0 && <button onClick={pullRaw} disabled={rawBusy} style={small}>{rawBusy ? "กำลังดึง…" : "ดึงย้อนหลังคันที่เป็น 0"}</button>}
           </Head>
-          {robotErr && <div style={{ fontSize: 12.5, color: c.danger, marginTop: 6 }}>{robotErr}</div>}
+          {robotErr && <div style={{ fontSize:13, color: c.danger, marginTop: 6 }}>{robotErr}</div>}
           {rawMsg && <div style={{ ...sub, marginTop: 4 }}>{rawMsg}</div>}
           {open.robot && robots && (
-            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 12.5, color: c.text500, margin: "8px 0 0", lineHeight: 1.7 }}>{robotText || "ไม่มีข้อมูล"}</pre>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize:13, color: c.text500, margin: "8px 0 0", lineHeight: 1.7 }}>{robotText || "ไม่มีข้อมูล"}</pre>
           )}
           <div style={{ ...sub, marginTop: 6 }}>กะเช้า = สถานะออนไลน์ · กะบ่าย = พร้อมพื้นที่ที่ทำความสะอาด (ตามปุ่มกะด้านบน)</div>
         </div>
@@ -239,7 +239,7 @@ export default function DeviceReportPage({ onBack }) {
             {loadingAny && <span style={sub}>กำลังโหลดข้อมูลวันที่ {fmtLong(date)}…</span>}
             <button onClick={copy} disabled={loadingAny} style={btn(true, { opacity: loadingAny ? 0.5 : 1 })}>{copied ? "✓ คัดลอกแล้ว" : "คัดลอกข้อความ"}</button>
           </div>
-          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13.5, color: c.text900, background: c.bg, borderRadius: 8,
+          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize:14, color: c.text900, background: c.bg, borderRadius: 8,
             padding: 12, margin: 0, lineHeight: 1.7, maxHeight: 640, overflowY: "auto" }}>{report}</pre>
         </div>
       </div>

@@ -19,9 +19,9 @@ export const KB_CATEGORIES = [
   { key: "Network",        icon: "", color: "#EA580C" },
   { key: "Access Control", icon: "", color: "#7C3AED" },
   { key: "Smart Pole",     icon: "", color: "#0891B2" },
-  { key: "Software อื่นๆ",  icon: "", color: "#52525b" },
+  { key: "Software อื่นๆ",  icon: "", color:"var(--c-text500)" },
   { key: "Hardware",       icon: "", color: "#92400E" },
-  { key: "อื่นๆ",           icon: "", color: "#71717a" },
+  { key: "อื่นๆ",           icon: "", color:"var(--c-text500)" },
 ];
 const catInfo = (k) => KB_CATEGORIES.find((x) => x.key === k) || KB_CATEGORIES[KB_CATEGORIES.length - 1];
 
@@ -67,10 +67,10 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
   const [solution, setSolution] = useState(editRecord?.solution || "");
   const [tagText, setTagText] = useState((editRecord?.tags || []).join(", "));
 
-  const IS = { width: "100%", boxSizing: "border-box", border: `1px solid ${c.border}`, borderRadius:8, padding: "9px 12px", fontSize: 13.5,
+  const IS = { width: "100%", boxSizing: "border-box", border: `1px solid ${c.border}`, borderRadius:8, padding: "9px 12px", fontSize:14,
     fontFamily: "inherit", outline: "none", background: c.bg, color: c.text900, lineHeight: 1.6 };
   const LB = { fontSize: 12, color: c.text500, fontWeight:600, marginBottom: 5, display: "block" };
-  const HINT = { fontWeight: 400, color: c.text400, fontSize: 11.5 };
+  const HINT = { fontWeight: 400, color: c.text400, fontSize:12 };
 
   const shortTitle = title.trim() && (title.trim().length < 10 || !/\s/.test(title.trim()));
   const steps = toSteps(solution);
@@ -103,7 +103,7 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
               const on = category === k.key;
               return (
                 <button key={k.key} type="button" onClick={() => setCategory(k.key)}
-                  style={{ padding: "6px 11px", borderRadius: 999, fontSize: 12.5, fontWeight:600, cursor: "pointer", fontFamily: "inherit",
+                  style={{ padding: "6px 11px", borderRadius: 999, fontSize:13, fontWeight:600, cursor: "pointer", fontFamily: "inherit",
                     border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.bg, color: on ? c.onInk : c.text500 }}>
                   {k.key}
                 </button>
@@ -132,7 +132,7 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
           <label style={LB}>วิธีแก้ * <span style={HINT}>— ขึ้นบรรทัดใหม่ = ขั้นตอนถัดไป</span></label>
           <textarea value={solution} onChange={(e) => setSolution(e.target.value)} rows={5}
             placeholder={"เข้าเมนู Booking\nแก้น้ำหนักให้ตรงกับใบ AWB\nกด Save แล้วไปที่หน้า Shipment"} style={{ ...IS, resize: "vertical" }} />
-          {steps.length > 1 && <div style={{ fontSize: 11.5, color: c.text400, marginTop: 4 }}>จะแสดงเป็น {steps.length} ขั้นตอน</div>}
+          {steps.length > 1 && <div style={{ fontSize:12, color: c.text400, marginTop: 4 }}>จะแสดงเป็น {steps.length} ขั้นตอน</div>}
         </div>
 
         <div style={{ marginBottom: 18 }}>
@@ -170,12 +170,12 @@ function Article({ a, open, onToggle, words, c, canDelete, onEdit, onDelete }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14.5, fontWeight:600, color: c.text900, lineHeight: 1.4, wordBreak: "break-word" }}><Highlight text={a.title} words={words} /></div>
           {!open && preview && (
-            <div style={{ fontSize: 12.5, color: c.text500, marginTop: 3, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box",
+            <div style={{ fontSize:13, color: c.text500, marginTop: 3, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box",
               WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
               {a.problem ? "" : "วิธีแก้: "}<Highlight text={preview} words={words} />
             </div>
           )}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 5, fontSize: 11.5, color: c.text400 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 5, fontSize:12, color: c.text400 }}>
             <span style={{ fontWeight: 600, color: c.text500, border: `1px solid ${c.border}`, borderRadius: 5, padding: "0 6px" }}>{cat.key}</span>
             {steps.length > 1 && <span>· {steps.length} ขั้นตอน</span>}
             {(a.tags || []).slice(0, 4).map((t) => <span key={t} style={{ background: c.borderSoft, borderRadius: 6, padding: "0 6px" }}>{t}</span>)}
@@ -189,12 +189,12 @@ function Article({ a, open, onToggle, words, c, canDelete, onEdit, onDelete }) {
         <div style={{ borderTop: `1px solid ${c.borderSoft}`, padding: "14px 16px 12px" }}>
           {a.problem && (
             <Section label="อาการ" color={c.text500}>
-              <div style={{ fontSize: 13.5, color: c.text900, lineHeight: 1.7, whiteSpace: "pre-wrap" }}><Highlight text={a.problem} words={words} /></div>
+              <div style={{ fontSize:14, color: c.text900, lineHeight: 1.7, whiteSpace: "pre-wrap" }}><Highlight text={a.problem} words={words} /></div>
             </Section>
           )}
           {a.cause && (
             <Section label="สาเหตุ" color={c.text500}>
-              <div style={{ fontSize: 13.5, color: c.text900, lineHeight: 1.7, whiteSpace: "pre-wrap" }}><Highlight text={a.cause} words={words} /></div>
+              <div style={{ fontSize:14, color: c.text900, lineHeight: 1.7, whiteSpace: "pre-wrap" }}><Highlight text={a.cause} words={words} /></div>
             </Section>
           )}
           <Section label="วิธีแก้" color={c.text500}>
@@ -204,20 +204,20 @@ function Article({ a, open, onToggle, words, c, canDelete, onEdit, onDelete }) {
                   <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <span style={{ width: 22, height: 22, borderRadius: "50%", background: c.borderSoft, color: c.text900, fontSize: 12, fontWeight:600,
                       display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                    <span style={{ fontSize: 13.5, color: c.text900, lineHeight: 1.65, wordBreak: "break-word" }}><Highlight text={s} words={words} /></span>
+                    <span style={{ fontSize:14, color: c.text900, lineHeight: 1.65, wordBreak: "break-word" }}><Highlight text={s} words={words} /></span>
                   </li>
                 ))}
               </ol>
             ) : (
-              <div style={{ fontSize: 13.5, color: c.text900, lineHeight: 1.7, whiteSpace: "pre-wrap", background: c.bg, border: `1px solid ${c.border}`,
+              <div style={{ fontSize:14, color: c.text900, lineHeight: 1.7, whiteSpace: "pre-wrap", background: c.bg, border: `1px solid ${c.border}`,
                 borderRadius:8, padding: "10px 12px" }}><Highlight text={a.solution} words={words} /></div>
             )}
           </Section>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
             <button onClick={onEdit} style={{ border: `1px solid ${c.border}`, background: "transparent", color: c.text900, borderRadius: 9, padding: "6px 12px",
-              fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>แก้ไข</button>
+              fontSize:13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>แก้ไข</button>
             {canDelete && <button onClick={onDelete} style={{ border: "none", background: "transparent", color: c.danger, borderRadius: 9, padding: "6px 12px",
-              fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>ลบ</button>}
+              fontSize:13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>ลบ</button>}
           </div>
         </div>
       )}
@@ -280,17 +280,17 @@ export default function KnowledgeHub({ onBack, currentUser }) {
     ? KB_CATEGORIES.map((k) => ({ ...k, items: filtered.filter((a) => a._cat === k.key) })).filter((g) => g.items.length)
     : [{ key: "", items: filtered }];
 
-  const chip = (on) => ({ padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+  const chip = (on) => ({ padding: "6px 12px", borderRadius: 8, fontSize:13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
     whiteSpace: "nowrap", border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card, color: on ? c.onInk : c.text500 });
 
   return (
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", maxWidth: 860, margin: "0 auto" }}>
-          <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer", padding: 4, lineHeight: 1 }}>←</button>
+          <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>Knowledge Hub</div>
-            <div style={{ fontSize: 11.5, color: c.text400 }}>วิธีแก้ปัญหาที่ทีมบันทึกไว้ · {articles.length} บทความ</div>
+            <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>Knowledge Hub</div>
+            <div style={{ fontSize:12, color: c.text400 }}>วิธีแก้ปัญหาที่ทีมบันทึกไว้ · {articles.length} บทความ</div>
           </div>
           {!showWms && <button onClick={() => setModal({})} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius:8, padding: "8px 14px", fontSize: 13,
             fontWeight:600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ เพิ่มบทความ</button>}
@@ -327,15 +327,15 @@ export default function KnowledgeHub({ onBack, currentUser }) {
         {loading ? (
           <div style={{ textAlign: "center", color: c.text400, padding: 48 }}>กำลังโหลด...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", color: c.text400, padding: "48px 10px", fontSize: 13.5, lineHeight: 1.9 }}>
-            {words.length || cat ? <>ไม่พบบทความที่ตรงกับ "{search || cat}"<br /><span style={{ fontSize: 12.5 }}>ถ้าแก้ได้แล้ว กด "+ เพิ่มบทความ" เก็บไว้ให้ทีม</span></> : "ยังไม่มีบทความ กด + เพิ่มบทความได้เลย"}
+          <div style={{ textAlign: "center", color: c.text400, padding: "48px 10px", fontSize:14, lineHeight: 1.9 }}>
+            {words.length || cat ? <>ไม่พบบทความที่ตรงกับ "{search || cat}"<br /><span style={{ fontSize:13 }}>ถ้าแก้ได้แล้ว กด "+ เพิ่มบทความ" เก็บไว้ให้ทีม</span></> : "ยังไม่มีบทความ กด + เพิ่มบทความได้เลย"}
           </div>
         ) : groups.map((g) => (
           <section key={g.key || "all"} style={{ marginTop: 14 }}>
             {grouped && (
               <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 6px" }}>
-                <span style={{ fontSize: 12.5, fontWeight:600, color: c.text900 }}>{g.key}</span>
-                <span style={{ fontSize: 11.5, color: c.text400 }}>{g.items.length}</span>
+                <span style={{ fontSize:13, fontWeight:600, color: c.text900 }}>{g.key}</span>
+                <span style={{ fontSize:12, color: c.text400 }}>{g.items.length}</span>
               </div>
             )}
             {!grouped && <div style={{ fontSize: 12, color: c.text400, margin: "0 2px 6px" }}>พบ {filtered.length} บทความ</div>}

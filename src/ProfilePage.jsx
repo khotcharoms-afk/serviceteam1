@@ -168,10 +168,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
     <div style={{ minHeight:"100vh", background:c.bg, fontFamily:"'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <header style={{ background:c.card, borderBottom:`1px solid ${c.border}`,
         padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
-        <button onClick={onBack} style={{ background:c.borderSoft, border:"none", borderRadius:8,
-          padding:"6px 12px", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:c.text500 }}>
-          ← กลับ
-        </button>
+        <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
         <div style={{ fontSize:15, fontWeight:600, color:c.text900 }}>โปรไฟล์</div>
       </header>
 
@@ -236,7 +233,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
                   borderRadius:8, padding:12, fontSize:14, fontWeight:600,
                   cursor:"pointer", fontFamily:"inherit", opacity:infoSaving?0.6:1 }}>
-                {infoSaving ? "กำลังบันทึก..." : "💾 บันทึก"}
+                {infoSaving ? "กำลังบันทึก..." : "บันทึก"}
               </button>
             </>
           )}
@@ -270,9 +267,9 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
                   {signatures.map((s,i)=>(
                     <div key={i} style={{ position:"relative", border:`1px solid ${c.border}`, borderRadius:8,
-                      background:"#fff", padding:6, height:64, display:"flex", alignItems:"center" }}>
+                      background:"var(--c-card)", padding:6, height:64, display:"flex", alignItems:"center" }}>
                       <img src={s} alt={`ลายเซ็น ${i+1}`} style={{ maxHeight:50, maxWidth:140 }}/>
-                      <span style={{ position:"absolute", left:4, top:2, fontSize:10, color:"#a1a1aa" }}>{i+1}</span>
+                      <span style={{ position:"absolute", left:4, top:2, fontSize:10, color:"var(--c-text400)" }}>{i+1}</span>
                       <button onClick={()=>saveSignatures(signatures.filter((_,j)=>j!==i)).catch(e=>setSigMsg("❌ "+e.message))}
                         title="ลบ" style={{ position:"absolute", right:-6, top:-6, width:20, height:20, borderRadius:"50%",
                           border:"none", background:"#ef4444", color:"#fff", fontSize:11, cursor:"pointer" }}>✕</button>
@@ -296,7 +293,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
                   borderRadius:8, padding:12, fontSize:14, fontWeight:600,
                   cursor:"pointer", fontFamily:"inherit", opacity:otSaving?0.6:1 }}>
-                {otSaving ? "กำลังบันทึก..." : "💾 บันทึกข้อมูล OT"}
+                {otSaving ? "กำลังบันทึก..." : "บันทึกข้อมูล OT"}
               </button>
             </>
           )}
@@ -338,7 +335,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
                   borderRadius:8, padding:12, fontSize:14, fontWeight:600,
                   cursor:"pointer", fontFamily:"inherit", opacity:pwSaving?0.6:1 }}>
-                {pwSaving ? "กำลังเปลี่ยน..." : "🔑 เปลี่ยนรหัสผ่าน"}
+                {pwSaving ? "กำลังเปลี่ยน..." : "เปลี่ยนรหัสผ่าน"}
               </button>
             </>
           )}
@@ -348,7 +345,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           style={{ width:"100%", marginTop:16, background:c.card,
             border:`1px solid ${c.red}55`, color:c.red, borderRadius:8,
             padding:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-          🚪 ออกจากระบบ
+          ออกจากระบบ
         </button>
       </div>
     </div>

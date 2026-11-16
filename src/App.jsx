@@ -786,7 +786,7 @@ export default function App({ currentUser, onSignOut }) {
           });
         });
         await batch.commit();
-        showToast(`📋 ${STATUS_LABEL[data.status]||data.status}แล้ว`,"success");
+        showToast(`${STATUS_LABEL[data.status]||data.status}แล้ว`,"success");
       } else if (!isNew) {
         // แจ้งคนที่เพิ่งถูกเพิ่มเป็นผู้รับผิดชอบ
         const added = (data.assignees||[]).filter(n=>!(prevTask?.assignees||[]).includes(n));
@@ -929,7 +929,7 @@ export default function App({ currentUser, onSignOut }) {
         )}
         {view!=="overview" && activeProj && (activeProj.contactName||activeProj.contactPhone||activeProj.location) && (
           <div style={{ display:"flex",flexWrap:"wrap",gap:"6px 14px",alignItems:"center",marginTop:-6,marginBottom:14,
-            fontSize:12.5,color:themeC.text500 }}>
+            fontSize:13,color:themeC.text500 }}>
             {activeProj.contactName && <span>ผู้ติดต่อ: {activeProj.contactName}</span>}
             {activeProj.contactPhone && (
               <a href={`tel:${activeProj.contactPhone.replace(/[^\d+]/g,"")}`}
@@ -1228,7 +1228,7 @@ export default function App({ currentUser, onSignOut }) {
             boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
             onClick={e=>e.stopPropagation()}>
             {/* Search input */}
-            <div style={{ padding:"14px 16px",borderBottom:"1px solid #f4f4f5",display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ padding:"14px 16px",borderBottom:"1px solid var(--c-soft)",display:"flex",alignItems:"center",gap:10 }}>
               <span style={{ fontSize:18,flexShrink:0 }}></span>
               <input autoFocus value={globalQ} onChange={e=>setGlobalQ(e.target.value)}
                 placeholder="ค้นหาเคส งาน Onsite โครงการ..."
@@ -1268,8 +1268,8 @@ export default function App({ currentUser, onSignOut }) {
                     <Section icon="" label="โครงการ" items={matchProjs} render={p=>(
                       <div key={p.id} onClick={()=>{ setView(p.id); setFilterStat("all"); setGlobalSearch(false); setGlobalQ(""); }}
                         style={{ padding:"10px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,
-                          borderBottom:"1px solid #fafafa" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
+                          borderBottom:"1px solid var(--c-soft)" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="var(--c-soft)"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#a1a1aa",flexShrink:0 }}/>
                         <div>
@@ -1282,8 +1282,8 @@ export default function App({ currentUser, onSignOut }) {
                       const proj=projects.find(p=>p.id===c.projectId);
                       return (
                       <div key={c.id} onClick={()=>{ setDetailCase(c); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #fafafa" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid var(--c-soft)" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="var(--c-soft)"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{c.title}</div>
                         <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
@@ -1295,8 +1295,8 @@ export default function App({ currentUser, onSignOut }) {
                       const proj=projects.find(p=>p.id===t.projectId);
                       return (
                       <div key={t.id} onClick={()=>{ setTaskPage(true); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #fafafa" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid var(--c-soft)" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="var(--c-soft)"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{t.title}</div>
                         <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
@@ -1306,12 +1306,12 @@ export default function App({ currentUser, onSignOut }) {
                     );}}/>
                     <Section icon="" label="Onsite" items={matchOnsite} render={r=>(
                       <div key={r.id} onClick={()=>{ setOnsitePage(true); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #fafafa" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid var(--c-soft)" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="var(--c-soft)"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{r.projectName||r.projectId}</div>
                         <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
-                          {r.site&&`📍 ${r.site} · `}{r.date||""} · {r.scope||""}
+                          {r.site&&`${r.site} · `}{r.date||""} · {r.scope||""}
                         </div>
                       </div>
                     )}/>
@@ -1352,7 +1352,7 @@ export default function App({ currentUser, onSignOut }) {
           <div className="notif-panel" onClick={e=>e.stopPropagation()}>
             <div className="notif-handle"/>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"14px 18px 12px",borderBottom:"1px solid #f4f4f5",flexShrink:0 }}>
+              padding:"14px 18px 12px",borderBottom:"1px solid var(--c-soft)",flexShrink:0 }}>
               <span style={{ fontSize:15,fontWeight:600,color:themeC.text900 }}>การแจ้งเตือน
                 {unreadCount>0&&<span style={{ background:"#ef4444",color:"#fff",borderRadius:20,
                   padding:"1px 7px",fontSize:11,fontWeight:600,marginLeft:8 }}>{unreadCount}</span>}
@@ -1372,7 +1372,7 @@ export default function App({ currentUser, onSignOut }) {
                 </div>
               ):notifications.map(n=>(
                 <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.type==="onsite"){ setOnsitePage(true); } else if(n.type==="task"){ setTaskPage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
-                  style={{ padding:"14px 18px",borderBottom:"1px solid #fafafa",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
+                  style={{ padding:"14px 18px",borderBottom:"1px solid var(--c-soft)",background:n.read?themeC.card:themeC.inkSoft,cursor:"pointer",transition:"background .15s" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
                     <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
                       background:themeC.borderSoft,color:themeC.text500,
@@ -1438,7 +1438,7 @@ export default function App({ currentUser, onSignOut }) {
         {onlineUsers.length===0 ? (
           <p style={{ color:themeC.text400,fontSize:14,textAlign:"center",padding:"20px 0" }}>ไม่มีใครออนไลน์อยู่ตอนนี้</p>
         ) : onlineUsers.map((u)=>(
-          <div key={u.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f4f4f5" }}>
+          <div key={u.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid var(--c-soft)" }}>
             <span style={{ width:8,height:8,borderRadius:"50%",background:"#16a34a",flexShrink:0 }}/>
             <div style={{ flex:1,minWidth:0 }}>
               <div style={{ fontSize:14,fontWeight:600,color:themeC.text900 }}>{u.name}</div>

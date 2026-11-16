@@ -48,7 +48,7 @@ function Pill({ children, color, filled }) {
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
-      padding: "3px 10px", borderRadius: 999, fontSize: 11.5, fontWeight:600,
+      padding: "3px 10px", borderRadius: 999, fontSize:12, fontWeight:600,
       color: filled ? "#fff" : color,
       background: filled ? color : color + "16",
       whiteSpace: "nowrap",
@@ -63,7 +63,7 @@ function InfoRow({ label, value, c, strong }) {
   return (
     <div style={{ display: "flex", gap: 8, padding: "3px 0" }}>
       <div style={{ fontSize: 12, color: c.text400, width: 88, flexShrink: 0, paddingTop: 1 }}>{label}</div>
-      <div style={{ fontSize: 13.5, color: c.text900, fontWeight: strong ? 700 : 500, lineHeight: 1.5 }}>{value}</div>
+      <div style={{ fontSize:14, color: c.text900, fontWeight: strong ? 700 : 500, lineHeight: 1.5 }}>{value}</div>
     </div>
   );
 }
@@ -129,7 +129,7 @@ function StatusSteps({ status, onChange, c, updating }) {
               border: `1.5px solid ${active ? PURPLE : c.border}`,
               background: active ? PURPLE : "transparent",
               color: active ? "#fff" : c.text500,
-              fontSize: 12.5, fontWeight: active ? 700 : 500,
+              fontSize:13, fontWeight: active ? 700 : 500,
               cursor: active ? "default" : "pointer",
               opacity: updating ? 0.55 : 1,
               transition: "all .12s ease",
@@ -189,7 +189,7 @@ function IssueCard({ issue, onUpdateStatus, onDelete, canDelete, c }) {
             <div style={{ fontWeight:600, fontSize: 14.5, color: c.text900 }}>
               {cat.label} · #{issue.ticketNo}
             </div>
-            <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{createdLabel}</div>
+            <div style={{ fontSize:12, color: c.text400, marginTop: 1 }}>{createdLabel}</div>
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5, flexShrink: 0 }}>
@@ -302,17 +302,10 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
         display: "flex", alignItems: "center", gap: 12, padding: "16px 20px",
         borderBottom: `1px solid ${c.border}`, background: c.card,
       }}>
-        <button onClick={onBack} style={{
-          background: "none", border: "none", fontSize: 18, color: c.text500,
-          cursor: "pointer", padding: 4, lineHeight: 1,
-        }}>←</button>
-        <div style={{
-          width: 36, height: 36, borderRadius:8, background: RED + "16",
-          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
-        }}></div>
+        <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
         <div>
-          <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>แจ้งเหตุ/แจ้งซ่อม</div>
-          <div style={{ fontSize: 11.5, color: c.text400 }}>ข้อมูลจาก LINE Bot (robot-report-bot)</div>
+          <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>แจ้งเหตุ/แจ้งซ่อม</div>
+          <div style={{ fontSize:12, color: c.text400 }}>ข้อมูลจาก LINE Bot (robot-report-bot)</div>
         </div>
       </div>
 

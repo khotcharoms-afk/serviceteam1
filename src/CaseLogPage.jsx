@@ -206,8 +206,8 @@ export default function CaseLogPage({ onBack, currentUser }) {
   const actions = r => (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
       {!r.closedAt && <button onClick={() => quickClose(r)} style={btn(`${c.green}1a`, c.green, `${c.green}55`)}>ปิดเคส</button>}
-      <button onClick={() => setModal(r)} style={btn(`${c.blue}1a`, c.blue, `${c.blue}55`)}></button>
-      {isAdminOrDev && <button onClick={() => remove(r)} style={btn(`${c.red}1a`, c.red, `${c.red}55`)}></button>}
+      <button onClick={() => setModal(r)} style={btn(`${c.blue}1a`, c.blue, `${c.blue}55`)}>แก้ไข</button>
+      {isAdminOrDev && <button onClick={() => remove(r)} style={btn(`${c.red}1a`, c.red, `${c.red}55`)}>ลบ</button>}
     </div>
   );
 
@@ -226,10 +226,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: "14px 16px",
         display: "flex", alignItems: "center", gap: 10, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: c.borderSoft, border: "none", borderRadius: 8,
-          padding: "7px 14px", cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: c.text500, fontWeight: 600 }}>
-          ← กลับ
-        </button>
+        <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
         <div style={{ fontSize: 16, fontWeight:600, color: c.text900, whiteSpace: "nowrap" }}>บันทึกการรับเคส</div>
         <button onClick={() => setModal("new")}
           style={{ marginLeft: "auto", background: "#2563eb", border: "none", color: "#fff", borderRadius: 8,

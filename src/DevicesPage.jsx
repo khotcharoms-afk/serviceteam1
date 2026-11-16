@@ -36,7 +36,7 @@ async function copyText(text) {
 
 // ค่าต่างๆ (IP, AnyDesk, รหัส) ใช้ฟอนต์เดียวกับทั้งแอป + ตัวเลขกว้างเท่ากันให้อ่านง่าย
 const MONO = "'Geist','Noto Sans Thai',system-ui,sans-serif";
-const iconBtn = (c) => ({ border: "none", background: "transparent", cursor: "pointer", color: c.text400, fontSize: 12.5,
+const iconBtn = (c) => ({ border: "none", background: "transparent", cursor: "pointer", color: c.text400, fontSize:13,
   padding: "1px 3px", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 });
 const withPort = (ip, port) => (ip ? (port ? `${ip}:${port}` : ip) : port ? `port ${port}` : "");
 const remoteHref = (kind, id) => (/^\d[\d ]+$/.test(id || "") ? `${kind === "anydesk" ? "anydesk:" : "rustdesk://"}${id.replace(/\s/g, "")}` : null);
@@ -87,7 +87,7 @@ function Copy({ value, label, onCopied, c, mono = true, muted, href }) {
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%" }}>
       <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.(label); }} title={`คัดลอก ${label}`}
         style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: mono ? MONO : "inherit", fontVariantNumeric: "tabular-nums",
-          fontSize: 12.5, color: muted ? c.text400 : c.text900, textAlign: "left", wordBreak: "break-all", minWidth: 0 }}>
+          fontSize:13, color: muted ? c.text400 : c.text900, textAlign: "left", wordBreak: "break-all", minWidth: 0 }}>
         {value}
       </button>
       <CopyBtn value={value} label={label} onCopied={onCopied} c={c} />
@@ -103,7 +103,7 @@ function Secret({ value, onCopied, c }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
       <button onClick={(e) => { e.stopPropagation(); copyText(value); onCopied?.("รหัสผ่าน"); }} title="คัดลอกรหัสผ่าน"
-        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontSize: 12.5,
+        style={{ border: "none", background: "transparent", padding: 0, cursor: "copy", fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontSize:13,
           color: c.text900, wordBreak: "break-all", textAlign: "left" }}>{show ? value : "••••••"}</button>
       <button onClick={(e) => { e.stopPropagation(); setShow((s) => !s); }} title={show ? "ซ่อนรหัส" : "แสดงรหัส"} style={{ ...iconBtn(c), display: "inline-flex", alignItems: "center" }}>
         <EyeIcon off={show} size={14} />
@@ -144,12 +144,12 @@ function Details({ d, shared, canEdit, onEdit, onDelete, onCopied, c }) {
     ["Gateway", d.gateway], ["RTSP", d.rtsp], ["Storage", d.storage]].filter(([, v]) => v);
   const accounts = [...(shared ? [{ username: d.username, password: d.password, main: true }] : []), ...(d.accounts || [])];
   return (
-    <div style={{ background: c.bg, borderRadius:8, padding: "10px 12px", display: "grid", gap: 8, fontSize: 12.5 }}>
+    <div style={{ background: c.bg, borderRadius:8, padding: "10px 12px", display: "grid", gap: 8, fontSize:13 }}>
       {rows.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "max-content 1fr", gap: "4px 14px" }}>
           {rows.map(([k, v]) => (
             <React.Fragment key={k}>
-              <span style={{ color: c.text400, fontWeight:600, fontSize: 11.5 }}>{k}</span>
+              <span style={{ color: c.text400, fontWeight:600, fontSize:12 }}>{k}</span>
               <Copy value={v} label={k} onCopied={onCopied} c={c} />
             </React.Fragment>
           ))}
@@ -157,7 +157,7 @@ function Details({ d, shared, canEdit, onEdit, onDelete, onCopied, c }) {
       )}
       {accounts.length > 0 && (
         <div>
-          <div style={{ color: c.text400, fontWeight:600, fontSize: 11.5, marginBottom: 4 }}>บัญชีเข้าใช้งาน</div>
+          <div style={{ color: c.text400, fontWeight:600, fontSize:12, marginBottom: 4 }}>บัญชีเข้าใช้งาน</div>
           <div style={{ display: "grid", gridTemplateColumns: "max-content max-content", gap: "4px 18px" }}>
             {accounts.map((a, i) => (
               <React.Fragment key={i}>
@@ -209,8 +209,8 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
     const n = (d.accounts || []).length;
     return (
       <span style={{ display: "inline-flex", gap: 4, marginLeft: 6, verticalAlign: "middle" }}>
-        {n > 0 && <span style={{ fontSize: 10.5, color: c.text400 }}>+{n} บัญชี</span>}
-        {d.note && <span title={d.note} style={{ fontSize: 10.5, color: c.text400 }}>มีหมายเหตุ</span>}
+        {n > 0 && <span style={{ fontSize:11, color: c.text400 }}>+{n} บัญชี</span>}
+        {d.note && <span title={d.note} style={{ fontSize:11, color: c.text400 }}>มีหมายเหตุ</span>}
       </span>
     );
   };
@@ -225,7 +225,7 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
       case "ip": return <Copy value={withPort(d.ip, d.port)} label="IP" onCopied={onCopied} c={c} href={webHref(d.ip, d.port)} />;
       case "pub": return <Copy value={withPort(d.publicIp, d.publicPort)} label="Public IP" onCopied={onCopied} c={c} href={webHref(d.publicIp, d.publicPort)} />;
       case "remote": return <Remote d={d} onCopied={onCopied} c={c} />;
-      case "user": return isShared(d) ? <span style={{ fontSize: 11.5, color: c.text400, whiteSpace: "nowrap" }}>ใช้รหัสหลัก</span>
+      case "user": return isShared(d) ? <span style={{ fontSize:12, color: c.text400, whiteSpace: "nowrap" }}>ใช้รหัสหลัก</span>
         : <Copy value={d.username} label="Username" onCopied={onCopied} c={c} />;
       case "pass": return isShared(d) ? null
         : <Secret value={d.password} onCopied={onCopied} c={c} />;
@@ -237,8 +237,8 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
     <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 14px", padding: "10px 14px",
         borderBottom: `1px solid ${c.border}` }}>
-        <span style={{ fontSize: 13.5, fontWeight:600, color: c.text900 }}>{site || "ไม่ระบุไซต์"}</span>
-        <span style={{ fontSize: 11.5, color: c.text400 }}>{items.length} เครื่อง</span>
+        <span style={{ fontSize:14, fontWeight:600, color: c.text900 }}>{site || "ไม่ระบุไซต์"}</span>
+        <span style={{ fontSize:12, color: c.text400 }}>{items.length} เครื่อง</span>
         {shared && (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, border: `1px solid ${c.border}`,
             borderRadius: 8, padding: "3px 10px", marginLeft: "auto" }}>
@@ -251,7 +251,7 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
 
       {!narrow && (
         <div style={{ display: "grid", gridTemplateColumns: grid, gap: 10, padding: "7px 14px", background: c.bg,
-          fontSize: 10.5, fontWeight:600, color: c.text400, letterSpacing: 0.3 }}>
+          fontSize:11, fontWeight:600, color: c.text400, letterSpacing: 0.3 }}>
           {cols.map((x) => <span key={x.key}>{x.label}</span>)}<span />
         </div>
       )}
@@ -374,7 +374,7 @@ function ImportDialog({ data, existingDevices, onClose, onConfirm, busy }) {
         {data.unknownHeaders.length > 0 && (
           <div style={{ fontSize: 12, color: c.text500, marginTop: 10 }}>ข้ามคอลัมน์ที่ไม่รู้จัก: {data.unknownHeaders.join(", ")}</div>
         )}
-        <div style={{ fontSize: 12.5, color: c.text500, marginTop: 12 }}>ตอนนี้ในระบบมี {existing} รายการ</div>
+        <div style={{ fontSize:13, color: c.text500, marginTop: 12 }}>ตอนนี้ในระบบมี {existing} รายการ</div>
         <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
           {sameProject > 0 ? (
             <button disabled={busy} onClick={() => onConfirm("projects")} style={btn(c.text900)}>
@@ -400,7 +400,7 @@ function ImportDialog({ data, existingDevices, onClose, onConfirm, busy }) {
             ยกเลิก
           </button>
         </div>
-        {busy && <div style={{ fontSize: 12.5, color: c.text400, marginTop: 10, textAlign: "center" }}>กำลังบันทึก...</div>}
+        {busy && <div style={{ fontSize:13, color: c.text400, marginTop: 10, textAlign: "center" }}>กำลังบันทึก...</div>}
       </div>
     </div>
   );
@@ -592,11 +592,10 @@ export default function DevicesPage({ onBack, currentUser }) {
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: `1px solid ${c.border}`,
         background: c.card, position: "sticky", top: 0, zIndex: 5 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer",
-          padding: 4, lineHeight: 1 }}>←</button>
+        <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
                 <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>อุปกรณ์/รีโมท</div>
-          <div style={{ fontSize: 11.5, color: c.text400 }}>IP · AnyDesk · RustDesk · รหัสเข้าอุปกรณ์หน้างาน</div>
+          <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>อุปกรณ์/รีโมท</div>
+          <div style={{ fontSize:12, color: c.text400 }}>IP · AnyDesk · RustDesk · รหัสเข้าอุปกรณ์หน้างาน</div>
         </div>
         <div style={{ fontSize: 12, color: c.text400, whiteSpace: "nowrap" }}>{devices.length} รายการ</div>
       </div>
@@ -613,11 +612,11 @@ export default function DevicesPage({ onBack, currentUser }) {
         </div>
         {project && types.length > 1 && (
           <div style={{ display: "flex", gap: 6, overflowX: "auto", padding: "4px 0", alignItems: "center" }}>
-            <span style={{ fontSize: 11.5, color: c.text400, whiteSpace: "nowrap" }}>ประเภท:</span>
+            <span style={{ fontSize:12, color: c.text400, whiteSpace: "nowrap" }}>ประเภท:</span>
             {types.map(([t, n]) => {
               const on = typeF === t;
               return (
-                <button key={t} onClick={() => setTypeF(on ? "" : t)} style={{ padding: "4px 10px", borderRadius: 999, fontSize: 11.5,
+                <button key={t} onClick={() => setTypeF(on ? "" : t)} style={{ padding: "4px 10px", borderRadius: 999, fontSize:12,
                   fontWeight:600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                   border: `1px solid ${on ? c.text900 : c.border}`, background: on ? c.text900 : c.card,
                   color: on ? c.card : c.text500 }}>{t} · {n}</button>
@@ -636,7 +635,7 @@ export default function DevicesPage({ onBack, currentUser }) {
           {devices.length > 0 && <button onClick={handleExport} style={toolBtn}>ส่งออก Excel</button>}
         </div>
         {devices.length > 0 && (
-          <div style={{ fontSize: 11.5, color: c.text400, margin: "-4px 0 10px" }}>
+          <div style={{ fontSize:12, color: c.text400, margin: "-4px 0 10px" }}>
             กดที่ค่าเพื่อคัดลอก · กดที่แถวเพื่อดูรายละเอียด/บัญชีอื่น · "ใช้รหัสหลัก" = ใช้รหัสเดียวกับที่แสดงบนหัวไซต์
           </div>
         )}
@@ -662,7 +661,7 @@ export default function DevicesPage({ onBack, currentUser }) {
                   style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none",
                     padding: "11px 14px", cursor: expandAll ? "default" : "pointer", fontFamily: "inherit", textAlign: "left" }}>
                   <span style={{ fontSize: 14.5, fontWeight:600, color: c.text900, flex: 1 }}>{g.project}</span>
-                  <span style={{ fontSize: 11.5, color: c.text400 }}>{g.sites.length} ไซต์ · {count} รายการ</span>
+                  <span style={{ fontSize:12, color: c.text400 }}>{g.sites.length} ไซต์ · {count} รายการ</span>
                   {!expandAll && <span style={{ color: c.text400, fontSize: 12 }}>{isOpen ? "▴" : "▾"}</span>}
                 </button>
                 {canEdit && (

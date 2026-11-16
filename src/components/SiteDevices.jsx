@@ -110,7 +110,7 @@ function Val({ label, value, href, secret, c, onCopied }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: c.card, border: `1px solid ${c.border}`, borderRadius: 7,
       padding: "2px 4px 2px 7px", fontSize: 12, maxWidth: "100%" }}>
-      <span style={{ fontSize: 10.5, fontWeight:600, color: c.text400 }}>{label}</span>
+      <span style={{ fontSize:11, fontWeight:600, color: c.text400 }}>{label}</span>
       <span style={{ color: c.text900, fontVariantNumeric: "tabular-nums", wordBreak: "break-all" }}>{secret && !show ? "••••••" : value}</span>
       {secret && <button onClick={() => setShow((s) => !s)} title={show ? "ซ่อนรหัส" : "แสดงรหัส"} style={btn(c)}><EyeIcon off={show} size={13} /></button>}
       {href && <a href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
@@ -119,7 +119,7 @@ function Val({ label, value, href, secret, c, onCopied }) {
     </span>
   );
 }
-const btn = (c) => ({ border: "none", background: "transparent", color: c.text400, cursor: "pointer", padding: "0 3px", fontSize: 12.5,
+const btn = (c) => ({ border: "none", background: "transparent", color: c.text400, cursor: "pointer", padding: "0 3px", fontSize:13,
   lineHeight: 1, display: "inline-flex", alignItems: "center", fontFamily: "inherit" });
 const remoteHref = (kind, id) => (/^\d[\d ]+$/.test(id || "") ? `${kind === "anydesk" ? "anydesk:" : "rustdesk://"}${id.replace(/\s/g, "")}` : null);
 
@@ -159,25 +159,25 @@ export default function SiteDevices({ caseData, project }) {
       <button onClick={toggle} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "11px 14px", background: c.borderSoft,
         border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
         <span style={{ flex: 1, fontSize: 13, fontWeight:600, color: c.text900 }}>อุปกรณ์ / รีโมท ของไซต์นี้</span>
-        {devices && !searched && <span style={{ fontSize: 11.5, color: c.text400 }}>{matched.length ? `${matched.length} เครื่อง` : "ไม่พบที่ตรง"}</span>}
+        {devices && !searched && <span style={{ fontSize:12, color: c.text400 }}>{matched.length ? `${matched.length} เครื่อง` : "ไม่พบที่ตรง"}</span>}
         <span style={{ color: c.text400, fontSize: 12 }}>{open ? "▴" : "▾"}</span>
       </button>
       {open && (
         <div style={{ padding: "10px 12px 12px", background: c.bg }}>
-          {!devices && !error && <div style={{ fontSize: 12.5, color: c.text400, padding: 6 }}>กำลังโหลด…</div>}
-          {error && <div style={{ fontSize: 12.5, color: "#DC2626" }}>{error}</div>}
+          {!devices && !error && <div style={{ fontSize:13, color: c.text400, padding: 6 }}>กำลังโหลด…</div>}
+          {error && <div style={{ fontSize:13, color: "#DC2626" }}>{error}</div>}
           {devices && (
             <>
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ค้นอุปกรณ์อื่น (ชื่อไซต์ / เครื่อง / IP / AnyDesk)"
-                style={{ width: "100%", border: `1px solid ${c.border}`, borderRadius: 9, padding: "7px 10px", fontSize: 12.5, outline: "none",
+                style={{ width: "100%", border: `1px solid ${c.border}`, borderRadius: 9, padding: "7px 10px", fontSize:13, outline: "none",
                   background: c.card, color: c.text900, marginBottom: 8, fontFamily: "inherit" }} />
               {!list.length && (
-                <div style={{ fontSize: 12.5, color: c.text400, padding: "4px 2px" }}>
+                <div style={{ fontSize:13, color: c.text400, padding: "4px 2px" }}>
                   {searched ? "ไม่พบอุปกรณ์ที่ตรงกับคำค้น" : caseData.site ? `ไม่พบอุปกรณ์ของไซต์ "${caseData.site}" ลองค้นด้วยชื่ออื่นด้านบน` : "ไม่พบอุปกรณ์ของโครงการนี้ ลองค้นด้านบน"}
                 </div>
               )}
               {!searched && !caseData.site && list.length > 0 && !showAllProject && (
-                <div style={{ fontSize: 11.5, color: c.text400, margin: "0 2px 6px" }}>
+                <div style={{ fontSize:12, color: c.text400, margin: "0 2px 6px" }}>
                   {inferredSite ? `ไซต์จากชื่อโครงการ: ${inferredSite}` : "ยังไม่ได้เลือกไซต์ — แสดงทุกเครื่องของโครงการ"}
                 </div>
               )}
@@ -193,9 +193,9 @@ export default function SiteDevices({ caseData, project }) {
                   return (
                     <div key={d.id} style={{ background: c.card, border: `1px solid ${c.borderSoft}`, borderRadius:8, padding: "8px 10px" }}>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap", marginBottom: 5 }}>
-                        {d.type && <span style={{ fontSize: 10.5, fontWeight: 600, color: c.text500, border: `1px solid ${c.border}`, borderRadius: 5, padding: "0 5px" }}>{d.type}</span>}
+                        {d.type && <span style={{ fontSize:11, fontWeight: 600, color: c.text500, border: `1px solid ${c.border}`, borderRadius: 5, padding: "0 5px" }}>{d.type}</span>}
                         <span style={{ fontSize: 13, fontWeight:600, color: c.text900 }}>{d.name}</span>
-                        <span style={{ fontSize: 11.5, color: c.text400 }}>{[d.project, d.site].filter(Boolean).join(" / ")}</span>
+                        <span style={{ fontSize:12, color: c.text400 }}>{[d.project, d.site].filter(Boolean).join(" / ")}</span>
                       </div>
                       <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                         <Val label="AnyDesk" value={d.anydesk} href={remoteHref("anydesk", d.anydesk)} c={c} onCopied={onCopied} />
