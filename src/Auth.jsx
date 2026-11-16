@@ -10,8 +10,8 @@ import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase
 import EyeIcon from "./components/EyeIcon.jsx";
 
 const IS = (x={}) => ({
-  width:"100%", background:"#fff", border:"1px solid #e2e8f0",
-  borderRadius:10, color:"#1e293b", padding:"12px 14px", fontSize:14,
+  width:"100%", background:"#fff", border:"1px solid #e4e4e7",
+  borderRadius:10, color:"#27272a", padding:"12px 14px", fontSize:14,
   outline:"none", fontFamily:"inherit", boxSizing:"border-box",
   transition:"border-color .15s", ...x,
 });
@@ -102,41 +102,41 @@ export default function Auth() {
   }
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f8fafc",
+    <div style={{ minHeight:"100vh", background:"#fafafa",
       display:"flex", alignItems:"center", justifyContent:"center",
       fontFamily:"'Geist','Noto Sans Thai',system-ui,sans-serif", padding:16 }}>
       <style>{`
         
         *{box-sizing:border-box}
-        input:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #dbeafe !important;outline:none}
-        .tab-btn:hover{background:#f1f5f9}
+        input:focus{border-color:#a1a1aa !important;box-shadow:0 0 0 3px #f4f4f5 !important;outline:none}
+        .tab-btn:hover{background:#f4f4f5}
       `}</style>
 
       <div style={{ width:"100%", maxWidth:420 }}>
 
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>
-          <div style={{ width:56, height:56, borderRadius:16,
+          <div style={{ width:48, height:48, borderRadius:12,
             background:"#18181b",
             display:"inline-flex", alignItems:"center", justifyContent:"center",
-            fontSize:26, color:"#fff", fontWeight:600, marginBottom:12,
-            boxShadow:"0 8px 24px rgba(37,99,235,.3)" }}>S</div>
-          <div style={{ fontSize:22, fontWeight:600, color:"#0f172a" }}>ServiceLog</div>
-          <div style={{ fontSize:13, color:"#94a3b8", marginTop:4 }}>ระบบบันทึกการเซอร์วิสโครงการ</div>
+            fontSize:20, color:"#fafafa", fontWeight:600, marginBottom:16,
+            boxShadow:"none" }}>S</div>
+          <div style={{ fontSize:22, fontWeight:600, color:"#09090b" }}>ServiceLog</div>
+          <div style={{ fontSize:13, color:"#a1a1aa", marginTop:4 }}>ระบบบันทึกการเซอร์วิสโครงการ</div>
         </div>
 
         {/* Card */}
-        <div style={{ background:"#fff", borderRadius:16, padding:"28px 28px",
-          boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e2e8f0" }}>
+        <div style={{ background:"#fff", borderRadius:12, padding:24,
+          boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e4e4e7" }}>
 
           {/* Tab */}
-          <div style={{ display:"flex", background:"#f8fafc", borderRadius:10,
-            padding:4, marginBottom:24, border:"1px solid #e2e8f0" }}>
+          <div style={{ display:"flex", background:"#fafafa", borderRadius:10,
+            padding:4, marginBottom:24, border:"1px solid #e4e4e7" }}>
             {[{v:"login",l:"เข้าสู่ระบบ"},{v:"register",l:"สมัครสมาชิก"}].map(t=>(
               <button key={t.v} className="tab-btn" onClick={()=>{ setMode(t.v); setError(""); }}
                 style={{ flex:1, padding:"9px 0", borderRadius:8, border:"none",
                   background: mode===t.v?"#fff":"transparent",
-                  color: mode===t.v?"#0f172a":"#94a3b8",
+                  color: mode===t.v?"#09090b":"#a1a1aa",
                   fontWeight: mode===t.v?700:500, fontSize:14, cursor:"pointer",
                   fontFamily:"inherit", transition:"all .15s",
                   boxShadow: mode===t.v?"0 1px 4px rgba(0,0,0,.08)":"none" }}>
@@ -150,7 +150,7 @@ export default function Auth() {
             {/* Name (register only) */}
             {mode==="register" && (
               <div style={{ marginBottom:14 }}>
-                <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:5 }}>ชื่อ-นามสกุล *</div>
+                <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:5 }}>ชื่อ-นามสกุล *</div>
                 <input style={IS()} value={name} onChange={e=>setName(e.target.value)}
                   placeholder="ชื่อที่แสดงในระบบ" required/>
               </div>
@@ -158,7 +158,7 @@ export default function Auth() {
 
             {/* Email */}
             <div style={{ marginBottom:14 }}>
-              <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:5 }}>อีเมล *</div>
+              <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:5 }}>อีเมล *</div>
               <input type="email" style={IS()} value={email}
                 onChange={e=>setEmail(e.target.value)}
                 placeholder="example@email.com" required/>
@@ -166,14 +166,14 @@ export default function Auth() {
 
             {/* Password */}
             <div style={{ marginBottom:14 }}>
-              <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:5 }}>รหัสผ่าน *</div>
+              <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:5 }}>รหัสผ่าน *</div>
               <div style={{ position:"relative" }}>
                 <input type={showPw?"text":"password"} style={IS({ paddingRight:44 })}
                   value={password} onChange={e=>setPassword(e.target.value)}
                   placeholder={mode==="register"?"อย่างน้อย 6 ตัวอักษร":"รหัสผ่าน"} required/>
                 <button type="button" onClick={()=>setShowPw(!showPw)}
                   style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",
-                    background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#94a3b8" }}>
+                    background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#a1a1aa" }}>
                   <EyeIcon off={showPw} size={18}/>
                 </button>
               </div>
@@ -192,7 +192,7 @@ export default function Auth() {
             {/* Confirm Password (register only) */}
             {mode==="register" && (
               <div style={{ marginBottom:14 }}>
-                <div style={{ fontSize:12,color:"#64748b",fontWeight:600,marginBottom:5 }}>ยืนยันรหัสผ่าน *</div>
+                <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:5 }}>ยืนยันรหัสผ่าน *</div>
                 <input type={showPw?"text":"password"} style={IS()}
                   value={confirmPw} onChange={e=>setConfirmPw(e.target.value)}
                   placeholder="พิมพ์รหัสผ่านอีกครั้ง" required/>
@@ -229,13 +229,13 @@ export default function Auth() {
               style={{ width:"100%",background: loading?"#a1a1aa":"#18181b",
                 border:"none",color:"#fff",borderRadius:10,padding:"13px",fontSize:15,
                 fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",
-                boxShadow:"0 4px 16px rgba(37,99,235,.3)",transition:"all .2s" }}>
+                boxShadow:"none",transition:"all .2s" }}>
               {loading ? "กำลังดำเนินการ..." : mode==="login" ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
             </button>
           </form>
         </div>
 
-        <div style={{ textAlign:"center",marginTop:16,fontSize:12,color:"#cbd5e1" }}>
+        <div style={{ textAlign:"center",marginTop:16,fontSize:12,color:"#d4d4d8" }}>
           ServiceLog © 2026
         </div>
       </div>

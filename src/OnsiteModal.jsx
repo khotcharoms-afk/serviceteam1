@@ -74,17 +74,17 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
   }
 
   const inputStyle = {
-    width:"100%", border:"1px solid #e2e8f0", borderRadius:8,
+    width:"100%", border:"1px solid #e4e4e7", borderRadius:8,
     padding:"8px 12px", fontSize:13, fontFamily:"inherit",
-    outline:"none", background:"#f8fafc", boxSizing:"border-box",
+    outline:"none", background:"#fafafa", boxSizing:"border-box",
   };
   const labelStyle = {
-    fontSize:11, color:"#94a3b8", fontWeight:700,
+    fontSize:11, color:"#a1a1aa", fontWeight:700,
     textTransform:"uppercase", letterSpacing:.5, marginBottom:4, display:"block",
   };
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:540,
@@ -93,10 +93,10 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
         onClick={e => e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#09090b" }}>
             📍 {isEdit ? "แก้ไข Onsite" : "บันทึก Onsite"}
           </h2>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
 
@@ -122,11 +122,11 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             );
             return (
               <div style={{ position:"relative" }}>
-                <div style={{ display:"flex",alignItems:"center",border:"1px solid #e2e8f0",
-                  borderRadius:8,background:"#f8fafc",overflow:"hidden" }}>
+                <div style={{ display:"flex",alignItems:"center",border:"1px solid #e4e4e7",
+                  borderRadius:8,background:"#fafafa",overflow:"hidden" }}>
                   <input
                     style={{ flex:1,border:"none",background:"transparent",padding:"8px 12px",
-                      fontSize:13,fontFamily:"inherit",outline:"none",color:"#1e293b" }}
+                      fontSize:13,fontFamily:"inherit",outline:"none",color:"#27272a" }}
                     placeholder="ค้นหาโครงการ..."
                     value={projDropdown ? projSearch : (selProj?.name||"")}
                     onFocus={()=>{ setProjDropdown(true); setProjSearch(""); }}
@@ -134,28 +134,28 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
                   />
                   {selProj && !projDropdown && (
                     <button type="button" onClick={()=>{ setProjId(""); setProjSearch(""); setSiteIndex(""); }}
-                      style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",
+                      style={{ background:"none",border:"none",color:"#a1a1aa",cursor:"pointer",
                         padding:"0 10px",fontSize:14 }}>✕</button>
                   )}
                 </div>
                 {projDropdown && (
                   <div style={{ position:"absolute",top:"100%",left:0,right:0,zIndex:100,
-                    background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
+                    background:"#fff",border:"1px solid #e4e4e7",borderRadius:8,
                     boxShadow:"0 8px 24px rgba(0,0,0,.12)",maxHeight:240,overflowY:"auto",marginTop:4 }}>
                     {filteredProjs.length===0 ? (
-                      <div style={{ padding:"12px 14px",fontSize:13,color:"#94a3b8",textAlign:"center" }}>ไม่พบโครงการ</div>
+                      <div style={{ padding:"12px 14px",fontSize:13,color:"#a1a1aa",textAlign:"center" }}>ไม่พบโครงการ</div>
                     ) : filteredProjs.map(p=>(
                       <div key={p.id}
                         onMouseDown={()=>{ setProjId(p.id); setProjDropdown(false); setProjSearch(""); setSiteIndex(""); }}
                         style={{ padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
-                          background:projId===p.id?"#fff7ed":"transparent",borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>{ if(projId!==p.id) e.currentTarget.style.background="#f8fafc"; }}
+                          background:projId===p.id?"#fff7ed":"transparent",borderBottom:"1px solid #fafafa" }}
+                        onMouseEnter={e=>{ if(projId!==p.id) e.currentTarget.style.background="#fafafa"; }}
                         onMouseLeave={e=>{ if(projId!==p.id) e.currentTarget.style.background="transparent"; }}>
-                        <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                        <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#a1a1aa",flexShrink:0 }}/>
                         <div style={{ flex:1,minWidth:0 }}>
-                          <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",
+                          <div style={{ fontSize:13,fontWeight:600,color:"#09090b",
                             overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
-                          {p.code&&<div style={{ fontSize:11,color:"#94a3b8" }}>{p.code}</div>}
+                          {p.code&&<div style={{ fontSize:11,color:"#a1a1aa" }}>{p.code}</div>}
                         </div>
                         {projId===p.id && <span style={{ color:"#f97316",fontSize:14 }}>✓</span>}
                       </div>
@@ -197,8 +197,8 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
           <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
             {approvedUsers.map(u => (
               <label key={u.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
-                background: techs.includes(u.name) ? "#f0fdf4" : "#f8fafc",
-                border:`1px solid ${techs.includes(u.name) ? "#bbf7d0" : "#e2e8f0"}`,
+                background: techs.includes(u.name) ? "#f0fdf4" : "#fafafa",
+                border:`1px solid ${techs.includes(u.name) ? "#bbf7d0" : "#e4e4e7"}`,
                 borderRadius:8,padding:"5px 10px",fontSize:12 }}>
                 <input type="checkbox" checked={techs.includes(u.name)}
                   onChange={() => toggleTech(u.name)} style={{ accentColor:"#16a34a" }}/>
@@ -232,8 +232,8 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
           </div>
         )}
 
-        <div style={{ background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px",marginBottom:16 }}>
-          <div style={{ fontSize:12,fontWeight:700,color:"#0f172a",marginBottom:12 }}>💰 ค่าใช้จ่าย</div>
+        <div style={{ background:"#fafafa",border:"1px solid #e4e4e7",borderRadius:12,padding:"14px",marginBottom:16 }}>
+          <div style={{ fontSize:12,fontWeight:700,color:"#09090b",marginBottom:12 }}>💰 ค่าใช้จ่าย</div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
             <div>
               <label style={labelStyle}>ค่าเดินทาง</label>
@@ -265,7 +265,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             </div>
             <div>
               <label style={labelStyle}>ค่าแรงรวม</label>
-              <div style={{ padding:"8px 12px",background:"#fff",border:"1px solid #e2e8f0",
+              <div style={{ padding:"8px 12px",background:"#fff",border:"1px solid #e4e4e7",
                 borderRadius:8,fontSize:13,color:"#16a34a",fontWeight:700 }}>
                 {laborCost.toLocaleString()} บาท
               </div>
@@ -282,7 +282,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose}
-            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+            style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
               borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>

@@ -12,7 +12,7 @@ import TaskModal from "./TaskModal.jsx";
 
 
 export const TASK_STATUS = {
-  todo:       { label: "ต้องทำ",   color: "#64748B" },
+  todo:       { label: "ต้องทำ",   color: "#71717a" },
   inprogress: { label: "กำลังทำ", color: "#D97706" },
   done:       { label: "เสร็จ",     color: "#16A34A" },
 };
@@ -70,7 +70,7 @@ function Avatars({ names = [], size = 22 }) {
   return (
     <span style={{ display: "inline-flex", flexShrink: 0 }}>
       {names.slice(0, 4).map((n, i) => (
-        <span key={n} title={n} style={{ width: size, height: size, borderRadius: "50%", background: "var(--av-bg, #e2e8f0)", color: "var(--av-fg, #0f172a)",
+        <span key={n} title={n} style={{ width: size, height: size, borderRadius: "50%", background: "var(--av-bg, #e4e4e7)", color: "var(--av-fg, #09090b)",
           fontSize: size * 0.48, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center",
           marginLeft: i ? -6 : 0, border: "2px solid var(--card-bg, #fff)" }}>{n.charAt(0)}</span>
       ))}
@@ -79,7 +79,7 @@ function Avatars({ names = [], size = 22 }) {
   );
 }
 const Unassigned = ({ small }) => (
-  <span style={{ fontSize: small ? 10 : 11, fontWeight: 600, color: "var(--av-fg, #0f172a)", border: "1px dashed currentColor", borderRadius: 6, opacity: 0.7,
+  <span style={{ fontSize: small ? 10 : 11, fontWeight: 600, color: "var(--av-fg, #09090b)", border: "1px dashed currentColor", borderRadius: 6, opacity: 0.7,
     padding: small ? "0 4px" : "1px 6px", whiteSpace: "nowrap" }}>ยังไม่มีคนทำ</span>
 );
 
@@ -236,7 +236,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
       )}
 
       {confirm && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(15,23,42,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: c.card, borderRadius: 16, padding: 22, maxWidth: 340, width: "100%", textAlign: "center" }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: c.text900, marginBottom: 4 }}>{confirm.kind === "delete" ? "ลบงานนี้?" : "สร้างเคสจากงานนี้?"}</div>
             <div style={{ fontSize: 13, color: c.text500, marginBottom: 18 }}>"{confirm.task.title}"{confirm.kind === "delete" && <><br />ลบแล้วกู้คืนไม่ได้</>}</div>
@@ -439,7 +439,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
     </div>
   ) : null;
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 650, background: "rgba(15,23,42,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}
+    <div style={{ position: "fixed", inset: 0, zIndex: 650, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}
       onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "92vh",
         display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
@@ -462,7 +462,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
           </div>
 
           {meta("วันที่", (startOf(t) && `${rangeText(t)}${t.status !== "done" && dueText(t, todayIso) !== rangeText(t) ? ` (${dueText(t, todayIso)})` : ""}`) || <span style={{ color: c.text400 }}>ยังไม่กำหนด</span>)}
-          {meta("โครงการ", projName && <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: projColor || "#94a3b8", marginRight: 6 }} />{projName}</span>)}
+          {meta("โครงการ", projName && <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: projColor || "#a1a1aa", marginRight: 6 }} />{projName}</span>)}
           {meta("ไซต์", t.site)}
           {meta("ความเร่งด่วน", pri.label && <span style={{ fontWeight: 700, color: pri.rank === 0 ? c.danger : c.warn }}>{pri.label}</span>)}
           {meta("ประเภท", t.type)}

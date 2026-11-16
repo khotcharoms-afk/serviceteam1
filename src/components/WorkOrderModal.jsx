@@ -19,15 +19,15 @@ function buildWorkOrderHTML(c, proj) {
   const handoverLog = c.handoverLog || [];
 
   const updateRows = updateLog.length === 0
-    ? `<tr><td colspan="4" style="padding:8px;border:0.5px solid #e2e8f0;color:#94a3b8;text-align:center">—</td></tr>`
+    ? `<tr><td colspan="4" style="padding:8px;border:0.5px solid #e4e4e7;color:#a1a1aa;text-align:center">—</td></tr>`
     : updateLog.map((u, i) => `
-      <tr style="background:${i%2===0?'#fff':'#f8fafc'}">
-        <td style="padding:4px 8px;border:0.5px solid #e2e8f0;color:#64748b">${u.date||''} ${u.time||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e2e8f0;color:#0f172a">${u.by||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e2e8f0;color:#0f172a">${u.text||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e2e8f0;color:#0f172a">${STATUS_LABEL[u.status]||u.status||'—'}</td>
+      <tr style="background:${i%2===0?'#fff':'#fafafa'}">
+        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#71717a">${u.date||''} ${u.time||''}</td>
+        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#09090b">${u.by||''}</td>
+        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#09090b">${u.text||''}</td>
+        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#09090b">${STATUS_LABEL[u.status]||u.status||'—'}</td>
       </tr>`).join('') + (updateLog.length < 3
-        ? Array(3 - updateLog.length).fill('<tr><td colspan="4" style="padding:10px 8px;border:0.5px solid #e2e8f0"> </td></tr>').join('')
+        ? Array(3 - updateLog.length).fill('<tr><td colspan="4" style="padding:10px 8px;border:0.5px solid #e4e4e7"> </td></tr>').join('')
         : '');
 
 
@@ -41,7 +41,7 @@ function buildWorkOrderHTML(c, proj) {
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  body { font-family:'Noto Sans Thai',sans-serif; background:#fff; padding:14mm 14mm 60mm 14mm; font-size:11pt; color:#0f172a; min-height:297mm; position:relative; }
+  body { font-family:'Noto Sans Thai',sans-serif; background:#fff; padding:14mm 14mm 60mm 14mm; font-size:11pt; color:#09090b; min-height:297mm; position:relative; }
   @page { size:A4; margin:0; }
   @media print { body { padding:10mm 12mm; } .no-print { display:none !important; } }
   table { width:100%; border-collapse:collapse; }
@@ -50,8 +50,8 @@ function buildWorkOrderHTML(c, proj) {
 </head>
 <body>
 
-<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#f8fafc;padding:10px 16px;display:flex;gap:10px;border-bottom:1px solid #e2e8f0;z-index:99">
-  <button onclick="window.close()" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:inherit">← ปิด</button>
+<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#fafafa;padding:10px 16px;display:flex;gap:10px;border-bottom:1px solid #e4e4e7;z-index:99">
+  <button onclick="window.close()" style="background:#f4f4f5;border:1px solid #e4e4e7;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:inherit">← ปิด</button>
   <button onclick="window.print()" style="background:${PURPLE};border:none;border-radius:8px;padding:6px 18px;cursor:pointer;font-size:13px;font-family:inherit;color:#fff;margin-left:auto">🖨 พิมพ์ / Export PDF</button>
 </div>
 
@@ -61,7 +61,7 @@ function buildWorkOrderHTML(c, proj) {
   <div style="border-bottom:3px solid ${ORANGE};padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start">
     <div>
       <div style="font-size:18pt;font-weight:700;color:${PURPLE};margin-bottom:3px">บริษัท เมทเธียร์ จำกัด</div>
-      <div style="font-size:9pt;color:#64748b;line-height:1.6">
+      <div style="font-size:9pt;color:#71717a;line-height:1.6">
         สำนักงานใหญ่ศูนย์ปฏิบัติการ
         ซอยรามคำแหง 21 แยก 3 แขวงพลับพลา เขตวังทองหลาง กรุงเทพมหานคร 10312<br/>
         โทร 02 091 5599
@@ -69,8 +69,8 @@ function buildWorkOrderHTML(c, proj) {
     </div>
     <div style="text-align:right">
       <div style="background:${PURPLE};color:#fff;font-size:12pt;font-weight:700;padding:4px 14px;border-radius:6px;margin-bottom:6px;display:inline-block">ใบงาน (Work Order)</div>
-      <div style="font-size:9pt;color:#64748b">เลขที่: WO-${(c.id||'').toString().slice(-6)}</div>
-      <div style="font-size:9pt;color:#64748b">วันที่พิมพ์: ${fmtDate(today())}</div>
+      <div style="font-size:9pt;color:#71717a">เลขที่: WO-${(c.id||'').toString().slice(-6)}</div>
+      <div style="font-size:9pt;color:#71717a">วันที่พิมพ์: ${fmtDate(today())}</div>
     </div>
   </div>
 
@@ -78,29 +78,29 @@ function buildWorkOrderHTML(c, proj) {
   <table style="margin-bottom:14px;font-size:10pt">
     <tr>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;width:22%;border:0.5px solid ${ORANGE}">โครงการ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e2e8f0;width:28%">${proj?.name||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid #e4e4e7;width:28%">${proj?.name||'—'}</td>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;width:20%;border:0.5px solid ${ORANGE}">ไซต์/สถานที่</td>
-      <td style="padding:5px 8px;border:0.5px solid #e2e8f0">${c.site||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.site||'—'}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">ชื่องาน</td>
-      <td colspan="3" style="padding:5px 8px;border:0.5px solid #e2e8f0">${c.title||'—'}</td>
+      <td colspan="3" style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.title||'—'}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;border:0.5px solid ${ORANGE}">ประเภทงาน</td>
-      <td style="padding:5px 8px;border:0.5px solid #e2e8f0">${c.type||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.type||'—'}</td>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;border:0.5px solid ${ORANGE}">วันที่ดำเนินการ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e2e8f0">${fmtDate(c.date)}</td>
+      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${fmtDate(c.date)}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">ผู้ดำเนินการ</td>
-      <td colspan="3" style="padding:5px 8px;border:0.5px solid #e2e8f0">${techs.join(', ')||'—'}</td>
+      <td colspan="3" style="padding:5px 8px;border:0.5px solid #e4e4e7">${techs.join(', ')||'—'}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">สถานะ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e2e8f0">${STATUS_LABEL[c.status]||c.status||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${STATUS_LABEL[c.status]||c.status||'—'}</td>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">หมายเหตุ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e2e8f0">${c.note||''}</td>
+      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.note||''}</td>
     </tr>
   </table>
 
@@ -131,27 +131,27 @@ function buildWorkOrderHTML(c, proj) {
       </tr>
     </thead>
     <tbody>
-      <tr><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td></tr>
-      <tr style="background:#f8fafc"><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td></tr>
-      <tr><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td><td style="padding:14px 8px;border:0.5px solid #e2e8f0"> </td></tr>
+      <tr><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td></tr>
+      <tr style="background:#fafafa"><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td></tr>
+      <tr><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td></tr>
     </tbody>
   </table>
 
   <!-- สรุปผลการดำเนินงาน -->
   <div style="font-size:11pt;font-weight:700;color:${PURPLE};margin-bottom:8px;padding-bottom:3px;border-bottom:1.5px solid ${ORANGE}">สรุปผลการดำเนินงาน</div>
   <div style="margin-bottom:14px">
-    ${Array(6).fill('<div style="border-bottom:1px dashed #cbd5e1;margin-bottom:18px;height:18px"> </div>').join('')}
+    ${Array(6).fill('<div style="border-bottom:1px dashed #d4d4d8;margin-bottom:18px;height:18px"> </div>').join('')}
   </div>
 
   <!-- Signature -->
   <div style="position:absolute;bottom:14mm;left:14mm;right:14mm;display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div style="border:1.5px solid ${ORANGE};border-radius:6px;padding:10px 12px">
       <div style="font-size:10pt;color:#7C2D12;font-weight:600;margin-bottom:36px">ผู้ดำเนินการ / Technician</div>
-      <div style="border-top:0.5px solid #e2e8f0;padding-top:6px;font-size:9pt;color:#94a3b8">ลายเซ็น / วันที่</div>
+      <div style="border-top:0.5px solid #e4e4e7;padding-top:6px;font-size:9pt;color:#a1a1aa">ลายเซ็น / วันที่</div>
     </div>
     <div style="border:1.5px solid ${PURPLE};border-radius:6px;padding:10px 12px">
       <div style="font-size:10pt;color:${PURPLE};font-weight:600;margin-bottom:36px">ผู้รับงาน / Customer</div>
-      <div style="border-top:0.5px solid #e2e8f0;padding-top:6px;font-size:9pt;color:#94a3b8">ลายเซ็น / วันที่</div>
+      <div style="border-top:0.5px solid #e4e4e7;padding-top:6px;font-size:9pt;color:#a1a1aa">ลายเซ็น / วันที่</div>
     </div>
   </div>
 
@@ -175,7 +175,7 @@ export default function WorkOrderModal({ c, proj, onClose }) {
   }
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(15,23,42,.6)",
+    <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.6)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}
       onClick={onClose}>
       <div style={{ background:t.card,borderRadius:16,padding:24,maxWidth:360,width:"100%",

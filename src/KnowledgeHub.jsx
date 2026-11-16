@@ -19,9 +19,9 @@ export const KB_CATEGORIES = [
   { key: "Network",        icon: "🌐", color: "#EA580C" },
   { key: "Access Control", icon: "🚪", color: "#7C3AED" },
   { key: "Smart Pole",     icon: "🗼", color: "#0891B2" },
-  { key: "Software อื่นๆ",  icon: "💻", color: "#475569" },
+  { key: "Software อื่นๆ",  icon: "💻", color: "#52525b" },
   { key: "Hardware",       icon: "🔧", color: "#92400E" },
-  { key: "อื่นๆ",           icon: "💡", color: "#64748B" },
+  { key: "อื่นๆ",           icon: "💡", color: "#71717a" },
 ];
 const catInfo = (k) => KB_CATEGORIES.find((x) => x.key === k) || KB_CATEGORIES[KB_CATEGORIES.length - 1];
 
@@ -85,7 +85,7 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(15,23,42,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}
+    <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}
       onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 600, maxHeight: "94vh",
         overflowY: "auto", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
@@ -352,7 +352,7 @@ export default function KnowledgeHub({ onBack, currentUser }) {
       )}
 
       {confirmId && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(15,23,42,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: c.card, borderRadius: 16, padding: 22, maxWidth: 320, width: "100%", textAlign: "center" }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: c.text900, marginBottom: 6 }}>ลบบทความนี้?</div>
             <div style={{ fontSize: 13, color: c.text500, marginBottom: 18 }}>ลบแล้วกู้คืนไม่ได้</div>

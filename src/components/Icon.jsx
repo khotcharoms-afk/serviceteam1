@@ -22,6 +22,8 @@ const PATHS = {
   leave: "M9 4h6M8 4h8v16H8zM11 9h2M10 13h4",
   x: "M18 6 6 18M6 6l12 12",
   plus: "M12 5v14M5 12h14",
+  download: "M12 4v12m0 0-4-4m4 4 4-4M4 20h16",
+  sparkle: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z",
 };
 export default function Icon({ name, size = 16, stroke = 1.75 }) {
   return (

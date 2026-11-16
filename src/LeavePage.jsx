@@ -147,22 +147,22 @@ export default function LeavePage({ onBack, currentUser, users }) {
   );
 
   const inputStyle = {
-    border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 10px",
-    fontSize:12, fontFamily:"inherit", background:"#f8fafc", outline:"none",
+    border:"1px solid #e4e4e7", borderRadius:8, padding:"6px 10px",
+    fontSize:12, fontFamily:"inherit", background:"#fafafa", outline:"none",
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f8fafc", fontFamily:"'Noto Sans Thai',sans-serif" }}>
+    <div style={{ minHeight:"100vh", background:"#fafafa", fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
 
       {/* Header */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"14px 20px",
+      <div style={{ background:"#fff", borderBottom:"1px solid #e4e4e7", padding:"14px 20px",
         display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"#f1f5f9", border:"none", borderRadius:8,
-          padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit", color:"#475569", fontWeight:600 }}>
+        <button onClick={onBack} style={{ background:"#f4f4f5", border:"none", borderRadius:8,
+          padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit", color:"#52525b", fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16, fontWeight:600, color:"#0f172a" }}>📋 ใบลา</div>
+        <div style={{ fontSize:16, fontWeight:600, color:"#09090b" }}>📋 ใบลา</div>
         <button onClick={()=>setShowModal(true)} style={{ marginLeft:"auto",
           background:"#2563eb", border:"none", color:"#fff", borderRadius:8,
           padding:"7px 14px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
@@ -182,28 +182,28 @@ export default function LeavePage({ onBack, currentUser, users }) {
           });
           if (Object.keys(summary).length === 0) return null;
           return (
-            <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0",
+            <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e4e4e7",
               padding:"14px 16px", marginBottom:16 }}>
-              <div style={{ fontSize:11, color:"#94a3b8", fontWeight:700, marginBottom:10,
+              <div style={{ fontSize:11, color:"#a1a1aa", fontWeight:700, marginBottom:10,
                 textTransform:"uppercase", letterSpacing:1 }}>สรุปวันลา</div>
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead>
-                    <tr style={{ background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
+                    <tr style={{ background:"#fafafa", borderBottom:"1px solid #e4e4e7" }}>
                       {["ชื่อ","ลาพักร้อน","ลากิจ","ลาป่วย","อื่นๆ"].map(h=>(
                         <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:11,
-                          color:"#64748b", fontWeight:700 }}>{h}</th>
+                          color:"#71717a", fontWeight:700 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(summary).map(([name, s]) => (
-                      <tr key={name} style={{ borderBottom:"1px solid #f1f5f9" }}>
-                        <td style={{ padding:"8px 12px", fontWeight:600, color:"#0f172a" }}>{name}</td>
+                      <tr key={name} style={{ borderBottom:"1px solid #f4f4f5" }}>
+                        <td style={{ padding:"8px 12px", fontWeight:600, color:"#09090b" }}>{name}</td>
                         <td style={{ padding:"8px 12px", color:"#2563eb" }}>{s.vacation||0} วัน</td>
                         <td style={{ padding:"8px 12px", color:"#7c3aed" }}>{s.personal||0} วัน</td>
                         <td style={{ padding:"8px 12px", color:"#dc2626" }}>{s.sick||0} วัน</td>
-                        <td style={{ padding:"8px 12px", color:"#475569" }}>{s.other||0} วัน</td>
+                        <td style={{ padding:"8px 12px", color:"#52525b" }}>{s.other||0} วัน</td>
                       </tr>
                     ))}
                   </tbody>
@@ -215,7 +215,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
 
         {/* Filter */}
         <div style={{ background:"#fff", borderRadius:12, padding:"12px 16px",
-          border:"1px solid #e2e8f0", marginBottom:16,
+          border:"1px solid #e4e4e7", marginBottom:16,
           display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
           {isAdmin && (
             <select value={filterName} onChange={e=>setFilterName(e.target.value)} style={inputStyle}>
@@ -223,14 +223,14 @@ export default function LeavePage({ onBack, currentUser, users }) {
               {names.map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           )}
-          <span style={{ fontSize:12, color:"#94a3b8", marginLeft:"auto" }}>{filtered.length} รายการ</span>
+          <span style={{ fontSize:12, color:"#a1a1aa", marginLeft:"auto" }}>{filtered.length} รายการ</span>
         </div>
 
         {/* List */}
         {loading ? (
-          <div style={{ textAlign:"center", color:"#94a3b8", padding:48 }}>กำลังโหลด...</div>
+          <div style={{ textAlign:"center", color:"#a1a1aa", padding:48 }}>กำลังโหลด...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign:"center", color:"#cbd5e1", padding:48, fontSize:14 }}>
+          <div style={{ textAlign:"center", color:"#d4d4d8", padding:48, fontSize:14 }}>
             ยังไม่มีใบลา
           </div>
         ) : (
@@ -239,17 +239,17 @@ export default function LeavePage({ onBack, currentUser, users }) {
               const typeLabel = r.leaveType==="other" ? (r.otherType||"อื่นๆ") : LEAVE_LABEL[r.leaveType]||r.leaveType;
               return (
                 <div key={r.id} style={{ background:"#fff", borderRadius:12,
-                  border:"1px solid #e2e8f0", padding:"14px 16px" }}>
+                  border:"1px solid #e4e4e7", padding:"14px 16px" }}>
                   <div style={{ marginBottom:8 }}>
-                    <div style={{ fontSize:14, fontWeight:700, color:"#0f172a" }}>{r.name}</div>
-                    <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:"#09090b" }}>{r.name}</div>
+                    <div style={{ fontSize:12, color:"#71717a", marginTop:2 }}>
                       {typeLabel} · {r.days} {r.leaveUnit==="hour"?"ชม.":"วัน"} · {r.dateFrom} ถึง {r.dateTo}
                     </div>
-                    {r.reason && <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>เหตุผล: {r.reason}</div>}
+                    {r.reason && <div style={{ fontSize:12, color:"#a1a1aa", marginTop:2 }}>เหตุผล: {r.reason}</div>}
                   </div>
                   <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                     <button onClick={()=>printLeave(r, logoData, users, records)}
-                      style={{ background:"#f8fafc", border:"1px solid #e2e8f0", color:"#475569",
+                      style={{ background:"#fafafa", border:"1px solid #e4e4e7", color:"#52525b",
                         borderRadius:7, padding:"5px 12px", fontSize:12, cursor:"pointer",
                         fontFamily:"inherit", fontWeight:600 }}>
                       🖨 Export PDF

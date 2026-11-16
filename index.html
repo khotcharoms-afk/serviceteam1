@@ -23,6 +23,13 @@
       button, input, textarea, select { font-family: inherit; font-variant-numeric: tabular-nums; }
       :focus-visible { outline: 2px solid #a1a1aa; outline-offset: 2px; }
       button { transition: background-color .15s ease-out, border-color .15s ease-out, color .15s ease-out, opacity .15s ease-out; }
+      /* ตัวโหลดแบบ pixel-grid + ข้อความ shimmer (Beautiful UI) */
+      .sl-pixels { display:grid; grid-template-columns:repeat(3,5px); gap:3px; }
+      .sl-pixels i { width:5px; height:5px; border-radius:1px; background:#71717a; animation:sl-px 1.2s infinite; }
+      @keyframes sl-px { 0%,100% { opacity:.15 } 50% { opacity:1 } }
+      .sl-shimmer { background:linear-gradient(90deg,#a1a1aa 0%,#52525b 50%,#a1a1aa 100%); background-size:200% 100%;
+        -webkit-background-clip:text; background-clip:text; color:transparent; animation:sl-sh 2s linear infinite; }
+      @keyframes sl-sh { from { background-position:100% 0 } to { background-position:-100% 0 } }
       @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
     </style>
     <title>ServiceLog</title>

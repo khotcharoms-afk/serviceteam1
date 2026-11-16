@@ -113,22 +113,22 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
     }, editRecord?.id||null);
   }
 
-  const IS = { width:"100%", border:"1px solid #e2e8f0", borderRadius:8,
-    padding:"8px 12px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#f8fafc" };
-  const LB = { fontSize:11, color:"#94a3b8", fontWeight:700, textTransform:"uppercase",
+  const IS = { width:"100%", border:"1px solid #e4e4e7", borderRadius:8,
+    padding:"8px 12px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#fafafa" };
+  const LB = { fontSize:11, color:"#a1a1aa", fontWeight:700, textTransform:"uppercase",
     letterSpacing:.5, marginBottom:4, display:"block" };
   const canSave = !saving && dateIn && timeIn && timeOut && descOk && name.trim();
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
       <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:540,
         maxHeight:"92vh",overflowY:"auto",padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>⏰ ใบ OR - บันทึก OT</h2>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#09090b" }}>⏰ ใบ OR - บันทึก OT</h2>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
 
@@ -178,7 +178,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
         <div style={{ marginBottom:14 }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
             <label style={{ ...LB,marginBottom:0 }}>ชั่วโมง OT</label>
-            <label style={{ fontSize:11,color:"#94a3b8",cursor:"pointer",display:"flex",alignItems:"center",gap:4 }}>
+            <label style={{ fontSize:11,color:"#a1a1aa",cursor:"pointer",display:"flex",alignItems:"center",gap:4 }}>
               <input type="checkbox" checked={manualHours} onChange={e=>setManualHours(e.target.checked)}
                 style={{ accentColor:"#F97316" }}/>
               กรอกเอง
@@ -196,35 +196,35 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
         <div style={{ marginBottom:14 }}>
           <label style={LB}>ชื่อโครงการ / Project Name</label>
           <div style={{ position:"relative" }}>
-            <div style={{ display:"flex",alignItems:"center",border:"1px solid #e2e8f0",
-              borderRadius:8,background:"#f8fafc",overflow:"hidden" }}>
+            <div style={{ display:"flex",alignItems:"center",border:"1px solid #e4e4e7",
+              borderRadius:8,background:"#fafafa",overflow:"hidden" }}>
               <input style={{ flex:1,border:"none",background:"transparent",padding:"8px 12px",
-                fontSize:13,fontFamily:"inherit",outline:"none",color:"#1e293b" }}
+                fontSize:13,fontFamily:"inherit",outline:"none",color:"#27272a" }}
                 placeholder="ค้นหาโครงการ..."
                 value={projDropdown?projSearch:(selProj?.name||"")}
                 onFocus={()=>{ setProjDropdown(true); setProjSearch(""); }}
                 onChange={e=>{ setProjSearch(e.target.value); setProjDropdown(true); }}/>
               {selProj && !projDropdown && (
                 <button type="button" onClick={()=>{ pickProject(null); setProjSearch(""); }}
-                  style={{ background:"none",border:"none",color:"#94a3b8",cursor:"pointer",padding:"0 10px",fontSize:14 }}>✕</button>
+                  style={{ background:"none",border:"none",color:"#a1a1aa",cursor:"pointer",padding:"0 10px",fontSize:14 }}>✕</button>
               )}
             </div>
             {projDropdown && (
               <div style={{ position:"absolute",top:"100%",left:0,right:0,zIndex:100,
-                background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
+                background:"#fff",border:"1px solid #e4e4e7",borderRadius:8,
                 boxShadow:"0 8px 24px rgba(0,0,0,.12)",maxHeight:200,overflowY:"auto",marginTop:4 }}>
                 {filteredProjs.length===0
-                  ? <div style={{ padding:"12px",fontSize:13,color:"#94a3b8",textAlign:"center" }}>ไม่พบโครงการ</div>
+                  ? <div style={{ padding:"12px",fontSize:13,color:"#a1a1aa",textAlign:"center" }}>ไม่พบโครงการ</div>
                   : filteredProjs.map(p=>(
                     <div key={p.id} onMouseDown={()=>{ pickProject(p); setProjDropdown(false); setProjSearch(""); }}
                       style={{ padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
-                        background:projId===p.id?"#fff7ed":"transparent",borderBottom:"1px solid #f8fafc" }}
-                      onMouseEnter={e=>{ if(projId!==p.id) e.currentTarget.style.background="#f8fafc"; }}
+                        background:projId===p.id?"#fff7ed":"transparent",borderBottom:"1px solid #fafafa" }}
+                      onMouseEnter={e=>{ if(projId!==p.id) e.currentTarget.style.background="#fafafa"; }}
                       onMouseLeave={e=>{ if(projId!==p.id) e.currentTarget.style.background="transparent"; }}>
-                      <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                      <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#a1a1aa",flexShrink:0 }}/>
                       <div style={{ flex:1,minWidth:0 }}>
-                        <div style={{ fontSize:13,fontWeight:600,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
-                        {p.code&&<div style={{ fontSize:11,color:"#94a3b8" }}>{p.code}</div>}
+                        <div style={{ fontSize:13,fontWeight:600,color:"#09090b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
+                        {p.code&&<div style={{ fontSize:11,color:"#a1a1aa" }}>{p.code}</div>}
                       </div>
                       {projId===p.id&&<span style={{ color:"#f97316" }}>✓</span>}
                     </div>
@@ -250,9 +250,9 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
                 <button key={s} type="button" onClick={()=>setSituation(situation===s?"":s)}
                   style={{ flex:1,padding:"8px",borderRadius:8,fontSize:12,fontWeight:700,
                     fontFamily:"inherit",cursor:"pointer",
-                    background:situation===s?"#F97316":"#f8fafc",
-                    border:`1px solid ${situation===s?"#F97316":"#e2e8f0"}`,
-                    color:situation===s?"#fff":"#64748b" }}>
+                    background:situation===s?"#F97316":"#fafafa",
+                    border:`1px solid ${situation===s?"#F97316":"#e4e4e7"}`,
+                    color:situation===s?"#fff":"#71717a" }}>
                   {s}
                 </button>
               ))}
@@ -272,14 +272,14 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
                     onClick={()=>setPresetId(p.id)}
                     onKeyDown={e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); setPresetId(p.id); } }}
                     style={{ display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer",borderRadius:10,padding:"10px 12px",
-                      border:`1.5px solid ${on?"#F97316":"#e2e8f0"}`,background:on?"#fff7ed":"#fff" }}>
+                      border:`1.5px solid ${on?"#F97316":"#e4e4e7"}`,background:on?"#fff7ed":"#fff" }}>
                     <span style={{ width:16,height:16,borderRadius:"50%",flexShrink:0,marginTop:2,
-                      border:`2px solid ${on?"#F97316":"#cbd5e1"}`,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      border:`2px solid ${on?"#F97316":"#d4d4d8"}`,display:"flex",alignItems:"center",justifyContent:"center" }}>
                       {on && <span style={{ width:8,height:8,borderRadius:"50%",background:"#F97316" }}/>}
                     </span>
                     <div style={{ minWidth:0 }}>
-                      <div style={{ fontSize:13,fontWeight:700,color:"#0f172a" }}>แบบ {p.id} · {p.label}</div>
-                      <div style={{ fontSize:12,color:"#64748b",marginTop:2,lineHeight:1.5 }}>{p.text}</div>
+                      <div style={{ fontSize:13,fontWeight:700,color:"#09090b" }}>แบบ {p.id} · {p.label}</div>
+                      <div style={{ fontSize:12,color:"#71717a",marginTop:2,lineHeight:1.5 }}>{p.text}</div>
                     </div>
                   </div>
                 );
@@ -289,7 +289,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
           ) : (
             <textarea value={desc} onChange={e=>setDesc(e.target.value)}
               placeholder="อธิบายงานที่ทำในช่วง OT..." rows={4}
-              style={{ ...IS,resize:"vertical",borderColor:descTooShort?"#f87171":"#e2e8f0" }}/>
+              style={{ ...IS,resize:"vertical",borderColor:descTooShort?"#f87171":"#e4e4e7" }}/>
           )}
           {descTooShort && <div style={{ fontSize:11,color:"#ef4444",marginTop:3 }}>รายละเอียดต้องยาวอย่างน้อย 10 ตัวอักษร</div>}
         </div>
@@ -328,7 +328,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
         )}
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
-          <button onClick={onClose} style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+          <button onClick={onClose} style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
             borderRadius:10,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>

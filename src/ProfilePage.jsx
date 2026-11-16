@@ -272,7 +272,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                     <div key={i} style={{ position:"relative", border:`1px solid ${c.border}`, borderRadius:8,
                       background:"#fff", padding:6, height:64, display:"flex", alignItems:"center" }}>
                       <img src={s} alt={`ลายเซ็น ${i+1}`} style={{ maxHeight:50, maxWidth:140 }}/>
-                      <span style={{ position:"absolute", left:4, top:2, fontSize:10, color:"#94a3b8" }}>{i+1}</span>
+                      <span style={{ position:"absolute", left:4, top:2, fontSize:10, color:"#a1a1aa" }}>{i+1}</span>
                       <button onClick={()=>saveSignatures(signatures.filter((_,j)=>j!==i)).catch(e=>setSigMsg("❌ "+e.message))}
                         title="ลบ" style={{ position:"absolute", right:-6, top:-6, width:20, height:20, borderRadius:"50%",
                           border:"none", background:"#ef4444", color:"#fff", fontSize:11, cursor:"pointer" }}>✕</button>

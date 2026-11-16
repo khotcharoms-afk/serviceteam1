@@ -1,4 +1,5 @@
 import Icon from "./components/Icon.jsx";
+import { FullLoader } from "./UI.jsx";
 import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
@@ -102,13 +103,13 @@ export default function App({ currentUser, onSignOut }) {
   useEffect(() => {
     if (!loading && view !== "overview" && projects.length && !projects.some((p) => p.id === view)) setView("overview");
   }, [loading, projects, view]);
-  const PageLoader = () => (<div style={{ minHeight:"100vh",background:themeC.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Sans Thai',sans-serif",color:themeC.text400,fontSize:14 }}><div style={{ textAlign:"center" }}><div style={{ fontSize:32,color:themeC.text400,marginBottom:10 }}>◈</div>กำลังโหลด...</div></div>);
+  const PageLoader = () => <FullLoader bg={themeC.bg}/>;
 
   // ตั้งสีให้ input/select/textarea ทั้งแอป (utils.js IS() อ่านตัวแปรพวกนี้)
   // และบอกเบราว์เซอร์ว่าหน้านี้โหมดไหน — คุมป๊อปอัป <select>, ปฏิทิน date picker, scrollbar
   useEffect(() => {
     const r = document.documentElement;
-    r.style.setProperty("--input-bg", darkMode ? "#0f172a" : "#fff");
+    r.style.setProperty("--input-bg", darkMode ? "#09090b" : "#fff");
     r.style.setProperty("--input-text", themeC.text900);
     r.style.setProperty("--input-border", themeC.border);
     r.style.colorScheme = darkMode ? "dark" : "light";
@@ -700,15 +701,7 @@ export default function App({ currentUser, onSignOut }) {
     expiringSoon:scopeCases.filter(c=>soonestEnd(c)<=90).length,
   };
 
-  if(loading) return (
-    <div style={{ minHeight:"100vh",background:themeC.bg,display:"flex",alignItems:"center",
-      justifyContent:"center",fontFamily:"'Noto Sans Thai',sans-serif",color:themeC.text400,fontSize:14 }}>
-      <div style={{ textAlign:"center" }}>
-        <div style={{ fontSize:32,color:"#94a3b8",marginBottom:10 }}>◈</div>
-        กำลังโหลด...
-      </div>
-    </div>
-  );
+  if(loading) return <FullLoader bg={themeC.bg} text="กำลังโหลดเคส"/>;
 
   if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></Suspense></ThemeContext.Provider>;
   // Onsite / ใบลา เปิดเฉพาะ admin/dev — บันทึก OT เปิดให้ทุกคน (ผู้ใช้ทั่วไปเห็นเฉพาะรายการตัวเอง)
@@ -830,7 +823,7 @@ export default function App({ currentUser, onSignOut }) {
             box-shadow:0 12px 40px rgba(0,0,0,.15); display:flex; flex-direction:column; overflow:hidden; }
         }
         @media (max-width: 767px){
-          .notif-backdrop{ background:rgba(15,23,42,.55); backdrop-filter:blur(4px);
+          .notif-backdrop{ background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
             display:flex; align-items:flex-end; justify-content:center; }
           .notif-panel{ background:${themeC.card}; border-radius:20px 20px 0 0; width:100%;
             height:75vh; display:flex; flex-direction:column; box-shadow:0 -8px 40px rgba(0,0,0,.2); }
@@ -991,7 +984,7 @@ export default function App({ currentUser, onSignOut }) {
                       borderBottom:`1px solid ${themeC.borderSoft}` }}
                     onMouseEnter={e=>e.currentTarget.style.background=themeC.bg}
                     onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                    <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                    <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#a1a1aa",flexShrink:0 }}/>
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ fontSize:13,fontWeight:600,color:themeC.text900,
                         overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</div>
@@ -1006,91 +999,81 @@ export default function App({ currentUser, onSignOut }) {
             );
           })()}
         </div>
-        <div style={{ display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center" }}>
-          <span style={{ fontSize:12,color:themeC.text500,fontWeight:600,whiteSpace:"nowrap" }}>ช่วงวันที่</span>
-          <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
-            style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,color:themeC.text900,padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" }}/>
-          <span style={{ fontSize:12,color:themeC.text400 }}>ถึง</span>
-          <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
-            style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,color:themeC.text900,padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" }}/>
-          <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
-            {[
-              { label:"วันนี้",    fn:()=>{ const t=today(); setDateFrom(t); setDateTo(t); },
-                active:()=>{ const t=today(); return dateFrom===t&&dateTo===t; }},
-              { label:"7 วัน",    fn:()=>{ const t=today(); setDateFrom(addDays(t,-6)); setDateTo(t); },
-                active:()=>{ const t=today(); return dateFrom===addDays(t,-6)&&dateTo===t; }},
-              { label:"30 วัน",   fn:()=>{ const t=today(); setDateFrom(addDays(t,-29)); setDateTo(t); },
-                active:()=>{ const t=today(); return dateFrom===addDays(t,-29)&&dateTo===t; }},
-              { label:"เดือนนี้", fn:()=>{ const n=new Date(); setDateFrom(n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"); setDateTo(today()); },
-                active:()=>{ const n=new Date(); return dateFrom===n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"&&dateTo===today(); }},
-            ].map(p=>{
-              const isActive = p.active();
-              return (
-                <button key={p.label} onClick={p.fn}
-                  style={{ background:isActive?themeC.ink:themeC.card,
-                    border:`1px solid ${isActive?themeC.ink:themeC.border}`,
-                    color:isActive?themeC.onInk:themeC.text500,
-                    borderRadius:7,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>
-                  {p.label}
-                </button>
-              );
-            })}
-            {(dateFrom||dateTo)&&(
-              <button onClick={()=>{ setDateFrom(""); setDateTo(""); }}
-                style={{ background:"transparent",border:"none",color:themeC.text500,textDecoration:"underline",
-                  borderRadius:7,padding:"5px 6px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ล้าง</button>
-            )}
-          </div>
-        </div>
-        <div style={{ display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap" }}>
-          <span style={{ fontSize:12,color:themeC.text500,fontWeight:600,whiteSpace:"nowrap" }}>ผู้ดำเนินการ</span>
-          <select value={filterTech} onChange={e=>setFilterTech(e.target.value)}
-            style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,color:themeC.text900,padding:"7px 11px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer",minWidth:160 }}>
-            <option value="all">ทั้งหมด</option>
-            {users.filter(u=>u.role!=="pending").sort((a,b)=>a.name.localeCompare(b.name)).map(u=>(
-              <option key={u.id} value={u.name}>{u.name}{u.role==="admin"?" (Admin)":""}</option>
-            ))}
-          </select>
-          {filterTech!=="all"&&(
-            <span style={{ border:`1px solid ${themeC.border}`,color:themeC.text900,borderRadius:7,padding:"3px 10px",fontSize:12,fontWeight:600,display:"inline-flex",alignItems:"center",gap:6 }}>
-              {filterTech}
-              <button onClick={()=>setFilterTech("all")} style={{ background:"none",border:"none",color:themeC.text500,cursor:"pointer",fontSize:13,padding:0,lineHeight:1 }}>×</button>
-            </span>
-          )}
-        </div>
-        <div style={{ display:"flex",gap:8,marginBottom:16,overflowX:"auto",paddingBottom:4 }}>
-          {[{value:"all",label:"ทั้งหมด"},...STATUS_OPTS].map(s=>(
-            <button key={s.value} onClick={()=>setFilterStat(s.value)}
-              style={{ background:filterStat===s.value?themeC.ink:themeC.card,
-                border:`1px solid ${filterStat===s.value?themeC.ink:themeC.border}`,
-                color:filterStat===s.value?themeC.onInk:themeC.text500,
-                borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,
-                cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap",flexShrink:0 }}>
-              {s.label}
-            </button>
-          ))}
-        </div>
+        {/* ตัวกรอง: แถบเดียว ความสูง 32 เท่ากันทุกช่อง */}
+        {(()=>{
+          const ctl = { height:32,background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,color:themeC.text900,
+            padding:"0 12px",fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer" };
+          const presets = [
+            { label:"วันนี้",    fn:()=>{ const t=today(); setDateFrom(t); setDateTo(t); },
+              active:()=>{ const t=today(); return dateFrom===t&&dateTo===t; }},
+            { label:"7 วัน",    fn:()=>{ const t=today(); setDateFrom(addDays(t,-6)); setDateTo(t); },
+              active:()=>{ const t=today(); return dateFrom===addDays(t,-6)&&dateTo===t; }},
+            { label:"30 วัน",   fn:()=>{ const t=today(); setDateFrom(addDays(t,-29)); setDateTo(t); },
+              active:()=>{ const t=today(); return dateFrom===addDays(t,-29)&&dateTo===t; }},
+            { label:"เดือนนี้", fn:()=>{ const n=new Date(); setDateFrom(n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"); setDateTo(today()); },
+              active:()=>{ const n=new Date(); return dateFrom===n.getFullYear()+"-"+(String(n.getMonth()+1).padStart(2,"0"))+"-01"&&dateTo===today(); }},
+          ];
+          const seg = (items, isOn, onPick) => (
+            <div style={{ display:"inline-flex",alignItems:"center",height:32,background:themeC.borderSoft,borderRadius:8,padding:2,gap:2,flexShrink:0 }}>
+              {items.map(it=>{ const on=isOn(it); return (
+                <button key={it.key} onClick={()=>onPick(it)}
+                  style={{ height:28,padding:"0 12px",borderRadius:6,border:"none",cursor:"pointer",fontFamily:"inherit",
+                    fontSize:13,fontWeight:500,whiteSpace:"nowrap",
+                    background:on?themeC.card:"transparent",color:on?themeC.text900:themeC.text500,
+                    boxShadow:on?"0 1px 2px rgba(0,0,0,.08)":"none" }}>{it.label}</button>
+              ); })}
+            </div>
+          );
+          const hasFilter = dateFrom||dateTo||filterTech!=="all";
+          return (
+            <div style={{ marginBottom:16 }}>
+              <div style={{ display:"flex",gap:8,overflowX:"auto",paddingBottom:4,marginBottom:8 }}>
+                {seg([{key:"all",label:"ทั้งหมด"},...STATUS_OPTS.map(x=>({key:x.value,label:x.label}))],
+                  it=>filterStat===it.key, it=>setFilterStat(it.key))}
+              </div>
+              <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
+                <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} aria-label="ตั้งแต่วันที่" style={ctl}/>
+                <span style={{ fontSize:13,color:themeC.text400 }}>–</span>
+                <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} aria-label="ถึงวันที่" style={ctl}/>
+                {seg(presets.map(x=>({...x,key:x.label})), it=>it.active(), it=>it.fn())}
+                <select value={filterTech} onChange={e=>setFilterTech(e.target.value)} aria-label="ผู้ดำเนินการ"
+                  style={{ ...ctl,minWidth:180,color:filterTech==="all"?themeC.text500:themeC.text900 }}>
+                  <option value="all">ผู้ดำเนินการ: ทุกคน</option>
+                  {users.filter(u=>u.role!=="pending").sort((a,b)=>a.name.localeCompare(b.name)).map(u=>(
+                    <option key={u.id} value={u.name}>{u.name}{u.role==="admin"?" (Admin)":""}</option>
+                  ))}
+                </select>
+                {hasFilter && (
+                  <button onClick={()=>{ setDateFrom(""); setDateTo(""); setFilterTech("all"); }}
+                    style={{ height:32,background:"transparent",border:"none",color:themeC.text500,borderRadius:8,
+                      padding:"0 8px",fontSize:13,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:4 }}>
+                    <Icon name="x" size={14}/>ล้างตัวกรอง
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
         {view==="overview" && projects.length>0 && (
           <div style={{ marginBottom:16 }}>
-            <div style={{ fontSize:11,color:themeC.text400,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>โครงการทั้งหมด</div>
-            <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
+            <div style={{ fontSize:14,color:themeC.text900,fontWeight:600,marginBottom:8 }}>โครงการ <span style={{ color:themeC.text400,fontWeight:400 }}>{projects.length}</span></div>
+            <div style={{ display:"flex",gap:8,overflowX:"auto",paddingBottom:4 }}>
               {projects.map(p=>{
                 const pl=cases.filter(c=>c.projectId===p.id);
                 return (
                   <div key={p.id} onClick={()=>setView(p.id)}
-                    style={{ background:themeC.card,borderStyle:"solid",borderWidth:"1px 1px 1px 3px",
-                      borderColor:`${themeC.border} ${themeC.border} ${themeC.border} ${p.color||themeC.border}`,borderRadius:10,
-                      padding:"12px 14px",cursor:"pointer",flexShrink:0,width:160,height:96,
+                    onMouseEnter={e=>e.currentTarget.style.borderColor=themeC.text400}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor=themeC.border}
+                    style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,
+                      padding:12,cursor:"pointer",flexShrink:0,width:176,height:96,
                       display:"flex",flexDirection:"column",justifyContent:"space-between" }}>
-                    <div style={{ fontSize:13,fontWeight:700,color:themeC.text900,lineHeight:1.3,
-                      overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical" }}>{p.name}</div>
-                    <div style={{ display:"flex",gap:12 }}>
-                      {[{l:"ทั้งหมด",v:pl.length},{l:"เสร็จ",v:pl.filter(x=>x.status==="done").length}].map(x=>(
-                        <div key={x.l}>
-                          <div style={{ fontSize:18,fontWeight:700,color:themeC.text900,lineHeight:1 }}>{x.v}</div>
-                          <div style={{ fontSize:10,color:themeC.text400,marginTop:2 }}>{x.l}</div>
-                        </div>
-                      ))}
+                    <div style={{ display:"flex",gap:8,alignItems:"flex-start" }}>
+                      <span style={{ width:6,height:6,borderRadius:"50%",background:p.color||themeC.text400,flexShrink:0,marginTop:7 }}/>
+                      <div style={{ fontSize:13,fontWeight:500,color:themeC.text900,lineHeight:1.4,
+                        overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical" }}>{p.name}</div>
+                    </div>
+                    <div style={{ fontSize:12,color:themeC.text500,paddingLeft:14 }}>
+                      <span style={{ color:themeC.text900,fontWeight:600 }}>{pl.filter(x=>x.status==="done").length}</span>/{pl.length} เคสเสร็จ
                     </div>
                   </div>
                 );
@@ -1099,20 +1082,20 @@ export default function App({ currentUser, onSignOut }) {
           </div>
         )}
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10 }}>
-          <div style={{ fontSize:11,color:themeC.text400,fontWeight:700,letterSpacing:1,textTransform:"uppercase" }}>
-            เคส ({visibleCases.length})
+          <div style={{ fontSize:14,color:themeC.text900,fontWeight:600 }}>
+            เคส <span style={{ color:themeC.text400,fontWeight:400 }}>{visibleCases.length}</span>
           </div>
           {visibleCases.length>0&&(
             <button onClick={exportToExcel}
               style={{ background:themeC.card,border:`1px solid ${themeC.border}`,color:themeC.text900,
-                borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600,
-                cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5 }}>
-              Export Excel
+                borderRadius:8,height:32,padding:"0 12px",fontSize:13,fontWeight:500,
+                cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6 }}>
+              <Icon name="download" size={14}/>Export Excel
             </button>
           )}
         </div>
         {visibleCases.length===0 ? (
-          <div style={{ background:themeC.card,border:`1.5px solid ${themeC.border}`,borderRadius:14,padding:"48px 20px",textAlign:"center",color:themeC.text400 }}>
+          <div style={{ background:themeC.card,border:`1px dashed ${themeC.border}`,borderRadius:12,padding:"48px 24px",textAlign:"center",color:themeC.text500 }}>
             <div style={{ fontSize:14,marginBottom:12 }}>ยังไม่มีเคส</div>
             <button onClick={openAddCase} style={{ background:themeC.ink,border:"none",color:themeC.onInk,borderRadius:8,padding:"10px 20px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>+ บันทึกเคสแรก</button>
           </div>
@@ -1134,20 +1117,20 @@ export default function App({ currentUser, onSignOut }) {
             {totalPages > 1 && (
               <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:16,flexWrap:"wrap" }}>
                 <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                  style={{ background:themeC.card,border:`1.5px solid ${themeC.border}`,borderRadius:8,
-                    padding:"8px 14px",fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",
+                  style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,
+                    height:32,padding:"0 12px",fontSize:13,fontWeight:500,cursor:page===1?"default":"pointer",
                     color:page===1?themeC.text400:themeC.text500,fontFamily:"inherit" }}>←</button>
                 {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
                   <button key={p} onClick={()=>setPage(p)}
                     style={{ background:page===p?themeC.ink:themeC.card,
                       border:`1px solid ${page===p?themeC.ink:themeC.border}`,
-                      borderRadius:8,padding:"8px 13px",fontSize:13,fontWeight:600,
+                      borderRadius:8,height:32,padding:"0 12px",fontSize:13,fontWeight:500,
                       cursor:"pointer",color:page===p?themeC.onInk:themeC.text500,fontFamily:"inherit",
                       minWidth:38 }}>{p}</button>
                 ))}
                 <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                  style={{ background:themeC.card,border:`1.5px solid ${themeC.border}`,borderRadius:8,
-                    padding:"8px 14px",fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",
+                  style={{ background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,
+                    height:32,padding:"0 12px",fontSize:13,fontWeight:500,cursor:page===totalPages?"default":"pointer",
                     color:page===totalPages?themeC.text400:themeC.text500,fontFamily:"inherit" }}>→</button>
                 <span style={{ fontSize:12,color:themeC.text400,marginLeft:4 }}>หน้า {page}/{totalPages}</span>
               </div>
@@ -1159,10 +1142,10 @@ export default function App({ currentUser, onSignOut }) {
       {/* ผู้ช่วย AI — ปุ่มลอยมุมซ้ายล่าง + แผงแชทด้านซ้าย */}
       {!assistantOpen && !assistantHasChat && (
         <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:20,
-          background:"#18181b",border:"none",color:"#fff",
-          width:52,height:52,borderRadius:"50%",fontSize:24,cursor:"pointer",
-          boxShadow:"0 6px 20px rgba(107,33,168,.4)",zIndex:40,display:"flex",
-          alignItems:"center",justifyContent:"center",lineHeight:1 }}>🤖</button>
+          background:themeC.card,border:`1px solid ${themeC.border}`,color:themeC.text900,
+          height:40,padding:"0 16px 0 12px",borderRadius:20,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit",
+          boxShadow:"0 4px 16px rgba(0,0,0,.10)",zIndex:40,display:"flex",gap:8,
+          alignItems:"center",justifyContent:"center",lineHeight:1 }}><Icon name="sparkle" size={16}/>ผู้ช่วย AI</button>
       )}
       {assistantMounted && (
         <Suspense fallback={null}>
@@ -1176,7 +1159,7 @@ export default function App({ currentUser, onSignOut }) {
       <button onClick={openAddCase} style={{ position:"fixed",bottom:24,right:20,
         background:themeC.ink,border:"none",color:themeC.onInk,
         width:54,height:54,borderRadius:"50%",fontSize:26,cursor:"pointer",
-        boxShadow:"0 4px 14px rgba(15,23,42,.25)",zIndex:40,display:"flex",
+        boxShadow:"0 4px 14px rgba(0,0,0,.25)",zIndex:40,display:"flex",
         alignItems:"center",justifyContent:"center",lineHeight:1 }}>+</button>
 
       {/* MODALS */}
@@ -1204,7 +1187,7 @@ export default function App({ currentUser, onSignOut }) {
       )}
 
       {globalSearch && (
-        <div style={{ position:"fixed",inset:0,zIndex:800,background:"rgba(15,23,42,.6)",
+        <div style={{ position:"fixed",inset:0,zIndex:800,background:"rgba(0,0,0,.6)",
           display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"60px 16px 16px" }}
           onClick={()=>setGlobalSearch(false)}>
           <div style={{ background:themeC.card,borderRadius:16,width:"100%",maxWidth:620,
@@ -1212,7 +1195,7 @@ export default function App({ currentUser, onSignOut }) {
             boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
             onClick={e=>e.stopPropagation()}>
             {/* Search input */}
-            <div style={{ padding:"14px 16px",borderBottom:"1px solid #f1f5f9",display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ padding:"14px 16px",borderBottom:"1px solid #f4f4f5",display:"flex",alignItems:"center",gap:10 }}>
               <span style={{ fontSize:18,flexShrink:0 }}>🔍</span>
               <input autoFocus value={globalQ} onChange={e=>setGlobalQ(e.target.value)}
                 placeholder="ค้นหาเคส งาน Onsite โครงการ..."
@@ -1252,10 +1235,10 @@ export default function App({ currentUser, onSignOut }) {
                     <Section icon="📁" label="โครงการ" items={matchProjs} render={p=>(
                       <div key={p.id} onClick={()=>{ setView(p.id); setFilterStat("all"); setGlobalSearch(false); setGlobalQ(""); }}
                         style={{ padding:"10px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,
-                          borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                          borderBottom:"1px solid #fafafa" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                        <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#a1a1aa",flexShrink:0 }}/>
                         <div>
                           <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{p.name}</div>
                           {p.customer&&<div style={{ fontSize:11,color:themeC.text500 }}>👤 {p.customer}</div>}
@@ -1266,8 +1249,8 @@ export default function App({ currentUser, onSignOut }) {
                       const proj=projects.find(p=>p.id===c.projectId);
                       return (
                       <div key={c.id} onClick={()=>{ setDetailCase(c); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #fafafa" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{c.title}</div>
                         <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
@@ -1279,8 +1262,8 @@ export default function App({ currentUser, onSignOut }) {
                       const proj=projects.find(p=>p.id===t.projectId);
                       return (
                       <div key={t.id} onClick={()=>{ setTaskPage(true); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #fafafa" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{t.title}</div>
                         <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
@@ -1290,8 +1273,8 @@ export default function App({ currentUser, onSignOut }) {
                     );}}/>
                     <Section icon="📍" label="Onsite" items={matchOnsite} render={r=>(
                       <div key={r.id} onClick={()=>{ setOnsitePage(true); setGlobalSearch(false); setGlobalQ(""); }}
-                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #f8fafc" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+                        style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #fafafa" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{r.projectName||r.projectId}</div>
                         <div style={{ fontSize:11,color:themeC.text500,marginTop:2 }}>
@@ -1336,7 +1319,7 @@ export default function App({ currentUser, onSignOut }) {
           <div className="notif-panel" onClick={e=>e.stopPropagation()}>
             <div className="notif-handle"/>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"14px 18px 12px",borderBottom:"1px solid #f1f5f9",flexShrink:0 }}>
+              padding:"14px 18px 12px",borderBottom:"1px solid #f4f4f5",flexShrink:0 }}>
               <span style={{ fontSize:15,fontWeight:700,color:themeC.text900 }}>🔔 การแจ้งเตือน
                 {unreadCount>0&&<span style={{ background:"#ef4444",color:"#fff",borderRadius:20,
                   padding:"1px 7px",fontSize:11,fontWeight:700,marginLeft:8 }}>{unreadCount}</span>}
@@ -1356,7 +1339,7 @@ export default function App({ currentUser, onSignOut }) {
                 </div>
               ):notifications.map(n=>(
                 <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.type==="onsite"){ setOnsitePage(true); } else if(n.type==="task"){ setTaskPage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
-                  style={{ padding:"14px 18px",borderBottom:"1px solid #f8fafc",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
+                  style={{ padding:"14px 18px",borderBottom:"1px solid #fafafa",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
                     <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
                       background:n.type==="handover"?"#dbeafe":n.type==="leave"?"#f0fdf4":n.type==="onsite"?"#fff7ed":n.type==="task"?"#f5f3ff":"#f5f3ff",
@@ -1422,7 +1405,7 @@ export default function App({ currentUser, onSignOut }) {
         {onlineUsers.length===0 ? (
           <p style={{ color:themeC.text400,fontSize:14,textAlign:"center",padding:"20px 0" }}>ไม่มีใครออนไลน์อยู่ตอนนี้</p>
         ) : onlineUsers.map((u)=>(
-          <div key={u.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f1f5f9" }}>
+          <div key={u.id} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #f4f4f5" }}>
             <span style={{ width:8,height:8,borderRadius:"50%",background:"#16a34a",flexShrink:0 }}/>
             <div style={{ flex:1,minWidth:0 }}>
               <div style={{ fontSize:14,fontWeight:600,color:themeC.text900 }}>{u.name}</div>

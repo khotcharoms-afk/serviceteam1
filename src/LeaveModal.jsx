@@ -68,15 +68,15 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
   }
 
   const IS = (extra={}) => ({
-    width:"100%", border:"1px solid #e2e8f0", borderRadius:8,
+    width:"100%", border:"1px solid #e4e4e7", borderRadius:8,
     padding:"8px 12px", fontSize:13, fontFamily:"inherit",
-    outline:"none", background:"#f8fafc", boxSizing:"border-box", ...extra,
+    outline:"none", background:"#fafafa", boxSizing:"border-box", ...extra,
   });
-  const LB = { fontSize:11, color:"#94a3b8", fontWeight:700,
+  const LB = { fontSize:11, color:"#a1a1aa", fontWeight:700,
     textTransform:"uppercase", letterSpacing:.5, marginBottom:4, display:"block" };
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:520,
@@ -84,8 +84,8 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
         onClick={e=>e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#0f172a" }}>📋 ยื่นใบลา</h2>
-          <button onClick={onClose} style={{ background:"#f1f5f9",border:"none",color:"#64748b",
+          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#09090b" }}>📋 ยื่นใบลา</h2>
+          <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
 
@@ -103,8 +103,8 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
           <div style={{ display:"flex",flexWrap:"wrap",gap:8 }}>
             {LEAVE_TYPES.map(t => (
               <label key={t.id} style={{ display:"flex",alignItems:"center",gap:6,cursor:"pointer",
-                background: leaveType===t.id ? "#eff6ff" : "#f8fafc",
-                border:`1px solid ${leaveType===t.id ? "#bfdbfe" : "#e2e8f0"}`,
+                background: leaveType===t.id ? "#eff6ff" : "#fafafa",
+                border:`1px solid ${leaveType===t.id ? "#bfdbfe" : "#e4e4e7"}`,
                 borderRadius:8, padding:"6px 12px", fontSize:13 }}>
                 <input type="radio" name="leaveType" value={t.id}
                   checked={leaveType===t.id} onChange={()=>setLeaveType(t.id)}
@@ -165,8 +165,8 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
           <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
             {DAYS_TH.map(d => (
               <label key={d} style={{ display:"flex",alignItems:"center",gap:4,cursor:"pointer",
-                background: offDays.includes(d) ? "#f0fdf4" : "#f8fafc",
-                border:`1px solid ${offDays.includes(d) ? "#bbf7d0" : "#e2e8f0"}`,
+                background: offDays.includes(d) ? "#f0fdf4" : "#fafafa",
+                border:`1px solid ${offDays.includes(d) ? "#bbf7d0" : "#e4e4e7"}`,
                 borderRadius:8, padding:"4px 10px", fontSize:12 }}>
                 <input type="checkbox" checked={offDays.includes(d)}
                   onChange={()=>toggleDay(d)} style={{ accentColor:"#16a34a" }}/>
@@ -205,12 +205,12 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
         <div style={{ marginBottom:16 }}>
           <label style={LB}>จำนวน *</label>
           <div style={{ display:"flex",gap:6 }}>
-            <div style={{ display:"flex",border:"1px solid #e2e8f0",borderRadius:8,overflow:"hidden",flexShrink:0 }}>
+            <div style={{ display:"flex",border:"1px solid #e4e4e7",borderRadius:8,overflow:"hidden",flexShrink:0 }}>
               {[{v:"day",l:"วัน"},{v:"hour",l:"ชม."}].map(u=>(
                 <button key={u.v} type="button" onClick={()=>{setLeaveUnit(u.v);setDays("");}}
                   style={{ padding:"8px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,
-                    border:"none",background:leaveUnit===u.v?"#2563eb":"#f8fafc",
-                    color:leaveUnit===u.v?"#fff":"#64748b" }}>{u.l}</button>
+                    border:"none",background:leaveUnit===u.v?"#2563eb":"#fafafa",
+                    color:leaveUnit===u.v?"#fff":"#71717a" }}>{u.l}</button>
               ))}
             </div>
             <input type="number" min="0" step={leaveUnit==="day"?0.5:1}
@@ -226,7 +226,7 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose}
-            style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
+            style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
               borderRadius:10,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>

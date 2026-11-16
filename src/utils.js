@@ -1,6 +1,6 @@
 // ── Constants ─────────────────────────────────────────────────
 export const WARRANTY_OPTS = [
-  { value: "none", label: "ไม่มีประกัน", color: "#94a3b8", years: 0 },
+  { value: "none", label: "ไม่มีประกัน", color: "#a1a1aa", years: 0 },
   { value: "1yr",  label: "ประกัน 1 ปี", color: "#3b82f6", years: 1 },
   { value: "3yr",  label: "ประกัน 3 ปี", color: "#8b5cf6", years: 3 },
   { value: "5yr",  label: "ประกัน 5 ปี", color: "#10b981", years: 5 },
@@ -54,9 +54,9 @@ export const fmtDate = (s) => {
 export const IS = (x = {}) => ({
   width: "100%",
   background: "var(--input-bg, #fff)",
-  border: "1px solid var(--input-border, #e2e8f0)",
+  border: "1px solid var(--input-border, #e4e4e7)",
   borderRadius: 8,
-  color: "var(--input-text, #1e293b)",
+  color: "var(--input-text, #27272a)",
   padding: "10px 13px", fontSize: 14,
   outline: "none", fontFamily: "inherit", boxSizing: "border-box", ...x,
 });

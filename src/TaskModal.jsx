@@ -40,7 +40,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
     onSave({
       title: title.trim(), projectId: projId,
       projectName: selProj?.name || "",
-      projectColor: selProj?.color || "#94a3b8",
+      projectColor: selProj?.color || "#a1a1aa",
       site, type, priority, assignees,
       startDate: startDate || dueDate || "", dueDate: dueDate || startDate || "",
       note: note.trim(),
@@ -59,7 +59,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
     textTransform:"uppercase", letterSpacing:.5, marginBottom:4, display:"block" };
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
+    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
       <div style={{ background:c.card,borderRadius:16,width:"100%",maxWidth:520,
@@ -110,7 +110,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
                       background:projId===p.id?c.borderSoft:"transparent",borderBottom:`1px solid ${c.borderSoft}` }}
                     onMouseEnter={e=>{ if(projId!==p.id) e.currentTarget.style.background=c.bg; }}
                     onMouseLeave={e=>{ if(projId!==p.id) e.currentTarget.style.background="transparent"; }}>
-                    <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#94a3b8",flexShrink:0 }}/>
+                    <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#a1a1aa",flexShrink:0 }}/>
                     <span style={{ fontSize:13,fontWeight:600,color:c.text900,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</span>
                     {projId===p.id && <span style={{ color:c.text900 }}>✓</span>}
                   </div>
