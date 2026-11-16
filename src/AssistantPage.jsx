@@ -51,7 +51,7 @@ function SqlCard({ card, c }) {
     <div style={{ background: c.card, border: `1px solid ${danger ? RED + "66" : c.border}`, borderRadius: 12, overflow: "hidden" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderBottom: `1px solid ${c.borderSoft || c.border}` }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: danger ? RED : c.text900 }}>{danger ? "⚠️ " : "🔎 "}{card.title}</div>
+          <div style={{ fontSize: 13, fontWeight:600, color: danger ? RED : c.text900 }}>{danger ? "⚠️ " : "🔎 "}{card.title}</div>
           <div style={{ fontSize: 11.5, color: c.text500, marginTop: 2 }}>AWB {card.awb}{card.note ? ` · ${card.note}` : ""}</div>
           {card.warning && <div style={{ fontSize: 11.5, color: RED, marginTop: 2 }}>{card.warning}</div>}
         </div>
@@ -91,7 +91,7 @@ function MarkdownLite({ text, c }) {
           return <div key={i} style={{ paddingLeft: 20, fontSize: "0.92em", color: c.text500 }}>{renderInline(t, i)}</div>;
         }
         const h = /^#{1,4}\s+(.*)$/.exec(t);
-        if (h) return <div key={i} style={{ fontWeight: 800, marginTop: 4, color: c.text900 }}>{renderInline(h[1], i)}</div>;
+        if (h) return <div key={i} style={{ fontWeight:600, marginTop: 4, color: c.text900 }}>{renderInline(h[1], i)}</div>;
         const li = /^([-*•]|\d+[.)])\s+(.*)$/.exec(t);
         if (li) {
           const bullet = /^\d/.test(li[1]) ? li[1] : "•";
@@ -405,12 +405,12 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       <div style={{ position: "fixed", left: 16, bottom: "calc(20px + env(safe-area-inset-bottom))", zIndex: 40,
         display: "flex", alignItems: "center", maxWidth: "min(340px, calc(100vw - 110px))",
         background: c.card, border: `1px solid ${PURPLE}33`, borderRadius: 999,
-        boxShadow: "0 6px 20px rgba(107,33,168,.25)", fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+        boxShadow: "0 6px 20px rgba(107,33,168,.25)", fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
         <button onClick={onExpand} aria-label="เปิดผู้ช่วย AI"
           style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1, background: "none", border: "none",
             padding: "8px 6px 8px 8px", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
           <span style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-            background: "linear-gradient(135deg,#6B21A8,#F97316)", color: "#fff", fontSize: 18,
+            background: "#18181b", color: "#fff", fontSize: 18,
             display: "flex", alignItems: "center", justifyContent: "center" }}>
             🤖
             {(unread || busy) && (
@@ -420,7 +420,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
             )}
           </span>
           <span style={{ minWidth: 0 }}>
-            <span style={{ display: "block", fontSize: 13, fontWeight: 800, color: c.text900 }}>ผู้ช่วย AI</span>
+            <span style={{ display: "block", fontSize: 13, fontWeight:600, color: c.text900 }}>ผู้ช่วย AI</span>
             <span style={{ display: "block", fontSize: 11.5, color: unread ? "#16a34a" : c.text400, fontWeight: unread ? 700 : 400,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pillStatus}</span>
           </span>
@@ -441,11 +441,11 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
       display: open ? "flex" : "none", flexDirection: "column", background: c.bg,
       borderRight: isMobile ? "none" : `1px solid ${c.border}`,
       boxShadow: isMobile ? "none" : "6px 0 28px rgba(15,23,42,.18)",
-      fontFamily: "'Noto Sans Thai','Sora',sans-serif", animation: "aiSlide .18s ease-out",
+      fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif", animation: "aiSlide .18s ease-out",
       overscrollBehavior: "contain",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+        
         @keyframes aiDot { 0%,80%,100% { opacity:.25 } 40% { opacity:1 } }
         @keyframes aiSlide { from { transform: translateX(-24px); opacity: 0 } to { transform: none; opacity: 1 } }
       `}</style>
@@ -456,7 +456,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         borderBottom: `1px solid ${c.border}`, background: c.card, flexShrink: 0 }}>
         <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: 10, background: PURPLE + "16", display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 15 : 17, flexShrink: 0 }}>🤖</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>ผู้ช่วย AI</div>
+          <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>ผู้ช่วย AI</div>
           {!isMobile && <div style={{ fontSize: 11.5, color: c.text400 }}>ถามข้อมูลเคส โครงการ งานค้าง ประกันใกล้หมด และเคส WMS</div>}
         </div>
         {history.length > 0 && (
@@ -486,7 +486,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
           {bubbles.length === 0 && (
             <div style={{ textAlign: "center", padding: isMobile ? "16px 4px 8px" : "28px 8px 8px" }}>
               <div style={{ fontSize: 34 }}>🤖</div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: c.text900, marginTop: 6 }}>สวัสดี {currentUser?.name || ""}</div>
+              <div style={{ fontSize: 15, fontWeight:600, color: c.text900, marginTop: 6 }}>สวัสดี {currentUser?.name || ""}</div>
               <div style={{ fontSize: 13, color: c.text400, marginTop: 4 }}>
                 ถามเรื่องเคส {cases.length} เคส และ {projects.length} โครงการในระบบได้เลย
               </div>

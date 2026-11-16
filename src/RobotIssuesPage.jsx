@@ -90,7 +90,7 @@ function AttachmentGallery({ imageUrls = [], videoUrls = [], c }) {
           <div key={`vid-${i}`} onClick={() => setLightbox({ type: "video", url })}
             style={{
               width: 72, height: 72, borderRadius: 10, cursor: "pointer",
-              background: "linear-gradient(135deg,#1F2937,#111827)", display: "flex",
+              background: "#18181b", display: "flex",
               alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18,
               boxShadow: "0 1px 3px rgba(0,0,0,.15)",
             }}
@@ -186,7 +186,7 @@ function IssueCard({ issue, onUpdateStatus, onDelete, canDelete, c }) {
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
           }}>{cat.icon}</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: 14.5, color: c.text900 }}>
+            <div style={{ fontWeight:600, fontSize: 14.5, color: c.text900 }}>
               {cat.label} · #{issue.ticketNo}
             </div>
             <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{createdLabel}</div>
@@ -294,9 +294,9 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+        
       `}</style>
       <div style={{
         display: "flex", alignItems: "center", gap: 12, padding: "16px 20px",
@@ -311,7 +311,7 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
         }}>🛠️</div>
         <div>
-          <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>แจ้งเหตุ/แจ้งซ่อม</div>
+          <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>แจ้งเหตุ/แจ้งซ่อม</div>
           <div style={{ fontSize: 11.5, color: c.text400 }}>ข้อมูลจาก LINE Bot (robot-report-bot)</div>
         </div>
       </div>

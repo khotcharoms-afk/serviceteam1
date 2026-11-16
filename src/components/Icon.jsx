@@ -20,8 +20,10 @@ const PATHS = {
   calendar: "M4 6h16v14H4zM4 10h16M9 3v4m6-4v4",
   camera: "M4 8h3l2-3h6l2 3h3v11H4V8Zm8 9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
   leave: "M9 4h6M8 4h8v16H8zM11 9h2M10 13h4",
+  x: "M18 6 6 18M6 6l12 12",
+  plus: "M12 5v14M5 12h14",
 };
-export default function Icon({ name, size = 16, stroke = 1.9 }) {
+export default function Icon({ name, size = 16, stroke = 1.75 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke}
       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block" }}>

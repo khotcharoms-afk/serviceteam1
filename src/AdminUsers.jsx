@@ -112,7 +112,7 @@ export default function AdminUsers({ onBack, currentUser }) {
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:800,color:c.text900 }}>👥 จัดการผู้ใช้</div>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>👥 จัดการผู้ใช้</div>
         <div style={{ marginLeft:"auto",fontSize:12,color:c.text400 }}>{users.length} คน</div>
       </div>
 

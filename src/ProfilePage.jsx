@@ -165,7 +165,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
   const initials = (currentUser?.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
 
   return (
-    <div style={{ minHeight:"100vh", background:c.bg, fontFamily:"'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight:"100vh", background:c.bg, fontFamily:"'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <header style={{ background:c.card, borderBottom:`1px solid ${c.border}`,
         padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
         <button onClick={onBack} style={{ background:c.borderSoft, border:"none", borderRadius:8,
@@ -179,9 +179,9 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
         {/* Avatar */}
         <div style={{ textAlign:"center", marginBottom:24 }}>
           <div style={{ width:72, height:72, borderRadius:"50%",
-            background:"linear-gradient(135deg,#F97316,#6B21A8)",
+            background:"#18181b",
             display:"inline-flex", alignItems:"center", justifyContent:"center",
-            fontSize:28, color:"#fff", fontWeight:800, marginBottom:8 }}>
+            fontSize:28, color:"#fff", fontWeight:600, marginBottom:8 }}>
             {initials}
           </div>
           <div style={{ fontSize:18, fontWeight:700, color:c.text900 }}>{currentUser?.name}</div>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -12,12 +12,18 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" />
     <style>
       /* ฟอนต์หลักของทั้งแอป — โหลดที่นี่ที่เดียว ทุกหน้าได้ฟอนต์เดียวกันแม้หน้านั้นไม่ได้โหลดเอง */
       *, *::before, *::after { box-sizing: border-box; }
-      body { margin: 0; font-family: 'Noto Sans Thai', 'Sora', sans-serif; }
-      button, input, textarea, select { font-family: inherit; }
+      /* Geist สำหรับอังกฤษ/ตัวเลข + Noto Sans Thai สำหรับภาษาไทย (เบราว์เซอร์เลือกตามตัวอักษรเอง) */
+      body { margin: 0; font-family: 'Geist', 'Noto Sans Thai', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: "cv11", "ss01"; font-variant-numeric: tabular-nums; }
+      button, input, textarea, select { font-family: inherit; font-variant-numeric: tabular-nums; }
+      :focus-visible { outline: 2px solid #a1a1aa; outline-offset: 2px; }
+      button { transition: background-color .15s ease-out, border-color .15s ease-out, color .15s ease-out, opacity .15s ease-out; }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
     </style>
     <title>ServiceLog</title>
   </head>

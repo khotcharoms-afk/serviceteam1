@@ -15,11 +15,11 @@ export default function NavBar({
 }) {
   const { c } = useTheme();
   const iconBtn = { background:"transparent", border:`1px solid ${c.border}`, color:c.text500, flexShrink:0,
-    borderRadius:8, width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, cursor:"pointer", fontFamily:"inherit",
+    borderRadius:8, width: 32, height: 32, cursor:"pointer", fontFamily:"inherit",
     display:"inline-flex", alignItems:"center", justifyContent:"center", padding:0, position:"relative" };
   const badge = (n) => (
-    <span style={{ position:"absolute", top:-5, right:-5, background:c.danger, color:"#fff", borderRadius:9, minWidth:16, height:16,
-      padding:"0 4px", fontSize:10, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>{n}</span>
+    <span style={{ position:"absolute", top:-4, right:-4, background:c.danger, color:"#fff", borderRadius:8, minWidth:16, height:16,
+      padding:"0 4px", fontSize:10, fontWeight:600, border:`2px solid ${c.card}`, boxSizing:"content-box", display:"flex", alignItems:"center", justifyContent:"center" }}>{n}</span>
   );
   const taskBadge = (tasks||[]).filter(t =>
     (t.status === "todo" || t.status === "accepted") && (t.assignees||[]).includes(currentUser?.name)
@@ -36,14 +36,14 @@ export default function NavBar({
           cursor:"pointer", padding:"6px", color:c.text500, lineHeight:1, flexShrink:0 }}><Icon name="menu" size={20}/></button>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <div style={{ width:28, height:28, borderRadius:8, flexShrink:0,
-            background:"linear-gradient(135deg,#2563eb,#7c3aed)",
+            background:c.ink,
             display:"flex", alignItems:"center", justifyContent:"center",
-            color:"#fff", fontSize:13, fontWeight:700 }}>S</div>
+            color:c.onInk, fontSize:13, fontWeight:600 }}>S</div>
           {!isMobile && (
             <div>
-              <div style={{ fontSize:13, fontWeight:800, color:c.text900, lineHeight:1 }}>ServiceLog</div>
+              <div style={{ fontSize:14, fontWeight:600, color:c.text900, lineHeight:1, letterSpacing:"-0.01em" }}>ServiceLog</div>
               {view !== "overview" && (
-                <div style={{ fontSize:10, color:c.text400, fontWeight:600, lineHeight:1.2 }}>
+                <div style={{ fontSize:12, color:c.text500, fontWeight:400, lineHeight:1.3, marginTop:2 }}>
                   {activeProj?.name}
                 </div>
               )}
@@ -78,16 +78,16 @@ export default function NavBar({
 
         <button onClick={onNewCase}
           style={{ background:c.ink, border:"none", color:c.onInk, flexShrink:0,
-            borderRadius:8, padding: isMobile ? "8px 11px" : "8px 14px", fontSize:13, fontWeight:600,
+            borderRadius:8, height:32, padding: isMobile ? "0 12px" : "0 12px", fontSize:13, fontWeight:500,
             cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>
           {isMobile ? "+" : "+ เคสใหม่"}
         </button>
 
         {!isMobile && (
           <button onClick={onProfile}
-            style={{ width:34, height:34, borderRadius:"50%", border:`1px solid ${c.border}`, flexShrink:0,
+            style={{ width:32, height:32, borderRadius:"50%", border:`1px solid ${c.border}`, flexShrink:0,
               background:c.borderSoft,
-              color:c.text900, fontSize:12, fontWeight:700, cursor:"pointer",
+              color:c.text900, fontSize:12, fontWeight:500, cursor:"pointer",
               display:"flex", alignItems:"center", justifyContent:"center" }}
             title={currentUser?.name}>
             {(currentUser?.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}

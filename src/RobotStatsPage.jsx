@@ -108,7 +108,7 @@ function StatCard({ label, value, sub, color }) {
       background: c.card, border: `1px solid ${c.border}`, borderRadius: 14,
       padding: '14px 16px', flex: 1, minWidth: 130, borderLeft: `4px solid ${color}`,
     }}>
-      <div style={{ fontSize: 22, fontWeight: 800, color: c.text900, lineHeight: 1.15 }}>{value}</div>
+      <div style={{ fontSize: 22, fontWeight:600, color: c.text900, lineHeight: 1.15 }}>{value}</div>
       <div style={{ fontSize: 11.5, color: c.text500, marginTop: 3, fontWeight: 600 }}>{label}</div>
       {sub && <div style={{ fontSize: 10.5, color: c.text400, marginTop: 2 }}>{sub}</div>}
     </div>
@@ -238,12 +238,12 @@ function VehicleDetail({ vehicle, onBack }) {
   const daysWorked = weekData.filter((d) => isWorked(d)).length;
 
   return (
-    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif", overflowX: 'hidden' }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={onBack} style={{ background: c.bg, border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>{vehicle.vehicle_name}</div>
+            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>{vehicle.vehicle_name}</div>
             <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{siteName(vehicle.project_name)} · {vehicle.vin}</div>
           </div>
         </div>
@@ -601,13 +601,13 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif", overflowX: 'hidden' }}>
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: isMobile ? '10px 12px' : '14px 16px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={onBack} style={{ background: c.bg, border: 'none', borderRadius: 8, width: 30, height: 30, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
           <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
-            <div style={{ fontSize: isMobile ? 14 : 15.5, fontWeight: 800, color: c.text900, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: isMobile ? 14 : 15.5, fontWeight:600, color: c.text900, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               <span style={{ fontSize: isMobile ? 15 : 17, flexShrink: 0 }}>📊</span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>สถิติการทำงานหุ่นยนต์</span>
             </div>
@@ -886,7 +886,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 <div key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
-                      <div style={{ fontSize: 14.5, fontWeight: 800, color: c.text900 }}>{r.vehicle_name}</div>
+                      <div style={{ fontSize: 14.5, fontWeight:600, color: c.text900 }}>{r.vehicle_name}</div>
                       <div style={{ fontSize: 12, color: c.text500, marginTop: 1, fontWeight: 600 }}>{siteName(r.project_name)}</div>
                       <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>{r.project_name}</div>
                       <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
@@ -993,7 +993,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
           style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()}
             style={{ background: c.card, borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif", maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: c.text900, marginBottom: 4 }}>🔧 สร้างเคส</div>
+            <div style={{ fontSize: 15, fontWeight:600, color: c.text900, marginBottom: 4 }}>🔧 สร้างเคส</div>
             <div style={{ fontSize: 12, color: c.text400, marginBottom: 16 }}>{caseModalFor.vehicle_name} · {siteName(caseModalFor.project_name)}</div>
 
             <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>หัวข้อเคส</label>

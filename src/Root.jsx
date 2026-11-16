@@ -147,7 +147,7 @@ export default function Root() {
           maxWidth:400, width:"100%", textAlign:"center",
           boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e2e8f0" }}>
           <div style={{ fontSize:40, marginBottom:16 }}>🚫</div>
-          <div style={{ fontSize:18, fontWeight:800, color:"#0f172a", marginBottom:8 }}>
+          <div style={{ fontSize:18, fontWeight:600, color:"#0f172a", marginBottom:8 }}>
             {isMissing ? "ไม่พบข้อมูลผู้ใช้" : "บัญชีถูกระงับการใช้งาน"}
           </div>
           <div style={{ fontSize:14, color:"#64748b", lineHeight:1.7, marginBottom:20 }}>
@@ -179,7 +179,7 @@ export default function Root() {
         maxWidth:400, width:"100%", textAlign:"center",
         boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e2e8f0" }}>
         <div style={{ fontSize:40, marginBottom:16 }}>⏳</div>
-        <div style={{ fontSize:18, fontWeight:800, color:"#0f172a", marginBottom:8 }}>รอการอนุมัติ</div>
+        <div style={{ fontSize:18, fontWeight:600, color:"#0f172a", marginBottom:8 }}>รอการอนุมัติ</div>
         <div style={{ fontSize:14, color:"#64748b", lineHeight:1.7, marginBottom:24 }}>
           บัญชีของคุณอยู่ระหว่างรอ Admin อนุมัติ<br/>
           กรุณารอสักครู่แล้วลองใหม่อีกครั้ง

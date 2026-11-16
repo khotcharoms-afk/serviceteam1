@@ -90,7 +90,7 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
       <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 600, maxHeight: "94vh",
         overflowY: "auto", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: c.text900 }}>{editRecord?.id ? "แก้ไขบทความ" : heading || "เพิ่มบทความ"}</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight:600, color: c.text900 }}>{editRecord?.id ? "แก้ไขบทความ" : heading || "เพิ่มบทความ"}</h2>
           <button onClick={onClose} style={{ background: c.borderSoft, border: "none", color: c.text500, cursor: "pointer", fontSize: 14, width: 30, height: 30, borderRadius: 8 }}>✕</button>
         </div>
         {intro && <div style={{ fontSize: 13, color: c.text500, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 10,
@@ -160,7 +160,7 @@ function Article({ a, open, onToggle, words, c, canDelete, onEdit, onDelete }) {
   const preview = (a.problem || steps[0] || "").replace(/\s+/g, " ");
   const Section = ({ label, color, children }) => (
     <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 12, fontWeight: 800, color, marginBottom: 5 }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight:600, color, marginBottom: 5 }}>{label}</div>
       {children}
     </div>
   );
@@ -168,7 +168,7 @@ function Article({ a, open, onToggle, words, c, canDelete, onEdit, onDelete }) {
     <div style={{ background: c.card, border: `1px solid ${open ? c.text400 : c.border}`, borderRadius: 12, overflow: "hidden" }}>
       <div onClick={onToggle} style={{ padding: "12px 14px", cursor: "pointer", display: "flex", gap: 12, alignItems: "flex-start" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14.5, fontWeight: 800, color: c.text900, lineHeight: 1.4, wordBreak: "break-word" }}><Highlight text={a.title} words={words} /></div>
+          <div style={{ fontSize: 14.5, fontWeight:600, color: c.text900, lineHeight: 1.4, wordBreak: "break-word" }}><Highlight text={a.title} words={words} /></div>
           {!open && preview && (
             <div style={{ fontSize: 12.5, color: c.text500, marginTop: 3, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box",
               WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
@@ -284,12 +284,12 @@ export default function KnowledgeHub({ onBack, currentUser }) {
     whiteSpace: "nowrap", border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card, color: on ? c.onInk : c.text500 });
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", maxWidth: 860, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer", padding: 4, lineHeight: 1 }}>←</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>Knowledge Hub</div>
+            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>Knowledge Hub</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>วิธีแก้ปัญหาที่ทีมบันทึกไว้ · {articles.length} บทความ</div>
           </div>
           {!showWms && <button onClick={() => setModal({})} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: "8px 14px", fontSize: 13,

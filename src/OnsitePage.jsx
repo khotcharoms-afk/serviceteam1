@@ -146,7 +146,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
           color: "#475569", fontWeight: 600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>📍 บันทึก Onsite</div>
+        <div style={{ fontSize: 16, fontWeight:600, color: "#0f172a" }}>📍 บันทึก Onsite</div>
         <div style={{ marginLeft: "auto" }}>
           <button onClick={() => { setEditRecord(null); setShowModal(true); }}
             style={{ background: "#F97316", border: "none", color: "#fff", borderRadius: 10,
@@ -189,7 +189,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
               <div key={k.label} style={{ background: "#fff", border: "1px solid #e2e8f0",
                 borderRadius: 12, padding: "14px 16px" }}>
                 <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>{k.label}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: k.color }}>{k.val}</div>
+                <div style={{ fontSize: 20, fontWeight:600, color: k.color }}>{k.val}</div>
               </div>
             ))}
           </div>

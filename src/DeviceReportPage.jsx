@@ -175,12 +175,12 @@ export default function DeviceReportPage({ onBack }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: "14px 16px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 960, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>รายงานสถานะอุปกรณ์</div>
+            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>รายงานสถานะอุปกรณ์</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>Smart Pole · EV Car · หุ่นยนต์ทำความสะอาด — รวมเป็นข้อความเดียวส่งไลน์</div>
           </div>
         </div>

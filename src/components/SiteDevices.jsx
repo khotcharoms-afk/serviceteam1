@@ -110,7 +110,7 @@ function Val({ label, value, href, secret, c, onCopied }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: c.card, border: `1px solid ${c.border}`, borderRadius: 7,
       padding: "2px 4px 2px 7px", fontSize: 12, maxWidth: "100%" }}>
-      <span style={{ fontSize: 10.5, fontWeight: 800, color: c.text400 }}>{label}</span>
+      <span style={{ fontSize: 10.5, fontWeight:600, color: c.text400 }}>{label}</span>
       <span style={{ color: c.text900, fontVariantNumeric: "tabular-nums", wordBreak: "break-all" }}>{secret && !show ? "••••••" : value}</span>
       {secret && <button onClick={() => setShow((s) => !s)} title={show ? "ซ่อนรหัส" : "แสดงรหัส"} style={btn(c)}><EyeIcon off={show} size={13} /></button>}
       {href && <a href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
@@ -158,7 +158,7 @@ export default function SiteDevices({ caseData, project }) {
     <div style={{ marginBottom: 16, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
       <button onClick={toggle} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "11px 14px", background: c.borderSoft,
         border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 800, color: c.text900 }}>อุปกรณ์ / รีโมท ของไซต์นี้</span>
+        <span style={{ flex: 1, fontSize: 13, fontWeight:600, color: c.text900 }}>อุปกรณ์ / รีโมท ของไซต์นี้</span>
         {devices && !searched && <span style={{ fontSize: 11.5, color: c.text400 }}>{matched.length ? `${matched.length} เครื่อง` : "ไม่พบที่ตรง"}</span>}
         <span style={{ color: c.text400, fontSize: 12 }}>{open ? "▴" : "▾"}</span>
       </button>

@@ -113,7 +113,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:800,color:c.text900 }}>📄 รายงานสรุปเคส</div>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>📄 รายงานสรุปเคส</div>
         <button onClick={printReport}
           style={{ marginLeft:"auto",background:c.blue,border:"none",color:"#fff",
             borderRadius:8,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -169,7 +169,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
 
         {/* หัวรายงาน */}
         <div style={{ marginBottom:24,paddingBottom:16,borderBottom:`2px solid ${c.border}` }}>
-          <div style={{ fontSize:20,fontWeight:800,color:c.text900,marginBottom:4 }}>
+          <div style={{ fontSize:20,fontWeight:600,color:c.text900,marginBottom:4 }}>
             รายงานสรุปเคส — บริษัท เมทเธียร์ จำกัด
           </div>
           <div style={{ fontSize:13,color:c.text500 }}>ช่วงเวลา: {label}</div>

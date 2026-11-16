@@ -35,7 +35,7 @@ async function copyText(text) {
 }
 
 // ค่าต่างๆ (IP, AnyDesk, รหัส) ใช้ฟอนต์เดียวกับทั้งแอป + ตัวเลขกว้างเท่ากันให้อ่านง่าย
-const MONO = "'Noto Sans Thai','Sora',sans-serif";
+const MONO = "'Geist','Noto Sans Thai',system-ui,sans-serif";
 const iconBtn = (c) => ({ border: "none", background: "transparent", cursor: "pointer", color: c.text400, fontSize: 12.5,
   padding: "1px 3px", lineHeight: 1, fontFamily: "inherit", flexShrink: 0 });
 const withPort = (ip, port) => (ip ? (port ? `${ip}:${port}` : ip) : port ? `port ${port}` : "");
@@ -251,7 +251,7 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
 
       {!narrow && (
         <div style={{ display: "grid", gridTemplateColumns: grid, gap: 10, padding: "7px 14px", background: c.bg,
-          fontSize: 10.5, fontWeight: 800, color: c.text400, letterSpacing: 0.3 }}>
+          fontSize: 10.5, fontWeight:600, color: c.text400, letterSpacing: 0.3 }}>
           {cols.map((x) => <span key={x.key}>{x.label}</span>)}<span />
         </div>
       )}
@@ -589,13 +589,13 @@ export default function DevicesPage({ onBack, currentUser }) {
   const toolBtn = { ...chip(false), color: c.text900, display: "inline-flex", alignItems: "center", gap: 4 };
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: `1px solid ${c.border}`,
         background: c.card, position: "sticky", top: 0, zIndex: 5 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer",
           padding: 4, lineHeight: 1 }}>←</button>
                 <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>อุปกรณ์/รีโมท</div>
+          <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>อุปกรณ์/รีโมท</div>
           <div style={{ fontSize: 11.5, color: c.text400 }}>IP · AnyDesk · RustDesk · รหัสเข้าอุปกรณ์หน้างาน</div>
         </div>
         <div style={{ fontSize: 12, color: c.text400, whiteSpace: "nowrap" }}>{devices.length} รายการ</div>
@@ -661,7 +661,7 @@ export default function DevicesPage({ onBack, currentUser }) {
                 <button onClick={() => setOpen((o) => ({ ...o, [g.project]: !isOpen }))} disabled={expandAll}
                   style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none",
                     padding: "11px 14px", cursor: expandAll ? "default" : "pointer", fontFamily: "inherit", textAlign: "left" }}>
-                  <span style={{ fontSize: 14.5, fontWeight: 800, color: c.text900, flex: 1 }}>{g.project}</span>
+                  <span style={{ fontSize: 14.5, fontWeight:600, color: c.text900, flex: 1 }}>{g.project}</span>
                   <span style={{ fontSize: 11.5, color: c.text400 }}>{g.sites.length} ไซต์ · {count} รายการ</span>
                   {!expandAll && <span style={{ color: c.text400, fontSize: 12 }}>{isOpen ? "▴" : "▾"}</span>}
                 </button>

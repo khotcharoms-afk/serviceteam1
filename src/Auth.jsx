@@ -104,9 +104,9 @@ export default function Auth() {
   return (
     <div style={{ minHeight:"100vh", background:"#f8fafc",
       display:"flex", alignItems:"center", justifyContent:"center",
-      fontFamily:"'Noto Sans Thai','Sora',sans-serif", padding:16 }}>
+      fontFamily:"'Geist','Noto Sans Thai',system-ui,sans-serif", padding:16 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+        
         *{box-sizing:border-box}
         input:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #dbeafe !important;outline:none}
         .tab-btn:hover{background:#f1f5f9}
@@ -117,11 +117,11 @@ export default function Auth() {
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div style={{ width:56, height:56, borderRadius:16,
-            background:"linear-gradient(135deg,#2563eb,#7c3aed)",
+            background:"#18181b",
             display:"inline-flex", alignItems:"center", justifyContent:"center",
-            fontSize:26, color:"#fff", fontWeight:800, marginBottom:12,
+            fontSize:26, color:"#fff", fontWeight:600, marginBottom:12,
             boxShadow:"0 8px 24px rgba(37,99,235,.3)" }}>S</div>
-          <div style={{ fontSize:22, fontWeight:800, color:"#0f172a" }}>ServiceLog</div>
+          <div style={{ fontSize:22, fontWeight:600, color:"#0f172a" }}>ServiceLog</div>
           <div style={{ fontSize:13, color:"#94a3b8", marginTop:4 }}>ระบบบันทึกการเซอร์วิสโครงการ</div>
         </div>
 
@@ -226,7 +226,7 @@ export default function Auth() {
 
             {/* Submit */}
             <button type="submit" disabled={loading}
-              style={{ width:"100%",background: loading?"#93c5fd":"linear-gradient(135deg,#2563eb,#7c3aed)",
+              style={{ width:"100%",background: loading?"#a1a1aa":"#18181b",
                 border:"none",color:"#fff",borderRadius:10,padding:"13px",fontSize:15,
                 fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",
                 boxShadow:"0 4px 16px rgba(37,99,235,.3)",transition:"all .2s" }}>
