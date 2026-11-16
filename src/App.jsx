@@ -115,6 +115,15 @@ export default function App({ currentUser, onSignOut }) {
     if (!loading && view !== "overview" && projects.length && !projects.some((p) => p.id === view)) setView("overview");
   }, [loading, projects, view]);
   const PageLoader = () => <FullLoader bg={themeC.bg}/>;
+  // ปุ่มสลับโหมดมืด/สว่าง ลอยมุมซ้ายล่าง — ใช้ในทุกหน้าย่อย (หน้าหลักมีปุ่มบนแถบบนอยู่แล้ว)
+  const darkToggle = (
+    <button onClick={()=>setDarkMode(v=>!v)} title={darkMode?"โหมดสว่าง":"โหมดมืด"} aria-label="สลับโหมดมืด/สว่าง"
+      style={{ position:"fixed",left:16,bottom:"calc(16px + env(safe-area-inset-bottom))",zIndex:45,
+        width:40,height:40,borderRadius:"50%",border:`1px solid ${themeC.border}`,background:themeC.card,color:themeC.text500,
+        boxShadow:"0 4px 16px rgba(0,0,0,.10)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+      <Icon name={darkMode?"sun":"moon"} size={18}/>
+    </button>
+  );
 
   // ตั้งสีให้ input/select/textarea ทั้งแอป (utils.js IS() อ่านตัวแปรพวกนี้)
   // และบอกเบราว์เซอร์ว่าหน้านี้โหมดไหน — คุมป๊อปอัป <select>, ปฏิทิน date picker, scrollbar
@@ -714,13 +723,13 @@ export default function App({ currentUser, onSignOut }) {
 
   if(loading) return <FullLoader bg={themeC.bg} text="กำลังโหลดเคส"/>;
 
-  if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></Suspense></ThemeContext.Provider>;
+  if(adminPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><AdminUsers onBack={()=>setAdminPage(false)} currentUser={currentUser} db={db} /></Suspense></ThemeContext.Provider>;
   // Onsite / ใบลา เปิดเฉพาะ admin/dev — บันทึก OT เปิดให้ทุกคน (ผู้ใช้ทั่วไปเห็นเฉพาะรายการตัวเอง)
-  if(leavePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></Suspense></ThemeContext.Provider>;
-  if(profilePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/></Suspense></ThemeContext.Provider>;
-  if(otPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OTPage onBack={()=>setOtPage(false)}
+  if(leavePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><LeavePage onBack={()=>setLeavePage(false)} currentUser={currentUser} users={users}/></Suspense></ThemeContext.Provider>;
+  if(profilePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><ProfilePage onBack={()=>setProfilePage(false)} currentUser={currentUser} onSignOut={onSignOut}/></Suspense></ThemeContext.Provider>;
+  if(otPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><OTPage onBack={()=>setOtPage(false)}
     projects={projects} users={users} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
-  if(taskPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><TaskBoard onBack={()=>setTaskPage(false)}
+  if(taskPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><TaskBoard onBack={()=>setTaskPage(false)}
     projects={projects} users={users} cases={cases} currentUser={currentUser}
     tasks={tasks} saving={saving}
     onSaveTask={async(data,id)=>{
@@ -802,17 +811,17 @@ export default function App({ currentUser, onSignOut }) {
       await setDoc(doc(db,"tasks",task.id),{caseId:cid,updatedAt:now},{merge:true});
       showToast("สร้างเคสจากงานแล้ว","success");
     }}/></Suspense></ThemeContext.Provider>;
-  if(onsitePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></Suspense></ThemeContext.Provider>;
-  if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></Suspense></ThemeContext.Provider>;
-  if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
-  if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
-  if(caseLogPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><CaseLogPage onBack={()=>setCaseLogPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
-  if(robotIssuesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RobotIssuesPage onBack={()=>setRobotIssuesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
-  if(devicesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><DevicesPage onBack={()=>setDevicesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
-  if(requisitionPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><RequisitionPage onBack={()=>setRequisitionPage(false)} currentUser={currentUser} projects={projects}/></Suspense></ThemeContext.Provider>;
-  if(deviceReportPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><DeviceReportPage onBack={()=>setDeviceReportPage(false)}/></Suspense></ThemeContext.Provider>;
-  if(smartPolePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><SmartPolePage onBack={()=>setSmartPolePage(false)}/></Suspense></ThemeContext.Provider>;
-  if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></Suspense></ThemeContext.Provider>;
+  if(onsitePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></Suspense></ThemeContext.Provider>;
+  if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></Suspense></ThemeContext.Provider>;
+  if(knowledgePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><KnowledgeHub onBack={()=>setKnowledgePage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(robotStatsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><RobotStatsPage onBack={()=>setRobotStatsPage(false)} projects={projects} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(caseLogPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><CaseLogPage onBack={()=>setCaseLogPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(robotIssuesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><RobotIssuesPage onBack={()=>setRobotIssuesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(devicesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><DevicesPage onBack={()=>setDevicesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(requisitionPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><RequisitionPage onBack={()=>setRequisitionPage(false)} currentUser={currentUser} projects={projects}/></Suspense></ThemeContext.Provider>;
+  if(deviceReportPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><DeviceReportPage onBack={()=>setDeviceReportPage(false)}/></Suspense></ThemeContext.Provider>;
+  if(smartPolePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><SmartPolePage onBack={()=>setSmartPolePage(false)}/></Suspense></ThemeContext.Provider>;
+  if(dashboardPage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><Dashboard onBack={()=>setDashboardPage(false)} cases={cases} projects={projects} users={users} deletedCases={deletedCases} onsiteRecords={onsiteRecords}/></Suspense></ThemeContext.Provider>;
 
   return (
     <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>
