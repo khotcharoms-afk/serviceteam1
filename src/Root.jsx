@@ -112,7 +112,7 @@ export default function Root() {
 
   // Loading
   if (authUser === undefined) return (
-    <FullLoader bg="#fafafa" text="กำลังโหลด"/>
+    <FullLoader bg={(()=>{ try { return localStorage.getItem("sl-dark")==="1" ? "#09090b" : "#fafafa"; } catch { return "#fafafa"; } })()} text="กำลังโหลด"/>
   );
 
   // Not logged in
@@ -120,7 +120,7 @@ export default function Root() {
 
   // Logged in but no userDoc yet (loading role)
   if (userDoc === null) return (
-    <FullLoader bg="#fafafa" text="กำลังตรวจสอบสิทธิ์"/>
+    <FullLoader bg={(()=>{ try { return localStorage.getItem("sl-dark")==="1" ? "#09090b" : "#fafafa"; } catch { return "#fafafa"; } })()} text="กำลังตรวจสอบสิทธิ์"/>
   );
 
   // บัญชีถูกระงับ หรือไม่มีข้อมูลผู้ใช้ในระบบแล้ว
