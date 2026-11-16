@@ -80,6 +80,11 @@ export default function App({ currentUser, onSignOut }) {
     try { localStorage.setItem("sl-dark", darkMode ? "1" : "0"); } catch {}
     document.documentElement.style.colorScheme = darkMode ? "dark" : "light";
     document.body.style.background = darkMode ? THEMES.dark.bg : THEMES.light.bg;
+    // ตัวแปร CSS ให้หน้าที่ใช้สีแบบเขียนตรง (เช่น ฟอร์ม OT) เปลี่ยนตามโหมดมืด/สว่างได้
+    const t = darkMode ? THEMES.dark : THEMES.light, r = document.documentElement.style;
+    r.setProperty("--c-bg", t.bg); r.setProperty("--c-card", t.card); r.setProperty("--c-border", t.border);
+    r.setProperty("--c-soft", t.borderSoft); r.setProperty("--c-text900", t.text900);
+    r.setProperty("--c-text500", t.text500); r.setProperty("--c-text400", t.text400);
   },[darkMode]);
   const themeC = THEMES[darkMode ? "dark" : "light"];
 
