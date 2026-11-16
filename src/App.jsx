@@ -1019,7 +1019,7 @@ export default function App({ currentUser, onSignOut }) {
                 <button key={it.key} onClick={()=>onPick(it)}
                   style={{ height:28,padding:"0 12px",borderRadius:6,border:"none",cursor:"pointer",fontFamily:"inherit",
                     fontSize:13,fontWeight:500,whiteSpace:"nowrap",
-                    background:on?themeC.card:"transparent",color:on?themeC.text900:themeC.text500,
+                    background:on?themeC.card:"transparent",color:on?themeC.ink:themeC.text500,
                     boxShadow:on?"0 1px 2px rgba(0,0,0,.08)":"none" }}>{it.label}</button>
               ); })}
             </div>

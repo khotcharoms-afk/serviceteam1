@@ -179,7 +179,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
         {/* Avatar */}
         <div style={{ textAlign:"center", marginBottom:24 }}>
           <div style={{ width:72, height:72, borderRadius:"50%",
-            background:"#18181b",
+            background:"#2563eb",
             display:"inline-flex", alignItems:"center", justifyContent:"center",
             fontSize:28, color:"#fff", fontWeight:600, marginBottom:8 }}>
             {initials}

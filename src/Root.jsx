@@ -185,7 +185,7 @@ export default function Root() {
         )}
 
         <button onClick={checkFromServer} disabled={checking}
-          style={{ width:"100%", background:"#18181b", border:"none", color:"#fafafa",
+          style={{ width:"100%", background:"#2563eb", border:"none", color:"#fafafa",
             borderRadius:8, padding:"11px 24px", fontSize:14, fontWeight:600,
             cursor:checking?"default":"pointer", fontFamily:"inherit", marginBottom:10,
             opacity:checking?.6:1 }}>

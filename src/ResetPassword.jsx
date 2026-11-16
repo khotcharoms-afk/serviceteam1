@@ -49,14 +49,14 @@ export default function ResetPassword({ oobCode, onDone }) {
       <style>{`
         
         *{box-sizing:border-box}
-        input:focus{border-color:#a1a1aa !important;box-shadow:0 0 0 3px #f4f4f5 !important;outline:none}
+        input:focus{border-color:#93c5fd !important;box-shadow:0 0 0 3px #eff6ff !important;outline:none}
       `}</style>
 
       <div style={{ width:"100%", maxWidth:420 }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div style={{ width:56, height:56, borderRadius:12,
-            background:"#18181b",
+            background:"#2563eb",
             display:"inline-flex", alignItems:"center", justifyContent:"center",
             fontSize:26, color:"#fff", fontWeight:600, marginBottom:12,
             boxShadow:"none" }}>S</div>
@@ -82,7 +82,7 @@ export default function ResetPassword({ oobCode, onDone }) {
                 คุณสามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้แล้ว
               </div>
               <button onClick={onDone}
-                style={{ width:"100%", background:"#18181b",
+                style={{ width:"100%", background:"#2563eb",
                   border:"none", color:"#fff", borderRadius:8, padding:"13px", fontSize:15,
                   fontWeight:600, cursor:"pointer", fontFamily:"inherit",
                   boxShadow:"none" }}>
@@ -141,7 +141,7 @@ export default function ResetPassword({ oobCode, onDone }) {
               )}
 
               <button type="submit" disabled={loading}
-                style={{ width:"100%", background: loading?"#a1a1aa":"#18181b",
+                style={{ width:"100%", background: loading?"#93c5fd":"#2563eb",
                   border:"none", color:"#fff", borderRadius:8, padding:"13px", fontSize:15,
                   fontWeight:600, cursor:loading?"not-allowed":"pointer", fontFamily:"inherit",
                   boxShadow:"none" }}>
