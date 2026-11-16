@@ -12,6 +12,7 @@ export default function NavBar({
   onProfile,
   isMobile,
   darkMode, onToggleDark,
+  sticky = true,
 }) {
   const { c } = useTheme();
   const iconBtn = { background:"transparent", border:`1px solid ${c.border}`, color:c.text500, flexShrink:0,
@@ -28,7 +29,7 @@ export default function NavBar({
   return (
     <header style={{ background:c.card, borderBottom:`1px solid ${c.border}`, padding: isMobile ? "0 8px" : "0 16px",
       display:"flex", alignItems:"center", justifyContent:"space-between", height:56,
-      position:"sticky", top:0, zIndex:50, overflow:"hidden" }}>
+      position: sticky ? "sticky" : "relative", top:0, zIndex:50, overflow:"hidden" }}>
 
       {/* Left */}
       <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 6 : 10, flexShrink:0 }}>
