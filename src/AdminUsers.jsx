@@ -2,7 +2,41 @@ import { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { useTheme } from "./theme.js";
 import { IS as inputBase, FEATURE_SHIFT } from "./utils.js";
-import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, writeBatch, setDoc, getFirestore } from "firebase/firestore";
+import { initializeApp, deleteApp } from "firebase/app";
+import { initializeAuth, inMemoryPersistence, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail, signOut } from "firebase/auth";
+
+// สร้างบัญชีให้ผู้ใช้ใหม่โดยไม่ทำให้ admin หลุดจากระบบ:
+// ใช้ Firebase app ตัวที่สอง (เก็บ session ในหน่วยความจำ) สร้างบัญชีด้วยรหัสสุ่มที่ไม่มีใครเห็น
+// แล้วส่งอีเมลให้ผู้ใช้ตั้งรหัสผ่านเอง
+async function createUserAccount({ name, email, role }) {
+  const sec = initializeApp(db.app.options, `adduser-${Date.now()}`);
+  try {
+    const secAuth = initializeAuth(sec, { persistence: inMemoryPersistence });
+    const bytes = crypto.getRandomValues(new Uint8Array(24));
+    const tmp = Array.from(bytes, b => "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%"[b % 61]).join("");
+    const cred = await createUserWithEmailAndPassword(secAuth, email, tmp);
+    await updateProfile(cred.user, { displayName: name });
+    // เขียนเอกสารผู้ใช้ในนามบัญชีใหม่ (rules อนุญาตให้สร้างของตัวเอง) เป็น pending ก่อน
+    await setDoc(doc(getFirestore(sec), "users", cred.user.uid), {
+      name, email, role: "pending", createdAt: new Date().toISOString(), createdByAdmin: true,
+    });
+    await sendPasswordResetEmail(secAuth, email);
+    await signOut(secAuth);
+    // admin ตั้ง role จริงด้วยบัญชีตัวเอง
+    await updateDoc(doc(db, "users", cred.user.uid), { role });
+    return cred.user.uid;
+  } finally {
+    await deleteApp(sec).catch(() => {});
+  }
+}
+
+const AUTH_ERR = {
+  "auth/email-already-in-use": "อีเมลนี้มีบัญชีอยู่แล้ว",
+  "auth/invalid-email": "รูปแบบอีเมลไม่ถูกต้อง",
+  "auth/network-request-failed": "เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง",
+  "auth/too-many-requests": "ทำรายการถี่เกินไป รอสักครู่แล้วลองใหม่",
+};
 
 // tone = ชื่อสีใน theme.js — แปลงเป็นสีจริงตอนเรนเดอร์ ให้เปลี่ยนตามโหมดมืด/สว่าง
 const ROLE_OPTS = [
@@ -18,6 +52,7 @@ export default function AdminUsers({ onBack, currentUser }) {
   const [users, setUsers]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [editUser, setEditUser]     = useState(null);
+  const [showAdd, setShowAdd]       = useState(false);
   const [cleaning, setCleaning]     = useState(false);
   const [cleanResult, setCleanResult] = useState(null);
 
@@ -113,7 +148,12 @@ export default function AdminUsers({ onBack, currentUser }) {
           ← กลับ
         </button>
         <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>จัดการผู้ใช้</div>
-        <div style={{ marginLeft:"auto",fontSize:12,color:c.text400 }}>{users.length} คน</div>
+        <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:12 }}>
+          <span style={{ fontSize:13,color:c.text500 }}>{users.length} คน</span>
+          <button onClick={()=>setShowAdd(true)}
+            style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:8,height:32,padding:"0 12px",
+              fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit" }}>+ เพิ่มผู้ใช้</button>
+        </div>
       </div>
 
       <div style={{ padding:"20px 20px 48px",maxWidth:640,margin:"0 auto" }}>
@@ -197,6 +237,10 @@ export default function AdminUsers({ onBack, currentUser }) {
       </div>
 
       {/* Edit Modal */}
+      {showAdd && (
+        <AddUserModal currentUser={currentUser} existing={users} onClose={()=>setShowAdd(false)}/>
+      )}
+
       {editUser && (
         <EditUserModal user={editUser} onClose={()=>setEditUser(null)} onSave={saveUserSettings}/>
       )}
@@ -420,6 +464,90 @@ function EditUserModal({ user, onClose, onSave }) {
             {saving?"กำลังบันทึก...":"บันทึก"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AddUserModal({ currentUser, existing, onClose }) {
+  const { c } = useTheme();
+  const [name, setName]   = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole]   = useState("user");
+  const [busy, setBusy]   = useState(false);
+  const [err, setErr]     = useState("");
+  const [done, setDone]   = useState(null);
+  const IS = inputBase({ padding:"8px 12px", fontSize:14 });
+  const LB = { fontSize:12,color:c.text500,fontWeight:500,marginBottom:8,display:"block" };
+  const roles = [{ value:"user",label:"User" },{ value:"admin",label:"Admin" },
+    ...(currentUser?.role==="dev" ? [{ value:"dev",label:"Dev" }] : [])];
+
+  async function submit() {
+    const n = name.trim().replace(/\s+/g," "), e = email.trim().toLowerCase();
+    setErr("");
+    if (!n) return setErr("กรุณาใส่ชื่อ");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return setErr("รูปแบบอีเมลไม่ถูกต้อง");
+    if (existing.some(u => (u.email||"").toLowerCase() === e)) return setErr("อีเมลนี้มีในระบบแล้ว");
+    setBusy(true);
+    try {
+      await createUserAccount({ name:n, email:e, role });
+      setDone({ name:n, email:e });
+    } catch (ex) {
+      setErr(AUTH_ERR[ex.code] || ex.message);
+    }
+    setBusy(false);
+  }
+
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16 }} onClick={busy?undefined:onClose}>
+      <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,width:"100%",maxWidth:420,
+        boxShadow:"0 16px 48px rgba(0,0,0,.16)",padding:24 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900,marginBottom:4 }}>เพิ่มผู้ใช้</div>
+        {done ? (<>
+          <div style={{ fontSize:14,color:c.text900,lineHeight:1.6,margin:"16px 0" }}>
+            สร้างบัญชี <b>{done.name}</b> แล้ว ระบบส่งอีเมลให้ตั้งรหัสผ่านไปที่ <b>{done.email}</b>
+          </div>
+          <div style={{ fontSize:13,color:c.text500,lineHeight:1.6,marginBottom:16 }}>
+            ให้ผู้ใช้เปิดอีเมล (ดูในโฟลเดอร์สแปมด้วย) กดลิงก์ตั้งรหัสผ่าน แล้วเข้าสู่ระบบได้เลย
+          </div>
+          <button onClick={onClose} style={{ width:"100%",background:c.ink,border:"none",color:c.onInk,borderRadius:8,height:40,
+            fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"inherit" }}>เสร็จ</button>
+        </>) : (<>
+          <div style={{ fontSize:13,color:c.text500,marginBottom:20,lineHeight:1.5 }}>
+            ระบบจะส่งอีเมลให้ผู้ใช้ตั้งรหัสผ่านเอง — admin ไม่ต้องรู้รหัสผ่าน
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <label style={LB}>ชื่อ-นามสกุล</label>
+            <input value={name} onChange={e=>setName(e.target.value)} style={IS} autoFocus/>
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <label style={LB}>อีเมล</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} style={IS} placeholder="name@metthier.co.th"/>
+          </div>
+          <div style={{ marginBottom:20 }}>
+            <label style={LB}>สิทธิ์</label>
+            <div style={{ display:"flex",gap:8 }}>
+              {roles.map(r=>(
+                <button key={r.value} type="button" onClick={()=>setRole(r.value)}
+                  style={{ flex:1,height:36,borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500,
+                    background:role===r.value?c.inkSoft:c.card,color:role===r.value?c.ink:c.text500,
+                    border:`1px solid ${role===r.value?c.ink:c.border}` }}>{r.label}</button>
+              ))}
+            </div>
+          </div>
+          {err && <div style={{ fontSize:13,color:c.danger,marginBottom:12 }}>{err}</div>}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
+            <button onClick={onClose} disabled={busy}
+              style={{ background:c.card,border:`1px solid ${c.border}`,color:c.text900,borderRadius:8,height:40,
+                fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+            <button onClick={submit} disabled={busy}
+              style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:8,height:40,
+                fontSize:14,fontWeight:500,cursor:busy?"default":"pointer",fontFamily:"inherit",opacity:busy?.7:1 }}>
+              {busy?"กำลังสร้างบัญชี...":"สร้างบัญชีและส่งอีเมล"}
+            </button>
+          </div>
+        </>)}
       </div>
     </div>
   );
