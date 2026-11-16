@@ -332,6 +332,28 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
 function EditUserModal({ user, onClose, onSave }) {
   const { c } = useTheme();
   const [resetState, setResetState] = useState("");   // "" | "sending" | "sent" | ข้อความ error
+  const [newPw, setNewPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [pwState, setPwState] = useState("");   // "" | "saving" | "done" | ข้อความ error
+  function genPw() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    const b = crypto.getRandomValues(new Uint8Array(10));
+    setNewPw(Array.from(b, x => chars[x % chars.length]).join("")); setShowPw(true); setPwState("");
+  }
+  async function setPassword() {
+    if (newPw.length < 8) return setPwState("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
+    if (!confirm(`ตั้งรหัสผ่านใหม่ให้ ${user.name||user.email}?\n\nผู้ใช้จะถูกออกจากระบบทุกเครื่อง และต้องเข้าด้วยรหัสใหม่`)) return;
+    setPwState("saving");
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const r = await fetch("/api/admin-set-password", { method:"POST",
+        headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ uid:user.id, password:newPw }) });
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      setPwState("done");
+    } catch (ex) { setPwState(ex.message); }
+  }
   async function sendReset() {
     if (!user.email) return setResetState("ผู้ใช้นี้ไม่มีอีเมลในระบบ");
     if (!confirm(`ส่งอีเมลลิงก์ตั้งรหัสผ่านใหม่ไปที่ ${user.email}?\n\nรหัสเดิมยังใช้ได้จนกว่าผู้ใช้จะตั้งรหัสใหม่`)) return;
@@ -411,11 +433,40 @@ function EditUserModal({ user, onClose, onSave }) {
           )}
         </div>
 
-        {/* รีเซ็ตรหัสผ่าน */}
+        {/* ตั้งรหัสผ่านใหม่ทันที */}
+        <div style={{ marginBottom:8,padding:12,background:c.bg,border:`1px solid ${c.border}`,borderRadius:8 }}>
+          <div style={{ fontSize:13,fontWeight:500,color:c.text900,marginBottom:8 }}>ตั้งรหัสผ่านใหม่</div>
+          <div style={{ display:"flex",gap:8 }}>
+            <div style={{ position:"relative",flex:1 }}>
+              <input type={showPw?"text":"password"} value={newPw} autoComplete="new-password"
+                onChange={e=>{ setNewPw(e.target.value); setPwState(""); }}
+                placeholder="อย่างน้อย 8 ตัวอักษร" style={{ ...IS, height:32, padding:"0 56px 0 10px" }}/>
+              <button type="button" onClick={()=>setShowPw(v=>!v)}
+                style={{ position:"absolute",right:4,top:4,height:24,padding:"0 6px",border:"none",background:"transparent",
+                  color:c.text500,fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>{showPw?"ซ่อน":"แสดง"}</button>
+            </div>
+            <button type="button" onClick={genPw}
+              style={{ background:c.card,border:`1px solid ${c.border}`,color:c.text900,borderRadius:8,height:32,padding:"0 10px",
+                fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap" }}>สุ่ม</button>
+            <button type="button" onClick={setPassword} disabled={pwState==="saving"||!newPw}
+              style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:8,height:32,padding:"0 12px",
+                fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap",opacity:(pwState==="saving"||!newPw)?.6:1 }}>
+              {pwState==="saving"?"กำลังตั้ง...":"ตั้งรหัส"}
+            </button>
+          </div>
+          <div style={{ fontSize:12,marginTop:6,lineHeight:1.5,
+            color:pwState==="done"?c.ok:(pwState&&pwState!=="saving"?c.danger:c.text500) }}>
+            {pwState==="done" ? "ตั้งรหัสใหม่แล้ว — แจ้งรหัสให้ผู้ใช้ทางช่องทางส่วนตัว และให้เปลี่ยนเองที่หน้าโปรไฟล์" :
+             pwState && pwState!=="saving" ? pwState :
+             "ใช้ได้ทันที ผู้ใช้จะถูกออกจากระบบทุกเครื่อง"}
+          </div>
+        </div>
+
+        {/* รีเซ็ตรหัสผ่านทางอีเมล */}
         <div style={{ marginBottom:16,padding:12,background:c.bg,border:`1px solid ${c.border}`,borderRadius:8,
           display:"flex",alignItems:"center",gap:12 }}>
           <div style={{ flex:1,minWidth:0 }}>
-            <div style={{ fontSize:13,fontWeight:500,color:c.text900 }}>รีเซ็ตรหัสผ่าน</div>
+            <div style={{ fontSize:13,fontWeight:500,color:c.text900 }}>หรือส่งลิงก์ทางอีเมล</div>
             <div style={{ fontSize:12,color:resetState==="sent"?c.ok:(resetState&&resetState!=="sending"?c.danger:c.text500),marginTop:2,lineHeight:1.5 }}>
               {resetState==="sent" ? `ส่งลิงก์ไปที่ ${user.email} แล้ว` :
                resetState && resetState!=="sending" ? resetState :
