@@ -25,11 +25,13 @@ function getRange(mode, customFrom, customTo) {
   if (mode === "month") {
     const to = today();
     const from = `${to.slice(0,7)}-01`;
-    return { from, to, label: `เดือน ${m}/${y}` };
+    const y = Number(to.slice(0,4)), m = Number(to.slice(5,7));
+    return { from, to, label: `เดือน ${m}/${y+543}` };
   }
   if (mode === "year") {
     const to = today();
     const from = `${to.slice(0,4)}-01-01`;
+    const y = Number(to.slice(0,4));
     return { from, to, label: `ปี ${y+543}` };
   }
   if (mode === "custom") {
