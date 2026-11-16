@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { db } from "./firebase.js";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, query, where } from "firebase/firestore";
 import OTModal from "./OTModal.jsx";
+import { useTheme } from "./theme.js";
 import { ORSettingsPanel, ORMigrateModal, planMigration } from "./ORSettingsPanel.jsx";
 
 export default function OTPage({ onBack, projects, users, currentUser }) {
+  const { c } = useTheme();
   const [tab, setTab]           = useState("list");
   const [records, setRecords]   = useState([]);
   const [profile, setProfile]   = useState({ nameTH:"", periodStart:"", periodEnd:"", periodMonth:"" });
@@ -252,225 +254,181 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     }
   }
 
-  const inputStyle = { border:"1px solid #e4e4e7",borderRadius:8,padding:"6px 10px",
-    fontSize:12,fontFamily:"inherit",background:"#fafafa",outline:"none" };
+  // ── สไตล์จาก theme (รองรับโหมดมืด) ──
+  const ctl = { height:32,border:`1px solid ${c.border}`,borderRadius:8,padding:"0 12px",
+    fontSize:13,fontFamily:"inherit",background:c.card,color:c.text900,outline:"none" };
+  const field = { ...ctl, width:"100%", height:36 };
+  const lbl = { fontSize:12,color:c.text500,fontWeight:500,marginBottom:8,display:"block" };
+  const btnOutline = { background:c.card,border:`1px solid ${c.border}`,color:c.text900,borderRadius:8,height:32,
+    padding:"0 12px",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:6,whiteSpace:"nowrap" };
+  const btnPrimary = { ...btnOutline, background:c.ink, border:"none", color:c.onInk };
+  const btnGhost = { ...btnOutline, background:"transparent", border:"none", color:c.text500 };
+  const card = { background:c.card,border:`1px solid ${c.border}`,borderRadius:8 };
+  const toInput = v => !v ? "" : v.includes("/") ? (()=>{ const p=v.split("/"); return `${p[2]}-${p[1]}-${p[0]}`; })() : v;
 
   return (
-    <div style={{ minHeight:"100vh",background:"#fafafa",fontFamily:"'Noto Sans Thai',sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
+    <div style={{ minHeight:"100vh",background:c.bg,color:c.text900 }}>
 
       {/* Header */}
-      <div style={{ background:"#fff",borderBottom:"1px solid #e4e4e7",padding:"14px 20px",
+      <div style={{ background:c.card,borderBottom:`1px solid ${c.border}`,padding:isMobile?"0 12px":"0 24px",height:56,
         display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"#f4f4f5",border:"none",borderRadius:8,
-          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#52525b",fontWeight:600 }}>
-          ← กลับ
-        </button>
-        <div style={{ fontSize:16,fontWeight:600,color:"#09090b" }}>บันทึก OT</div>
-        <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
-          {canEditORSettings && <button onClick={()=>setShowORSettings(v=>!v)}
-            style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
-              borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            ⚙ ตั้งค่าใบ OR
-          </button>}
-          <button onClick={exportAllOR}
-            style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",
-              borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            🖨 Export ใบ OR
-          </button>
-          <button onClick={exportExcel}
-            style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
-              borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            📥 Export Excel
-          </button>
-          <button onClick={()=>{ setEditRecord(null); setShowModal(true); }}
-            style={{ background:"#F97316",border:"none",color:"#fff",borderRadius:8,
-              padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            + บันทึก OT
-          </button>
+        <button onClick={onBack} style={btnGhost}>← กลับ</button>
+        <span style={{ width:1,height:16,background:c.border }}/>
+        <div style={{ fontSize:15,fontWeight:600 }}>บันทึก OT</div>
+        <div style={{ marginLeft:"auto",display:"flex",gap:8,overflowX:"auto" }}>
+          {canEditORSettings && !isMobile && (
+            <button onClick={()=>setShowORSettings(v=>!v)} style={btnGhost}>ตั้งค่าใบ OR</button>
+          )}
+          <button onClick={exportAllOR} style={btnOutline}>{isMobile?"ใบ OR":"Export ใบ OR"}</button>
+          <button onClick={exportExcel} style={btnOutline}>{isMobile?"Excel":"Export หน้าปก Excel"}</button>
+          <button onClick={()=>{ setEditRecord(null); setShowModal(true); }} style={btnPrimary}>+ บันทึก OT</button>
         </div>
       </div>
 
-      <div style={{ padding:isMobile?"12px 14px 48px":"16px 20px 48px",maxWidth:1100,margin:"0 auto" }}>
-
-        {/* Tab bar */}
-        <div style={{ display:"flex",gap:6,marginBottom:16,background:"#fff",border:"1px solid #e4e4e7",
-          borderRadius:8,padding:6 }}>
-          {[{key:"list",label:"รายการ"}].map(t=>(
-            <button key={t.key} onClick={()=>setTab(t.key)}
-              style={{ flex:1,padding:"7px",borderRadius:7,border:"none",fontSize:12,fontWeight:600,
-                cursor:"pointer",fontFamily:"inherit",
-                background:tab===t.key?"#F97316":"transparent",
-                color:tab===t.key?"#fff":"#71717a" }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div style={{ padding:isMobile?"16px 12px 48px":"24px 24px 48px",maxWidth:1100,margin:"0 auto" }}>
 
         {showORSettings && canEditORSettings && <ORSettingsPanel key={JSON.stringify(orCfg)} orCfg={orCfg} projects={projects} onClose={()=>setShowORSettings(false)}/>}
 
-        {/* Period Section — แสดงเหนือ list เสมอ */}
-        <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,
-          padding:"16px 20px",marginBottom:16 }}>
-          <div style={{ fontSize:13,fontWeight:600,color:"#09090b",marginBottom:12 }}>รอบเบิก OT</div>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,alignItems:"end" }}>
-            <div>
-              <div style={{ fontSize:11,color:"#a1a1aa",fontWeight:600,marginBottom:4 }}>เดือนที่เบิก</div>
-              <input value={profile.periodMonth||""} placeholder="เช่น กรกฎาคม"
-                onChange={e=>setProfile(p=>({...p,periodMonth:e.target.value}))}
-                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,
-                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
+        {/* รอบเบิก */}
+        <div style={{ ...card,padding:16,marginBottom:16 }}>
+          <div style={{ display:"flex",alignItems:"center",marginBottom:16 }}>
+            <div style={{ fontSize:14,fontWeight:600 }}>รอบเบิก OT</div>
+            <span style={{ fontSize:12,color:c.text500,marginLeft:8 }}>ใช้กับหน้าปก Excel และช่วงวันที่ของใบ OR</span>
+          </div>
+          <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 1fr auto",gap:12,alignItems:"end" }}>
+            <div style={{ gridColumn:isMobile?"1 / -1":"auto" }}>
+              <label style={lbl}>เดือนที่เบิก</label>
+              <input value={profile.periodMonth||""} placeholder="เช่น พฤศจิกายน"
+                onChange={e=>setProfile(p=>({...p,periodMonth:e.target.value}))} style={field}/>
             </div>
             <div>
-              <div style={{ fontSize:11,color:"#a1a1aa",fontWeight:600,marginBottom:4 }}>วันที่เริ่ม</div>
-              <input type="date"
-                value={profile.periodStart
-                  ? (profile.periodStart.includes("/")
-                    ? (()=>{ const p=profile.periodStart.split("/"); return `${p[2]}-${p[1]}-${p[0]}`; })()
-                    : profile.periodStart)
-                  : ""}
+              <label style={lbl}>วันที่เริ่ม</label>
+              <input type="date" value={toInput(profile.periodStart)}
                 onChange={e=>{
                   const val = e.target.value;
                   const MONTH_TH=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
                   const mo = val ? MONTH_TH[parseInt(val.slice(5,7))-1] : "";
                   const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
                   setProfile(p=>({...p, periodStart:fmt, periodMonth:mo||p.periodMonth}));
-                }}
-                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,
-                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
+                }} style={field}/>
             </div>
             <div>
-              <div style={{ fontSize:11,color:"#a1a1aa",fontWeight:600,marginBottom:4 }}>วันที่สิ้นสุด</div>
-              <input type="date"
-                value={profile.periodEnd
-                  ? (profile.periodEnd.includes("/")
-                    ? (()=>{ const p=profile.periodEnd.split("/"); return `${p[2]}-${p[1]}-${p[0]}`; })()
-                    : profile.periodEnd)
-                  : ""}
+              <label style={lbl}>วันที่สิ้นสุด</label>
+              <input type="date" value={toInput(profile.periodEnd)}
                 onChange={e=>{
                   const val = e.target.value;
                   const fmt = val ? `${val.slice(8,10)}/${val.slice(5,7)}/${val.slice(0,4)}` : "";
                   setProfile(p=>({...p,periodEnd:fmt}));
-                }}
-                style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,
-                  padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
+                }} style={field}/>
             </div>
+            <button onClick={saveProfile} disabled={profileSaving}
+              style={{ ...(profileSaved?btnOutline:btnPrimary),height:36,gridColumn:isMobile?"1 / -1":"auto",justifyContent:"center",
+                color:profileSaved?c.ok:(btnPrimary.color) }}>
+              {profileSaving?"กำลังบันทึก...":profileSaved?"บันทึกแล้ว ✓":"บันทึกรอบเบิก"}
+            </button>
           </div>
-          <button onClick={saveProfile} disabled={profileSaving}
-            style={{ marginTop:12,background:profileSaved?"#16a34a":"#F97316",border:"none",color:"#fff",
-              borderRadius:8,padding:"8px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            {profileSaving?"กำลังบันทึก...":profileSaved?"บันทึกแล้ว":"บันทึกรอบเบิก"}
-          </button>
         </div>
 
-        {/* KPI */}
-        {tab==="list" && <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)",gap:10,marginBottom:16 }}>
+        {/* ตัวเลขสรุป */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:isMobile?8:16,marginBottom:16 }}>
           {[
-            { label:"รายการทั้งหมด", val:filtered.length, color:"#F97316" },
-            { label:"ชั่วโมง OT รวม", val:`${totalHours} ชม.`, color:"#6B21A8" },
-            { label:"เฉลี่ยต่อครั้ง", val:`${filtered.length>0?(totalHours/filtered.length).toFixed(1):0} ชม.`, color:"#16a34a" },
+            { label:"รายการ", val:filtered.length, unit:"ครั้ง" },
+            { label:"ชั่วโมง OT รวม", val:totalHours, unit:"ชม." },
+            { label:"เฉลี่ยต่อครั้ง", val:filtered.length>0?(totalHours/filtered.length).toFixed(1):0, unit:"ชม." },
           ].map(k=>(
-            <div key={k.label} style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,padding:"14px 16px" }}>
-              <div style={{ fontSize:10,color:"#a1a1aa",fontWeight:600,marginBottom:4 }}>{k.label}</div>
-              <div style={{ fontSize:20,fontWeight:600,color:k.color }}>{k.val}</div>
+            <div key={k.label} style={{ ...card,padding:isMobile?12:16 }}>
+              <div style={{ fontSize:12,color:c.text500 }}>{k.label}</div>
+              <div style={{ marginTop:8,display:"flex",alignItems:"baseline",gap:4 }}>
+                <span style={{ fontSize:isMobile?20:24,fontWeight:600,letterSpacing:"-0.02em",lineHeight:1 }}>{k.val}</span>
+                <span style={{ fontSize:13,color:c.text500 }}>{k.unit}</span>
+              </div>
             </div>
           ))}
-        </div>}
+        </div>
 
-        {/* Filters — เฉพาะ tab รายการ */}
-        {tab==="list" && <>
-        <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,
-          padding:"12px 16px",marginBottom:14,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
+        {/* ตัวกรอง */}
+        <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:12 }}>
+          <div style={{ fontSize:14,fontWeight:600,marginRight:"auto" }}>
+            รายการ OT <span style={{ color:c.text400,fontWeight:400 }}>{filtered.length}</span>
+          </div>
           {isAdmin && (
-            <select value={filterName} onChange={e=>setFilterName(e.target.value)} style={inputStyle}>
+            <select value={filterName} onChange={e=>setFilterName(e.target.value)} style={ctl}>
               <option value="all">ทุกคน</option>
               {names.map(n=><option key={n} value={n}>{n}</option>)}
             </select>
           )}
-          <select value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} style={inputStyle}>
+          <select value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} style={{ ...ctl,minWidth:140 }}>
             <option value="">ทุกเดือน</option>
             {months.map(m=><option key={m} value={m}>{fmtMonth(m)}</option>)}
           </select>
           {(filterName!=="all"||filterMonth) && (
-            <button onClick={()=>{ setFilterName("all"); setFilterMonth(""); }}
-              style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-                borderRadius:8,padding:"5px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>
-              ล้าง
-            </button>
+            <button onClick={()=>{ setFilterName("all"); setFilterMonth(""); }} style={btnGhost}>ล้าง</button>
           )}
         </div>
 
-        {/* Records */}
+        {/* รายการ */}
         {filtered.length === 0 ? (
-          <div style={{ textAlign:"center",color:"#d4d4d8",padding:48,fontSize:14 }}>
+          <div style={{ ...card,border:`1px dashed ${c.border}`,borderRadius:12,textAlign:"center",color:c.text500,padding:48,fontSize:14 }}>
             ยังไม่มีข้อมูล OT
+            <div style={{ marginTop:16 }}>
+              <button onClick={()=>{ setEditRecord(null); setShowModal(true); }} style={btnPrimary}>+ บันทึก OT แรก</button>
+            </div>
           </div>
         ) : (
-          <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-            {filtered.map(r => {
+          <div style={{ ...card,overflow:"hidden" }}>
+            {filtered.map((r,i) => {
               const proj = projects.find(p=>p.id===r.projectId);
+              const projName = r.orProjectName || proj?.name || r.projectName || "";
               return (
-                <div key={r.id} style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:12,
-                  padding:"14px 16px",display:"flex",gap:12,alignItems:"flex-start" }}>
+                <div key={r.id} style={{ padding:isMobile?12:16,display:"flex",gap:16,alignItems:"flex-start",
+                  borderTop:i>0?`1px solid ${c.border}`:"none" }}>
+                  {/* วันที่ */}
+                  <div style={{ width:isMobile?72:84,flexShrink:0 }}>
+                    <div style={{ fontSize:13,fontWeight:600 }}>{fmtDate(r.dateIn)}</div>
+                    <div style={{ fontSize:12,color:c.text500,marginTop:4 }}>{r.timeIn}–{r.timeOut}</div>
+                  </div>
+                  {/* รายละเอียด */}
                   <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4 }}>
-                      <span style={{ fontSize:14,fontWeight:600,color:"#09090b" }}>{r.name}</span>
-                      <span style={{ fontSize:13,fontWeight:600,color:"#F97316" }}>{r.hours} ชม.</span>
+                    <div style={{ display:"flex",alignItems:"center",gap:8,minWidth:0 }}>
+                      {proj && <span style={{ width:6,height:6,borderRadius:"50%",background:proj.color||c.text400,flexShrink:0 }}/>}
+                      <span style={{ fontSize:14,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{projName || "ไม่ระบุโครงการ"}</span>
                     </div>
-                    {proj && (
-                      <div style={{ fontSize:12,color:"#71717a",display:"flex",alignItems:"center",gap:5,marginBottom:3 }}>
-                        <span style={{ width:8,height:8,borderRadius:"50%",background:proj.color||"#a1a1aa" }}/>
-                        {proj.name}
-                      </div>
-                    )}
-                    <div style={{ fontSize:12,color:"#52525b",marginBottom:3 }}>{r.desc}</div>
-                    <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
-                      <span style={{ fontSize:11,color:"#a1a1aa" }}>{fmtDate(r.dateIn)} {r.timeIn} - {r.timeOut}</span>
-                      {r.location && <span style={{ fontSize:11,color:"#a1a1aa" }}>{r.location}</span>}
-                      <span style={{ fontSize:11,color:"#a1a1aa" }}>{r.remark}</span>
+                    {r.desc && <div style={{ fontSize:13,color:c.text500,marginTop:4,lineHeight:1.5,
+                      overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical" }}>{r.desc}</div>}
+                    <div style={{ fontSize:12,color:c.text400,marginTop:4,display:"flex",gap:12,flexWrap:"wrap" }}>
+                      {r.location && <span>{r.location}</span>}
+                      {r.examiner && <span>ผู้ตรวจสอบ {r.examiner}</span>}
+                      {r.remark && <span>{r.remark}</span>}
                     </div>
                   </div>
-                  <div style={{ display:"flex",gap:6,flexShrink:0 }}>
-                    <button onClick={()=>exportOR(r)}
-                      style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",color:"#16a34a",
-                        borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}></button>
-                    <button onClick={()=>{ setEditRecord(r); setShowModal(true); }}
-                      style={{ background:"#eff6ff",border:"1px solid #bfdbfe",color:"#2563eb",
-                        borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}></button>
-                    {(isAdmin || r.createdBy === uid) && (
-                      <button onClick={()=>setConfirmId(r.id)}
-                        style={{ background:"#fff5f5",border:"1px solid #fecaca",color:"#ef4444",
-                          borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:12,fontFamily:"inherit" }}></button>
-                    )}
+                  {/* ชั่วโมง + ปุ่ม */}
+                  <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8,flexShrink:0 }}>
+                    <span style={{ fontSize:14,fontWeight:600,color:c.ink }}>{r.hours} ชม.</span>
+                    <div style={{ display:"flex",gap:4 }}>
+                      <button onClick={()=>exportOR(r)} title="Export ใบ OR ของรายการนี้" style={{ ...btnGhost,height:28,padding:"0 8px",fontSize:12 }}>ใบ OR</button>
+                      <button onClick={()=>{ setEditRecord(r); setShowModal(true); }} style={{ ...btnGhost,height:28,padding:"0 8px",fontSize:12 }}>แก้ไข</button>
+                      {(isAdmin || r.createdBy === uid) && (
+                        <button onClick={()=>setConfirmId(r.id)} style={{ ...btnGhost,height:28,padding:"0 8px",fontSize:12,color:c.danger }}>ลบ</button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </>}
       </div>
 
       {/* Confirm delete */}
       {confirmId && (
         <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(0,0,0,.5)",
           display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
-          <div style={{ background:"#fff",borderRadius:12,padding:24,maxWidth:320,width:"100%",
-            textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}>
-            
-            <div style={{ fontSize:15,fontWeight:600,color:"#09090b",marginBottom:8 }}>ลบรายการ OT นี้?</div>
-            <div style={{ fontSize:13,color:"#71717a",marginBottom:20 }}>ไม่สามารถกู้คืนได้</div>
-            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
-              <button onClick={()=>setConfirmId(null)}
-                style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
-                  borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                ยกเลิก
-              </button>
-              <button onClick={()=>deleteOT(confirmId)}
-                style={{ background:"#ef4444",border:"none",color:"#fff",
-                  borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                ลบ
-              </button>
+          <div style={{ ...card,borderRadius:12,padding:24,maxWidth:340,width:"100%",boxShadow:"0 16px 48px rgba(0,0,0,.16)" }}>
+            <div style={{ fontSize:16,fontWeight:600,marginBottom:8 }}>ลบรายการ OT นี้?</div>
+            <div style={{ fontSize:13,color:c.text500,marginBottom:24 }}>ลบแล้วกู้คืนไม่ได้</div>
+            <div style={{ display:"flex",justifyContent:"flex-end",gap:8 }}>
+              <button onClick={()=>setConfirmId(null)} style={{ ...btnOutline,height:36 }}>ยกเลิก</button>
+              <button onClick={()=>deleteOT(confirmId)} style={{ ...btnPrimary,height:36,background:c.danger,color:"#fff" }}>ลบ</button>
             </div>
           </div>
         </div>
@@ -480,44 +438,35 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
         <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
           display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
           onClick={()=>setShowORDatePicker(false)}>
-          <div style={{ background:"#fff",borderRadius:12,width:"100%",maxWidth:380,
-            padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
+          <div style={{ ...card,borderRadius:12,width:"100%",maxWidth:400,padding:24,boxShadow:"0 16px 48px rgba(0,0,0,.16)" }}
             onClick={e=>e.stopPropagation()}>
-            <div style={{ fontSize:15,fontWeight:600,color:"#09090b",marginBottom:16 }}>Export ใบ OR — เลือกช่วงวันที่</div>
-            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16 }}>
+            <div style={{ fontSize:16,fontWeight:600,marginBottom:4 }}>Export ใบ OR</div>
+            <div style={{ fontSize:13,color:c.text500,marginBottom:20 }}>เลือกช่วงวันที่ — 1 รายการ = 1 หน้า</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20 }}>
               <div>
-                <label style={{ fontSize:11,color:"#a1a1aa",fontWeight:600,display:"block",marginBottom:4 }}>ตั้งแต่วันที่</label>
-                <input type="date" value={orDateFrom} onChange={e=>setOrDateFrom(e.target.value)}
-                  style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 12px",
-                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
+                <label style={lbl}>ตั้งแต่วันที่</label>
+                <input type="date" value={orDateFrom} onChange={e=>setOrDateFrom(e.target.value)} style={field}/>
               </div>
               <div>
-                <label style={{ fontSize:11,color:"#a1a1aa",fontWeight:600,display:"block",marginBottom:4 }}>ถึงวันที่</label>
-                <input type="date" value={orDateTo} onChange={e=>setOrDateTo(e.target.value)}
-                  style={{ width:"100%",border:"1px solid #e4e4e7",borderRadius:8,padding:"8px 12px",
-                    fontSize:13,fontFamily:"inherit",outline:"none",background:"#fafafa" }}/>
+                <label style={lbl}>ถึงวันที่</label>
+                <input type="date" value={orDateTo} onChange={e=>setOrDateTo(e.target.value)} style={field}/>
               </div>
             </div>
-            <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
-              <button onClick={()=>setShowORDatePicker(false)}
-                style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
-                  borderRadius:8,padding:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                ยกเลิก
-              </button>
-              <button onClick={doExportAllOR}
-                style={{ background:"#1d4ed8",border:"none",color:"#fff",
-                  borderRadius:8,padding:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-                🖨 Export ใบ OR ({ownRecords.filter(inRange).length} หน้า)
+            <div style={{ display:"flex",justifyContent:"flex-end",gap:8 }}>
+              <button onClick={()=>setShowORDatePicker(false)} style={{ ...btnOutline,height:36 }}>ยกเลิก</button>
+              <button onClick={doExportAllOR} style={{ ...btnPrimary,height:36 }}>
+                Export {ownRecords.filter(inRange).length} หน้า
               </button>
             </div>
-            <button onClick={openMigrate}
-              style={{ marginTop:10,width:"100%",background:"#fefce8",border:"1px solid #fde047",color:"#854d0e",
-                borderRadius:8,padding:8,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-              🛠 ปรับข้อมูลเก่าในช่วงนี้ให้ตรงค่าตั้งใบ OR (ดูก่อนยืนยัน)
-            </button>
-            {!(profile.signatures||[]).length && (
-              <div style={{ marginTop:8,fontSize:11,color:"#a1a1aa" }}>ยังไม่มีลายเซ็น — อัปโหลดได้ที่ โปรไฟล์ → ข้อมูล OT</div>
-            )}
+            <div style={{ borderTop:`1px solid ${c.border}`,marginTop:20,paddingTop:16 }}>
+              <button onClick={openMigrate} style={{ ...btnGhost,padding:0,height:"auto",color:c.text900,textDecoration:"underline" }}>
+                ปรับข้อมูลเก่าในช่วงนี้ให้ตรงค่าตั้งใบ OR
+              </button>
+              <div style={{ fontSize:12,color:c.text500,marginTop:4 }}>แสดงรายการที่จะเปลี่ยนให้ดูก่อนยืนยัน</div>
+              {!(profile.signatures||[]).length && (
+                <div style={{ marginTop:8,fontSize:12,color:c.warn }}>ยังไม่มีลายเซ็น — อัปโหลดได้ที่ โปรไฟล์ → ข้อมูล OT</div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -3,9 +3,9 @@ import { db } from "./firebase.js";
 import { doc, setDoc } from "firebase/firestore";
 import { EXAMINER_OPTS, orMap, orSettingsFor, orDisplayName, cleanProjectName, normPresets, isPresetMode } from "./orConfig.js";
 
-const IS = { width:"100%", border:"1px solid #e4e4e7", borderRadius:8, padding:"7px 10px",
-  fontSize:12, fontFamily:"inherit", outline:"none", background:"#fafafa", boxSizing:"border-box" };
-const LB = { fontSize:10, color:"#a1a1aa", fontWeight:600, marginBottom:3, display:"block" };
+const IS = { width:"100%", border:"1px solid var(--c-border)", borderRadius:8, padding:"7px 10px",
+  fontSize:12, fontFamily:"inherit", outline:"none", background:"var(--c-bg)", color:"var(--c-text900)", boxSizing:"border-box" };
+const LB = { fontSize:10, color:"var(--c-text400)", fontWeight:600, marginBottom:3, display:"block" };
 const BTN = { border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" };
 
 // ── ตั้งค่าใบ OR ต่อโครงการ (Firestore settings/orProjects) ─────────────
@@ -44,19 +44,19 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
   const unused = (projects || []).filter(p => p.code && !rows.some(r => r.code === p.code));
 
   return (
-    <div style={{ background:"#fff", border:"1px solid #e4e4e7", borderRadius:12, padding:"16px 20px", marginBottom:16 }}>
+    <div style={{ background:"var(--c-card)", border:"1px solid var(--c-border)", borderRadius:12, padding:"16px 20px", marginBottom:16 }}>
       <div style={{ display:"flex", alignItems:"center", marginBottom:4 }}>
-        <div style={{ fontSize:13, fontWeight:600, color:"#09090b" }}>ตั้งค่าใบ OR ต่อโครงการ</div>
-        <button onClick={onClose} style={{ ...BTN, marginLeft:"auto", background:"#f4f4f5", color:"#71717a", padding:"4px 10px" }}>ปิด</button>
+        <div style={{ fontSize:13, fontWeight:600, color:"var(--c-text900)" }}>ตั้งค่าใบ OR ต่อโครงการ</div>
+        <button onClick={onClose} style={{ ...BTN, marginLeft:"auto", background:"var(--c-soft)", color:"var(--c-text500)", padding:"4px 10px" }}>ปิด</button>
       </div>
-      <div style={{ fontSize:11, color:"#a1a1aa", marginBottom:12 }}>
+      <div style={{ fontSize:11, color:"var(--c-text400)", marginBottom:12 }}>
         เติมอัตโนมัติตอนเลือกโครงการในฟอร์ม (แก้เองได้เสมอ) · รายละเอียดสำเร็จรูป 1 บรรทัด = 1 แบบ
       </div>
       {rows.map((r, i) => (
-        <div key={i} style={{ border:"1px solid #f4f4f5", borderRadius:8, padding:12, marginBottom:10, background:"#fcfcfd" }}>
-          <div style={{ fontSize:12, fontWeight:600, color:"#3f3f46", marginBottom:8 }}>
+        <div key={i} style={{ border:"1px solid var(--c-soft)", borderRadius:8, padding:12, marginBottom:10, background:"#fcfcfd" }}>
+          <div style={{ fontSize:12, fontWeight:600, color:"var(--c-text900)", marginBottom:8 }}>
             {r.label || cleanProjectName(projOf(r.code)?.name) || r.code}
-            <span style={{ fontWeight:400, color:"#a1a1aa", marginLeft:6 }}>รหัส {r.code}</span>
+            <span style={{ fontWeight:400, color:"var(--c-text400)", marginLeft:6 }}>รหัส {r.code}</span>
             <button onClick={() => setRows(rs => rs.filter((_, j) => j !== i))}
               style={{ float:"right", background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontSize:12 }}>ลบ</button>
           </div>
@@ -69,14 +69,14 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
             <div><label style={LB}>ผู้ตรวจสอบเริ่มต้น</label>
               <input style={IS} list="or-examiners" value={r.defaultExaminer || ""} onChange={e => set(i, "defaultExaminer", e.target.value)} /></div>
           </div>
-          <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#3f3f46", marginBottom:6, cursor:"pointer" }}>
+          <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--c-text900)", marginBottom:6, cursor:"pointer" }}>
             <input type="checkbox" checked={r.descriptionMode === "preset"} style={{ accentColor:"#F97316" }}
               onChange={e => set(i, "descriptionMode", e.target.checked ? "preset" : "free")} />
             รายละเอียดแบบเลือกจากสำเร็จรูป (ซ่อนช่องพิมพ์ · วนแบบอัตโนมัติ)
           </label>
           {(r.presets || []).map((p, k) => (
             <div key={k} style={{ display:"grid", gridTemplateColumns:"28px 1fr 24px", gap:6, marginBottom:6, alignItems:"start" }}>
-              <div style={{ fontSize:12, fontWeight:600, color:"#a1a1aa", paddingTop:7 }}>{k + 1}</div>
+              <div style={{ fontSize:12, fontWeight:600, color:"var(--c-text400)", paddingTop:7 }}>{k + 1}</div>
               <div>
                 <input style={{ ...IS, marginBottom:4, fontWeight:600 }} placeholder="ชื่อแบบ (label)" value={p.label}
                   onChange={e => set(i, "presets", r.presets.map((x, j) => j === k ? { ...x, label: e.target.value } : x))} />
@@ -88,7 +88,7 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
             </div>
           ))}
           <button onClick={() => set(i, "presets", [...(r.presets || []), { id: (r.presets || []).length + 1, label: "", text: "" }])}
-            style={{ ...BTN, background:"#fafafa", border:"1px dashed #d4d4d8", color:"#71717a", padding:"4px 10px" }}>+ เพิ่มแบบ</button>
+            style={{ ...BTN, background:"var(--c-bg)", border:"1px dashed #d4d4d8", color:"var(--c-text500)", padding:"4px 10px" }}>+ เพิ่มแบบ</button>
         </div>
       ))}
       <datalist id="or-examiners">{EXAMINER_OPTS.map(o => <option key={o} value={o} />)}</datalist>
@@ -143,29 +143,29 @@ export function ORMigrateModal({ plan, from, to, onConfirm, onClose, running }) 
   return (
     <div style={{ position:"fixed", inset:0, zIndex:700, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff", borderRadius:12, width:"100%", maxWidth:760, maxHeight:"88vh", overflowY:"auto", padding:24 }}
+      <div style={{ background:"var(--c-card)", borderRadius:12, width:"100%", maxWidth:760, maxHeight:"88vh", overflowY:"auto", padding:24 }}
         onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize:15, fontWeight:600, color:"#09090b", marginBottom:4 }}>ปรับข้อมูลเก่าให้ตรงค่าตั้งใบ OR</div>
-        <div style={{ fontSize:12, color:"#71717a", marginBottom:14 }}>
+        <div style={{ fontSize:15, fontWeight:600, color:"var(--c-text900)", marginBottom:4 }}>ปรับข้อมูลเก่าให้ตรงค่าตั้งใบ OR</div>
+        <div style={{ fontSize:12, color:"var(--c-text500)", marginBottom:14 }}>
           ช่วง {from || "—"} ถึง {to || "—"} · จะเปลี่ยน {plan.length} รายการ — ตรวจดูก่อน แล้วกดยืนยัน
         </div>
         {plan.length === 0 ? (
-          <div style={{ textAlign:"center", color:"#a1a1aa", padding:24, fontSize:13 }}>ข้อมูลตรงค่าตั้งแล้ว ไม่มีอะไรต้องเปลี่ยน</div>
+          <div style={{ textAlign:"center", color:"var(--c-text400)", padding:24, fontSize:13 }}>ข้อมูลตรงค่าตั้งแล้ว ไม่มีอะไรต้องเปลี่ยน</div>
         ) : plan.map(({ r, ch }) => (
-          <div key={r.id} style={{ border:"1px solid #f4f4f5", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
-            <div style={{ fontSize:12, fontWeight:600, color:"#3f3f46", marginBottom:4 }}>
+          <div key={r.id} style={{ border:"1px solid var(--c-soft)", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
+            <div style={{ fontSize:12, fontWeight:600, color:"var(--c-text900)", marginBottom:4 }}>
               {r.dateIn} {r.timeIn}-{r.timeOut} · {short(cleanProjectName(r.projectName))}
             </div>
             {Object.entries(ch).map(([k, v]) => (
-              <div key={k} style={{ fontSize:11, color:"#52525b", display:"grid", gridTemplateColumns:"110px 1fr", gap:6 }}>
-                <span style={{ color:"#a1a1aa" }}>{FIELD_TH[k] || k}</span>
+              <div key={k} style={{ fontSize:11, color:"var(--c-text500)", display:"grid", gridTemplateColumns:"110px 1fr", gap:6 }}>
+                <span style={{ color:"var(--c-text400)" }}>{FIELD_TH[k] || k}</span>
                 <span><s style={{ color:"#ef4444" }}>{short(r[k])}</s> → <b style={{ color:"#16a34a" }}>{k === "createdBy" ? "ฉัน" : short(v)}</b></span>
               </div>
             ))}
           </div>
         ))}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:8, marginTop:12 }}>
-          <button onClick={onClose} style={{ ...BTN, background:"#fafafa", border:"1px solid #e4e4e7", color:"#52525b", padding:10 }}>ยกเลิก</button>
+          <button onClick={onClose} style={{ ...BTN, background:"var(--c-bg)", border:"1px solid var(--c-border)", color:"var(--c-text500)", padding:10 }}>ยกเลิก</button>
           <button onClick={onConfirm} disabled={running || plan.length === 0}
             style={{ ...BTN, background:"#16a34a", color:"#fff", padding:10, opacity:(running || plan.length === 0) ? .5 : 1 }}>
             {running ? "กำลังบันทึก..." : `✅ ยืนยันเปลี่ยน ${plan.length} รายการ`}
