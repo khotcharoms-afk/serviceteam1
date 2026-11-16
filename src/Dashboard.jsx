@@ -137,27 +137,28 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
 
   return (
     <div style={{ minHeight:"100vh",background:c.bg,fontFamily:"'Noto Sans Thai',sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
+
 
       {/* Header */}
-      <div style={{ background:c.card,borderBottom:`1px solid ${c.border}`,padding:"14px 20px",
+      <div style={{ background:c.card,borderBottom:`1px solid ${c.border}`,padding:"0 24px",height:56,
         display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
-        <button onClick={onBack} style={{ background:c.borderSoft,border:"none",borderRadius:8,
-          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
+        <button onClick={onBack} style={{ background:"transparent",border:"none",borderRadius:8,height:32,
+          padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>📊 Dashboard</div>
-        <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:10 }}>
-          <span style={{ fontSize:12,color:c.text400 }}>เคสทั้งหมด {cases.length} รายการ</span>
+        <span style={{ width:1,height:16,background:c.border }}/>
+        <div style={{ fontSize:15,fontWeight:600,color:c.text900 }}>Dashboard</div>
+        <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:8 }}>
+          <span style={{ fontSize:13,color:c.text500 }}>เคสทั้งหมด {cases.length} รายการ</span>
           <button onClick={()=>setShowDeleteLog(true)}
-            style={{ background:tint(c.red,"1a"),border:`1px solid ${tint(c.red,"55")}`,color:c.red,borderRadius:8,
-              padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            🗑 ประวัติลบเคส {deletedCases.length>0&&`(${deletedCases.length})`}
+            style={{ background:"transparent",border:`1px solid ${c.border}`,color:c.text900,borderRadius:8,height:32,
+              padding:"0 12px",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit" }}>
+            ประวัติลบเคส {deletedCases.length>0&&<span style={{ color:c.text400 }}>{deletedCases.length}</span>}
           </button>
           <button onClick={()=>setShowReport(true)}
-            style={{ background:c.blue,border:"none",color:"#fff",borderRadius:8,
-              padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
-            📄 สรุปเคส
+            style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:8,height:32,
+              padding:"0 12px",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit" }}>
+            สรุปเคส
           </button>
         </div>
       </div>
@@ -173,27 +174,26 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
         {/* KPI 2×2 */}
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
           {[
-            { icon:"📋", label:"เคสเดือนนี้",  value:casesThisMonth, unit:"รายการ", color:c.blue,  bg:tint(c.blue,"14"),  border:tint(c.blue,"40"),  sub:null },
-            { icon:"✅", label:"อัตราปิดงาน",  value:closeRate,       unit:"%",      color:c.green, bg:tint(c.green,"14"), border:tint(c.green,"40"), sub:`${doneCases.length}/${cases.length} เคส` },
-            { icon:"⏱️", label:"เฉลี่ยปิดงาน", value:avgDays!==null?avgDays:"—", unit:avgDays!==null?"วัน":"", color:c.amber, bg:tint(c.amber,"14"), border:tint(c.amber,"40"), sub:avgDays!==null?`${closedWithDates.length} เคส`:"ยังไม่มีข้อมูล" },
-            { icon:"🔥", label:"ค้างนานสุด",   value:pendingCases.length>0?longestPending:"—", unit:pendingCases.length>0?"วัน":"", color:longestPending>=7?c.red:c.text500, bg:longestPending>=7?tint(c.red,"14"):c.borderSoft, border:longestPending>=7?tint(c.red,"40"):c.border, sub:`${pendingCases.length} งานค้าง` },
+            { icon:"", label:"เคสเดือนนี้",  value:casesThisMonth, unit:"รายการ", color:c.blue,  bg:tint(c.blue,"14"),  border:tint(c.blue,"40"),  sub:null },
+            { icon:"", label:"อัตราปิดงาน",  value:closeRate,       unit:"%",      color:c.green, bg:tint(c.green,"14"), border:tint(c.green,"40"), sub:`${doneCases.length}/${cases.length} เคส` },
+            { icon:"", label:"เฉลี่ยปิดงาน", value:avgDays!==null?avgDays:"—", unit:avgDays!==null?"วัน":"", color:c.amber, bg:tint(c.amber,"14"), border:tint(c.amber,"40"), sub:avgDays!==null?`${closedWithDates.length} เคส`:"ยังไม่มีข้อมูล" },
+            { icon:"", label:"ค้างนานสุด",   value:pendingCases.length>0?longestPending:"—", unit:pendingCases.length>0?"วัน":"", color:longestPending>=7?c.red:c.text500, bg:longestPending>=7?tint(c.red,"14"):c.borderSoft, border:longestPending>=7?tint(c.red,"40"):c.border, sub:`${pendingCases.length} งานค้าง` },
           ].map(k=>(
-            <div key={k.label} style={{ background:k.bg,border:`1px solid ${k.border}`,borderRadius:12,padding:"12px 14px" }}>
-              <div style={{ fontSize:16,marginBottom:4 }}>{k.icon}</div>
-              <div style={{ fontSize:10,color:c.text400,fontWeight:600,letterSpacing:.3,marginBottom:2 }}>{k.label.toUpperCase()}</div>
-              <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
-                <span style={{ fontSize:22,fontWeight:600,color:k.color,lineHeight:1 }}>{k.value}</span>
-                {k.unit&&<span style={{ fontSize:11,color:k.color,fontWeight:600 }}>{k.unit}</span>}
+            <div key={k.label} style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,padding:16 }}>
+              <div style={{ fontSize:13,color:c.text500,fontWeight:400 }}>{k.label}</div>
+              <div style={{ display:"flex",alignItems:"baseline",gap:4,marginTop:8 }}>
+                <span style={{ fontSize:24,fontWeight:600,color:k.color===c.red?c.danger:c.text900,lineHeight:1,letterSpacing:"-0.02em" }}>{k.value}</span>
+                {k.unit&&<span style={{ fontSize:13,color:c.text500,fontWeight:400 }}>{k.unit}</span>}
               </div>
-              {k.sub&&<div style={{ fontSize:10,color:c.text400,marginTop:2 }}>{k.sub}</div>}
+              {k.sub&&<div style={{ fontSize:12,color:c.text500,marginTop:4 }}>{k.sub}</div>}
             </div>
           ))}
         </div>
 
         {/* Bar Chart สถิติเคส */}
-        <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:14,
-          padding:"16px 20px" }}>
-          <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:16 }}>สถิติเคสแต่ละสถานะ</div>
+        <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,
+          padding:16 }}>
+          <div style={{ fontSize:14,fontWeight:600,color:c.text900,marginBottom:16 }}>สถิติเคสแต่ละสถานะ</div>
           {(()=>{
             const max = Math.max(...statusStats.map(s=>s.val), 1);
             return statusStats.map(s=>(
@@ -228,15 +228,15 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
         </div>{/* end column ซ้าย */}
 
         {/* งานค้างอยู่กับใคร — column ขวา */}
-        <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:14,padding:"16px 20px" }}>
-        <Section title="👤 งานค้างอยู่กับใคร" count={pendingCases.length}>
+        <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,padding:16 }}>
+        <Section title="งานค้างอยู่กับใคร" count={pendingCases.length}>
           {techList.length===0 ? (
-            <Empty text="ไม่มีงานค้าง 🎉"/>
+            <Empty text="ไม่มีงานค้าง"/>
           ) : techList.map(([name, cs])=>(
             <div key={name} style={{ background:c.card,border:`1px solid ${c.border}`,
-              borderRadius:10,padding:"12px 14px",marginBottom:8 }}>
+              borderRadius:8,padding:"12px 14px",marginBottom:8 }}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
-                <div style={{ fontSize:14,fontWeight:700,color:c.text900 }}>👤 {name}</div>
+                <div style={{ fontSize:14,fontWeight:700,color:c.text900 }}>{name}</div>
                 <span style={{ background:tint(c.blue,"22"),color:c.blue,borderRadius:20,
                   padding:"2px 10px",fontSize:12,fontWeight:700 }}>{cs.length} งาน</span>
               </div>
@@ -261,7 +261,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
 
         {/* ประกันใกล้หมด */}
         {(warrantyExpiring.length>0||warrantyExpired.length>0) && (
-          <Section title="🛡 ประกันใกล้หมด / หมดแล้ว" count={warrantyExpiring.length+warrantyExpired.length}>
+          <Section title="ประกันใกล้หมด / หมดแล้ว" count={warrantyExpiring.length+warrantyExpired.length}>
             {warrantyExpired.map(cs=>(
               <ExpiryRow key={cs.id} c={cs} projects={projects} days={daysLeft(cs.warrantyEnd)} type="warranty" expired/>
             ))}
@@ -273,7 +273,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
 
         {/* สัญญาเช่าใกล้หมด */}
         {(leaseExpiring.length>0||leaseExpired.length>0) && (
-          <Section title="📋 สัญญาเช่าใกล้หมด / หมดแล้ว" count={leaseExpiring.length+leaseExpired.length}>
+          <Section title="สัญญาเช่าใกล้หมด / หมดแล้ว" count={leaseExpiring.length+leaseExpired.length}>
             {leaseExpired.map(cs=>(
               <ExpiryRow key={cs.id} c={cs} projects={projects} days={daysLeft(cs.leaseEnd)} type="lease" expired/>
             ))}
@@ -287,24 +287,24 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
         {approvedOnsite.length>0 && (
           <div style={{ marginBottom:20 }}>
             <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:10 }}>
-              <div style={{ fontSize:13,fontWeight:700,color:c.text900 }}>📍 ค่าใช้จ่าย Onsite</div>
+              <div style={{ fontSize:13,fontWeight:700,color:c.text900 }}>ค่าใช้จ่าย Onsite</div>
               <span style={{ background:tint(c.orange,"1a"),color:c.orange,borderRadius:20,
                 padding:"1px 8px",fontSize:11,fontWeight:700 }}>{approvedOnsite.length} ครั้ง</span>
             </div>
 
             {/* KPI cards */}
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14 }}>
-              <div style={{ background:c.card,border:`1px solid ${tint(c.orange,"55")}`,borderRadius:12,padding:"14px 16px" }}>
+              <div style={{ background:c.card,border:`1px solid ${tint(c.orange,"55")}`,borderRadius:8,padding:"14px 16px" }}>
                 <div style={{ fontSize:10,color:c.text400,fontWeight:700,marginBottom:4 }}>เดือนนี้</div>
                 <div style={{ fontSize:20,fontWeight:600,color:c.orange }}>{onsiteThisMonth.toLocaleString()}</div>
                 <div style={{ fontSize:10,color:c.text400 }}>บาท</div>
               </div>
-              <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,padding:"14px 16px" }}>
+              <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,padding:"14px 16px" }}>
                 <div style={{ fontSize:10,color:c.text400,fontWeight:700,marginBottom:4 }}>รวมทั้งหมด</div>
                 <div style={{ fontSize:20,fontWeight:600,color:c.orange }}>{onsiteTotalAll.toLocaleString()}</div>
                 <div style={{ fontSize:10,color:c.text400 }}>บาท</div>
               </div>
-              <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,padding:"14px 16px" }}>
+              <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,padding:"14px 16px" }}>
                 <div style={{ fontSize:10,color:c.text400,fontWeight:700,marginBottom:4 }}>เฉลี่ย/ครั้ง</div>
                 <div style={{ fontSize:20,fontWeight:600,color:c.green }}>{approvedOnsite.length>0?Math.round(onsiteTotalAll/approvedOnsite.length).toLocaleString():0}</div>
                 <div style={{ fontSize:10,color:c.text400 }}>บาท</div>
@@ -312,8 +312,8 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
             </div>
 
             {/* กราฟรายเดือน */}
-            <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:14,padding:"16px 20px",marginBottom:14 }}>
-              <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:16 }}>ค่าใช้จ่ายรายเดือน</div>
+            <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,padding:16,marginBottom:14 }}>
+              <div style={{ fontSize:14,fontWeight:600,color:c.text900,marginBottom:16 }}>ค่าใช้จ่ายรายเดือน</div>
               <div style={{ display:"flex",alignItems:"flex-end",gap:10,height:140,paddingTop:10 }}>
                 {onsiteMonths.map(m=>{
                   const d = onsiteMonthly[m];
@@ -334,7 +334,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
             </div>
 
             {/* Top 5 โครงการ */}
-            <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:14,padding:"16px 20px" }}>
+            <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,padding:16 }}>
               <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:12 }}>โครงการที่มีค่าใช้จ่ายสูงสุด</div>
               <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                 {onsiteProjTop.map(([pid,d])=>{
@@ -367,7 +367,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
             <span style={{ background:c.borderSoft,color:c.text500,borderRadius:20,
               padding:"1px 8px",fontSize:11,fontWeight:700 }}>{projects.length}</span>
           </div>
-          <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,overflow:"hidden" }}>
+          <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,overflow:"hidden" }}>
             <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed" }}>
               <thead>
                 <tr style={{ background:c.borderSoft }}>
@@ -437,7 +437,7 @@ function DeleteLog({ onBack, deletedCases }) {
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>🗑 ประวัติการลบเคส</div>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>ประวัติการลบเคส</div>
         <span style={{ background:tint(c.red,"22"),color:c.red,borderRadius:20,
           padding:"2px 10px",fontSize:12,fontWeight:700,marginLeft:4 }}>{deletedCases.length} รายการ</span>
       </div>
@@ -446,7 +446,7 @@ function DeleteLog({ onBack, deletedCases }) {
           <div style={{ textAlign:"center",color:c.text400,padding:"48px 0",fontSize:14 }}>ยังไม่มีประวัติการลบเคส</div>
         ) : (
           <>
-            <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,overflow:"hidden",marginBottom:16 }}>
+            <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:8,overflow:"hidden",marginBottom:16 }}>
               <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed" }}>
                 <thead>
                   <tr style={{ background:c.borderSoft }}>
@@ -532,7 +532,7 @@ function ExpiryRow({ c: caseObj, projects, days, type, expired }) {
   return (
     <div style={{ background: tint(stateColor,"14"),
       border:`1px solid ${tint(stateColor,"55")}`,
-      borderRadius:10,padding:"10px 14px",marginBottom:6,
+      borderRadius:8,padding:"10px 14px",marginBottom:6,
       display:"flex",alignItems:"center",gap:10 }}>
       <div style={{ flex:1,minWidth:0 }}>
         <div style={{ fontSize:13,fontWeight:700,color:c.text900,
