@@ -74,7 +74,13 @@ export default function App({ currentUser, onSignOut }) {
   const [globalQ, setGlobalQ]           = useState("");
   const [leavePage,setLeavePage]   = useState(false);
   const [onlineUsers,setOnlineUsers] = useState([]);
-  const [darkMode,setDarkMode] = useState(false);
+  // โหมดมืด: จำไว้ในเครื่อง (กด F5 แล้วไม่เด้งกลับเป็นโหมดสว่าง)
+  const [darkMode,setDarkMode] = useState(()=>{ try { return localStorage.getItem("sl-dark")==="1"; } catch { return false; } });
+  useEffect(()=>{
+    try { localStorage.setItem("sl-dark", darkMode ? "1" : "0"); } catch {}
+    document.documentElement.style.colorScheme = darkMode ? "dark" : "light";
+    document.body.style.background = darkMode ? THEMES.dark.bg : THEMES.light.bg;
+  },[darkMode]);
   const themeC = THEMES[darkMode ? "dark" : "light"];
 
   // ── จำหน้าที่เปิดอยู่ไว้ใน URL (#devices, #tasks, #view=<โครงการ>) → กดรีเฟรชแล้วอยู่หน้าเดิม ──
