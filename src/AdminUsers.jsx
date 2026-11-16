@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import { useTheme } from "./theme.js";
 import { IS as inputBase, FEATURE_SHIFT } from "./utils.js";
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, writeBatch, setDoc, getFirestore } from "firebase/firestore";
@@ -331,6 +331,14 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
 
 function EditUserModal({ user, onClose, onSave }) {
   const { c } = useTheme();
+  const [resetState, setResetState] = useState("");   // "" | "sending" | "sent" | ข้อความ error
+  async function sendReset() {
+    if (!user.email) return setResetState("ผู้ใช้นี้ไม่มีอีเมลในระบบ");
+    if (!confirm(`ส่งอีเมลลิงก์ตั้งรหัสผ่านใหม่ไปที่ ${user.email}?\n\nรหัสเดิมยังใช้ได้จนกว่าผู้ใช้จะตั้งรหัสใหม่`)) return;
+    setResetState("sending");
+    try { await sendPasswordResetEmail(auth, user.email); setResetState("sent"); }
+    catch (ex) { setResetState(AUTH_ERR[ex.code] || ex.message); }
+  }
   const [name, setName] = useState(user.name||"");
   const [onsiteRate, setOnsiteRate] = useState(user.onsiteRate?.toString()||"");
   const [canEditShift, setCanEditShift] = useState(!!user.canEditShift);
@@ -401,6 +409,25 @@ function EditUserModal({ user, onClose, onSave }) {
               ข้อมูลที่บันทึกไปแล้ว (เคส งานที่มอบหมาย Onsite OT) ยังผูกกับชื่อเดิม — งานที่มอบหมายไว้ด้วยชื่อเดิมจะไม่ขึ้นเป็นของคนนี้จนกว่าจะแก้ในงานนั้น
             </div>
           )}
+        </div>
+
+        {/* รีเซ็ตรหัสผ่าน */}
+        <div style={{ marginBottom:16,padding:12,background:c.bg,border:`1px solid ${c.border}`,borderRadius:8,
+          display:"flex",alignItems:"center",gap:12 }}>
+          <div style={{ flex:1,minWidth:0 }}>
+            <div style={{ fontSize:13,fontWeight:500,color:c.text900 }}>รีเซ็ตรหัสผ่าน</div>
+            <div style={{ fontSize:12,color:resetState==="sent"?c.ok:(resetState&&resetState!=="sending"?c.danger:c.text500),marginTop:2,lineHeight:1.5 }}>
+              {resetState==="sent" ? `ส่งลิงก์ไปที่ ${user.email} แล้ว` :
+               resetState && resetState!=="sending" ? resetState :
+               "ส่งอีเมลให้ผู้ใช้ตั้งรหัสผ่านใหม่เอง"}
+            </div>
+          </div>
+          <button type="button" onClick={sendReset} disabled={resetState==="sending"||resetState==="sent"}
+            style={{ background:c.card,border:`1px solid ${c.border}`,color:c.text900,borderRadius:8,height:32,padding:"0 12px",
+              fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap",
+              opacity:(resetState==="sending"||resetState==="sent")?.6:1 }}>
+            {resetState==="sending"?"กำลังส่ง...":resetState==="sent"?"ส่งแล้ว":"ส่งลิงก์"}
+          </button>
         </div>
 
         {/* ค่าแรง Onsite */}
