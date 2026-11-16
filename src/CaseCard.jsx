@@ -19,7 +19,7 @@ function CaseCard({ c, proj, onClick, onEdit, onDel, onHandover, onUpdate }) {
       borderRadius:12,padding:"14px 16px",marginBottom:10,cursor:"pointer" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
         <div style={{ flex:1,paddingRight:8 }}>
-          <div style={{ fontSize:14,fontWeight:700,color:theme.text900,lineHeight:1.3 }}>{c.title}</div>
+          <div style={{ fontSize:14,fontWeight:600,color:theme.text900,lineHeight:1.3 }}>{c.title}</div>
           {(c.site || proj) && <div style={{ fontSize:12,color:theme.text500,marginTop:3 }}>
             {[c.site, proj?.name].filter(Boolean).join(" · ")}</div>}
         </div>

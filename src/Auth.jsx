@@ -11,7 +11,7 @@ import EyeIcon from "./components/EyeIcon.jsx";
 
 const IS = (x={}) => ({
   width:"100%", background:"#fff", border:"1px solid #e4e4e7",
-  borderRadius:10, color:"#27272a", padding:"12px 14px", fontSize:14,
+  borderRadius:8, color:"#27272a", padding:"12px 14px", fontSize:14,
   outline:"none", fontFamily:"inherit", boxSizing:"border-box",
   transition:"border-color .15s", ...x,
 });
@@ -130,7 +130,7 @@ export default function Auth() {
           boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e4e4e7" }}>
 
           {/* Tab */}
-          <div style={{ display:"flex", background:"#fafafa", borderRadius:10,
+          <div style={{ display:"flex", background:"#fafafa", borderRadius:8,
             padding:4, marginBottom:24, border:"1px solid #e4e4e7" }}>
             {[{v:"login",l:"เข้าสู่ระบบ"},{v:"register",l:"สมัครสมาชิก"}].map(t=>(
               <button key={t.v} className="tab-btn" onClick={()=>{ setMode(t.v); setError(""); }}
@@ -227,8 +227,8 @@ export default function Auth() {
             {/* Submit */}
             <button type="submit" disabled={loading}
               style={{ width:"100%",background: loading?"#a1a1aa":"#18181b",
-                border:"none",color:"#fff",borderRadius:10,padding:"13px",fontSize:15,
-                fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",
+                border:"none",color:"#fff",borderRadius:8,padding:"13px",fontSize:15,
+                fontWeight:600,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",
                 boxShadow:"none",transition:"all .2s" }}>
               {loading ? "กำลังดำเนินการ..." : mode==="login" ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
             </button>

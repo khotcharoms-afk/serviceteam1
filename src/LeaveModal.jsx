@@ -72,19 +72,19 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
     padding:"8px 12px", fontSize:13, fontFamily:"inherit",
     outline:"none", background:"#fafafa", boxSizing:"border-box", ...extra,
   });
-  const LB = { fontSize:11, color:"#a1a1aa", fontWeight:700,
+  const LB = { fontSize:11, color:"#a1a1aa", fontWeight:600,
     textTransform:"uppercase", letterSpacing:.5, marginBottom:4, display:"block" };
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:520,
+      <div style={{ background:"#fff",borderRadius:12,width:"100%",maxWidth:520,
         maxHeight:"92vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:24 }}
         onClick={e=>e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#09090b" }}>📋 ยื่นใบลา</h2>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:600,color:"#09090b" }}>ยื่นใบลา</h2>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
@@ -222,19 +222,19 @@ export default function LeaveModal({ onClose, onSave, saving, currentUser, users
           {leaveUnit==="day"&&days&&<div style={{fontSize:11,color:"#2563eb",marginTop:4}}>= {parseFloat(days)*8} ชม.</div>}
         </div>
 
-        {error && <div style={{ color:"#ef4444",fontSize:12,marginBottom:12,fontWeight:500 }}>⚠ {error}</div>}
+        {error && <div style={{ color:"#ef4444",fontSize:12,marginBottom:12,fontWeight:500 }}>{error}</div>}
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose}
             style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
-              borderRadius:10,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+              borderRadius:8,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>
           <button onClick={handleSave} disabled={saving}
-            style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
+            style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:saving?0.7:1 }}>
-            {saving ? "กำลังบันทึก..." : "📋 ยื่นใบลา"}
+            {saving ? "กำลังบันทึก..." : "ยื่นใบลา"}
           </button>
         </div>
       </div>

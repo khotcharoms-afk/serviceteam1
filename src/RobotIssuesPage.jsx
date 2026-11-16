@@ -20,8 +20,8 @@ const STATUS_META = {
 };
 
 const CATEGORY_META = {
-  repair:    { label: "แจ้งซ่อม", icon: "🔧" },
-  exception: { label: "แจ้งเหตุ", icon: "📋" },
+  repair:    { label: "แจ้งซ่อม", icon: "" },
+  exception: { label: "แจ้งเหตุ", icon: "" },
 };
 
 // map รหัสอาการ/สาเหตุ → ข้อความไทย ต้อง sync กับ ISSUE_TYPES ใน lib/repairFlow.js
@@ -48,7 +48,7 @@ function Pill({ children, color, filled }) {
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
-      padding: "3px 10px", borderRadius: 999, fontSize: 11.5, fontWeight: 700,
+      padding: "3px 10px", borderRadius: 999, fontSize: 11.5, fontWeight:600,
       color: filled ? "#fff" : color,
       background: filled ? color : color + "16",
       whiteSpace: "nowrap",
@@ -79,7 +79,7 @@ function AttachmentGallery({ imageUrls = [], videoUrls = [], c }) {
           <img key={`img-${i}`} src={url} alt={`แนบ ${i + 1}`}
             onClick={() => setLightbox({ type: "image", url })}
             style={{
-              width: 72, height: 72, objectFit: "cover", borderRadius: 10,
+              width: 72, height: 72, objectFit: "cover", borderRadius:8,
               border: `1px solid ${c.border}`, cursor: "pointer",
               boxShadow: "0 1px 3px rgba(0,0,0,.06)", transition: "transform .12s ease",
             }}
@@ -89,7 +89,7 @@ function AttachmentGallery({ imageUrls = [], videoUrls = [], c }) {
         {videoUrls.map((url, i) => (
           <div key={`vid-${i}`} onClick={() => setLightbox({ type: "video", url })}
             style={{
-              width: 72, height: 72, borderRadius: 10, cursor: "pointer",
+              width: 72, height: 72, borderRadius:8, cursor: "pointer",
               background: "#18181b", display: "flex",
               alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18,
               boxShadow: "0 1px 3px rgba(0,0,0,.15)",
@@ -103,10 +103,10 @@ function AttachmentGallery({ imageUrls = [], videoUrls = [], c }) {
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
         }}>
           {lightbox.type === "image" ? (
-            <img src={lightbox.url} alt="" style={{ maxWidth: "95%", maxHeight: "95%", borderRadius: 10 }} />
+            <img src={lightbox.url} alt="" style={{ maxWidth: "95%", maxHeight: "95%", borderRadius:8 }} />
           ) : (
             <video src={lightbox.url} controls autoPlay
-              style={{ maxWidth: "95%", maxHeight: "95%", borderRadius: 10 }}
+              style={{ maxWidth: "95%", maxHeight: "95%", borderRadius:8 }}
               onClick={(e) => e.stopPropagation()} />
           )}
         </div>
@@ -165,7 +165,7 @@ function IssueCard({ issue, onUpdateStatus, onDelete, canDelete, c }) {
   const createdLabel = issue.createdAt
     ? new Date(issue.createdAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })
     : "-";
-  const cat = CATEGORY_META[issue.category] || { label: issue.category, icon: "📄" };
+  const cat = CATEGORY_META[issue.category] || { label: issue.category, icon: "" };
   const statusMeta = STATUS_META[issue.status] || { label: issue.status, color: "#6B7280" };
   const isUrgent = issue.priority === "urgent";
   const accentColor = isUrgent ? RED : (c.border || "#E5E7EB");
@@ -173,7 +173,7 @@ function IssueCard({ issue, onUpdateStatus, onDelete, canDelete, c }) {
   return (
     <div style={{
       position: "relative", overflow: "hidden",
-      border: `1px solid ${c.border}`, borderRadius: 14, padding: "14px 16px 16px 18px",
+      border: `1px solid ${c.border}`, borderRadius:8, padding: "14px 16px 16px 18px",
       marginBottom: 12, background: c.card, boxShadow: "0 1px 2px rgba(0,0,0,.04)",
     }}>
       <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: accentColor }} />
@@ -307,9 +307,9 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
           cursor: "pointer", padding: 4, lineHeight: 1,
         }}>←</button>
         <div style={{
-          width: 36, height: 36, borderRadius: 10, background: RED + "16",
+          width: 36, height: 36, borderRadius:8, background: RED + "16",
           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
-        }}>🛠️</div>
+        }}></div>
         <div>
           <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>แจ้งเหตุ/แจ้งซ่อม</div>
           <div style={{ fontSize: 11.5, color: c.text400 }}>ข้อมูลจาก LINE Bot (robot-report-bot)</div>
@@ -320,8 +320,8 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
         <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
           <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={selectStyle}>
             <option value="">ทุกประเภท</option>
-            <option value="repair">🔧 แจ้งซ่อม</option>
-            <option value="exception">📋 แจ้งเหตุ</option>
+            <option value="repair">แจ้งซ่อม</option>
+            <option value="exception">แจ้งเหตุ</option>
           </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={selectStyle}>
             <option value="">ทุกสถานะ</option>
@@ -339,7 +339,7 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
           <div style={{ textAlign: "center", padding: "40px 0", color: c.text400, fontSize: 13 }}>กำลังโหลด...</div>
         )}
         {error && (
-          <div style={{ background: RED + "10", color: RED, padding: "10px 14px", borderRadius: 10, fontSize: 13 }}>
+          <div style={{ background: RED + "10", color: RED, padding: "10px 14px", borderRadius:8, fontSize: 13 }}>
             {error}
           </div>
         )}

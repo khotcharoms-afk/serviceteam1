@@ -120,7 +120,7 @@ function Remote({ d, onCopied, c }) {
     <div style={{ display: "grid", gap: 2 }}>
       {items.map(([k, label, v]) => (
         <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: c.text400 }}>{k === "anydesk" ? "AD" : "RD"}</span>
+          <span style={{ fontSize: 10, fontWeight:600, color: c.text400 }}>{k === "anydesk" ? "AD" : "RD"}</span>
           <Copy value={v} label={label} onCopied={onCopied} c={c} />
           {remoteHref(k, v) && <a href={remoteHref(k, v)} title={`เปิด ${label}`} onClick={(e) => e.stopPropagation()}
             style={{ ...iconBtn(c), textDecoration: "none", color: c.text500 }}>↗</a>}
@@ -144,12 +144,12 @@ function Details({ d, shared, canEdit, onEdit, onDelete, onCopied, c }) {
     ["Gateway", d.gateway], ["RTSP", d.rtsp], ["Storage", d.storage]].filter(([, v]) => v);
   const accounts = [...(shared ? [{ username: d.username, password: d.password, main: true }] : []), ...(d.accounts || [])];
   return (
-    <div style={{ background: c.bg, borderRadius: 10, padding: "10px 12px", display: "grid", gap: 8, fontSize: 12.5 }}>
+    <div style={{ background: c.bg, borderRadius:8, padding: "10px 12px", display: "grid", gap: 8, fontSize: 12.5 }}>
       {rows.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "max-content 1fr", gap: "4px 14px" }}>
           {rows.map(([k, v]) => (
             <React.Fragment key={k}>
-              <span style={{ color: c.text400, fontWeight: 700, fontSize: 11.5 }}>{k}</span>
+              <span style={{ color: c.text400, fontWeight:600, fontSize: 11.5 }}>{k}</span>
               <Copy value={v} label={k} onCopied={onCopied} c={c} />
             </React.Fragment>
           ))}
@@ -157,7 +157,7 @@ function Details({ d, shared, canEdit, onEdit, onDelete, onCopied, c }) {
       )}
       {accounts.length > 0 && (
         <div>
-          <div style={{ color: c.text400, fontWeight: 700, fontSize: 11.5, marginBottom: 4 }}>บัญชีเข้าใช้งาน</div>
+          <div style={{ color: c.text400, fontWeight:600, fontSize: 11.5, marginBottom: 4 }}>บัญชีเข้าใช้งาน</div>
           <div style={{ display: "grid", gridTemplateColumns: "max-content max-content", gap: "4px 18px" }}>
             {accounts.map((a, i) => (
               <React.Fragment key={i}>
@@ -219,7 +219,7 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
       case "type": return <TypeBadge t={d.type} />;
       case "name": return (
         <div style={{ minWidth: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: 13, color: c.text900, wordBreak: "break-word" }}>{d.name}</span>{extras(d)}
+          <span style={{ fontWeight:600, fontSize: 13, color: c.text900, wordBreak: "break-word" }}>{d.name}</span>{extras(d)}
           {d.model && <div style={{ fontSize: 11, color: c.text400 }}>{d.model}</div>}
         </div>);
       case "ip": return <Copy value={withPort(d.ip, d.port)} label="IP" onCopied={onCopied} c={c} href={webHref(d.ip, d.port)} />;
@@ -237,7 +237,7 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
     <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 14px", padding: "10px 14px",
         borderBottom: `1px solid ${c.border}` }}>
-        <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900 }}>{site || "ไม่ระบุไซต์"}</span>
+        <span style={{ fontSize: 13.5, fontWeight:600, color: c.text900 }}>{site || "ไม่ระบุไซต์"}</span>
         <span style={{ fontSize: 11.5, color: c.text400 }}>{items.length} เครื่อง</span>
         {shared && (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, border: `1px solid ${c.border}`,
@@ -265,13 +265,13 @@ function SiteTable({ site, items, canEdit, onEdit, onDelete, onCopied, c, narrow
                 <div style={{ display: "grid", gap: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <TypeBadge t={d.type} />
-                    <span style={{ flex: 1, minWidth: 0, fontWeight: 700, fontSize: 13, color: c.text900, wordBreak: "break-word" }}>
+                    <span style={{ flex: 1, minWidth: 0, fontWeight:600, fontSize: 13, color: c.text900, wordBreak: "break-word" }}>
                       {d.name}{extras(d)}</span>
                     <span style={{ color: c.text400, fontSize: 11 }}>{open ? "▴" : "▾"}</span>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 14px", alignItems: "center", fontSize: 12 }}>
                     {(d.ip || d.port) && <span>{cell(d, "ip")}</span>}
-                    {(d.publicIp || d.publicPort) && <span><span style={{ fontSize: 10, color: c.text400, fontWeight: 700 }}>PUB </span>{cell(d, "pub")}</span>}
+                    {(d.publicIp || d.publicPort) && <span><span style={{ fontSize: 10, color: c.text400, fontWeight:600 }}>PUB </span>{cell(d, "pub")}</span>}
                     {(d.anydesk || d.rustdesk) && <Remote d={d} onCopied={onCopied} c={c} />}
                     {!isShared(d) && (d.username || d.password) && (
                       <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
@@ -313,10 +313,10 @@ function DeviceModal({ record, projects, onClose, onSave, saving }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(0,0,0,.5)", display: "flex",
       alignItems: "center", justifyContent: "center", padding: 12 }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 620,
+      <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius:12, width: "100%", maxWidth: 620,
         maxHeight: "92vh", overflowY: "auto", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.15)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text900 }}>{record?.id ? "แก้ไขอุปกรณ์" : "เพิ่มอุปกรณ์"}</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight:600, color: c.text900 }}>{record?.id ? "แก้ไขอุปกรณ์" : "เพิ่มอุปกรณ์"}</h2>
           <button onClick={onClose} style={{ background: c.borderSoft, border: "none", color: c.text500, cursor: "pointer",
             fontSize: 14, width: 30, height: 30, borderRadius: 8 }}>✕</button>
         </div>
@@ -324,7 +324,7 @@ function DeviceModal({ record, projects, onClose, onSave, saving }) {
         <datalist id="device-types">{Object.keys(TYPE_COLOR).map((t) => <option key={t} value={t} />)}</datalist>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: 10 }}>
           {DEVICE_COLUMNS.filter((x) => !["accounts", "note", "rtsp"].includes(x.key)).map(({ key, label }) => (
-            <label key={key} style={{ fontSize: 11, color: c.text400, fontWeight: 700 }}>
+            <label key={key} style={{ fontSize: 11, color: c.text400, fontWeight:600 }}>
               {label}{key === "project" ? " *" : ""}
               <input value={f[key]} onChange={set(key)} style={{ ...IS, marginTop: 3 }}
                 list={key === "project" ? "device-projects" : key === "type" ? "device-types" : undefined} />
@@ -332,19 +332,19 @@ function DeviceModal({ record, projects, onClose, onSave, saving }) {
           ))}
         </div>
         {["rtsp", "accounts", "note"].map((key) => (
-          <label key={key} style={{ display: "block", fontSize: 11, color: c.text400, fontWeight: 700, marginTop: 10 }}>
+          <label key={key} style={{ display: "block", fontSize: 11, color: c.text400, fontWeight:600, marginTop: 10 }}>
             {DEVICE_COLUMNS.find((x) => x.key === key).label}
             {key === "accounts" && <span style={{ fontWeight: 400 }}> (บรรทัดละบัญชี รูปแบบ user / password)</span>}
             <textarea value={f[key]} onChange={set(key)} rows={key === "rtsp" ? 1 : 2} style={{ ...IS, marginTop: 3, resize: "vertical" }} />
           </label>
         ))}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8, marginTop: 16 }}>
-          <button onClick={onClose} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500, borderRadius: 10,
+          <button onClick={onClose} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500, borderRadius:8,
             padding: "10px", cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>ยกเลิก</button>
           <button disabled={!canSave || saving}
             onClick={() => onSave({ ...Object.fromEntries(Object.entries(f).map(([k, v]) => [k, k === "accounts" ? parseAccounts(v) : String(v).trim()])) })}
-            style={{ background: canSave ? c.text900 : c.border, border: "none", color: c.card, borderRadius: 10, padding: "10px",
-              cursor: canSave ? "pointer" : "default", fontFamily: "inherit", fontSize: 13, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
+            style={{ background: canSave ? c.text900 : c.border, border: "none", color: c.card, borderRadius:8, padding: "10px",
+              cursor: canSave ? "pointer" : "default", fontFamily: "inherit", fontSize: 13, fontWeight:600, opacity: saving ? 0.6 : 1 }}>
             {saving ? "กำลังบันทึก..." : "บันทึก"}
           </button>
         </div>
@@ -361,12 +361,12 @@ function ImportDialog({ data, existingDevices, onClose, onConfirm, busy }) {
   const { c } = useTheme();
   const byProject = {};
   data.devices.forEach((d) => { byProject[d.project || "(ไม่ระบุโครงการ)"] = (byProject[d.project || "(ไม่ระบุโครงการ)"] || 0) + 1; });
-  const btn = (bg) => ({ border: "none", background: bg, color: c.card, borderRadius: 10, padding: "10px 12px",
-    cursor: busy ? "default" : "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, opacity: busy ? 0.6 : 1 });
+  const btn = (bg) => ({ border: "none", background: bg, color: c.card, borderRadius:8, padding: "10px 12px",
+    cursor: busy ? "default" : "pointer", fontFamily: "inherit", fontSize: 13, fontWeight:600, opacity: busy ? 0.6 : 1 });
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(0,0,0,.5)", display: "flex",
       alignItems: "center", justifyContent: "center", padding: 12 }}>
-      <div style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 20 }}>
+      <div style={{ background: c.card, borderRadius:12, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 20 }}>
         <h2 style={{ margin: "0 0 10px", fontSize: 16, color: c.text900 }}>นำเข้าอุปกรณ์ {data.devices.length} รายการ</h2>
         <div style={{ fontSize: 13, color: c.text500, lineHeight: 1.7 }}>
           {Object.entries(byProject).map(([p, n]) => <div key={p}>• {p}: {n} รายการ</div>)}
@@ -618,7 +618,7 @@ export default function DevicesPage({ onBack, currentUser }) {
               const on = typeF === t;
               return (
                 <button key={t} onClick={() => setTypeF(on ? "" : t)} style={{ padding: "4px 10px", borderRadius: 999, fontSize: 11.5,
-                  fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  fontWeight:600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                   border: `1px solid ${on ? c.text900 : c.border}`, background: on ? c.text900 : c.card,
                   color: on ? c.card : c.text500 }}>{t} · {n}</button>
               );
@@ -642,7 +642,7 @@ export default function DevicesPage({ onBack, currentUser }) {
         )}
 
         {loading && <div style={{ textAlign: "center", padding: 40, color: c.text400, fontSize: 13 }}>กำลังโหลด...</div>}
-        {error && <div style={{ background: RED + "10", color: RED, padding: "10px 14px", borderRadius: 10, fontSize: 13 }}>{error}</div>}
+        {error && <div style={{ background: RED + "10", color: RED, padding: "10px 14px", borderRadius:8, fontSize: 13 }}>{error}</div>}
         {!loading && !error && devices.length === 0 && (
           <div style={{ textAlign: "center", padding: "40px 10px", color: c.text400, fontSize: 13, lineHeight: 1.8 }}>
             ยังไม่มีข้อมูลอุปกรณ์{canEdit ? " — กด \"นำเข้า Excel\" เพื่อใส่ข้อมูลชุดแรก" : ""}

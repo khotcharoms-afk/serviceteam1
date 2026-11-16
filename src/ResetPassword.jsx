@@ -5,7 +5,7 @@ import EyeIcon from "./components/EyeIcon.jsx";
 
 const IS = (x={}) => ({
   width:"100%", background:"#fff", border:"1px solid #e4e4e7",
-  borderRadius:10, color:"#27272a", padding:"12px 14px", fontSize:14,
+  borderRadius:8, color:"#27272a", padding:"12px 14px", fontSize:14,
   outline:"none", fontFamily:"inherit", boxSizing:"border-box",
   transition:"border-color .15s", ...x,
 });
@@ -55,7 +55,7 @@ export default function ResetPassword({ oobCode, onDone }) {
       <div style={{ width:"100%", maxWidth:420 }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>
-          <div style={{ width:56, height:56, borderRadius:16,
+          <div style={{ width:56, height:56, borderRadius:12,
             background:"#18181b",
             display:"inline-flex", alignItems:"center", justifyContent:"center",
             fontSize:26, color:"#fff", fontWeight:600, marginBottom:12,
@@ -65,7 +65,7 @@ export default function ResetPassword({ oobCode, onDone }) {
         </div>
 
         {/* Card */}
-        <div style={{ background:"#fff", borderRadius:16, padding:"28px",
+        <div style={{ background:"#fff", borderRadius:12, padding:"28px",
           boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e4e4e7" }}>
 
           {verifying ? (
@@ -74,8 +74,8 @@ export default function ResetPassword({ oobCode, onDone }) {
             </div>
           ) : done ? (
             <div style={{ textAlign:"center", padding:"12px 0" }}>
-              <div style={{ fontSize:40, marginBottom:12 }}>✅</div>
-              <div style={{ fontSize:16, fontWeight:700, color:"#09090b", marginBottom:8 }}>
+              
+              <div style={{ fontSize:16, fontWeight:600, color:"#09090b", marginBottom:8 }}>
                 ตั้งรหัสผ่านใหม่สำเร็จ
               </div>
               <div style={{ fontSize:13, color:"#71717a", marginBottom:20, lineHeight:1.6 }}>
@@ -83,31 +83,31 @@ export default function ResetPassword({ oobCode, onDone }) {
               </div>
               <button onClick={onDone}
                 style={{ width:"100%", background:"#18181b",
-                  border:"none", color:"#fff", borderRadius:10, padding:"13px", fontSize:15,
-                  fontWeight:700, cursor:"pointer", fontFamily:"inherit",
+                  border:"none", color:"#fff", borderRadius:8, padding:"13px", fontSize:15,
+                  fontWeight:600, cursor:"pointer", fontFamily:"inherit",
                   boxShadow:"none" }}>
                 ไปหน้าเข้าสู่ระบบ
               </button>
             </div>
           ) : error && !email ? (
             <div style={{ textAlign:"center", padding:"12px 0" }}>
-              <div style={{ fontSize:40, marginBottom:12 }}>⚠️</div>
+              
               <div style={{ fontSize:14, color:"#ef4444", marginBottom:20, lineHeight:1.6, fontWeight:500 }}>
                 {error}
               </div>
               <button onClick={onDone}
                 style={{ width:"100%", background:"#fafafa", border:"1px solid #e4e4e7",
-                  color:"#52525b", borderRadius:10, padding:"13px", fontSize:15,
-                  fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                  color:"#52525b", borderRadius:8, padding:"13px", fontSize:15,
+                  fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
                 กลับหน้าเข้าสู่ระบบ
               </button>
             </div>
           ) : (
             <form onSubmit={handleSave}>
-              <div style={{ background:"#fafafa", border:"1px solid #e4e4e7", borderRadius:10,
+              <div style={{ background:"#fafafa", border:"1px solid #e4e4e7", borderRadius:8,
                 padding:"10px 14px", marginBottom:18, fontSize:13, color:"#71717a" }}>
                 ตั้งรหัสผ่านใหม่สำหรับ<br/>
-                <span style={{ fontWeight:700, color:"#09090b" }}>{email}</span>
+                <span style={{ fontWeight:600, color:"#09090b" }}>{email}</span>
               </div>
 
               {/* New password */}
@@ -142,8 +142,8 @@ export default function ResetPassword({ oobCode, onDone }) {
 
               <button type="submit" disabled={loading}
                 style={{ width:"100%", background: loading?"#a1a1aa":"#18181b",
-                  border:"none", color:"#fff", borderRadius:10, padding:"13px", fontSize:15,
-                  fontWeight:700, cursor:loading?"not-allowed":"pointer", fontFamily:"inherit",
+                  border:"none", color:"#fff", borderRadius:8, padding:"13px", fontSize:15,
+                  fontWeight:600, cursor:loading?"not-allowed":"pointer", fontFamily:"inherit",
                   boxShadow:"none" }}>
                 {loading ? "กำลังบันทึก..." : "บันทึกรหัสผ่านใหม่"}
               </button>

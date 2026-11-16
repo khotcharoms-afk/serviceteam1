@@ -32,7 +32,7 @@ export default function CaseModal({
 
   function Err({ field }) {
     if (!errors[field]) return null;
-    return <div style={{ color:c.red,fontSize:12,marginTop:4,fontWeight:500 }}>⚠ {errors[field]}</div>;
+    return <div style={{ color:c.red,fontSize:12,marginTop:4,fontWeight:500 }}>{errors[field]}</div>;
   }
 
   return (
@@ -184,13 +184,13 @@ export default function CaseModal({
         const wd = daysLeft(proj.warrantyEnd);
         const ld = daysLeft(proj.leaseEnd);
         return (
-          <div style={{ background:c.bg,border:`1px solid ${c.border}`,borderRadius:10,
+          <div style={{ background:c.bg,border:`1px solid ${c.border}`,borderRadius:8,
             padding:"12px 14px",marginBottom:14 }}>
-            <div style={{ fontSize:10,color:c.text400,fontWeight:700,letterSpacing:1,
+            <div style={{ fontSize:10,color:c.text400,fontWeight:600,letterSpacing:1,
               textTransform:"uppercase",marginBottom:8 }}>ข้อมูลจากโครงการ (อัตโนมัติ)</div>
             <div style={{ display:"flex",gap:16,flexWrap:"wrap" }}>
               <div>
-                <div style={{ fontSize:10,color:c.text400,marginBottom:2 }}>🛡 ประกัน</div>
+                <div style={{ fontSize:10,color:c.text400,marginBottom:2 }}>ประกัน</div>
                 {proj.warrantyEnd ? (
                   <div style={{ fontSize:12,fontWeight:600,
                     color:wd<0?c.red:wd<=90?c.amber:c.blue }}>
@@ -199,7 +199,7 @@ export default function CaseModal({
                 ) : <div style={{ fontSize:12,color:c.text400 }}>ไม่มี</div>}
               </div>
               <div>
-                <div style={{ fontSize:10,color:c.text400,marginBottom:2 }}>📋 สัญญาเช่า</div>
+                <div style={{ fontSize:10,color:c.text400,marginBottom:2 }}>สัญญาเช่า</div>
                 {proj.leaseEnd ? (
                   <div style={{ fontSize:12,fontWeight:600,
                     color:ld<0?c.red:ld<=90?c.amber:c.purple }}>

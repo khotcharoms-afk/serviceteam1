@@ -130,10 +130,10 @@ export default function Root() {
       <div style={{ minHeight:"100vh", background:"#fafafa", display:"flex",
         alignItems:"center", justifyContent:"center",
         fontFamily:"'Noto Sans Thai',sans-serif", padding:20 }}>
-        <div style={{ background:"#fff", borderRadius:16, padding:"32px 28px",
+        <div style={{ background:"#fff", borderRadius:12, padding:"32px 28px",
           maxWidth:400, width:"100%", textAlign:"center",
           boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e4e4e7" }}>
-          <div style={{ fontSize:40, marginBottom:16 }}>🚫</div>
+          
           <div style={{ fontSize:18, fontWeight:600, color:"#09090b", marginBottom:8 }}>
             {isMissing ? "ไม่พบข้อมูลผู้ใช้" : "บัญชีถูกระงับการใช้งาน"}
           </div>
@@ -142,13 +142,13 @@ export default function Root() {
               ? <>บัญชีนี้ไม่มีข้อมูลผู้ใช้ในระบบแล้ว<br/>กรุณาติดต่อ Admin</>
               : <>บัญชีนี้ถูกระงับโดยผู้ดูแลระบบ<br/>ติดต่อ Admin หากต้องการใช้งานต่อ</>}
           </div>
-          <div style={{ background:"#fafafa", borderRadius:10, padding:"10px 14px",
+          <div style={{ background:"#fafafa", borderRadius:8, padding:"10px 14px",
             marginBottom:20, fontSize:13, color:"#52525b" }}>
             {authUser.email}
           </div>
           <button onClick={() => signOut(auth)}
             style={{ background:"#f4f4f5", border:"1px solid #e4e4e7", color:"#71717a",
-              borderRadius:10, padding:"10px 24px", fontSize:14, fontWeight:600,
+              borderRadius:8, padding:"10px 24px", fontSize:14, fontWeight:600,
               cursor:"pointer", fontFamily:"inherit" }}>
             ออกจากระบบ
           </button>
@@ -162,23 +162,23 @@ export default function Root() {
     <div style={{ minHeight:"100vh", background:"#fafafa", display:"flex",
       alignItems:"center", justifyContent:"center",
       fontFamily:"'Noto Sans Thai',sans-serif", padding:20 }}>
-      <div style={{ background:"#fff", borderRadius:16, padding:"32px 28px",
+      <div style={{ background:"#fff", borderRadius:12, padding:"32px 28px",
         maxWidth:400, width:"100%", textAlign:"center",
         boxShadow:"0 4px 24px rgba(0,0,0,.08)", border:"1px solid #e4e4e7" }}>
-        <div style={{ fontSize:40, marginBottom:16 }}>⏳</div>
+        
         <div style={{ fontSize:18, fontWeight:600, color:"#09090b", marginBottom:8 }}>รอการอนุมัติ</div>
         <div style={{ fontSize:14, color:"#71717a", lineHeight:1.7, marginBottom:24 }}>
           บัญชีของคุณอยู่ระหว่างรอ Admin อนุมัติ<br/>
           กรุณารอสักครู่แล้วลองใหม่อีกครั้ง
         </div>
-        <div style={{ background:"#fafafa", borderRadius:10, padding:"10px 14px",
+        <div style={{ background:"#fafafa", borderRadius:8, padding:"10px 14px",
           marginBottom:16, fontSize:13, color:"#52525b" }}>
           {authUser.email}
         </div>
 
         {docErr && (
           <div style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444",
-            borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:12.5,
+            borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:12.5,
             lineHeight:1.6, textAlign:"left" }}>
             ⚠ {docErr}
           </div>
@@ -186,15 +186,15 @@ export default function Root() {
 
         <button onClick={checkFromServer} disabled={checking}
           style={{ width:"100%", background:"#18181b", border:"none", color:"#fafafa",
-            borderRadius:10, padding:"11px 24px", fontSize:14, fontWeight:700,
+            borderRadius:8, padding:"11px 24px", fontSize:14, fontWeight:600,
             cursor:checking?"default":"pointer", fontFamily:"inherit", marginBottom:10,
             opacity:checking?.6:1 }}>
-          {checking ? "กำลังตรวจสอบ…" : "🔄 ตรวจสอบสถานะอีกครั้ง"}
+          {checking ? "กำลังตรวจสอบ…" : "ตรวจสอบสถานะอีกครั้ง"}
         </button>
 
         <button onClick={hardReload}
           style={{ width:"100%", background:"#fff", border:"1px solid #e4e4e7", color:"#52525b",
-            borderRadius:10, padding:"11px 24px", fontSize:13.5, fontWeight:600,
+            borderRadius:8, padding:"11px 24px", fontSize:13.5, fontWeight:600,
             cursor:"pointer", fontFamily:"inherit", marginBottom:10 }}>
           ล้างแคชแล้วโหลดใหม่
         </button>

@@ -115,19 +115,19 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
 
   const IS = { width:"100%", border:"1px solid #e4e4e7", borderRadius:8,
     padding:"8px 12px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#fafafa" };
-  const LB = { fontSize:11, color:"#a1a1aa", fontWeight:700, textTransform:"uppercase",
+  const LB = { fontSize:11, color:"#a1a1aa", fontWeight:600, textTransform:"uppercase",
     letterSpacing:.5, marginBottom:4, display:"block" };
   const canSave = !saving && dateIn && timeIn && timeOut && descOk && name.trim();
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
-      <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:540,
+      <div style={{ background:"#fff",borderRadius:12,width:"100%",maxWidth:540,
         maxHeight:"92vh",overflowY:"auto",padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#09090b" }}>⏰ ใบ OR - บันทึก OT</h2>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:600,color:"#09090b" }}>ใบ OR - บันทึก OT</h2>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",fontSize:14,width:30,height:30,borderRadius:8 }}>✕</button>
         </div>
@@ -188,7 +188,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
             onChange={e=>{ setHours(e.target.value); setManualHours(true); }}
             placeholder="คำนวณอัตโนมัติจากเวลาเข้า-ออก" style={IS}/>
           {hours && !manualHours && (
-            <div style={{ fontSize:11,color:"#F97316",marginTop:3 }}>⚡ {hours} ชั่วโมง</div>
+            <div style={{ fontSize:11,color:"#F97316",marginTop:3 }}>{hours} ชั่วโมง</div>
           )}
         </div>
 
@@ -248,7 +248,7 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
             <div style={{ display:"flex",gap:6 }}>
               {SITUATION_OPTS.map(s=>(
                 <button key={s} type="button" onClick={()=>setSituation(situation===s?"":s)}
-                  style={{ flex:1,padding:"8px",borderRadius:8,fontSize:12,fontWeight:700,
+                  style={{ flex:1,padding:"8px",borderRadius:8,fontSize:12,fontWeight:600,
                     fontFamily:"inherit",cursor:"pointer",
                     background:situation===s?"#F97316":"#fafafa",
                     border:`1px solid ${situation===s?"#F97316":"#e4e4e7"}`,
@@ -271,14 +271,14 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
                   <div key={p.id} role="radio" aria-checked={on} tabIndex={0}
                     onClick={()=>setPresetId(p.id)}
                     onKeyDown={e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); setPresetId(p.id); } }}
-                    style={{ display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer",borderRadius:10,padding:"10px 12px",
+                    style={{ display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer",borderRadius:8,padding:"10px 12px",
                       border:`1.5px solid ${on?"#F97316":"#e4e4e7"}`,background:on?"#fff7ed":"#fff" }}>
                     <span style={{ width:16,height:16,borderRadius:"50%",flexShrink:0,marginTop:2,
                       border:`2px solid ${on?"#F97316":"#d4d4d8"}`,display:"flex",alignItems:"center",justifyContent:"center" }}>
                       {on && <span style={{ width:8,height:8,borderRadius:"50%",background:"#F97316" }}/>}
                     </span>
                     <div style={{ minWidth:0 }}>
-                      <div style={{ fontSize:13,fontWeight:700,color:"#09090b" }}>แบบ {p.id} · {p.label}</div>
+                      <div style={{ fontSize:13,fontWeight:600,color:"#09090b" }}>แบบ {p.id} · {p.label}</div>
                       <div style={{ fontSize:12,color:"#71717a",marginTop:2,lineHeight:1.5 }}>{p.text}</div>
                     </div>
                   </div>
@@ -329,14 +329,14 @@ export default function OTModal({ onClose, onSave, saving, projects, users, curr
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose} style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
-            borderRadius:10,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+            borderRadius:8,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>
           <button onClick={handleSave} disabled={!canSave}
-            style={{ background:"#F97316",border:"none",color:"#fff",borderRadius:10,
+            style={{ background:"#F97316",border:"none",color:"#fff",borderRadius:8,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:canSave?1:0.5 }}>
-            {saving?"กำลังบันทึก...":(editRecord?"💾 บันทึก":"➕ บันทึก OT")}
+            {saving?"กำลังบันทึก...":(editRecord?"บันทึก":"บันทึก OT")}
           </button>
         </div>
       </div>

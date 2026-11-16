@@ -223,11 +223,11 @@ export default function ProjectModal({
             return (
               <div key={i} style={{ background:"#fafafa",border:"1px solid #e4e4e7",
                 borderRadius:8,padding:"6px 10px",display:"flex",alignItems:"center",gap:8 }}>
-                <span style={{ fontSize:13,fontWeight:600,color:"#09090b",flex:1 }}>📍 {name}</span>
+                <span style={{ fontSize:13,fontWeight:600,color:"#09090b",flex:1 }}>{name}</span>
                 {ref && <span style={{ fontSize:11,color:"#71717a",background:"#f4f4f5",borderRadius:4,padding:"1px 6px" }}>{ref}</span>}
                 {travel>0 && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600 }}>{travel.toLocaleString()} บ.</span>}
                 <button type="button" onClick={()=>startEditSite(i,s)}
-                  style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,padding:"0 4px" }}>✏️</button>
+                  style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,padding:"0 4px" }}></button>
                 <button type="button" onClick={() => setNewProjSites(p => p.filter((_,j) => j!==i))}
                   style={{ background:"none",border:"none",color:"#a1a1aa",cursor:"pointer",fontSize:14,padding:0 }}>×</button>
               </div>

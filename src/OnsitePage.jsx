@@ -128,7 +128,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
     const s = map[status] || map["pending"];
     return (
       <span style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color,
-        borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>
+        borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight:600 }}>
         {s.label}
       </span>
     );
@@ -146,11 +146,11 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
           color: "#52525b", fontWeight: 600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize: 16, fontWeight:600, color: "#09090b" }}>📍 บันทึก Onsite</div>
+        <div style={{ fontSize: 16, fontWeight:600, color: "#09090b" }}>บันทึก Onsite</div>
         <div style={{ marginLeft: "auto" }}>
           <button onClick={() => { setEditRecord(null); setShowModal(true); }}
-            style={{ background: "#F97316", border: "none", color: "#fff", borderRadius: 10,
-              padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 700,
+            style={{ background: "#F97316", border: "none", color: "#fff", borderRadius:8,
+              padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight:600,
               fontFamily: "inherit" }}>
             + บันทึก
           </button>
@@ -161,8 +161,8 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
       <div style={{ background: "#fff", borderBottom: "1px solid #e4e4e7",
         display: "flex", gap: 0, overflowX: "auto" }}>
         {[
-          { key: "list",    label: "📋 รายการ" },
-          { key: "machine", label: "🤖 ประวัติเครื่อง" },
+          { key: "list",    label: "รายการ" },
+          { key: "machine", label: "ประวัติเครื่อง" },
           ...(isAdmin ? [{ key: "approve", label: `✅ อนุมัติ${pendingRecords.length > 0 ? ` (${pendingRecords.length})` : ""}` }] : []),
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
@@ -188,7 +188,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
             ].map(k => (
               <div key={k.label} style={{ background: "#fff", border: "1px solid #e4e4e7",
                 borderRadius: 12, padding: "14px 16px" }}>
-                <div style={{ fontSize: 10, color: "#a1a1aa", fontWeight: 700, marginBottom: 4 }}>{k.label}</div>
+                <div style={{ fontSize: 10, color: "#a1a1aa", fontWeight:600, marginBottom: 4 }}>{k.label}</div>
                 <div style={{ fontSize: 20, fontWeight:600, color: k.color }}>{k.val}</div>
               </div>
             ))}
@@ -235,12 +235,9 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                 return (
                   <div key={r.id} style={{ background: "#fff", border: "1px solid #e4e4e7",
                     borderRadius: 12, padding: "14px 16px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "#fff7ed",
-                      border: "1px solid #fed7aa", display: "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: 20, flexShrink: 0 }}>📍</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "#09090b" }}>
+                        <span style={{ fontSize: 14, fontWeight:600, color: "#09090b" }}>
                           {r.techs?.join(", ") || "-"}
                         </span>
                         {statusBadge(r.status)}
@@ -251,27 +248,27 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                           {proj.name}
                         </div>
                       )}
-                      {r.site && <div style={{ fontSize: 12, color: "#52525b", marginBottom: 2 }}>📌 {r.site}</div>}
+                      {r.site && <div style={{ fontSize: 12, color: "#52525b", marginBottom: 2 }}>{r.site}</div>}
                       {r.scope && <div style={{ fontSize: 12, color: "#71717a", marginBottom: 2 }}>{r.scope}</div>}
                       {r.detail && <div style={{ fontSize: 12, color: "#71717a", marginBottom: 3 }}>{r.detail}</div>}
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                        <span style={{ fontSize: 11, color: "#a1a1aa" }}>📅 {fmtDate(r.date)}</span>
+                        <span style={{ fontSize: 11, color: "#a1a1aa" }}>{fmtDate(r.date)}</span>
                         {r.totalCost > 0 && (
-                          <span style={{ fontSize: 11, color: "#F97316", fontWeight: 700 }}>
+                          <span style={{ fontSize: 11, color: "#F97316", fontWeight:600 }}>
                             💰 {r.totalCost.toLocaleString()} ฿
                           </span>
                         )}
-                        {r.robotSerial && <span style={{ fontSize: 11, color: "#6B21A8" }}>🤖 {r.robotSerial}</span>}
+                        {r.robotSerial && <span style={{ fontSize: 11, color: "#6B21A8" }}>{r.robotSerial}</span>}
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                       <button onClick={() => { setEditRecord(r); setShowModal(true); }}
                         style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#2563eb",
-                          borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>✏️</button>
+                          borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}></button>
                       {isAdmin && (
                         <button onClick={() => setConfirmId(r.id)}
                           style={{ background: "#fff5f5", border: "1px solid #fecaca", color: "#ef4444",
-                            borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>🗑</button>
+                            borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}></button>
                       )}
                     </div>
                   </div>
@@ -295,13 +292,12 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                   <div key={serial} style={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: 12, overflow: "hidden" }}>
                     <div style={{ background: "#fafafa", borderBottom: "1px solid #e4e4e7",
                       padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>🤖</span>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#09090b" }}>{serial}</div>
+                                            <div>
+                        <div style={{ fontSize: 14, fontWeight:600, color: "#09090b" }}>{serial}</div>
                         {proj && <div style={{ fontSize: 11, color: "#71717a" }}>{proj.name}</div>}
                       </div>
                       <span style={{ marginLeft: "auto", background: "#fff7ed", border: "1px solid #fed7aa",
-                        color: "#F97316", borderRadius: 8, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>
+                        color: "#F97316", borderRadius: 8, padding: "3px 10px", fontSize: 12, fontWeight:600 }}>
                         {recs.length} ครั้ง
                       </span>
                     </div>
@@ -346,11 +342,11 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                   <div key={r.id} style={{ background: "#fff", border: "1px solid #fde68a",
                     borderRadius: 12, padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fffbeb",
+                      <div style={{ width: 40, height: 40, borderRadius:8, background: "#fffbeb",
                         border: "1px solid #fde68a", display: "flex", alignItems: "center",
-                        justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📍</div>
+                        justifyContent: "center", fontSize: 18, flexShrink: 0 }}></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#09090b", marginBottom: 2 }}>
+                        <div style={{ fontSize: 14, fontWeight:600, color: "#09090b", marginBottom: 2 }}>
                           {r.techs?.join(", ") || "-"}
                         </div>
                         {proj && (
@@ -359,12 +355,12 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                             {proj.name}
                           </div>
                         )}
-                        {r.site && <div style={{ fontSize: 12, color: "#52525b" }}>📌 {r.site}</div>}
+                        {r.site && <div style={{ fontSize: 12, color: "#52525b" }}>{r.site}</div>}
                         <div style={{ fontSize: 12, color: "#71717a" }}>{r.scope}</div>
                         {r.detail && <div style={{ fontSize: 12, color: "#71717a" }}>{r.detail}</div>}
-                        <div style={{ fontSize: 11, color: "#a1a1aa", marginTop: 4 }}>📅 {fmtDate(r.date)}</div>
+                        <div style={{ fontSize: 11, color: "#a1a1aa", marginTop: 4 }}>{fmtDate(r.date)}</div>
                         {r.totalCost > 0 && (
-                          <div style={{ fontSize: 12, color: "#F97316", fontWeight: 700, marginTop: 2 }}>
+                          <div style={{ fontSize: 12, color: "#F97316", fontWeight:600, marginTop: 2 }}>
                             💰 {r.totalCost.toLocaleString()} ฿
                           </div>
                         )}
@@ -373,13 +369,13 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
                       <button onClick={() => rejectRecord(r.id)}
                         style={{ background: "#fff5f5", border: "1px solid #fecaca", color: "#ef4444",
-                          borderRadius: 10, padding: "10px", fontSize: 13, fontWeight: 600,
+                          borderRadius:8, padding: "10px", fontSize: 13, fontWeight: 600,
                           cursor: "pointer", fontFamily: "inherit" }}>
                         ❌ ไม่อนุมัติ
                       </button>
                       <button onClick={() => approveRecord(r.id)}
                         style={{ background: "#16a34a", border: "none", color: "#fff",
-                          borderRadius: 10, padding: "10px", fontSize: 13, fontWeight: 600,
+                          borderRadius:8, padding: "10px", fontSize: 13, fontWeight: 600,
                           cursor: "pointer", fontFamily: "inherit" }}>
                         ✅ อนุมัติ
                       </button>
@@ -397,21 +393,21 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
       {confirmId && (
         <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.5)",
           display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 320, width: "100%",
+          <div style={{ background: "#fff", borderRadius:12, padding: 24, maxWidth: 320, width: "100%",
             textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🗑</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#09090b", marginBottom: 8 }}>ลบรายการนี้?</div>
+            
+            <div style={{ fontSize: 15, fontWeight:600, color: "#09090b", marginBottom: 8 }}>ลบรายการนี้?</div>
             <div style={{ fontSize: 13, color: "#71717a", marginBottom: 20 }}>ไม่สามารถกู้คืนได้</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <button onClick={() => setConfirmId(null)}
                 style={{ background: "#fafafa", border: "1px solid #e4e4e7", color: "#52525b",
-                  borderRadius: 10, padding: "10px", fontSize: 14, fontWeight: 600,
+                  borderRadius:8, padding: "10px", fontSize: 14, fontWeight: 600,
                   cursor: "pointer", fontFamily: "inherit" }}>
                 ยกเลิก
               </button>
               <button onClick={() => deleteOnsite(confirmId)}
                 style={{ background: "#ef4444", border: "none", color: "#fff",
-                  borderRadius: 10, padding: "10px", fontSize: 14, fontWeight: 600,
+                  borderRadius:8, padding: "10px", fontSize: 14, fontWeight: 600,
                   cursor: "pointer", fontFamily: "inherit" }}>
                 ลบ
               </button>

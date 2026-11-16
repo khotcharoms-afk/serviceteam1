@@ -162,7 +162,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
           padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit", color:"#52525b", fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16, fontWeight:600, color:"#09090b" }}>📋 ใบลา</div>
+        <div style={{ fontSize:16, fontWeight:600, color:"#09090b" }}>ใบลา</div>
         <button onClick={()=>setShowModal(true)} style={{ marginLeft:"auto",
           background:"#2563eb", border:"none", color:"#fff", borderRadius:8,
           padding:"7px 14px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
@@ -184,7 +184,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
           return (
             <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e4e4e7",
               padding:"14px 16px", marginBottom:16 }}>
-              <div style={{ fontSize:11, color:"#a1a1aa", fontWeight:700, marginBottom:10,
+              <div style={{ fontSize:11, color:"#a1a1aa", fontWeight:600, marginBottom:10,
                 textTransform:"uppercase", letterSpacing:1 }}>สรุปวันลา</div>
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
@@ -192,7 +192,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
                     <tr style={{ background:"#fafafa", borderBottom:"1px solid #e4e4e7" }}>
                       {["ชื่อ","ลาพักร้อน","ลากิจ","ลาป่วย","อื่นๆ"].map(h=>(
                         <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:11,
-                          color:"#71717a", fontWeight:700 }}>{h}</th>
+                          color:"#71717a", fontWeight:600 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -241,7 +241,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
                 <div key={r.id} style={{ background:"#fff", borderRadius:12,
                   border:"1px solid #e4e4e7", padding:"14px 16px" }}>
                   <div style={{ marginBottom:8 }}>
-                    <div style={{ fontSize:14, fontWeight:700, color:"#09090b" }}>{r.name}</div>
+                    <div style={{ fontSize:14, fontWeight:600, color:"#09090b" }}>{r.name}</div>
                     <div style={{ fontSize:12, color:"#71717a", marginTop:2 }}>
                       {typeLabel} · {r.days} {r.leaveUnit==="hour"?"ชม.":"วัน"} · {r.dateFrom} ถึง {r.dateTo}
                     </div>

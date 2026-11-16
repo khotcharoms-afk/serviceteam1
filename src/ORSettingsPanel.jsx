@@ -5,7 +5,7 @@ import { EXAMINER_OPTS, orMap, orSettingsFor, orDisplayName, cleanProjectName, n
 
 const IS = { width:"100%", border:"1px solid #e4e4e7", borderRadius:8, padding:"7px 10px",
   fontSize:12, fontFamily:"inherit", outline:"none", background:"#fafafa", boxSizing:"border-box" };
-const LB = { fontSize:10, color:"#a1a1aa", fontWeight:700, marginBottom:3, display:"block" };
+const LB = { fontSize:10, color:"#a1a1aa", fontWeight:600, marginBottom:3, display:"block" };
 const BTN = { border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" };
 
 // ── ตั้งค่าใบ OR ต่อโครงการ (Firestore settings/orProjects) ─────────────
@@ -46,15 +46,15 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
   return (
     <div style={{ background:"#fff", border:"1px solid #e4e4e7", borderRadius:12, padding:"16px 20px", marginBottom:16 }}>
       <div style={{ display:"flex", alignItems:"center", marginBottom:4 }}>
-        <div style={{ fontSize:13, fontWeight:700, color:"#09090b" }}>⚙ ตั้งค่าใบ OR ต่อโครงการ</div>
+        <div style={{ fontSize:13, fontWeight:600, color:"#09090b" }}>ตั้งค่าใบ OR ต่อโครงการ</div>
         <button onClick={onClose} style={{ ...BTN, marginLeft:"auto", background:"#f4f4f5", color:"#71717a", padding:"4px 10px" }}>ปิด</button>
       </div>
       <div style={{ fontSize:11, color:"#a1a1aa", marginBottom:12 }}>
         เติมอัตโนมัติตอนเลือกโครงการในฟอร์ม (แก้เองได้เสมอ) · รายละเอียดสำเร็จรูป 1 บรรทัด = 1 แบบ
       </div>
       {rows.map((r, i) => (
-        <div key={i} style={{ border:"1px solid #f4f4f5", borderRadius:10, padding:12, marginBottom:10, background:"#fcfcfd" }}>
-          <div style={{ fontSize:12, fontWeight:700, color:"#3f3f46", marginBottom:8 }}>
+        <div key={i} style={{ border:"1px solid #f4f4f5", borderRadius:8, padding:12, marginBottom:10, background:"#fcfcfd" }}>
+          <div style={{ fontSize:12, fontWeight:600, color:"#3f3f46", marginBottom:8 }}>
             {r.label || cleanProjectName(projOf(r.code)?.name) || r.code}
             <span style={{ fontWeight:400, color:"#a1a1aa", marginLeft:6 }}>รหัส {r.code}</span>
             <button onClick={() => setRows(rs => rs.filter((_, j) => j !== i))}
@@ -76,9 +76,9 @@ export function ORSettingsPanel({ orCfg, projects, onClose }) {
           </label>
           {(r.presets || []).map((p, k) => (
             <div key={k} style={{ display:"grid", gridTemplateColumns:"28px 1fr 24px", gap:6, marginBottom:6, alignItems:"start" }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"#a1a1aa", paddingTop:7 }}>{k + 1}</div>
+              <div style={{ fontSize:12, fontWeight:600, color:"#a1a1aa", paddingTop:7 }}>{k + 1}</div>
               <div>
-                <input style={{ ...IS, marginBottom:4, fontWeight:700 }} placeholder="ชื่อแบบ (label)" value={p.label}
+                <input style={{ ...IS, marginBottom:4, fontWeight:600 }} placeholder="ชื่อแบบ (label)" value={p.label}
                   onChange={e => set(i, "presets", r.presets.map((x, j) => j === k ? { ...x, label: e.target.value } : x))} />
                 <textarea style={{ ...IS, resize:"vertical" }} rows={2} placeholder="ข้อความเต็ม" value={p.text}
                   onChange={e => set(i, "presets", r.presets.map((x, j) => j === k ? { ...x, text: e.target.value } : x))} />
@@ -143,17 +143,17 @@ export function ORMigrateModal({ plan, from, to, onConfirm, onClose, running }) 
   return (
     <div style={{ position:"fixed", inset:0, zIndex:700, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff", borderRadius:16, width:"100%", maxWidth:760, maxHeight:"88vh", overflowY:"auto", padding:24 }}
+      <div style={{ background:"#fff", borderRadius:12, width:"100%", maxWidth:760, maxHeight:"88vh", overflowY:"auto", padding:24 }}
         onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize:15, fontWeight:700, color:"#09090b", marginBottom:4 }}>🛠 ปรับข้อมูลเก่าให้ตรงค่าตั้งใบ OR</div>
+        <div style={{ fontSize:15, fontWeight:600, color:"#09090b", marginBottom:4 }}>ปรับข้อมูลเก่าให้ตรงค่าตั้งใบ OR</div>
         <div style={{ fontSize:12, color:"#71717a", marginBottom:14 }}>
           ช่วง {from || "—"} ถึง {to || "—"} · จะเปลี่ยน {plan.length} รายการ — ตรวจดูก่อน แล้วกดยืนยัน
         </div>
         {plan.length === 0 ? (
           <div style={{ textAlign:"center", color:"#a1a1aa", padding:24, fontSize:13 }}>ข้อมูลตรงค่าตั้งแล้ว ไม่มีอะไรต้องเปลี่ยน</div>
         ) : plan.map(({ r, ch }) => (
-          <div key={r.id} style={{ border:"1px solid #f4f4f5", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:"#3f3f46", marginBottom:4 }}>
+          <div key={r.id} style={{ border:"1px solid #f4f4f5", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
+            <div style={{ fontSize:12, fontWeight:600, color:"#3f3f46", marginBottom:4 }}>
               {r.dateIn} {r.timeIn}-{r.timeOut} · {short(cleanProjectName(r.projectName))}
             </div>
             {Object.entries(ch).map(([k, v]) => (

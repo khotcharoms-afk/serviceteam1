@@ -98,8 +98,8 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
 
   const IS = inputBase({ background: c.bg, border: `1px solid ${c.border}`, color: c.text900 });
   const btn = (bg, fg = "#fff", extra = {}) => ({ border: "none", background: bg, color: fg, borderRadius: 9, padding: "8px 13px",
-    fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", ...extra });
-  const label = { fontSize: 11.5, fontWeight: 700, color: c.text500, marginBottom: 4, display: "block" };
+    fontSize: 12.5, fontWeight:600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", ...extra });
+  const label = { fontSize: 11.5, fontWeight:600, color: c.text500, marginBottom: 4, display: "block" };
 
   return (
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
@@ -118,14 +118,14 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
         <input placeholder="ค้นหาโครงการ ไซต์ รายการ serial ผู้เบิก…" value={q} onChange={(e) => setQ(e.target.value)}
           style={{ ...IS, background: c.card, marginBottom: 14 }} />
 
-        {error && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, color: c.text900, borderRadius: 10, padding: "12px 16px", marginBottom: 14, fontSize: 13.5 }}>{error}</div>}
+        {error && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, color: c.text900, borderRadius:8, padding: "12px 16px", marginBottom: 14, fontSize: 13.5 }}>{error}</div>}
         {loading ? <div style={{ textAlign: "center", color: c.text400, padding: 40 }}>กำลังโหลด…</div>
           : !shown.length ? (
-            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: "40px 20px", textAlign: "center", color: c.text400 }}>
+            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: "40px 20px", textAlign: "center", color: c.text400 }}>
               {q ? "ไม่พบใบเบิกที่ค้นหา" : "ยังไม่มีใบเบิก กด \"+ สร้างใบเบิก\" เพื่อเริ่ม"}
             </div>
           ) : shown.map((r) => (
-            <div key={r.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
+            <div key={r.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: 14, marginBottom: 10 }}>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ fontSize: 14, fontWeight:600, color: c.text900 }}>{(() => { const n = normalizeReq(r); return [n.location, n.site].filter(Boolean).join(" · ") || "—"; })()} <span style={{ fontWeight: 500, color: c.text400, fontSize: 12.5 }}>· {thaiDate(r.date)}</span></div>
@@ -208,7 +208,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
               const set = (patch) => setForm({ ...form, items: form.items.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
               return (
                 <div key={i} style={{ display: "grid", gridTemplateColumns: narrow ? "1fr 1fr" : "28px 3fr 1.3fr 70px 80px 1.3fr 30px", gap: 6, alignItems: "center",
-                  padding: narrow ? 10 : 0, border: narrow ? `1px solid ${c.borderSoft}` : "none", borderRadius: 10, marginBottom: 6 }}>
+                  padding: narrow ? 10 : 0, border: narrow ? `1px solid ${c.borderSoft}` : "none", borderRadius:8, marginBottom: 6 }}>
                   {!narrow && <div style={{ fontSize: 12, color: c.text400, textAlign: "center" }}>{i + 1}</div>}
                   <input list="req-items" placeholder={narrow ? `${i + 1}. รายการสินค้า` : "รายการสินค้า"} value={it.name}
                     onChange={(e) => { const v = e.target.value; const u = suggest.names.get(v); set(u ? { name: v, unit: u } : { name: v }); }}
@@ -241,7 +241,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
 
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: toast.ok ? c.ink : c.danger, color: toast.ok ? c.onInk : "#fff",
-          padding: "10px 18px", borderRadius: 10, fontSize: 13.5, fontWeight: 700, zIndex: 400, boxShadow: "0 6px 20px rgba(0,0,0,.2)" }}>{toast.msg}</div>
+          padding: "10px 18px", borderRadius:8, fontSize: 13.5, fontWeight:600, zIndex: 400, boxShadow: "0 6px 20px rgba(0,0,0,.2)" }}>{toast.msg}</div>
       )}
     </div>
   );

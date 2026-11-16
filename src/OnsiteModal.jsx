@@ -79,7 +79,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
     outline:"none", background:"#fafafa", boxSizing:"border-box",
   };
   const labelStyle = {
-    fontSize:11, color:"#a1a1aa", fontWeight:700,
+    fontSize:11, color:"#a1a1aa", fontWeight:600,
     textTransform:"uppercase", letterSpacing:.5, marginBottom:4, display:"block",
   };
 
@@ -87,13 +87,13 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:540,
+      <div style={{ background:"#fff",borderRadius:12,width:"100%",maxWidth:540,
         maxHeight:"92vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.15)",
         padding:"24px" }}
         onClick={e => e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:"#09090b" }}>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:600,color:"#09090b" }}>
             📍 {isEdit ? "แก้ไข Onsite" : "บันทึก Onsite"}
           </h2>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
@@ -101,7 +101,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
         </div>
 
         {!["admin","dev"].includes(currentUser?.role) && (
-          <div style={{ background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,
+          <div style={{ background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,
             padding:"10px 14px",marginBottom:14,fontSize:12,color:"#92400e" }}>
             ℹ️ รายการนี้จะส่งให้ admin อนุมัติก่อนนับเข้ารายงาน
           </div>
@@ -233,13 +233,13 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
         )}
 
         <div style={{ background:"#fafafa",border:"1px solid #e4e4e7",borderRadius:12,padding:"14px",marginBottom:16 }}>
-          <div style={{ fontSize:12,fontWeight:700,color:"#09090b",marginBottom:12 }}>💰 ค่าใช้จ่าย</div>
+          <div style={{ fontSize:12,fontWeight:600,color:"#09090b",marginBottom:12 }}>ค่าใช้จ่าย</div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
             <div>
               <label style={labelStyle}>ค่าเดินทาง</label>
               {(selSite?.travelRate || 0) > 0 ? (
                 <div style={{ padding:"8px 12px",background:"#fff7ed",border:"1px solid #fed7aa",
-                  borderRadius:8,fontSize:13,color:"#f97316",fontWeight:700,display:"flex",
+                  borderRadius:8,fontSize:13,color:"#f97316",fontWeight:600,display:"flex",
                   alignItems:"center",justifyContent:"space-between" }}>
                   <span>{travelCost.toLocaleString()} บาท</span>
                   <span style={{ fontSize:10,background:"#fff",border:"1px solid #fed7aa",
@@ -266,14 +266,14 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
             <div>
               <label style={labelStyle}>ค่าแรงรวม</label>
               <div style={{ padding:"8px 12px",background:"#fff",border:"1px solid #e4e4e7",
-                borderRadius:8,fontSize:13,color:"#16a34a",fontWeight:700 }}>
+                borderRadius:8,fontSize:13,color:"#16a34a",fontWeight:600 }}>
                 {laborCost.toLocaleString()} บาท
               </div>
             </div>
           </div>
           <div style={{ marginTop:12,padding:"10px 14px",background:"#fff7ed",
-            border:"1px solid #fed7aa",borderRadius:10,display:"flex",justifyContent:"space-between" }}>
-            <span style={{ fontSize:14,fontWeight:700,color:"#7c2d12" }}>รวมทั้งสิ้น</span>
+            border:"1px solid #fed7aa",borderRadius:8,display:"flex",justifyContent:"space-between" }}>
+            <span style={{ fontSize:14,fontWeight:600,color:"#7c2d12" }}>รวมทั้งสิ้น</span>
             <span style={{ fontSize:18,fontWeight:600,color:"#f97316" }}>
               {totalCost.toLocaleString()} บาท
             </span>
@@ -283,14 +283,14 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose}
             style={{ background:"#fafafa",border:"1px solid #e4e4e7",color:"#52525b",
-              borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+              borderRadius:8,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>
           <button onClick={handleSave} disabled={saving || !projId || techs.length === 0}
-            style={{ background:"#f97316",border:"none",color:"#fff",borderRadius:10,
+            style={{ background:"#f97316",border:"none",color:"#fff",borderRadius:8,
               padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity: saving ? 0.7 : 1 }}>
-            {saving ? "กำลังบันทึก..." : (isEdit ? "💾 บันทึกการแก้ไข" : "💾 บันทึก Onsite")}
+            {saving ? "กำลังบันทึก..." : (isEdit ? "บันทึกการแก้ไข" : "บันทึก Onsite")}
           </button>
         </div>
       </div>

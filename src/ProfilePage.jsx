@@ -70,7 +70,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
   const [showPw, setShowPw]         = useState(false);
 
   const IS = inputBase({ padding:"10px 12px" });
-  const LB = { fontSize:11, color:c.text400, fontWeight:700, textTransform:"uppercase",
+  const LB = { fontSize:11, color:c.text400, fontWeight:600, textTransform:"uppercase",
     letterSpacing:.5, marginBottom:4, display:"block" };
 
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           padding:"6px 12px", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:c.text500 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:15, fontWeight:700, color:c.text900 }}>โปรไฟล์</div>
+        <div style={{ fontSize:15, fontWeight:600, color:c.text900 }}>โปรไฟล์</div>
       </header>
 
       <div style={{ maxWidth:520, margin:"32px auto", padding:"0 16px" }}>
@@ -184,19 +184,19 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
             fontSize:28, color:"#fff", fontWeight:600, marginBottom:8 }}>
             {initials}
           </div>
-          <div style={{ fontSize:18, fontWeight:700, color:c.text900 }}>{currentUser?.name}</div>
+          <div style={{ fontSize:18, fontWeight:600, color:c.text900 }}>{currentUser?.name}</div>
           <div style={{ fontSize:13, color:c.text400 }}>{auth.currentUser?.email}</div>
           <div style={{ display:"inline-block", marginTop:6, padding:"2px 10px",
             background: currentUser?.role==="dev"?`${c.teal}1a`:currentUser?.role==="admin"?`${c.purple}1a`:`${c.blue}1a`,
             border:`1px solid ${currentUser?.role==="dev"?`${c.teal}55`:currentUser?.role==="admin"?`${c.purple}55`:`${c.blue}55`}`,
-            borderRadius:20, fontSize:11, fontWeight:700,
+            borderRadius:20, fontSize:11, fontWeight:600,
             color: currentUser?.role==="dev"?c.teal:currentUser?.role==="admin"?c.purple:c.blue }}>
             {currentUser?.role==="dev"?"Dev":currentUser?.role==="admin"?"Admin":"User"}
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display:"flex", background:c.borderSoft, borderRadius:10,
+        <div style={{ display:"flex", background:c.borderSoft, borderRadius:8,
           padding:4, marginBottom:20, gap:4 }}>
           {[
             {v:"info",l:"ข้อมูลส่วนตัว"},
@@ -214,7 +214,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
           ))}
         </div>
 
-        <div style={{ background:c.card, borderRadius:16, padding:24,
+        <div style={{ background:c.card, borderRadius:12, padding:24,
           boxShadow:"0 4px 24px rgba(0,0,0,.06)", border:`1px solid ${c.border}` }}>
 
           {/* Tab: ข้อมูลส่วนตัว */}
@@ -234,7 +234,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 color:infoMsg.startsWith("✅")?c.green:c.red }}>{infoMsg}</div>}
               <button onClick={saveInfo} disabled={infoSaving||!displayName.trim()}
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
-                  borderRadius:10, padding:12, fontSize:14, fontWeight:600,
+                  borderRadius:8, padding:12, fontSize:14, fontWeight:600,
                   cursor:"pointer", fontFamily:"inherit", opacity:infoSaving?0.6:1 }}>
                 {infoSaving ? "กำลังบันทึก..." : "💾 บันทึก"}
               </button>
@@ -294,7 +294,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
                 color:otMsg.startsWith("✅")?c.green:c.red }}>{otMsg}</div>}
               <button onClick={saveOT} disabled={otSaving}
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
-                  borderRadius:10, padding:12, fontSize:14, fontWeight:600,
+                  borderRadius:8, padding:12, fontSize:14, fontWeight:600,
                   cursor:"pointer", fontFamily:"inherit", opacity:otSaving?0.6:1 }}>
                 {otSaving ? "กำลังบันทึก..." : "💾 บันทึกข้อมูล OT"}
               </button>
@@ -330,13 +330,13 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
               </label>
               {pwError && <div style={{ marginBottom:12, fontSize:13, color:c.red,
                 background:`${c.red}1a`, border:`1px solid ${c.red}55`, borderRadius:8,
-                padding:"8px 12px" }}>⚠ {pwError}</div>}
+                padding:"8px 12px" }}>{pwError}</div>}
               {pwMsg && <div style={{ marginBottom:12, fontSize:13, color:c.green,
                 background:`${c.green}1a`, border:`1px solid ${c.green}55`, borderRadius:8,
                 padding:"8px 12px" }}>{pwMsg}</div>}
               <button onClick={changePassword} disabled={pwSaving}
                 style={{ width:"100%", background:"#F97316", border:"none", color:"#fff",
-                  borderRadius:10, padding:12, fontSize:14, fontWeight:600,
+                  borderRadius:8, padding:12, fontSize:14, fontWeight:600,
                   cursor:"pointer", fontFamily:"inherit", opacity:pwSaving?0.6:1 }}>
                 {pwSaving ? "กำลังเปลี่ยน..." : "🔑 เปลี่ยนรหัสผ่าน"}
               </button>
@@ -346,7 +346,7 @@ export default function ProfilePage({ onBack, currentUser, onSignOut }) {
 
         <button onClick={onSignOut}
           style={{ width:"100%", marginTop:16, background:c.card,
-            border:`1px solid ${c.red}55`, color:c.red, borderRadius:10,
+            border:`1px solid ${c.red}55`, color:c.red, borderRadius:8,
             padding:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
           🚪 ออกจากระบบ
         </button>

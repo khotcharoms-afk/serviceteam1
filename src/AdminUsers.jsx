@@ -112,7 +112,7 @@ export default function AdminUsers({ onBack, currentUser }) {
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>👥 จัดการผู้ใช้</div>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>จัดการผู้ใช้</div>
         <div style={{ marginLeft:"auto",fontSize:12,color:c.text400 }}>{users.length} คน</div>
       </div>
 
@@ -122,8 +122,8 @@ export default function AdminUsers({ onBack, currentUser }) {
         {pending.length>0 && (
           <div style={{ marginBottom:24 }}>
             <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12 }}>
-              <div style={{ fontSize:12,color:c.amber,fontWeight:700,letterSpacing:1,textTransform:"uppercase" }}>รออนุมัติ</div>
-              <span style={{ background:`${c.amber}1a`,color:c.amber,borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700 }}>{pending.length}</span>
+              <div style={{ fontSize:12,color:c.amber,fontWeight:600,letterSpacing:1,textTransform:"uppercase" }}>รออนุมัติ</div>
+              <span style={{ background:`${c.amber}1a`,color:c.amber,borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:600 }}>{pending.length}</span>
             </div>
             {pending.map(u=>(
               <UserCard key={u.id} user={u} onRole={changeRole} onDisable={disableUser} onRestore={restoreUser} onEdit={setEditUser} currentUser={currentUser}/>
@@ -133,7 +133,7 @@ export default function AdminUsers({ onBack, currentUser }) {
 
         {/* Active */}
         <div>
-          <div style={{ fontSize:12,color:c.text400,fontWeight:700,letterSpacing:1,
+          <div style={{ fontSize:12,color:c.text400,fontWeight:600,letterSpacing:1,
             textTransform:"uppercase",marginBottom:12 }}>ผู้ใช้ทั้งหมด ({active.length})</div>
           {loading && <div style={{ textAlign:"center",color:c.text400,padding:32 }}>กำลังโหลด...</div>}
           {active.map(u=>(
@@ -148,8 +148,8 @@ export default function AdminUsers({ onBack, currentUser }) {
         {disabled.length>0 && (
           <div style={{ marginTop:24 }}>
             <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12 }}>
-              <div style={{ fontSize:12,color:c.text500,fontWeight:700,letterSpacing:1,textTransform:"uppercase" }}>ระงับใช้งาน</div>
-              <span style={{ background:c.borderSoft,color:c.text500,borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700 }}>{disabled.length}</span>
+              <div style={{ fontSize:12,color:c.text500,fontWeight:600,letterSpacing:1,textTransform:"uppercase" }}>ระงับใช้งาน</div>
+              <span style={{ background:c.borderSoft,color:c.text500,borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:600 }}>{disabled.length}</span>
             </div>
             <div style={{ fontSize:11,color:c.text400,marginBottom:10,lineHeight:1.6 }}>
               อีเมลเหล่านี้ยังถูกจองอยู่ใน Firebase Authentication — ถ้าต้องการปล่อยอีเมลให้สมัครใหม่ได้ ต้องลบบัญชีใน Firebase Console → Authentication
@@ -163,10 +163,10 @@ export default function AdminUsers({ onBack, currentUser }) {
 
       {/* บำรุงรักษาระบบ */}
       <div style={{ padding:"0 20px 48px",maxWidth:640,margin:"0 auto" }}>
-        <div style={{ fontSize:12,color:c.text400,fontWeight:700,letterSpacing:1,
-          textTransform:"uppercase",marginBottom:12 }}>🛠 บำรุงรักษาระบบ</div>
+        <div style={{ fontSize:12,color:c.text400,fontWeight:600,letterSpacing:1,
+          textTransform:"uppercase",marginBottom:12 }}>บำรุงรักษาระบบ</div>
         <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,padding:"16px 18px" }}>
-          <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:4 }}>🔔 ล้าง Notifications เก่า</div>
+          <div style={{ fontSize:13,fontWeight:600,color:c.text900,marginBottom:4 }}>ล้าง Notifications เก่า</div>
           <div style={{ fontSize:12,color:c.text500,marginBottom:14 }}>
             ลบ notifications ที่อ่านแล้วออกจาก Firestore เพื่อลด reads quota
           </div>
@@ -190,7 +190,7 @@ export default function AdminUsers({ onBack, currentUser }) {
               background:cleanResult.type==="success"?`${c.green}1a`:`${c.red}1a`,
               color:cleanResult.type==="success"?c.green:c.red,
               border:`1px solid ${cleanResult.type==="success"?`${c.green}55`:`${c.red}55`}` }}>
-              {cleanResult.type==="success"?"✅":"❌"} {cleanResult.msg}
+              {cleanResult.msg}
             </div>
           )}
         </div>
@@ -221,11 +221,11 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
         <div style={{ width:40,height:40,borderRadius:"50%",flexShrink:0,
           background:`hsl(${user.name?.charCodeAt(0)*7%360},60%,70%)`,
           display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:16,fontWeight:700,color:"#fff" }}>
+          fontSize:16,fontWeight:600,color:"#fff" }}>
           {user.name?.charAt(0)||"?"}
         </div>
         <div style={{ flex:1,minWidth:0 }}>
-          <div style={{ fontSize:14,fontWeight:700,color:c.text900 }}>{user.name||"ไม่ระบุชื่อ"}</div>
+          <div style={{ fontSize:14,fontWeight:600,color:c.text900 }}>{user.name||"ไม่ระบุชื่อ"}</div>
           <div style={{ fontSize:12,color:c.text400,marginTop:1,
             overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{user.email}</div>
         </div>
@@ -234,7 +234,7 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
           title={locked ? "เฉพาะ Dev เท่านั้นที่จัดการสิทธิ์ Dev ได้" : isSelf ? "เปลี่ยนสิทธิ์ตัวเองไม่ได้" : ""}
           style={{ background:`${roleColor}1a`,border:`1px solid ${roleColor}40`,
             color:roleColor,borderRadius:8,padding:"5px 10px",fontSize:12,
-            fontWeight:700,cursor:(locked||isSelf)?"not-allowed":"pointer",
+            fontWeight:600,cursor:(locked||isSelf)?"not-allowed":"pointer",
             fontFamily:"inherit",outline:"none",opacity:(locked||isSelf)?0.55:1 }}>
           {(locked ? ROLE_OPTS : visibleOpts).map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
@@ -247,7 +247,7 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
         )}
         {locked ? (
           <span title="เฉพาะ Dev เท่านั้นที่จัดการบัญชี Dev ได้"
-            style={{ fontSize:14, color:c.text400, padding:"6px 10px" }}>🔒</span>
+            style={{ fontSize:14, color:c.text400, padding:"6px 10px" }}></span>
         ) : isDisabled ? (
           <button onClick={()=>onRestore(user.id)} title="คืนสิทธิ์การใช้งาน"
             style={{ background:`${c.green}1a`,border:`1px solid ${c.green}55`,color:c.green,
@@ -269,7 +269,7 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
       {user.role !== "pending" && !isDisabled && (
         <div style={{ marginTop:8,display:"flex",gap:12,flexWrap:"wrap" }}>
           {user.onsiteRate > 0 && (
-            <span style={{ fontSize:11,color:c.green }}>💰 {user.onsiteRate.toLocaleString()} บ./ครั้ง</span>
+            <span style={{ fontSize:11,color:c.green }}>{user.onsiteRate.toLocaleString()} บ./ครั้ง</span>
           )}
           {FEATURE_SHIFT && user.role==="user" && (
             <span style={{ fontSize:11,color:user.canEditShift?c.blue:c.text400 }}>
@@ -277,7 +277,7 @@ function UserCard({ user, onRole, onDisable, onRestore, onEdit, currentUser }) {
             </span>
           )}
           {user.leaveQuota?.vacation > 0 && (
-            <span style={{ fontSize:11,color:c.purple }}>📋 พักผ่อน {user.leaveQuota.vacation} วัน/ปี</span>
+            <span style={{ fontSize:11,color:c.purple }}>พักผ่อน {user.leaveQuota.vacation} วัน/ปี</span>
           )}
         </div>
       )}
@@ -314,14 +314,14 @@ function EditUserModal({ user, onClose, onSave }) {
   }
 
   const IS = inputBase({ padding:"8px 12px", fontSize:13 });
-  const LB = { fontSize:11,color:c.text400,fontWeight:700,textTransform:"uppercase",
+  const LB = { fontSize:11,color:c.text400,fontWeight:600,textTransform:"uppercase",
     letterSpacing:.5,marginBottom:4,display:"block" };
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:c.card,borderRadius:16,width:"100%",maxWidth:460,
+      <div style={{ background:c.card,borderRadius:12,width:"100%",maxWidth:460,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",padding:24 }}
         onClick={e=>e.stopPropagation()}>
 
@@ -331,11 +331,11 @@ function EditUserModal({ user, onClose, onSave }) {
             <div style={{ width:36,height:36,borderRadius:"50%",
               background:`hsl(${user.name?.charCodeAt(0)*7%360},60%,70%)`,
               display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:14,fontWeight:700,color:"#fff" }}>
+              fontSize:14,fontWeight:600,color:"#fff" }}>
               {user.name?.charAt(0)||"?"}
             </div>
             <div>
-              <div style={{ fontSize:14,fontWeight:700,color:c.text900 }}>{user.name}</div>
+              <div style={{ fontSize:14,fontWeight:600,color:c.text900 }}>{user.name}</div>
               <div style={{ fontSize:12,color:c.text400 }}>{user.email}</div>
             </div>
           </div>
@@ -345,7 +345,7 @@ function EditUserModal({ user, onClose, onSave }) {
 
         {/* ค่าแรง Onsite */}
         <div style={{ marginBottom:16 }}>
-          <label style={LB}>💰 ค่าแรง Onsite (บาท/ครั้ง)</label>
+          <label style={LB}>ค่าแรง Onsite (บาท/ครั้ง)</label>
           <input type="number" min="0" value={onsiteRate}
             onChange={e=>setOnsiteRate(e.target.value)} style={IS} placeholder="0"/>
         </div>
@@ -353,10 +353,10 @@ function EditUserModal({ user, onClose, onSave }) {
         {/* สิทธิ์ตารางกะ (เฉพาะ user) — ซ่อนเมื่อปิดฟีเจอร์ตารางกะ */}
         {FEATURE_SHIFT && user.role === "user" && (
           <div style={{ marginBottom:16,padding:"12px 14px",background:c.bg,
-            border:`1px solid ${c.border}`,borderRadius:10,
+            border:`1px solid ${c.border}`,borderRadius:8,
             display:"flex",alignItems:"center",justifyContent:"space-between" }}>
             <div>
-              <div style={{ fontSize:13,fontWeight:600,color:c.text900 }}>📅 สิทธิ์ลงตารางกะ</div>
+              <div style={{ fontSize:13,fontWeight:600,color:c.text900 }}>สิทธิ์ลงตารางกะ</div>
               <div style={{ fontSize:11,color:c.text400,marginTop:2 }}>อนุญาตให้แก้ไขตารางกะได้</div>
             </div>
             <button onClick={()=>setCanEditShift(v=>!v)}
@@ -372,7 +372,7 @@ function EditUserModal({ user, onClose, onSave }) {
 
         {/* วันลาที่ได้รับ */}
         <div style={{ marginBottom:20 }}>
-          <label style={LB}>📋 วันลาที่ได้รับต่อปี (วัน)</label>
+          <label style={LB}>วันลาที่ได้รับต่อปี (วัน)</label>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
             {[
               { key:"vacation", label:"ลาพักร้อน" },
@@ -394,14 +394,14 @@ function EditUserModal({ user, onClose, onSave }) {
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose}
             style={{ background:c.bg,border:`1px solid ${c.border}`,color:c.text500,
-              borderRadius:10,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
+              borderRadius:8,padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
             ยกเลิก
           </button>
           <button onClick={handleSave} disabled={saving}
-            style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
+            style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:saving?0.7:1 }}>
-            {saving?"กำลังบันทึก...":"💾 บันทึก"}
+            {saving?"กำลังบันทึก...":"บันทึก"}
           </button>
         </div>
       </div>

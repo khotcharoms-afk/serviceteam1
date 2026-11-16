@@ -72,13 +72,13 @@ export default function SmartPolePage({ onBack }) {
 
         {loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: c.text400, fontSize: 13.5 }}>
           กำลังดึงข้อมูลจาก Grafana ทั้ง 16 ไซต์… (อาจใช้เวลาครึ่งนาที)</div>}
-        {error && !loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius: 10, padding: "12px 14px", fontSize: 13.5, color: c.text900 }}>{error}</div>}
+        {error && !loading && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius:8, padding: "12px 14px", fontSize: 13.5, color: c.text900 }}>{error}</div>}
 
         {data && !loading && (<>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 12 }}>
             {[["ใบหน้าทั้งหมด", total("faces")], ["VIP", total("vip")], ["Blacklist", total("blacklist")]].map(([l, v]) => (
-              <div key={l} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 10, padding: "12px 10px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: l === "Blacklist" && v > 0 ? c.danger : c.text900, lineHeight: 1 }}>{v.toLocaleString()}</div>
+              <div key={l} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: "12px 10px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, fontWeight:600, color: l === "Blacklist" && v > 0 ? c.danger : c.text900, lineHeight: 1 }}>{v.toLocaleString()}</div>
                 <div style={{ fontSize: 11, color: c.text500, marginTop: 5, fontWeight: 600 }}>{l}</div>
               </div>
             ))}
@@ -89,7 +89,7 @@ export default function SmartPolePage({ onBack }) {
               <thead>
                 <tr style={{ background: c.bg }}>
                   {["ไซต์", "ใบหน้า", "VIP", "Blacklist"].map((h, i) => (
-                    <th key={h} style={{ padding: "9px 12px", fontSize: 11.5, color: c.text500, fontWeight: 700, textAlign: i ? "right" : "left" }}>{h}</th>
+                    <th key={h} style={{ padding: "9px 12px", fontSize: 11.5, color: c.text500, fontWeight:600, textAlign: i ? "right" : "left" }}>{h}</th>
                   ))}
                 </tr>
               </thead>

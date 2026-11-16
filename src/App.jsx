@@ -433,7 +433,7 @@ export default function App({ currentUser, onSignOut }) {
         });
         await batch.commit();
       }
-      showToast(recordId ? "📍 แก้ไข Onsite แล้ว" : "📍 บันทึก Onsite แล้ว", "success");
+      showToast(recordId ? "แก้ไข Onsite แล้ว" : "บันทึก Onsite แล้ว", "success");
     } catch(e) { console.error(e); showToast("บันทึกไม่สำเร็จ ลองใหม่"); }
     setSaving(false);
   }
@@ -741,7 +741,7 @@ export default function App({ currentUser, onSignOut }) {
         });
         await batch.commit();
         const others = (data.assignees||[]).some(n=>n!==currentUser?.name);
-        showToast(others ? "📋 ลงงานและแจ้งผู้รับผิดชอบแล้ว" : "📋 ลงงานแล้ว","success");
+        showToast(others ? "ลงงานและแจ้งผู้รับผิดชอบแล้ว" : "ลงงานแล้ว","success");
       } else if (!isNew && prevTask && data.status && normSt(prevTask.status) !== normSt(data.status)) {
         // แจ้งผู้สร้างงาน + admin เมื่อมีคนเปลี่ยนสถานะ
         const toNotify = users.filter(u=>(u.role==="admin"||u.id===data.createdByUid||u.name===data.createdBy)&&u.id!==currentUser?.id);
@@ -767,7 +767,7 @@ export default function App({ currentUser, onSignOut }) {
           });
         });
         if (added.length) await batch.commit();
-        if ((data.comments||[]).length === (prevTask?.comments||[]).length) showToast("💾 บันทึกแล้ว","success");
+        if ((data.comments||[]).length === (prevTask?.comments||[]).length) showToast("บันทึกแล้ว","success");
       }
     }}
     onDeleteTask={async(id)=>{
@@ -789,7 +789,7 @@ export default function App({ currentUser, onSignOut }) {
         updatedAt:now, activityAt:now,
       });
       await setDoc(doc(db,"tasks",task.id),{caseId:cid,updatedAt:now},{merge:true});
-      showToast("📁 สร้างเคสจากงานแล้ว","success");
+      showToast("สร้างเคสจากงานแล้ว","success");
     }}/></Suspense></ThemeContext.Provider>;
   if(onsitePage && isAdminOrDev) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><OnsitePage onBack={()=>setOnsitePage(false)} projects={projects} users={users} currentUser={currentUser} onsiteRecords={onsiteRecords} onSaveOnsite={saveOnsite} onApproveOnsite={approveOnsite} onDeleteOnsite={deleteOnsite} saving={saving}/></Suspense></ThemeContext.Provider>;
   if(shiftPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}><Suspense fallback={<PageLoader/>}><ShiftCalendar onBack={()=>setShiftPage(false)} currentUser={currentUser} users={users} shiftTypes={shiftTypes} shifts={shifts} userSchedules={userSchedules} shiftMembers={shiftMembers} refreshSchedules={refreshSchedules} refreshShiftTypes={refreshShiftTypes} refreshShiftMembers={refreshShiftMembers} refreshShifts={refreshShifts}/></Suspense></ThemeContext.Provider>;
@@ -880,7 +880,7 @@ export default function App({ currentUser, onSignOut }) {
             <button onClick={()=>setView("overview")} style={{ background:"none",border:"none",
               color:themeC.text400,cursor:"pointer",fontFamily:"inherit",fontSize:13,padding:0 }}>ภาพรวม</button>
             <span style={{ color:themeC.text400 }}>›</span>
-            <span style={{ fontSize:13,fontWeight:700,color:themeC.text900,flex:1,
+            <span style={{ fontSize:13,fontWeight:600,color:themeC.text900,flex:1,
               overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{activeProj?.name}</span>
             {activeProj && (<>
               <button onClick={()=>openEditProj(activeProj)}
@@ -927,7 +927,7 @@ export default function App({ currentUser, onSignOut }) {
                 padding:"12px 16px",marginBottom:16,cursor:"pointer",display:"flex",
                 alignItems:"center",gap:12 }}>
               <div style={{ flex:1,minWidth:0 }}>
-                <div style={{ fontSize:13,fontWeight:700,color:themeC.text900 }}>
+                <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>
                   มี {caseCount} เคสใกล้หมดภายใน 30 วัน{warn.length>caseCount ? ` (${warn.length} รายการ)` : ""}
                 </div>
                 <div style={{ fontSize:12,color:themeC.text500,marginTop:2,overflow:"hidden",
@@ -972,9 +972,9 @@ export default function App({ currentUser, onSignOut }) {
             if (matchProjs.length===0) return null;
             return (
               <div style={{ position:"absolute",top:"100%",left:0,right:0,zIndex:50,
-                background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:10,
+                background:themeC.card,border:`1px solid ${themeC.border}`,borderRadius:8,
                 boxShadow:"0 8px 24px rgba(0,0,0,.12)",marginTop:4,overflow:"hidden" }}>
-                <div style={{ padding:"6px 12px",fontSize:10,color:themeC.text400,fontWeight:700,
+                <div style={{ padding:"6px 12px",fontSize:10,color:themeC.text400,fontWeight:600,
                   textTransform:"uppercase",letterSpacing:1,borderBottom:`1px solid ${themeC.borderSoft}` }}>
                   โครงการที่ตรงกัน
                 </div>
@@ -1182,7 +1182,7 @@ export default function App({ currentUser, onSignOut }) {
       {kbCase && (
         <Suspense fallback={null}>
           <CaseToKnowledge caseData={kbCase} project={projects.find(p=>p.id===kbCase.projectId)} currentUser={currentUser}
-            onClose={()=>setKbCase(null)} onSaved={()=>showToast("💡 บันทึกลง Knowledge Hub แล้ว","success")}/>
+            onClose={()=>setKbCase(null)} onSaved={()=>showToast("บันทึกลง Knowledge Hub แล้ว","success")}/>
         </Suspense>
       )}
 
@@ -1190,13 +1190,13 @@ export default function App({ currentUser, onSignOut }) {
         <div style={{ position:"fixed",inset:0,zIndex:800,background:"rgba(0,0,0,.6)",
           display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"60px 16px 16px" }}
           onClick={()=>setGlobalSearch(false)}>
-          <div style={{ background:themeC.card,borderRadius:16,width:"100%",maxWidth:620,
+          <div style={{ background:themeC.card,borderRadius:12,width:"100%",maxWidth:620,
             maxHeight:"80vh",display:"flex",flexDirection:"column",
             boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
             onClick={e=>e.stopPropagation()}>
             {/* Search input */}
             <div style={{ padding:"14px 16px",borderBottom:"1px solid #f4f4f5",display:"flex",alignItems:"center",gap:10 }}>
-              <span style={{ fontSize:18,flexShrink:0 }}>🔍</span>
+              <span style={{ fontSize:18,flexShrink:0 }}></span>
               <input autoFocus value={globalQ} onChange={e=>setGlobalQ(e.target.value)}
                 placeholder="ค้นหาเคส งาน Onsite โครงการ..."
                 style={{ flex:1,border:"none",outline:"none",fontSize:15,fontFamily:"inherit",
@@ -1225,14 +1225,14 @@ export default function App({ currentUser, onSignOut }) {
                 );
                 const Section = ({icon,label,items,render})=>items.length===0?null:(
                   <div>
-                    <div style={{ padding:"8px 16px 4px",fontSize:10,color:themeC.text400,fontWeight:700,
+                    <div style={{ padding:"8px 16px 4px",fontSize:10,color:themeC.text400,fontWeight:600,
                       textTransform:"uppercase",letterSpacing:.5 }}>{icon} {label} ({items.length})</div>
                     {items.map(render)}
                   </div>
                 );
                 return (
                   <div>
-                    <Section icon="📁" label="โครงการ" items={matchProjs} render={p=>(
+                    <Section icon="" label="โครงการ" items={matchProjs} render={p=>(
                       <div key={p.id} onClick={()=>{ setView(p.id); setFilterStat("all"); setGlobalSearch(false); setGlobalQ(""); }}
                         style={{ padding:"10px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,
                           borderBottom:"1px solid #fafafa" }}
@@ -1241,11 +1241,11 @@ export default function App({ currentUser, onSignOut }) {
                         <span style={{ width:10,height:10,borderRadius:"50%",background:p.color||"#a1a1aa",flexShrink:0 }}/>
                         <div>
                           <div style={{ fontSize:13,fontWeight:600,color:themeC.text900 }}>{p.name}</div>
-                          {p.customer&&<div style={{ fontSize:11,color:themeC.text500 }}>👤 {p.customer}</div>}
+                          {p.customer&&<div style={{ fontSize:11,color:themeC.text500 }}>{p.customer}</div>}
                         </div>
                       </div>
                     )}/>
-                    <Section icon="📋" label="เคส" items={matchCases} render={c=>{
+                    <Section icon="" label="เคส" items={matchCases} render={c=>{
                       const proj=projects.find(p=>p.id===c.projectId);
                       return (
                       <div key={c.id} onClick={()=>{ setDetailCase(c); setGlobalSearch(false); setGlobalQ(""); }}
@@ -1258,7 +1258,7 @@ export default function App({ currentUser, onSignOut }) {
                         </div>
                       </div>
                     );}}/>
-                    <Section icon="📋" label="งาน (Board)" items={matchTasks} render={t=>{
+                    <Section icon="" label="งาน (Board)" items={matchTasks} render={t=>{
                       const proj=projects.find(p=>p.id===t.projectId);
                       return (
                       <div key={t.id} onClick={()=>{ setTaskPage(true); setGlobalSearch(false); setGlobalQ(""); }}
@@ -1271,7 +1271,7 @@ export default function App({ currentUser, onSignOut }) {
                         </div>
                       </div>
                     );}}/>
-                    <Section icon="📍" label="Onsite" items={matchOnsite} render={r=>(
+                    <Section icon="" label="Onsite" items={matchOnsite} render={r=>(
                       <div key={r.id} onClick={()=>{ setOnsitePage(true); setGlobalSearch(false); setGlobalQ(""); }}
                         style={{ padding:"10px 16px",cursor:"pointer",borderBottom:"1px solid #fafafa" }}
                         onMouseEnter={e=>e.currentTarget.style.background="#fafafa"}
@@ -1320,9 +1320,9 @@ export default function App({ currentUser, onSignOut }) {
             <div className="notif-handle"/>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
               padding:"14px 18px 12px",borderBottom:"1px solid #f4f4f5",flexShrink:0 }}>
-              <span style={{ fontSize:15,fontWeight:700,color:themeC.text900 }}>🔔 การแจ้งเตือน
+              <span style={{ fontSize:15,fontWeight:600,color:themeC.text900 }}>การแจ้งเตือน
                 {unreadCount>0&&<span style={{ background:"#ef4444",color:"#fff",borderRadius:20,
-                  padding:"1px 7px",fontSize:11,fontWeight:700,marginLeft:8 }}>{unreadCount}</span>}
+                  padding:"1px 7px",fontSize:11,fontWeight:600,marginLeft:8 }}>{unreadCount}</span>}
               </span>
               <div style={{ display:"flex",gap:10,alignItems:"center" }}>
                 {unreadCount>0&&(
@@ -1335,16 +1335,16 @@ export default function App({ currentUser, onSignOut }) {
             <div style={{ overflowY:"auto",flex:1 }}>
               {notifications.length===0?(
                 <div style={{ padding:"48px 18px",textAlign:"center",color:themeC.text400,fontSize:14 }}>
-                  <div style={{ fontSize:32,marginBottom:8 }}>🔔</div>ไม่มีการแจ้งเตือน
+                  ไม่มีการแจ้งเตือน
                 </div>
               ):notifications.map(n=>(
                 <div key={n.id} onClick={()=>{ markNotifRead(n.id); setNotifOpen(false); if(n.type==="leave"){ setLeavePage(true); } else if(n.type==="onsite"){ setOnsitePage(true); } else if(n.type==="task"){ setTaskPage(true); } else if(n.caseId){ const c=cases.find(x=>x.id===n.caseId); if(c){ setDetailCase(c); }}}}
                   style={{ padding:"14px 18px",borderBottom:"1px solid #fafafa",background:n.read?"#fff":"#eff6ff",cursor:"pointer",transition:"background .15s" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
                     <div style={{ width:36,height:36,borderRadius:"50%",flexShrink:0,
-                      background:n.type==="handover"?"#dbeafe":n.type==="leave"?"#f0fdf4":n.type==="onsite"?"#fff7ed":n.type==="task"?"#f5f3ff":"#f5f3ff",
-                      display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>
-                      {n.type==="handover"?"📤":n.type==="leave"?"📋":n.type==="onsite"?"📍":n.type==="task"?"📋":"👤"}
+                      background:themeC.borderSoft,color:themeC.text500,
+                      display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      <Icon name={n.type==="handover"?"inbox":n.type==="leave"?"leave":n.type==="onsite"?"pin":n.type==="task"?"board":"bell"} size={16}/>
                     </div>
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ fontSize:14,fontWeight:n.read?400:700,color:themeC.text900,lineHeight:1.5 }}>
@@ -1356,7 +1356,7 @@ export default function App({ currentUser, onSignOut }) {
                           ? <>{n.message||`รายการ Onsite อัปเดตแล้ว`}</>
                           : n.type==="task"
                           ? <>{n.message||`มีงานใหม่มอบหมายให้คุณ`}</>
-                          : <>มีผู้ใช้ใหม่: <span style={{ color:"#7c3aed",fontWeight:700 }}>{n.toName}</span></>}
+                          : <>มีผู้ใช้ใหม่: <span style={{ color:"#7c3aed",fontWeight:600 }}>{n.toName}</span></>}
                       </div>
                       {n.note&&<div style={{ fontSize:12,color:themeC.text500,marginTop:3,background:themeC.bg,borderRadius:6,padding:"3px 8px",display:"inline-block" }}>"{n.note}"</div>}
                       <div style={{ fontSize:11,color:themeC.text400,marginTop:4 }}>
@@ -1374,25 +1374,25 @@ export default function App({ currentUser, onSignOut }) {
 
       <Modal open={!!delCase} onClose={()=>setDelCase(null)} title="ลบเคส?">
         {delCase&&(()=>{ const c=cases.find(x=>x.id===delCase); return c&&(
-          <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:10,
+          <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:8,
             padding:"10px 14px",marginBottom:14 }}>
             <div style={{ fontSize:11,color:themeC.text400,marginBottom:3 }}>เคสที่จะลบ</div>
-            <div style={{ fontSize:14,fontWeight:700,color:"#b91c1c" }}>"{c.title}"</div>
+            <div style={{ fontSize:14,fontWeight:600,color:"#b91c1c" }}>"{c.title}"</div>
           </div>
         ); })()}
         <p style={{ color:themeC.text500,fontSize:14,marginBottom:20 }}>เคสนี้จะถูกลบถาวร ยืนยันหรือไม่?</p>
         <div style={{ display:"flex",gap:10 }}>
           <GhostBtn onClick={()=>setDelCase(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
-          <button onClick={()=>deleteCase(delCase)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14 }}>ลบ</button>
+          <button onClick={()=>deleteCase(delCase)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14 }}>ลบ</button>
         </div>
       </Modal>
 
       <Modal open={!!delProj} onClose={()=>setDelProj(null)} title="ลบโครงการ?">
         <p style={{ color:themeC.text500,fontSize:14,marginBottom:4 }}>โครงการและเคสทั้งหมดจะถูกลบถาวร</p>
-        <p style={{ color:"#ef4444",fontSize:13,marginBottom:20 }}>⚠ ไม่สามารถกู้คืนได้</p>
+        <p style={{ color:"#ef4444",fontSize:13,marginBottom:20 }}>ไม่สามารถกู้คืนได้</p>
         <div style={{ display:"flex",gap:10 }}>
           <GhostBtn onClick={()=>setDelProj(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
-          <button onClick={()=>removeProj(delProj)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14 }}>ลบโครงการ</button>
+          <button onClick={()=>removeProj(delProj)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14 }}>ลบโครงการ</button>
         </div>
       </Modal>
 
@@ -1401,7 +1401,7 @@ export default function App({ currentUser, onSignOut }) {
       <HandoverModal open={!!handoverCase} onClose={()=>setHandoverCase(null)}
         caseData={handoverCase} onSave={saveHandover} users={users} currentUser={currentUser}/>
 
-      <Modal open={showOnlineUsers} onClose={()=>setShowOnlineUsers(false)} title="🟢 ใครออนไลน์อยู่บ้าง">
+      <Modal open={showOnlineUsers} onClose={()=>setShowOnlineUsers(false)} title="ใครออนไลน์อยู่บ้าง">
         {onlineUsers.length===0 ? (
           <p style={{ color:themeC.text400,fontSize:14,textAlign:"center",padding:"20px 0" }}>ไม่มีใครออนไลน์อยู่ตอนนี้</p>
         ) : onlineUsers.map((u)=>(
@@ -1423,7 +1423,7 @@ export default function App({ currentUser, onSignOut }) {
             color:toast.type==="error"?"#b91c1c":"#15803d",
             borderRadius:12,padding:"12px 18px",fontSize:14,fontWeight:600,
             boxShadow:"0 8px 24px rgba(0,0,0,.12)",fontFamily:"inherit" }}>
-            <span style={{ fontSize:16 }}>{toast.type==="error"?"⚠️":"✅"}</span>
+
             <span>{toast.msg}</span>
           </div>
         </div>

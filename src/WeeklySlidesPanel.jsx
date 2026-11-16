@@ -108,11 +108,11 @@ export default function WeeklySlidesPanel({ onClose }) {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 16px 60px" }}>
         {busy && <div style={{ padding: 40, textAlign: "center", color: c.text400, fontSize: 13.5 }}>กำลังอ่านชีต…</div>}
-        {err && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius: 10, padding: "12px 14px", fontSize: 13.5, color: c.text900 }}>{err}</div>}
+        {err && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius:8, padding: "12px 14px", fontSize: 13.5, color: c.text900 }}>{err}</div>}
 
         {showTargets && data && (
           <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: c.text900 }}>Target ของแต่ละไซต์ (ตร.ม./วัน)</div>
+            <div style={{ fontSize: 13.5, fontWeight:600, color: c.text900 }}>Target ของแต่ละไซต์ (ตร.ม./วัน)</div>
             <div style={{ fontSize: 11.5, color: c.text400, margin: "2px 0 10px" }}>ถ้าแถว Target ในชีตมีตัวเลข จะใช้ของชีตก่อน · 0 หรือเว้นว่าง = ไม่มี target · บันทึกแล้วใช้ทุกสัปดาห์ ทุกคนเห็นเหมือนกัน</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: 6 }}>
               {data.columns.map((col) => {
@@ -142,7 +142,7 @@ export default function WeeklySlidesPanel({ onClose }) {
           {slides.map((s, i) => (
             <div key={s.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 12, marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: c.text900, flex: 1 }}>{i + 1}. {s.label}</span>
+                <span style={{ fontSize: 13, fontWeight:600, color: c.text900, flex: 1 }}>{i + 1}. {s.label}</span>
                 <button onClick={async () => save(await toBlob(s, marks, notes), fname(i, s))} style={btn(false)}>ดาวน์โหลด PNG</button>
               </div>
               <SlideCanvas slide={s} marks={marks} notes={notes} ready={ready} />

@@ -24,7 +24,7 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{ padding:24, fontFamily:"sans-serif", color:"#ef4444",
           background:"#fff", minHeight:"100vh" }}>
-          <div style={{ fontSize:20, fontWeight:700, marginBottom:12 }}>⚠️ เกิดข้อผิดพลาด</div>
+          <div style={{ fontSize:20, fontWeight:600, marginBottom:12 }}>เกิดข้อผิดพลาด</div>
           <div style={{ background:"#fee2e2", borderRadius:8, padding:16,
             fontSize:13, wordBreak:"break-all", lineHeight:1.6 }}>
             {this.state.error}

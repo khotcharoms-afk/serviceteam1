@@ -40,8 +40,8 @@ export default function DetailModal({
           <span style={{ background: detailCase.checklist.confirmed?tint(c.green,"14"):tint(c.orange,"14"),
             color: detailCase.checklist.confirmed?c.green:c.orange,
             border:`1px solid ${detailCase.checklist.confirmed?tint(c.green,"55"):tint(c.orange,"55")}`,
-            borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700 }}>
-            {detailCase.checklist.confirmed ? "✅ พร้อมแล้ว" : "📋 กรอกแล้ว (ยังไม่ยืนยัน)"}
+            borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600 }}>
+            {detailCase.checklist.confirmed ? "พร้อมแล้ว" : "กรอกแล้ว (ยังไม่ยืนยัน)"}
           </span>
         )}
       </div>
@@ -56,12 +56,12 @@ export default function DetailModal({
           ["วันที่", fmtDate(detailCase.date)]
         ].map(([k,v]) => (
           <div key={k}>
-            <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:3,fontWeight:700 }}>{k}</div>
+            <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:3,fontWeight:600 }}>{k}</div>
             <div style={{ fontSize:14,color:c.text900,fontWeight:500 }}>{v}</div>
           </div>
         ))}
         <div>
-          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>ประกัน</div>
+          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:600 }}>ประกัน</div>
           {detailCase.warrantyEnd ? (
             <>
               <WarrantyPill warrantyEnd={detailCase.warrantyEnd}/>
@@ -72,7 +72,7 @@ export default function DetailModal({
           ) : <span style={{ fontSize:12,color:c.text400 }}>ไม่มีประกัน</span>}
         </div>
         <div>
-          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>สัญญาเช่า</div>
+          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:600 }}>สัญญาเช่า</div>
           {detailCase.leaseEnd ? (()=>{
             const ld = daysLeft(detailCase.leaseEnd);
             return (
@@ -86,7 +86,7 @@ export default function DetailModal({
           })() : <span style={{ fontSize:12,color:c.text400 }}>ไม่มีสัญญาเช่า</span>}
         </div>
         <div>
-          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>สัญญาเช่าซื้อ</div>
+          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:600 }}>สัญญาเช่าซื้อ</div>
           {detailCase.hirePurchaseEnd ? (()=>{
             const hd = daysLeft(detailCase.hirePurchaseEnd);
             return (
@@ -100,7 +100,7 @@ export default function DetailModal({
           })() : <span style={{ fontSize:12,color:c.text400 }}>ไม่มีสัญญาเช่าซื้อ</span>}
         </div>
         <div>
-          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:700 }}>สถานะ</div>
+          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontWeight:600 }}>สถานะ</div>
           <StatusPill value={detailCase.status}/>
         </div>
       </div>
@@ -112,29 +112,29 @@ export default function DetailModal({
           <div style={{ fontSize:12.5,color:c.text500,fontWeight:600,marginBottom:16 }}>✓ บันทึกวิธีแก้ของเคสนี้ไว้ใน Knowledge Hub แล้ว</div>
         ) : (
           <button onClick={onKnowledge} style={{ width:"100%",marginBottom:16,background:"transparent",border:`1px dashed ${c.text400}`,
-            color:c.text900,borderRadius:10,padding:"10px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700,textAlign:"left" }}>
+            color:c.text900,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left" }}>
             + บันทึกวิธีแก้ของเคสนี้ลง Knowledge Hub ให้ทีม
           </button>
         )
       )}
 
       {detailCase.note && (
-        <div style={{ background:c.borderSoft,border:`1px solid ${c.border}`,borderRadius:10,padding:"12px 14px",marginBottom:16 }}>
-          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:5,fontWeight:700 }}>หมายเหตุ</div>
+        <div style={{ background:c.borderSoft,border:`1px solid ${c.border}`,borderRadius:8,padding:"12px 14px",marginBottom:16 }}>
+          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:5,fontWeight:600 }}>หมายเหตุ</div>
           <div style={{ fontSize:13,color:c.text500,lineHeight:1.8 }}>{detailCase.note}</div>
         </div>
       )}
 
       {(detailCase.updateLog||[]).length > 0 && (
         <div style={{ marginBottom:16 }}>
-          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontWeight:700 }}>
+          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontWeight:600 }}>
             ประวัติการอัปเดต ({detailCase.updateLog.length})
           </div>
           <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
             {[...(detailCase.updateLog||[])].reverse().map((u,i) => (
               <div key={i} style={{ background:c.card,borderRadius:8,padding:"10px 12px",border:`1px solid ${c.border}` }}>
                 <div style={{ display:"flex",justifyContent:"space-between",marginBottom:4 }}>
-                  <span style={{ fontSize:12,fontWeight:700,color:c.text900 }}>{u.by}</span>
+                  <span style={{ fontSize:12,fontWeight:600,color:c.text900 }}>{u.by}</span>
                   <span style={{ fontSize:11,color:c.text400 }}>{u.date} {u.time}</span>
                 </div>
                 {u.status && <div style={{ fontSize:11,color:c.text500,marginBottom:2 }}>→ {u.status}</div>}
@@ -147,16 +147,16 @@ export default function DetailModal({
 
       {(detailCase.handoverLog||[]).length > 0 && (
         <div style={{ marginBottom:16 }}>
-          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontWeight:700 }}>
+          <div style={{ fontSize:10,color:c.text400,textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontWeight:600 }}>
             ประวัติการส่งต่อ ({detailCase.handoverLog.length} ครั้ง)
           </div>
           <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
             {[...(detailCase.handoverLog||[])].reverse().map((h,i) => (
-              <div key={i} style={{ background:c.borderSoft,border:`1px solid ${c.border}`,borderRadius:10,padding:"10px 14px" }}>
+              <div key={i} style={{ background:c.borderSoft,border:`1px solid ${c.border}`,borderRadius:8,padding:"10px 14px" }}>
                 <div style={{ display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:h.note?4:0 }}>
-                  <span style={{ fontSize:13,fontWeight:700,color:c.text500 }}>{h.from}</span>
+                  <span style={{ fontSize:13,fontWeight:600,color:c.text500 }}>{h.from}</span>
                   <span style={{ color:c.text400,fontSize:14 }}>→</span>
-                  <span style={{ fontSize:13,fontWeight:700,color:c.text900 }}>{h.to}</span>
+                  <span style={{ fontSize:13,fontWeight:600,color:c.text900 }}>{h.to}</span>
                   <span style={{ fontSize:11,color:c.text400,marginLeft:"auto" }}>{h.date} {h.time}</span>
                 </div>
                 {h.note && <div style={{ fontSize:12,color:c.text500,lineHeight:1.6,
@@ -175,22 +175,22 @@ export default function DetailModal({
           style={{ background: detailCase.checklist?.confirmed?tint(c.green,"14"):detailCase.checklist?tint(c.orange,"14"):c.borderSoft,
             border:`1px solid ${detailCase.checklist?.confirmed?tint(c.green,"55"):detailCase.checklist?tint(c.orange,"55"):c.border}`,
             color: detailCase.checklist?.confirmed?c.green:detailCase.checklist?c.orange:c.text500,
-            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
-          {detailCase.checklist?.confirmed?"✅ Checklist":detailCase.checklist?"📋 Checklist*":"📋 Checklist"}
+            borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
+          {detailCase.checklist?.confirmed?"Checklist":detailCase.checklist?"Checklist*":"Checklist"}
         </button>}
         <button onClick={onUpdate}
           style={{ background:c.ink,border:"none",color:c.onInk,
-            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
+            borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           อัปเดต
         </button>
         <button onClick={onHandover}
           style={{ background:c.bg,border:`1px solid ${c.border}`,color:c.text900,
-            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
+            borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           ส่งต่องาน
         </button>
         <button onClick={onDelete}
           style={{ background:"transparent",border:`1px solid ${c.border}`,color:c.danger,
-            borderRadius:10,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
+            borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600 }}>
           ลบ
         </button>
       </div>
