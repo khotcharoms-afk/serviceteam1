@@ -142,10 +142,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
       {/* Header */}
       <div style={{ background:c.card,borderBottom:`1px solid ${c.border}`,padding:"0 24px",height:56,
         display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
-        <button onClick={onBack} style={{ background:"transparent",border:"none",borderRadius:8,height:32,
-          padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500 }}>
-          ← กลับ
-        </button>
+        <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
         <span style={{ width:1,height:16,background:c.border }}/>
         <div style={{ fontSize:15,fontWeight:600,color:c.text900 }}>Dashboard</div>
         <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:8 }}>
@@ -433,10 +430,7 @@ function DeleteLog({ onBack, deletedCases }) {
     <div style={{ minHeight:"100vh",background:c.bg,fontFamily:"'Noto Sans Thai',sans-serif" }}>
       <div style={{ background:c.card,borderBottom:`1px solid ${c.border}`,padding:"14px 20px",
         display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10 }}>
-        <button onClick={onBack} style={{ background:c.borderSoft,border:"none",borderRadius:8,
-          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
-          ← กลับ
-        </button>
+        <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
         <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>ประวัติการลบเคส</div>
         <span style={{ background:tint(c.red,"22"),color:c.red,borderRadius:20,
           padding:"2px 10px",fontSize:12,fontWeight:600,marginLeft:4 }}>{deletedCases.length} รายการ</span>

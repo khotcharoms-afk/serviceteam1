@@ -87,8 +87,8 @@ export default function WeeklySlidesPanel({ onClose }) {
   }
 
   const btn = (primary) => ({ border: primary ? "none" : `1px solid ${c.border}`, background: primary ? c.ink : c.card, color: primary ? c.onInk : c.text900,
-    borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" });
-  const input = { border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" };
+    borderRadius: 8, padding: "7px 12px", fontSize:13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" });
+  const input = { border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize:13, background: c.bg, color: c.text900, fontFamily: "inherit" };
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: c.bg, overflowY: "auto", fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
@@ -97,9 +97,9 @@ export default function WeeklySlidesPanel({ onClose }) {
           <button onClick={onClose} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
           <div style={{ flex: 1, minWidth: 180 }}>
             <div style={{ fontSize: 15, fontWeight:600, color: c.text900 }}>สไลด์รายสัปดาห์</div>
-            <div style={{ fontSize: 11.5, color: c.text400 }}>ข้อมูลจากชีต Weekly สรุป · ดาวน์โหลดเป็นรูปแล้วลากใส่ Canva (ไม่แก้ไฟล์ Canva หลัก)</div>
+            <div style={{ fontSize:12, color: c.text400 }}>ข้อมูลจากชีต Weekly สรุป · ดาวน์โหลดเป็นรูปแล้วลากใส่ Canva (ไม่แก้ไฟล์ Canva หลัก)</div>
           </div>
-          <span style={{ fontSize: 12.5, color: c.text500 }}>สัปดาห์ที่มีวันที่</span>
+          <span style={{ fontSize:13, color: c.text500 }}>สัปดาห์ที่มีวันที่</span>
           <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} style={{ ...input, padding: "6px 10px", fontSize: 13, background: c.card }} />
           {data && <button onClick={() => setShowTargets((v) => !v)} style={btn(showTargets)}>ตั้งค่า Target</button>}
           {slides.length > 0 && <button onClick={downloadAll} disabled={zipBusy} style={btn(true)}>{zipBusy ? "กำลังเตรียม…" : `ดาวน์โหลดทั้งหมด (${slides.length} รูป)`}</button>}
@@ -107,21 +107,21 @@ export default function WeeklySlidesPanel({ onClose }) {
       </div>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 16px 60px" }}>
-        {busy && <div style={{ padding: 40, textAlign: "center", color: c.text400, fontSize: 13.5 }}>กำลังอ่านชีต…</div>}
-        {err && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius:8, padding: "12px 14px", fontSize: 13.5, color: c.text900 }}>{err}</div>}
+        {busy && <div style={{ padding: 40, textAlign: "center", color: c.text400, fontSize:14 }}>กำลังอ่านชีต…</div>}
+        {err && <div style={{ background: c.card, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.danger}`, borderRadius:8, padding: "12px 14px", fontSize:14, color: c.text900 }}>{err}</div>}
 
         {showTargets && data && (
           <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 13.5, fontWeight:600, color: c.text900 }}>Target ของแต่ละไซต์ (ตร.ม./วัน)</div>
-            <div style={{ fontSize: 11.5, color: c.text400, margin: "2px 0 10px" }}>ถ้าแถว Target ในชีตมีตัวเลข จะใช้ของชีตก่อน · 0 หรือเว้นว่าง = ไม่มี target · บันทึกแล้วใช้ทุกสัปดาห์ ทุกคนเห็นเหมือนกัน</div>
+            <div style={{ fontSize:14, fontWeight:600, color: c.text900 }}>Target ของแต่ละไซต์ (ตร.ม./วัน)</div>
+            <div style={{ fontSize:12, color: c.text400, margin: "2px 0 10px" }}>ถ้าแถว Target ในชีตมีตัวเลข จะใช้ของชีตก่อน · 0 หรือเว้นว่าง = ไม่มี target · บันทึกแล้วใช้ทุกสัปดาห์ ทุกคนเห็นเหมือนกัน</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: 6 }}>
               {data.columns.map((col) => {
                 const fromSheet = !!col.target;
                 const val = draft[col.name] ?? (targetFor(col.name, saved) ?? "");
                 return (
-                  <label key={col.name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: c.text900 }}>
+                  <label key={col.name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize:13, color: c.text900 }}>
                     <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{col.name}</span>
-                    {fromSheet ? <span style={{ fontSize: 11.5, color: c.text400 }}>ชีต: {col.target}</span>
+                    {fromSheet ? <span style={{ fontSize:12, color: c.text400 }}>ชีต: {col.target}</span>
                       : <input type="number" min="0" value={val} onChange={(e) => setDraft((d) => ({ ...d, [col.name]: e.target.value }))} style={{ ...input, width: 80 }} />}
                   </label>
                 );
@@ -135,7 +135,7 @@ export default function WeeklySlidesPanel({ onClose }) {
         )}
 
         {data && !busy && (<>
-          <div style={{ fontSize: 12.5, color: c.text500, marginBottom: 12 }}>
+          <div style={{ fontSize:13, color: c.text500, marginBottom: 12 }}>
             {data.title && <b style={{ color: c.text900 }}>{data.title}</b>} · {data.columns.length} ไซต์ที่มีตัวเลข · {groups.length} ชุด
             <div style={{ marginTop: 4 }}>ตัวเลขดึงจากชีต ถ้ายังไม่ได้ส่งยอดของวันไหนเข้าชีต ให้กด "ส่งเข้า Google Sheet" ก่อน · ตัวเลขสีแดง = ต่ำกว่า target · กดที่ตัวเลขในตารางใต้สไลด์เพื่อสลับ ไม่มี → * → ** → *** → หยุด</div>
           </div>

@@ -140,7 +140,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
   async function exportOR(r) {
     if (!profile.nameTH?.trim()) {
-      alert("กรุณาตั้งค่าข้อมูล OT ในโปรไฟล์ก่อน (tab 👤 โปรไฟล์)");
+      alert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
       setTab("profile");
       return;
     }
@@ -165,7 +165,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
   async function exportAllOR() {
     if (!profile.nameTH?.trim()) {
-      alert("กรุณาตั้งค่าข้อมูล OT ในโปรไฟล์ก่อน (tab 👤 โปรไฟล์)");
+      alert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
       setTab("profile");
       return;
     }
@@ -227,7 +227,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     const exportRecords = filtered.length > 0 ? filtered : myRecords;
     if (exportRecords.length === 0) return;
     if (!profile.nameTH?.trim()) {
-      alert("กรุณาตั้งค่าข้อมูล OT ในโปรไฟล์ก่อน (tab 👤 โปรไฟล์)");
+      alert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
       setTab("profile");
       return;
     }

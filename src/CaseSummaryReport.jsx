@@ -111,10 +111,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
       <div className="no-print" style={{ background:c.card,borderBottom:`1px solid ${c.border}`,
         padding:"14px 20px",display:"flex",alignItems:"center",gap:12,
         position:"sticky",top:0,zIndex:10 }}>
-        <button onClick={onBack} style={{ background:c.borderSoft,border:"none",borderRadius:8,
-          padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
-          ← กลับ
-        </button>
+        <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
         <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>รายงานสรุปเคส</div>
         <button onClick={printReport}
           style={{ marginLeft:"auto",background:c.blue,border:"none",color:"#fff",

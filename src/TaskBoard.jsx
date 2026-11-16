@@ -12,7 +12,7 @@ import TaskModal from "./TaskModal.jsx";
 
 
 export const TASK_STATUS = {
-  todo:       { label: "ต้องทำ",   color: "#71717a" },
+  todo:       { label: "ต้องทำ",   color:"var(--c-text500)" },
   inprogress: { label: "กำลังทำ", color: "#D97706" },
   done:       { label: "เสร็จ",     color: "#16A34A" },
 };
@@ -70,7 +70,7 @@ function Avatars({ names = [], size = 22 }) {
   return (
     <span style={{ display: "inline-flex", flexShrink: 0 }}>
       {names.slice(0, 4).map((n, i) => (
-        <span key={n} title={n} style={{ width: size, height: size, borderRadius: "50%", background: "var(--av-bg, #e4e4e7)", color: "var(--av-fg, #09090b)",
+        <span key={n} title={n} style={{ width: size, height: size, borderRadius: "50%", background: "var(--av-bg, var(--c-border))", color: "var(--av-fg, #09090b)",
           fontSize: size * 0.48, fontWeight:600, display: "inline-flex", alignItems: "center", justifyContent: "center",
           marginLeft: i ? -6 : 0, border: "2px solid var(--card-bg, #fff)" }}>{n.charAt(0)}</span>
       ))}
@@ -128,7 +128,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
     const on = tab === key;
     return (
       <button key={key} onClick={() => setTab(key)} style={{ border: "none", background: "transparent", cursor: "pointer", fontFamily: "inherit",
-        padding: "10px 4px", marginRight: 14, fontSize: 13.5, fontWeight: on ? 700 : 500, color: on ? c.text900 : c.text500,
+        padding: "10px 4px", marginRight: 14, fontSize:14, fontWeight: on ? 700 : 500, color: on ? c.text900 : c.text500,
         borderBottom: `2px solid ${on ? c.ink : "transparent"}`, whiteSpace: "nowrap" }}>
         {label}{n != null && <span style={{ marginLeft: 6, fontSize: 11, fontWeight:600, padding: "1px 7px", borderRadius: 999,
           background: c.borderSoft, color: warn ? c.danger : c.text500 }}>{n}</span>}
@@ -157,10 +157,10 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px 6px", maxWidth: W, margin: "0 auto" }}>
-          <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer", padding: 4, lineHeight: 1 }}>←</button>
+          <button onClick={onBack} aria-label="กลับ" style={{ background:"transparent",border:"none",borderRadius:8,height:32,padding:"0 8px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,flexShrink:0,whiteSpace:"nowrap" }}>← กลับ</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>บอร์ดงาน</div>
-            <div style={{ fontSize: 11.5, color: c.text400 }}>
+            <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>บอร์ดงาน</div>
+            <div style={{ fontSize:12, color: c.text400 }}>
               งานของคุณ {mineActive.length} งาน{overdueMine > 0 && <span style={{ color: c.danger, fontWeight:600 }}> · เลยกำหนด {overdueMine}</span>}
               {isAdmin && unassigned.length > 0 && <span style={{ color: c.warn, fontWeight:600 }}> · ยังไม่มีคนทำ {unassigned.length}</span>}
             </div>
@@ -190,7 +190,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
             if (!undated.length) return null;
             return (
               <section style={{ marginTop: 16, padding: narrow ? "0 4px" : 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight:600, color: c.text500, margin: "0 2px 6px" }}>ยังไม่กำหนดวัน <span style={{ fontWeight: 600, color: c.text400 }}>{undated.length}</span></div>
+                <div style={{ fontSize:13, fontWeight:600, color: c.text500, margin: "0 2px 6px" }}>ยังไม่กำหนดวัน <span style={{ fontWeight: 600, color: c.text400 }}>{undated.length}</span></div>
                 <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
                   {undated.map((t, i) => <TaskRow key={t.id} first={i === 0} showAssignees {...rowProps(t)} />)}
                 </div>
@@ -202,19 +202,19 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
         <div style={{ maxWidth: 860, margin: "0 auto", padding: "14px 16px 60px" }}>
           {all.length > 0 && (
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหา ชื่องาน / โครงการ / ไซต์ / คน…"
-              style={{ width: "100%", border: `1px solid ${c.border}`, borderRadius:8, padding: "9px 12px", fontSize: 13.5,
+              style={{ width: "100%", border: `1px solid ${c.border}`, borderRadius:8, padding: "9px 12px", fontSize:14,
                 outline: "none", background: c.card, color: c.text900, marginBottom: 4 }} />
           )}
           {groups.length === 0 && (
-            <div style={{ textAlign: "center", padding: "50px 10px", color: c.text400, fontSize: 13.5, lineHeight: 1.9 }}>
+            <div style={{ textAlign: "center", padding: "50px 10px", color: c.text400, fontSize:14, lineHeight: 1.9 }}>
               {q ? "ไม่พบงานที่ตรงกับคำค้น" : tab === "mine" ? "ไม่มีงานค้างของคุณ" : tab === "all" ? "ยังไม่มีงานที่ค้างอยู่" : "ยังไม่มีงานที่เสร็จ"}
             </div>
           )}
           {groups.map((g) => (
             <section key={g.key} style={{ marginTop: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 6px" }}>
-                <span style={{ fontSize: 12.5, fontWeight:600, color: g.danger ? c.danger : c.text900 }}>{g.label}</span>
-                <span style={{ fontSize: 11.5, color: c.text400 }}>{g.items.length}</span>
+                <span style={{ fontSize:13, fontWeight:600, color: g.danger ? c.danger : c.text900 }}>{g.label}</span>
+                <span style={{ fontSize:12, color: c.text400 }}>{g.items.length}</span>
               </div>
               <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
                 {g.items.map((t, i) => <TaskRow key={t.id} first={i === 0} showAssignees={tab !== "mine"} {...rowProps(t)} />)}
@@ -286,14 +286,14 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
         <button onClick={() => shiftMonth(-1)} style={navBtn(c)}>‹</button>
         <div style={{ fontSize: narrow ? 17 : 20, fontWeight:600, color: c.text900, minWidth: narrow ? 0 : 200, textAlign: "center" }}>{TH_MONTHS[m - 1]} {y + 543}</div>
         <button onClick={() => shiftMonth(1)} style={navBtn(c)}>›</button>
-        {month !== todayIso.slice(0, 7) && <button onClick={() => setMonth(todayIso.slice(0, 7))} style={{ ...navBtn(c), width: "auto", padding: "0 12px", fontSize: 12.5 }}>วันนี้</button>}
+        {month !== todayIso.slice(0, 7) && <button onClick={() => setMonth(todayIso.slice(0, 7))} style={{ ...navBtn(c), width: "auto", padding: "0 12px", fontSize:13 }}>วันนี้</button>}
         <span style={{ fontSize: 12, color: c.text400 }}>{inMonth.length} งานในเดือนนี้</span>
         <div style={{ flex: 1 }} />
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: c.text500, cursor: "pointer", fontWeight: 600 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize:13, color: c.text500, cursor: "pointer", fontWeight: 600 }}>
           <input type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} style={{ accentColor: c.ink }} /> เฉพาะงานของฉัน
         </label>
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหา…"
-          style={{ width: narrow ? "100%" : 200, border: `1px solid ${c.border}`, borderRadius: 9, padding: "6px 10px", fontSize: 12.5, outline: "none",
+          style={{ width: narrow ? "100%" : 200, border: `1px solid ${c.border}`, borderRadius: 9, padding: "6px 10px", fontSize:13, outline: "none",
             background: c.card, color: c.text900 }} />
       </div>
 
@@ -355,7 +355,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
           );
         })}
       </div>
-      {isAdmin && <div style={{ fontSize: 11.5, color: c.text400, marginTop: 6, padding: narrow ? "0 4px" : 0 }}>กดช่องว่างในวันที่เพื่อลงงาน · กดแถบงานเพื่อดูรายละเอียด/มอบงาน</div>}
+      {isAdmin && <div style={{ fontSize:12, color: c.text400, marginTop: 6, padding: narrow ? "0 4px" : 0 }}>กดช่องว่างในวันที่เพื่อลงงาน · กดแถบงานเพื่อดูรายละเอียด/มอบงาน</div>}
     </div>
   );
 }
@@ -381,7 +381,7 @@ function CalBar({ sg, c, narrow, h, color, onOpen, todayIso }) {
         borderLeft: sg.contL ? "none" : `3px solid ${overdue ? c.danger : color || c.text400}`,
         textDecoration: done ? "line-through" : "none" }}>
       {t.status === "inprogress" && <span title="กำลังทำ" style={{ width: 6, height: 6, borderRadius: "50%", background: c.warn, flexShrink: 0 }} />}
-      {pri.label && !narrow && <span style={{ fontSize: 10.5, fontWeight:600, color: pri.rank === 0 ? c.danger : c.warn, flexShrink: 0 }}>{pri.label}</span>}
+      {pri.label && !narrow && <span style={{ fontSize:11, fontWeight:600, color: pri.rank === 0 ? c.danger : c.warn, flexShrink: 0 }}>{pri.label}</span>}
       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
       {!narrow && !none && <span style={{ marginLeft: "auto", fontSize: 11, color: c.text400, fontWeight: 500, flexShrink: 0, whiteSpace: "nowrap" }}>{(t.assignees || []).join(", ")}</span>}
     </div>
@@ -403,8 +403,8 @@ function TaskRow({ t, first, c, todayIso, showAssignees, projName, projColor, ca
       borderTop: first ? "none" : `1px solid ${c.borderSoft}`, borderLeft: `3px solid ${projColor || "transparent"}` }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          {pri.label && <span style={{ fontSize: 10.5, fontWeight:600, padding: "0 6px", borderRadius: 5, border: `1px solid ${c.border}`, color: pri.rank === 0 ? c.danger : c.warn }}>{pri.label}</span>}
-          {t.status === "inprogress" && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight:600, padding: "0 6px", borderRadius: 5, border: `1px solid ${c.border}`, color: c.text500 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: c.warn }} />กำลังทำ</span>}
+          {pri.label && <span style={{ fontSize:11, fontWeight:600, padding: "0 6px", borderRadius: 5, border: `1px solid ${c.border}`, color: pri.rank === 0 ? c.danger : c.warn }}>{pri.label}</span>}
+          {t.status === "inprogress" && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize:11, fontWeight:600, padding: "0 6px", borderRadius: 5, border: `1px solid ${c.border}`, color: c.text500 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: c.warn }} />กำลังทำ</span>}
           <span style={{ fontSize: 14, fontWeight:600, color: done ? c.text400 : c.text900, textDecoration: done ? "line-through" : "none", wordBreak: "break-word" }}>{t.title}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 3, fontSize: 12, color: c.text400 }}>
@@ -418,7 +418,7 @@ function TaskRow({ t, first, c, todayIso, showAssignees, projName, projColor, ca
       {showAssignees && (none ? (!done && <Unassigned />) : <Avatars names={t.assignees} />)}
       {canStatus && next && !none && (
         <button onClick={(ev) => { ev.stopPropagation(); onStatus(next.s); }}
-          style={{ border: `1px solid ${c.border}`, background: c.card, color: c.text900, borderRadius: 8, padding: "6px 11px", fontSize: 12.5, fontWeight: 600,
+          style={{ border: `1px solid ${c.border}`, background: c.card, color: c.text900, borderRadius: 8, padding: "6px 11px", fontSize:13, fontWeight: 600,
             cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>{next.label}</button>
       )}
     </div>
@@ -474,7 +474,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
           {isAdmin && (
             <div style={{ marginTop: 12, background: c.bg, border: `1px ${assignees.length ? "solid" : "dashed"} ${assignees.length ? c.border : c.text400}`,
               borderRadius: 12, padding: "10px 12px" }}>
-              <div style={{ fontSize: 12.5, fontWeight:600, color: assignees.length ? c.text500 : c.text900, marginBottom: 8 }}>
+              <div style={{ fontSize:13, fontWeight:600, color: assignees.length ? c.text500 : c.text900, marginBottom: 8 }}>
                 {assignees.length ? `ผู้รับผิดชอบ (${assignees.length})` : "ยังไม่มีคนทำ — เลือกคนทำงานนี้"}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -483,7 +483,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
                   return (
                     <button key={u.id} onClick={() => onAssign(on ? assignees.filter((n) => n !== u.name) : [...assignees, u.name])}
                       style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px 4px 4px", borderRadius: 999, cursor: "pointer",
-                        fontSize: 12.5, fontWeight: 600, border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card,
+                        fontSize:13, fontWeight: 600, border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card,
                         color: on ? c.onInk : c.text500 }}>
                       <span style={{ width: 20, height: 20, borderRadius: "50%", background: on ? c.onInk : c.borderSoft, color: on ? c.ink : c.text900, fontSize: 10, fontWeight:600,
                         display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{(u.name || "?").charAt(0)}</span>
@@ -498,15 +498,15 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
             {isAdmin && <button onClick={onEdit} style={smallBtn(c)}>แก้ไขงาน</button>}
             {isAdmin && t.status === "done" && !t.caseId && <button onClick={onConvert} style={smallBtn(c)}>สร้างเคสจากงานนี้</button>}
-            {t.caseId && <span style={{ fontSize: 12.5, color: c.text500, alignSelf: "center" }}>สร้างเคสแล้ว</span>}
+            {t.caseId && <span style={{ fontSize:13, color: c.text500, alignSelf: "center" }}>สร้างเคสแล้ว</span>}
             {isAdmin && <button onClick={onDelete} style={{ ...smallBtn(c), color: c.danger, border: "none", marginLeft: "auto" }}>ลบ</button>}
           </div>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 18px", minHeight: 80 }}>
-          <div style={{ fontSize: 11.5, color: c.text400, fontWeight:600, marginBottom: 8 }}>ความคิดเห็น ({(t.comments || []).length})</div>
+          <div style={{ fontSize:12, color: c.text400, fontWeight:600, marginBottom: 8 }}>ความคิดเห็น ({(t.comments || []).length})</div>
           {(t.comments || []).length === 0 ? (
-            <div style={{ color: c.text400, fontSize: 12.5, padding: "6px 0" }}>ยังไม่มีความคิดเห็น</div>
+            <div style={{ color: c.text400, fontSize:13, padding: "6px 0" }}>ยังไม่มีความคิดเห็น</div>
           ) : (t.comments || []).map((m, i) => {
             const mine = m.by === me;
             return (
@@ -514,7 +514,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
                 <span style={{ width: 26, height: 26, borderRadius: "50%", background: c.borderSoft, color: c.text900, fontSize: 12, fontWeight:600,
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{(m.by || "?").charAt(0)}</span>
                 <div style={{ maxWidth: "78%" }}>
-                  <div style={{ fontSize: 10.5, color: c.text400, marginBottom: 2, textAlign: mine ? "right" : "left" }}>{m.by} · {m.at ? fmtDate(m.at.slice(0, 10)) : ""}</div>
+                  <div style={{ fontSize:11, color: c.text400, marginBottom: 2, textAlign: mine ? "right" : "left" }}>{m.by} · {m.at ? fmtDate(m.at.slice(0, 10)) : ""}</div>
                   <div style={{ background: mine ? c.borderSoft : c.card, border: `1px solid ${c.border}`, borderRadius: 12,
                     padding: "7px 11px", fontSize: 13, color: c.text900, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.text}</div>
                 </div>
@@ -526,7 +526,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
           <textarea value={text} onChange={(e) => setText(e.target.value)} rows={1}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
             placeholder="พิมพ์ความคิดเห็น… (Enter ส่ง)"
-            style={{ flex: 1, border: `1px solid ${c.border}`, borderRadius:8, padding: "9px 12px", fontSize: 13.5, resize: "none",
+            style={{ flex: 1, border: `1px solid ${c.border}`, borderRadius:8, padding: "9px 12px", fontSize:14, resize: "none",
               outline: "none", background: c.bg, color: c.text900 }} />
           <button onClick={send} disabled={!text.trim()} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius:8, padding: "9px 16px",
             fontSize: 13, fontWeight:600, cursor: "pointer", opacity: text.trim() ? 1 : 0.5 }}>ส่ง</button>
@@ -536,4 +536,4 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
   );
 }
 const smallBtn = (c) => ({ border: `1px solid ${c.border}`, background: "transparent", color: c.text900, borderRadius: 9, padding: "6px 12px",
-  fontSize: 12.5, fontWeight: 600, cursor: "pointer" });
+  fontSize:13, fontWeight: 600, cursor: "pointer" });

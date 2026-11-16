@@ -142,10 +142,10 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
                         {isOwner && (<>
                           <button onClick={()=>startEdit(u._realIndex, u)}
                             style={{ background:"none",border:"none",color:c.blue,cursor:"pointer",
-                              fontSize:12,padding:"0 4px" }}></button>
+                              fontSize:12,padding:"0 4px" }}>แก้ไข</button>
                           <button onClick={()=>deleteEntry(u._realIndex)}
                             style={{ background:"none",border:"none",color:c.red,cursor:"pointer",
-                              fontSize:12,padding:"0 4px" }}></button>
+                              fontSize:12,padding:"0 4px" }}>ลบ</button>
                         </>)}
                       </div>
                     </div>

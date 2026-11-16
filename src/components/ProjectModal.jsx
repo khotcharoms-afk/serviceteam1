@@ -81,8 +81,8 @@ export default function ProjectModal({
           {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b => {
             const v = addYears(today(), b.y);
             return <button key={b.l} type="button" onClick={() => setNewProjWarranty(v)}
-              style={{ background:newProjWarranty===v?"#3b82f6":"#f4f4f5",
-                border:"1px solid #e4e4e7",color:newProjWarranty===v?"#fff":"#52525b",
+              style={{ background:newProjWarranty===v?"#3b82f6":"var(--c-soft)",
+                border:"1px solid var(--c-border)",color:newProjWarranty===v?"#fff":"#52525b",
                 borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>{b.l}</button>;
           })}
           {newProjWarranty && <button type="button" onClick={() => setNewProjWarranty("")}
@@ -100,8 +100,8 @@ export default function ProjectModal({
           {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b => {
             const v = addYears(today(), b.y);
             return <button key={b.l} type="button" onClick={() => setNewProjLease(v)}
-              style={{ background:newProjLease===v?"#8b5cf6":"#f4f4f5",
-                border:"1px solid #e4e4e7",color:newProjLease===v?"#fff":"#52525b",
+              style={{ background:newProjLease===v?"#8b5cf6":"var(--c-soft)",
+                border:"1px solid var(--c-border)",color:newProjLease===v?"#fff":"#52525b",
                 borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>{b.l}</button>;
           })}
           {newProjLease && <button type="button" onClick={() => setNewProjLease("")}
@@ -119,8 +119,8 @@ export default function ProjectModal({
           {[{l:"+1ปี",y:1},{l:"+3ปี",y:3},{l:"+5ปี",y:5}].map(b => {
             const v = addYears(today(), b.y);
             return <button key={b.l} type="button" onClick={() => setNewProjHirePurchase(v)}
-              style={{ background:newProjHirePurchase===v?"#0891b2":"#f4f4f5",
-                border:"1px solid #e4e4e7",color:newProjHirePurchase===v?"#fff":"#52525b",
+              style={{ background:newProjHirePurchase===v?"#0891b2":"var(--c-soft)",
+                border:"1px solid var(--c-border)",color:newProjHirePurchase===v?"#fff":"#52525b",
                 borderRadius:7,padding:"6px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>{b.l}</button>;
           })}
           {newProjHirePurchase && <button type="button" onClick={() => setNewProjHirePurchase("")}
@@ -176,7 +176,7 @@ export default function ProjectModal({
       <Field label="วันเริ่มสัญญา">
         <input type="date" style={IS()} value={newProjContractStart}
           onChange={e => setNewProjContractStart(e.target.value)}/>
-        {newProjContractStart && <div style={{ fontSize:11,color:"#71717a",marginTop:4,fontWeight:600 }}>
+        {newProjContractStart && <div style={{ fontSize:11,color:"var(--c-text500)",marginTop:4,fontWeight:600 }}>
           📅 {fmtDate(newProjContractStart)}
         </div>}
       </Field>
@@ -193,7 +193,7 @@ export default function ProjectModal({
             style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
               padding:"8px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600 }}>+</button>
         </div>
-        <div style={{ fontSize:10,color:"#a1a1aa",marginBottom:8 }}>ชื่อไซต์ · Ref Code · ค่าเดินทาง (บาท)</div>
+        <div style={{ fontSize:10,color:"var(--c-text400)",marginBottom:8 }}>ชื่อไซต์ · Ref Code · ค่าเดินทาง (บาท)</div>
         <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
           {newProjSites.map((s,i) => {
             const name = typeof s==="object" ? s.name : s;
@@ -213,7 +213,7 @@ export default function ProjectModal({
                   </div>
                   <div style={{ display:"flex",gap:6,justifyContent:"flex-end" }}>
                     <button type="button" onClick={()=>setEditSiteIndex(null)}
-                      style={{ background:"#f4f4f5",border:"1px solid #e4e4e7",color:"#71717a",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
+                      style={{ background:"var(--c-soft)",border:"1px solid var(--c-border)",color:"var(--c-text500)",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
                     <button type="button" onClick={()=>saveEditSite(i)}
                       style={{ background:"#2563eb",border:"none",color:"#fff",borderRadius:6,padding:"4px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>บันทึก</button>
                   </div>
@@ -221,19 +221,19 @@ export default function ProjectModal({
               );
             }
             return (
-              <div key={i} style={{ background:"#fafafa",border:"1px solid #e4e4e7",
+              <div key={i} style={{ background:"var(--c-bg)",border:"1px solid var(--c-border)",
                 borderRadius:8,padding:"6px 10px",display:"flex",alignItems:"center",gap:8 }}>
-                <span style={{ fontSize:13,fontWeight:600,color:"#09090b",flex:1 }}>{name}</span>
-                {ref && <span style={{ fontSize:11,color:"#71717a",background:"#f4f4f5",borderRadius:4,padding:"1px 6px" }}>{ref}</span>}
+                <span style={{ fontSize:13,fontWeight:600,color:"var(--c-text900)",flex:1 }}>{name}</span>
+                {ref && <span style={{ fontSize:11,color:"var(--c-text500)",background:"var(--c-soft)",borderRadius:4,padding:"1px 6px" }}>{ref}</span>}
                 {travel>0 && <span style={{ fontSize:11,color:"#16a34a",fontWeight:600 }}>{travel.toLocaleString()} บ.</span>}
                 <button type="button" onClick={()=>startEditSite(i,s)}
-                  style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,padding:"0 4px" }}></button>
+                  style={{ background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,padding:"0 4px" }}>แก้ไข</button>
                 <button type="button" onClick={() => setNewProjSites(p => p.filter((_,j) => j!==i))}
-                  style={{ background:"none",border:"none",color:"#a1a1aa",cursor:"pointer",fontSize:14,padding:0 }}>×</button>
+                  style={{ background:"none",border:"none",color:"var(--c-text400)",cursor:"pointer",fontSize:14,padding:0 }}>×</button>
               </div>
             );
           })}
-          {newProjSites.length===0 && <span style={{ fontSize:12,color:"#d4d4d8" }}>ยังไม่มีไซต์</span>}
+          {newProjSites.length===0 && <span style={{ fontSize:12,color:"var(--c-text400)" }}>ยังไม่มีไซต์</span>}
         </div>
       </Field>
       <div style={{ display:"flex",gap:10,marginTop:4 }}>

@@ -264,11 +264,11 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                       <button onClick={() => { setEditRecord(r); setShowModal(true); }}
                         style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#2563eb",
-                          borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}></button>
+                          borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>แก้ไข</button>
                       {isAdmin && (
                         <button onClick={() => setConfirmId(r.id)}
                           style={{ background: "#fff5f5", border: "1px solid #fecaca", color: "#ef4444",
-                            borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}></button>
+                            borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>ลบ</button>
                       )}
                     </div>
                   </div>
@@ -342,9 +342,6 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
                   <div key={r.id} style={{ background: "#fff", border: "1px solid #fde68a",
                     borderRadius: 12, padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                      <div style={{ width: 40, height: 40, borderRadius:8, background: "#fffbeb",
-                        border: "1px solid #fde68a", display: "flex", alignItems: "center",
-                        justifyContent: "center", fontSize: 18, flexShrink: 0 }}></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight:600, color: "#09090b", marginBottom: 2 }}>
                           {r.techs?.join(", ") || "-"}

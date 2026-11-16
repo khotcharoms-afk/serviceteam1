@@ -19,15 +19,15 @@ function buildWorkOrderHTML(c, proj) {
   const handoverLog = c.handoverLog || [];
 
   const updateRows = updateLog.length === 0
-    ? `<tr><td colspan="4" style="padding:8px;border:0.5px solid #e4e4e7;color:#a1a1aa;text-align:center">—</td></tr>`
+    ? `<tr><td colspan="4" style="padding:8px;border:0.5px solid var(--c-border);color:#a1a1aa;text-align:center">—</td></tr>`
     : updateLog.map((u, i) => `
       <tr style="background:${i%2===0?'#fff':'#fafafa'}">
-        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#71717a">${u.date||''} ${u.time||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#09090b">${u.by||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#09090b">${u.text||''}</td>
-        <td style="padding:4px 8px;border:0.5px solid #e4e4e7;color:#09090b">${STATUS_LABEL[u.status]||u.status||'—'}</td>
+        <td style="padding:4px 8px;border:0.5px solid var(--c-border);color:#71717a">${u.date||''} ${u.time||''}</td>
+        <td style="padding:4px 8px;border:0.5px solid var(--c-border);color:#09090b">${u.by||''}</td>
+        <td style="padding:4px 8px;border:0.5px solid var(--c-border);color:#09090b">${u.text||''}</td>
+        <td style="padding:4px 8px;border:0.5px solid var(--c-border);color:#09090b">${STATUS_LABEL[u.status]||u.status||'—'}</td>
       </tr>`).join('') + (updateLog.length < 3
-        ? Array(3 - updateLog.length).fill('<tr><td colspan="4" style="padding:10px 8px;border:0.5px solid #e4e4e7"> </td></tr>').join('')
+        ? Array(3 - updateLog.length).fill('<tr><td colspan="4" style="padding:10px 8px;border:0.5px solid var(--c-border)"> </td></tr>').join('')
         : '');
 
 
@@ -50,8 +50,8 @@ function buildWorkOrderHTML(c, proj) {
 </head>
 <body>
 
-<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#fafafa;padding:10px 16px;display:flex;gap:10px;border-bottom:1px solid #e4e4e7;z-index:99">
-  <button onclick="window.close()" style="background:#f4f4f5;border:1px solid #e4e4e7;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:inherit">← ปิด</button>
+<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#fafafa;padding:10px 16px;display:flex;gap:10px;border-bottom:1px solid var(--c-border);z-index:99">
+  <button onclick="window.close()" style="background:var(--c-soft);border:1px solid var(--c-border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:inherit">← ปิด</button>
   <button onclick="window.print()" style="background:${PURPLE};border:none;border-radius:8px;padding:6px 18px;cursor:pointer;font-size:13px;font-family:inherit;color:#fff;margin-left:auto">พิมพ์ / Export PDF</button>
 </div>
 
@@ -78,29 +78,29 @@ function buildWorkOrderHTML(c, proj) {
   <table style="margin-bottom:14px;font-size:10pt">
     <tr>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;width:22%;border:0.5px solid ${ORANGE}">โครงการ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e4e4e7;width:28%">${proj?.name||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid var(--c-border);width:28%">${proj?.name||'—'}</td>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;width:20%;border:0.5px solid ${ORANGE}">ไซต์/สถานที่</td>
-      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.site||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid var(--c-border)">${c.site||'—'}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">ชื่องาน</td>
-      <td colspan="3" style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.title||'—'}</td>
+      <td colspan="3" style="padding:5px 8px;border:0.5px solid var(--c-border)">${c.title||'—'}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;border:0.5px solid ${ORANGE}">ประเภทงาน</td>
-      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.type||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid var(--c-border)">${c.type||'—'}</td>
       <td style="padding:5px 8px;background:${ORANGE};color:#fff;font-weight:600;border:0.5px solid ${ORANGE}">วันที่ดำเนินการ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${fmtDate(c.date)}</td>
+      <td style="padding:5px 8px;border:0.5px solid var(--c-border)">${fmtDate(c.date)}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">ผู้ดำเนินการ</td>
-      <td colspan="3" style="padding:5px 8px;border:0.5px solid #e4e4e7">${techs.join(', ')||'—'}</td>
+      <td colspan="3" style="padding:5px 8px;border:0.5px solid var(--c-border)">${techs.join(', ')||'—'}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">สถานะ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${STATUS_LABEL[c.status]||c.status||'—'}</td>
+      <td style="padding:5px 8px;border:0.5px solid var(--c-border)">${STATUS_LABEL[c.status]||c.status||'—'}</td>
       <td style="padding:5px 8px;background:${ORANGE_LIGHT};color:#7C2D12;font-weight:600;border:0.5px solid ${ORANGE_BORDER}">หมายเหตุ</td>
-      <td style="padding:5px 8px;border:0.5px solid #e4e4e7">${c.note||''}</td>
+      <td style="padding:5px 8px;border:0.5px solid var(--c-border)">${c.note||''}</td>
     </tr>
   </table>
 
@@ -131,9 +131,9 @@ function buildWorkOrderHTML(c, proj) {
       </tr>
     </thead>
     <tbody>
-      <tr><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td></tr>
-      <tr style="background:#fafafa"><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td></tr>
-      <tr><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td><td style="padding:14px 8px;border:0.5px solid #e4e4e7"> </td></tr>
+      <tr><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td></tr>
+      <tr style="background:#fafafa"><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td></tr>
+      <tr><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td><td style="padding:14px 8px;border:0.5px solid var(--c-border)"> </td></tr>
     </tbody>
   </table>
 
@@ -147,11 +147,11 @@ function buildWorkOrderHTML(c, proj) {
   <div style="position:absolute;bottom:14mm;left:14mm;right:14mm;display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div style="border:1.5px solid ${ORANGE};border-radius:6px;padding:10px 12px">
       <div style="font-size:10pt;color:#7C2D12;font-weight:600;margin-bottom:36px">ผู้ดำเนินการ / Technician</div>
-      <div style="border-top:0.5px solid #e4e4e7;padding-top:6px;font-size:9pt;color:#a1a1aa">ลายเซ็น / วันที่</div>
+      <div style="border-top:0.5px solid var(--c-border);padding-top:6px;font-size:9pt;color:#a1a1aa">ลายเซ็น / วันที่</div>
     </div>
     <div style="border:1.5px solid ${PURPLE};border-radius:6px;padding:10px 12px">
       <div style="font-size:10pt;color:${PURPLE};font-weight:600;margin-bottom:36px">ผู้รับงาน / Customer</div>
-      <div style="border-top:0.5px solid #e4e4e7;padding-top:6px;font-size:9pt;color:#a1a1aa">ลายเซ็น / วันที่</div>
+      <div style="border-top:0.5px solid var(--c-border);padding-top:6px;font-size:9pt;color:#a1a1aa">ลายเซ็น / วันที่</div>
     </div>
   </div>
 

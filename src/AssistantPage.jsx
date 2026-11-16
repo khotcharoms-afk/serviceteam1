@@ -52,11 +52,11 @@ function SqlCard({ card, c }) {
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderBottom: `1px solid ${c.borderSoft || c.border}` }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight:600, color: danger ? RED : c.text900 }}>{danger ? "⚠️ " : "🔎 "}{card.title}</div>
-          <div style={{ fontSize: 11.5, color: c.text500, marginTop: 2 }}>AWB {card.awb}{card.note ? ` · ${card.note}` : ""}</div>
-          {card.warning && <div style={{ fontSize: 11.5, color: RED, marginTop: 2 }}>{card.warning}</div>}
+          <div style={{ fontSize:12, color: c.text500, marginTop: 2 }}>AWB {card.awb}{card.note ? ` · ${card.note}` : ""}</div>
+          {card.warning && <div style={{ fontSize:12, color: RED, marginTop: 2 }}>{card.warning}</div>}
         </div>
         <button onClick={copy} style={{ background: danger ? RED : PURPLE, border: "none", color: "#fff", borderRadius: 8, padding: "6px 12px",
-          fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}>
+          fontSize:13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}>
           {copied ? "✓ คัดลอกแล้ว" : "คัดลอก SQL"}
         </button>
       </div>
@@ -421,7 +421,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
           </span>
           <span style={{ minWidth: 0 }}>
             <span style={{ display: "block", fontSize: 13, fontWeight:600, color: c.text900 }}>ผู้ช่วย AI</span>
-            <span style={{ display: "block", fontSize: 11.5, color: unread ? "#16a34a" : c.text400, fontWeight: unread ? 700 : 400,
+            <span style={{ display: "block", fontSize:12, color: unread ? "#16a34a" : c.text400, fontWeight: unread ? 700 : 400,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pillStatus}</span>
           </span>
         </button>
@@ -456,13 +456,13 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
         borderBottom: `1px solid ${c.border}`, background: c.card, flexShrink: 0 }}>
         <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius: 10, background: PURPLE + "16", display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 15 : 17, flexShrink: 0 }}>🤖</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>ผู้ช่วย AI</div>
-          {!isMobile && <div style={{ fontSize: 11.5, color: c.text400 }}>ถามข้อมูลเคส โครงการ งานค้าง ประกันใกล้หมด และเคส WMS</div>}
+          <div style={{ fontSize:15, fontWeight:600, color: c.text900 }}>ผู้ช่วย AI</div>
+          {!isMobile && <div style={{ fontSize:12, color: c.text400 }}>ถามข้อมูลเคส โครงการ งานค้าง ประกันใกล้หมด และเคส WMS</div>}
         </div>
         {history.length > 0 && (
           <button onClick={() => { if (!busy) { setHistory([]); setError(""); } }} disabled={busy}
             style={{ border: `1px solid ${c.border}`, background: "transparent", color: c.text500, borderRadius: 999,
-              padding: isMobile ? "8px 12px" : "6px 12px", fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0,
+              padding: isMobile ? "8px 12px" : "6px 12px", fontSize:13, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0,
               cursor: busy ? "default" : "pointer", fontFamily: "inherit" }}>
             {isMobile ? "＋ ใหม่" : "＋ แชทใหม่"}
           </button>
@@ -515,7 +515,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
             b.who === "sql" ? (
               <SqlCard key={b.key} card={b.card} c={c} />
             ) : b.who === "tool" ? (
-              <div key={b.key} style={{ fontSize: 11.5, color: c.text400, paddingLeft: 6 }}>🔎 {b.text}</div>
+              <div key={b.key} style={{ fontSize:12, color: c.text400, paddingLeft: 6 }}>🔎 {b.text}</div>
             ) : (
               <div key={b.key} style={{ display: "flex", justifyContent: b.who === "me" ? "flex-end" : "flex-start" }}>
                 <div style={{
@@ -531,7 +531,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
                   {b.askAI && (
                     <button onClick={() => send(b.askAI, { forceAI: true })} disabled={busy}
                       style={{ marginTop: 8, border: `1px solid ${PURPLE}33`, background: PURPLE + "0d", color: c.purple, borderRadius: 999,
-                        padding: "5px 12px", fontSize: 12.5, cursor: busy ? "default" : "pointer", fontFamily: "inherit" }}>
+                        padding: "5px 12px", fontSize:13, cursor: busy ? "default" : "pointer", fontFamily: "inherit" }}>
                       🤖 ไม่ใช่ที่ต้องการ? ให้ AI ค้นแทน
                     </button>
                   )}
@@ -541,7 +541,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
           )}
 
           {busy && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: c.text400, paddingLeft: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize:13, color: c.text400, paddingLeft: 6 }}>
               <span>
                 {[0, 1, 2].map((i) => (
                   <span key={i} style={{ display: "inline-block", width: 6, height: 6, borderRadius: 3, background: PURPLE,
@@ -567,7 +567,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
             scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
             {quickActions.map((a) => (
               <button key={a.key} onClick={() => quick(a)} disabled={busy}
-                style={{ ...chipStyle(true), padding: "5px 11px", fontSize: 12.5 }}>⚡ {a.label}</button>
+                style={{ ...chipStyle(true), padding: "5px 11px", fontSize:13 }}>⚡ {a.label}</button>
             ))}
           </div>
         )}
@@ -579,7 +579,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
             style={{ flex: 1, resize: "none", minHeight: 44, maxHeight: 132, overflowY: "hidden", padding: "10px 14px", borderRadius: 12, lineHeight: 1.5,
               fontSize: isMobile ? 16 : 14, // ต่ำกว่า 16px iOS จะซูมหน้าจอตอนแตะช่องพิมพ์
-              background: "var(--input-bg, #fff)", color: "var(--input-text, #27272a)", border: "1px solid var(--input-border, #e4e4e7)",
+              background: "var(--input-bg, #fff)", color: "var(--input-text, #27272a)", border: "1px solid var(--input-border, var(--c-border))",
               outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
           <button type="submit" disabled={busy || !input.trim()}
             style={{ background: busy || !input.trim() ? c.border : PURPLE, color: "#fff", border: "none", borderRadius: 12,
@@ -589,7 +589,7 @@ export default function AssistantPage({ open = true, onClose, onExpand, onChatCh
           </button>
         </form>
         {!(isMobile && vv && vv.height < window.innerHeight * 0.75) && ( // ซ่อนตอนคีย์บอร์ดเปิดบนมือถือ ให้มีที่อ่านแชทมากขึ้น
-          <div style={{ maxWidth: 720, margin: "6px auto 0", fontSize: 10.5, color: c.text400, textAlign: "center" }}>
+          <div style={{ maxWidth: 720, margin: "6px auto 0", fontSize:11, color: c.text400, textAlign: "center" }}>
             AI อาจตอบผิดได้ ตรวจสอบกับข้อมูลในหน้าเคสก่อนนำไปใช้
           </div>
         )}
