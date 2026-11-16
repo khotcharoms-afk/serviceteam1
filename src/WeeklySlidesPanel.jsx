@@ -91,12 +91,12 @@ export default function WeeklySlidesPanel({ onClose }) {
   const input = { border: `1px solid ${c.border}`, borderRadius: 6, padding: "4px 6px", fontSize: 12.5, background: c.bg, color: c.text900, fontFamily: "inherit" };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: c.bg, overflowY: "auto", fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: c.bg, overflowY: "auto", fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 2, background: c.card, borderBottom: `1px solid ${c.border}`, padding: "12px 16px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <button onClick={onClose} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
           <div style={{ flex: 1, minWidth: 180 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: c.text900 }}>สไลด์รายสัปดาห์</div>
+            <div style={{ fontSize: 15, fontWeight:600, color: c.text900 }}>สไลด์รายสัปดาห์</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>ข้อมูลจากชีต Weekly สรุป · ดาวน์โหลดเป็นรูปแล้วลากใส่ Canva (ไม่แก้ไฟล์ Canva หลัก)</div>
           </div>
           <span style={{ fontSize: 12.5, color: c.text500 }}>สัปดาห์ที่มีวันที่</span>

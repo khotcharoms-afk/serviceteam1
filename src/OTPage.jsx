@@ -266,7 +266,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#475569",fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>⏰ บันทึก OT</div>
+        <div style={{ fontSize:16,fontWeight:600,color:"#0f172a" }}>⏰ บันทึก OT</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
           {canEditORSettings && <button onClick={()=>setShowORSettings(v=>!v)}
             style={{ background:"#f8fafc",border:"1px solid #e2e8f0",color:"#475569",
@@ -372,7 +372,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
           ].map(k=>(
             <div key={k.label} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px 16px" }}>
               <div style={{ fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:4 }}>{k.label}</div>
-              <div style={{ fontSize:20,fontWeight:800,color:k.color }}>{k.val}</div>
+              <div style={{ fontSize:20,fontWeight:600,color:k.color }}>{k.val}</div>
             </div>
           ))}
         </div>}

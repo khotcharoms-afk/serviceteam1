@@ -45,7 +45,7 @@ export default function DetailModal({
           </span>
         )}
       </div>
-      <div style={{ fontSize:17,fontWeight:800,color:c.text900,marginBottom:16,lineHeight:1.4 }}>
+      <div style={{ fontSize:17,fontWeight:600,color:c.text900,marginBottom:16,lineHeight:1.4 }}>
         {detailCase.title}
       </div>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16 }}>

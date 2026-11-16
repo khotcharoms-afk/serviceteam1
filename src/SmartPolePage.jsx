@@ -48,12 +48,12 @@ export default function SmartPolePage({ onBack }) {
   const numCell = { ...cell, textAlign: "right", fontVariantNumeric: "tabular-nums" };
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: "14px 16px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 960, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>Smart Pole</div>
+            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>Smart Pole</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>จำนวนใบหน้า / VIP / Blacklist รายวัน · ข้อมูลจาก Grafana</div>
           </div>
         </div>

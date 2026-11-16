@@ -1,3 +1,4 @@
+import Icon from "./components/Icon.jsx";
 import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
@@ -811,9 +812,9 @@ export default function App({ currentUser, onSignOut }) {
 
   return (
     <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>
-    <div style={{ minHeight:"100vh",background:themeC.bg,fontFamily:"'Noto Sans Thai','Sora',sans-serif",color:themeC.text900,overflowX:"hidden" }}>
+    <div style={{ minHeight:"100vh",background:themeC.bg,fontFamily:"'Geist','Noto Sans Thai',system-ui,sans-serif",color:themeC.text900,overflowX:"hidden" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+        
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         ::-webkit-scrollbar{width:4px;background:${themeC.borderSoft}}
         ::-webkit-scrollbar-thumb{background:${themeC.border};border-radius:4px}
@@ -929,8 +930,8 @@ export default function App({ currentUser, onSignOut }) {
           const caseCount = new Set(warn.map(w=>w.id)).size; // เคสเดียวอาจมีทั้งประกันและสัญญาเช่าใกล้หมด
           return (
             <div onClick={()=>setFilterStat("__exp")}
-              style={{ background:themeC.card,borderStyle:"solid",borderWidth:"1px 1px 1px 3px",borderColor:`${themeC.border} ${themeC.border} ${themeC.border} ${themeC.warn}`,borderRadius:10,
-                padding:"10px 14px",marginBottom:14,cursor:"pointer",display:"flex",
+              style={{ background:themeC.card,borderStyle:"solid",borderWidth:"1px 1px 1px 3px",borderColor:`${themeC.border} ${themeC.border} ${themeC.border} ${themeC.warn}`,borderRadius:8,
+                padding:"12px 16px",marginBottom:16,cursor:"pointer",display:"flex",
                 alignItems:"center",gap:12 }}>
               <div style={{ flex:1,minWidth:0 }}>
                 <div style={{ fontSize:13,fontWeight:700,color:themeC.text900 }}>
@@ -957,17 +958,18 @@ export default function App({ currentUser, onSignOut }) {
               style={{ background:themeC.card,
                 border:`1px solid ${filterStat===s.key?themeC.ink:themeC.border}`,
                 boxShadow:filterStat===s.key?`inset 0 0 0 1px ${themeC.ink}`:"none",
-                borderRadius:10,padding:"12px 10px",cursor:"pointer",textAlign:"center" }}>
-              <div style={{ fontSize:22,fontWeight:700,color:themeC.text900,lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:10.5,color:themeC.text500,marginTop:5,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                borderRadius:8,padding:isMobile?"12px 8px":"12px 16px",cursor:"pointer",textAlign:isMobile?"center":"left" }}>
+              <div style={{ fontSize:12,color:themeC.text500,fontWeight:400,display:"flex",alignItems:"center",
+                justifyContent:isMobile?"center":"flex-start",gap:6,whiteSpace:"nowrap",overflow:"hidden" }}>
                 {s.dot && <span style={{ width:6,height:6,borderRadius:"50%",background:s.dot,flexShrink:0 }}/>}{s.label}</div>
+              <div style={{ fontSize:isMobile?20:24,fontWeight:600,color:themeC.text900,lineHeight:1,marginTop:8,letterSpacing:"-0.02em" }}>{s.val}</div>
             </div>
           ))}
         </div>
         <div style={{ position:"relative",marginBottom:14 }}>
-          <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:themeC.text400,fontSize:16 }}>⌕</span>
+          <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:themeC.text400,display:"inline-flex" }}><Icon name="search" size={16}/></span>
           <input placeholder="ค้นหาเคส หรือโครงการ..." value={search} onChange={e=>setSearch(e.target.value)}
-            style={{ ...IS({ paddingLeft:36,borderRadius:10,fontSize:14 }), background:themeC.card, borderColor:themeC.border, color:themeC.text900 }}/>
+            style={{ ...IS({ paddingLeft:36,borderRadius:8,fontSize:14 }), height:40, background:themeC.card, borderColor:themeC.border, color:themeC.text900 }}/>
           {/* Dropdown ผลการค้นหาโครงการ */}
           {search.trim().length>=1 && (() => {
             const q = search.trim().toLowerCase();
@@ -1157,7 +1159,7 @@ export default function App({ currentUser, onSignOut }) {
       {/* ผู้ช่วย AI — ปุ่มลอยมุมซ้ายล่าง + แผงแชทด้านซ้าย */}
       {!assistantOpen && !assistantHasChat && (
         <button onClick={openAssistant} title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI" style={{ position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:20,
-          background:"linear-gradient(135deg,#6B21A8,#F97316)",border:"none",color:"#fff",
+          background:"#18181b",border:"none",color:"#fff",
           width:52,height:52,borderRadius:"50%",fontSize:24,cursor:"pointer",
           boxShadow:"0 6px 20px rgba(107,33,168,.4)",zIndex:40,display:"flex",
           alignItems:"center",justifyContent:"center",lineHeight:1 }}>🤖</button>

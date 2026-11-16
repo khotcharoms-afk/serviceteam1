@@ -471,7 +471,7 @@ function FfmChecker({ c }) {
       {text.trim() && (
         <>
           <div style={{ ...card, borderColor: bad.length || r.problems.length ? c.danger : c.ok }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: bad.length ? c.danger : r.problems.length ? c.warn : c.ok }}>
+            <div style={{ fontSize: 14, fontWeight:600, color: bad.length ? c.danger : r.problems.length ? c.warn : c.ok }}>
               {bad.length ? `❌ มี AWB ผิด ${bad.length} ใบ — ส่งกลับหน้างานแก้ก่อน อย่าเพิ่งยิง Postman`
                 : r.problems.length ? "⚠️ อ่านได้ แต่มีจุดที่ควรเช็ก" : "✅ รูปแบบถูกต้อง ยิง Postman ต่อได้"}
             </div>
@@ -536,7 +536,7 @@ function SopList({ c }) {
           <div key={s.key} style={{ background: c.card, border: `1px solid ${on ? c.text400 : c.border}`, borderRadius: 12, overflow: "hidden" }}>
             <div onClick={() => setOpen(on ? "" : s.key)} style={{ padding: "12px 14px", cursor: "pointer", display: "flex", gap: 10, alignItems: "center" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14.5, fontWeight: 800, color: c.text900 }}>{s.title}</div>
+                <div style={{ fontSize: 14.5, fontWeight:600, color: c.text900 }}>{s.title}</div>
                 {s.when && <div style={{ fontSize: 12, color: c.text500, marginTop: 2 }}>ใช้เมื่อ: {s.when}</div>}
               </div>
               <span style={{ fontSize: 11.5, color: c.text400 }}>{s.steps.length} ขั้นตอน</span>
@@ -590,7 +590,7 @@ function SqlTemplates({ c }) {
         if (t.kind === "danger" && !backedUp) {
           return (
             <div key={t.key} style={{ background: c.card, border: `1px dashed ${c.danger}`, borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: c.danger }}>🔒 {t.title}</div>
+              <div style={{ fontSize: 14, fontWeight:600, color: c.danger }}>🔒 {t.title}</div>
               <label style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8, fontSize: 13, color: c.text900, cursor: "pointer" }}>
                 <input type="checkbox" checked={backedUp} onChange={(e) => setBackedUp(e.target.checked)} />
                 ฉัน back up และเปิดไฟล์เช็กแล้วว่าครบทุกแถว
@@ -602,7 +602,7 @@ function SqlTemplates({ c }) {
         return (
           <div key={t.key} style={{ background: c.card, border: `1px solid ${t.kind === "danger" ? c.danger : c.border}`, borderRadius: 12, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${c.borderSoft}` }}>
-              <div style={{ flex: 1, fontSize: 13.5, fontWeight: 800, color: t.kind === "danger" ? c.danger : c.text900 }}>
+              <div style={{ flex: 1, fontSize: 13.5, fontWeight:600, color: t.kind === "danger" ? c.danger : c.text900 }}>
                 {t.kind === "danger" ? "⚠️ " : "🔎 "}{t.title}
               </div>
               {sql && (
@@ -755,7 +755,7 @@ function AmendHelper({ c }) {
         <div key={st.key} style={{ background: c.card, border: `1px solid ${st.kind === "danger" ? c.danger : c.border}`, borderRadius: 12, overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${c.borderSoft}` }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 800, color: st.kind === "danger" ? c.danger : c.text900 }}>{st.title}</div>
+              <div style={{ fontSize: 13.5, fontWeight:600, color: st.kind === "danger" ? c.danger : c.text900 }}>{st.title}</div>
               <div style={{ fontSize: 12, color: c.text500, marginTop: 2, lineHeight: 1.5 }}>{st.note}</div>
             </div>
             <button onClick={() => copy(st.key, st.sql)} style={{ background: st.kind === "danger" ? c.danger : c.ink, border: "none", color: "#fff", borderRadius: 8,

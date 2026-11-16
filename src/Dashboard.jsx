@@ -146,7 +146,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:800,color:c.text900 }}>📊 Dashboard</div>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>📊 Dashboard</div>
         <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:10 }}>
           <span style={{ fontSize:12,color:c.text400 }}>เคสทั้งหมด {cases.length} รายการ</span>
           <button onClick={()=>setShowDeleteLog(true)}
@@ -182,7 +182,7 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
               <div style={{ fontSize:16,marginBottom:4 }}>{k.icon}</div>
               <div style={{ fontSize:10,color:c.text400,fontWeight:600,letterSpacing:.3,marginBottom:2 }}>{k.label.toUpperCase()}</div>
               <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
-                <span style={{ fontSize:22,fontWeight:800,color:k.color,lineHeight:1 }}>{k.value}</span>
+                <span style={{ fontSize:22,fontWeight:600,color:k.color,lineHeight:1 }}>{k.value}</span>
                 {k.unit&&<span style={{ fontSize:11,color:k.color,fontWeight:600 }}>{k.unit}</span>}
               </div>
               {k.sub&&<div style={{ fontSize:10,color:c.text400,marginTop:2 }}>{k.sub}</div>}
@@ -296,17 +296,17 @@ export default function Dashboard({ onBack, cases, projects, users, deletedCases
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14 }}>
               <div style={{ background:c.card,border:`1px solid ${tint(c.orange,"55")}`,borderRadius:12,padding:"14px 16px" }}>
                 <div style={{ fontSize:10,color:c.text400,fontWeight:700,marginBottom:4 }}>เดือนนี้</div>
-                <div style={{ fontSize:20,fontWeight:800,color:c.orange }}>{onsiteThisMonth.toLocaleString()}</div>
+                <div style={{ fontSize:20,fontWeight:600,color:c.orange }}>{onsiteThisMonth.toLocaleString()}</div>
                 <div style={{ fontSize:10,color:c.text400 }}>บาท</div>
               </div>
               <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,padding:"14px 16px" }}>
                 <div style={{ fontSize:10,color:c.text400,fontWeight:700,marginBottom:4 }}>รวมทั้งหมด</div>
-                <div style={{ fontSize:20,fontWeight:800,color:c.orange }}>{onsiteTotalAll.toLocaleString()}</div>
+                <div style={{ fontSize:20,fontWeight:600,color:c.orange }}>{onsiteTotalAll.toLocaleString()}</div>
                 <div style={{ fontSize:10,color:c.text400 }}>บาท</div>
               </div>
               <div style={{ background:c.card,border:`1px solid ${c.border}`,borderRadius:12,padding:"14px 16px" }}>
                 <div style={{ fontSize:10,color:c.text400,fontWeight:700,marginBottom:4 }}>เฉลี่ย/ครั้ง</div>
-                <div style={{ fontSize:20,fontWeight:800,color:c.green }}>{approvedOnsite.length>0?Math.round(onsiteTotalAll/approvedOnsite.length).toLocaleString():0}</div>
+                <div style={{ fontSize:20,fontWeight:600,color:c.green }}>{approvedOnsite.length>0?Math.round(onsiteTotalAll/approvedOnsite.length).toLocaleString():0}</div>
                 <div style={{ fontSize:10,color:c.text400 }}>บาท</div>
               </div>
             </div>
@@ -437,7 +437,7 @@ function DeleteLog({ onBack, deletedCases }) {
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:800,color:c.text900 }}>🗑 ประวัติการลบเคส</div>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>🗑 ประวัติการลบเคส</div>
         <span style={{ background:tint(c.red,"22"),color:c.red,borderRadius:20,
           padding:"2px 10px",fontSize:12,fontWeight:700,marginLeft:4 }}>{deletedCases.length} รายการ</span>
       </div>

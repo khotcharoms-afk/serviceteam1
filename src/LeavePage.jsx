@@ -162,7 +162,7 @@ export default function LeavePage({ onBack, currentUser, users }) {
           padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit", color:"#475569", fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16, fontWeight:800, color:"#0f172a" }}>📋 ใบลา</div>
+        <div style={{ fontSize:16, fontWeight:600, color:"#0f172a" }}>📋 ใบลา</div>
         <button onClick={()=>setShowModal(true)} style={{ marginLeft:"auto",
           background:"#2563eb", border:"none", color:"#fff", borderRadius:8,
           padding:"7px 14px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>

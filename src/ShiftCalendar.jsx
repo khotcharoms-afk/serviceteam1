@@ -260,7 +260,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#475569",fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:800,color:"#0f172a" }}>📅 ตารางกะ</div>
+        <div style={{ fontSize:16,fontWeight:600,color:"#0f172a" }}>📅 ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
 
           <button onClick={exportCalendarPDF}
@@ -298,7 +298,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16 }}>
           <button onClick={prevMonth} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,
             padding:"7px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600,color:"#475569" }}>← ก่อนหน้า</button>
-          <div style={{ fontSize:18,fontWeight:800,color:"#0f172a" }}>
+          <div style={{ fontSize:18,fontWeight:600,color:"#0f172a" }}>
             {MONTH_NAMES[month]} {year + 543}
           </div>
           <button onClick={nextMonth} style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:8,

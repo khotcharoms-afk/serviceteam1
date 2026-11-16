@@ -230,7 +230,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
           padding: "7px 14px", cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: c.text500, fontWeight: 600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize: 16, fontWeight: 800, color: c.text900, whiteSpace: "nowrap" }}>🗂️ บันทึกการรับเคส</div>
+        <div style={{ fontSize: 16, fontWeight:600, color: c.text900, whiteSpace: "nowrap" }}>🗂️ บันทึกการรับเคส</div>
         <button onClick={() => setModal("new")}
           style={{ marginLeft: "auto", background: "#2563eb", border: "none", color: "#fff", borderRadius: 8,
             padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>

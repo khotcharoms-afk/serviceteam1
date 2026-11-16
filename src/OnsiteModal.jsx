@@ -274,7 +274,7 @@ export default function OnsiteModal({ onClose, onSave, saving, projects, users, 
           <div style={{ marginTop:12,padding:"10px 14px",background:"#fff7ed",
             border:"1px solid #fed7aa",borderRadius:10,display:"flex",justifyContent:"space-between" }}>
             <span style={{ fontSize:14,fontWeight:700,color:"#7c2d12" }}>รวมทั้งสิ้น</span>
-            <span style={{ fontSize:18,fontWeight:800,color:"#f97316" }}>
+            <span style={{ fontSize:18,fontWeight:600,color:"#f97316" }}>
               {totalCost.toLocaleString()} บาท
             </span>
           </div>

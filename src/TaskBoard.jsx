@@ -153,13 +153,13 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
     onOpen: () => setDetailId(t.id), onStatus: (s) => setStatus(t, s) });
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif", "--card-bg": c.card, "--av-bg": c.borderSoft, "--av-fg": c.text900 }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif", "--card-bg": c.card, "--av-bg": c.borderSoft, "--av-fg": c.text900 }}>
       {/* Header */}
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px 6px", maxWidth: W, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 18, color: c.text500, cursor: "pointer", padding: 4, lineHeight: 1 }}>←</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>บอร์ดงาน</div>
+            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>บอร์ดงาน</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>
               งานของคุณ {mineActive.length} งาน{overdueMine > 0 && <span style={{ color: c.danger, fontWeight: 700 }}> · เลยกำหนด {overdueMine}</span>}
               {isAdmin && unassigned.length > 0 && <span style={{ color: c.warn, fontWeight: 700 }}> · ยังไม่มีคนทำ {unassigned.length}</span>}
@@ -190,7 +190,7 @@ export default function TaskBoard({ onBack, projects = [], users = [], currentUs
             if (!undated.length) return null;
             return (
               <section style={{ marginTop: 16, padding: narrow ? "0 4px" : 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: c.text500, margin: "0 2px 6px" }}>ยังไม่กำหนดวัน <span style={{ fontWeight: 600, color: c.text400 }}>{undated.length}</span></div>
+                <div style={{ fontSize: 12.5, fontWeight:600, color: c.text500, margin: "0 2px 6px" }}>ยังไม่กำหนดวัน <span style={{ fontWeight: 600, color: c.text400 }}>{undated.length}</span></div>
                 <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
                   {undated.map((t, i) => <TaskRow key={t.id} first={i === 0} showAssignees {...rowProps(t)} />)}
                 </div>
@@ -284,7 +284,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10, padding: narrow ? "0 4px" : 0 }}>
         <button onClick={() => shiftMonth(-1)} style={navBtn(c)}>‹</button>
-        <div style={{ fontSize: narrow ? 17 : 20, fontWeight: 800, color: c.text900, minWidth: narrow ? 0 : 200, textAlign: "center" }}>{TH_MONTHS[m - 1]} {y + 543}</div>
+        <div style={{ fontSize: narrow ? 17 : 20, fontWeight:600, color: c.text900, minWidth: narrow ? 0 : 200, textAlign: "center" }}>{TH_MONTHS[m - 1]} {y + 543}</div>
         <button onClick={() => shiftMonth(1)} style={navBtn(c)}>›</button>
         {month !== todayIso.slice(0, 7) && <button onClick={() => setMonth(todayIso.slice(0, 7))} style={{ ...navBtn(c), width: "auto", padding: "0 12px", fontSize: 12.5 }}>วันนี้</button>}
         <span style={{ fontSize: 12, color: c.text400 }}>{inMonth.length} งานในเดือนนี้</span>
@@ -300,7 +300,7 @@ function MonthCalendar({ month, setMonth, todayIso, c, narrow, isAdmin, tasks, p
       <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, overflow: "hidden" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", background: c.bg, borderBottom: `1px solid ${c.border}` }}>
           {TH_DAYS.map((d, i) => (
-            <div key={d} style={{ textAlign: "center", fontSize: narrow ? 11.5 : 13, fontWeight: 800, padding: narrow ? "6px 0" : "9px 0", color: c.text400 }}>{d}</div>
+            <div key={d} style={{ textAlign: "center", fontSize: narrow ? 11.5 : 13, fontWeight:600, padding: narrow ? "6px 0" : "9px 0", color: c.text400 }}>{d}</div>
           ))}
         </div>
 
@@ -445,7 +445,7 @@ function TaskDetail({ t, c, me, isAdmin, canStatus, todayIso, users, projName, p
         display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
         <div style={{ padding: "16px 18px 12px", borderBottom: `1px solid ${c.borderSoft}`, overflowY: "auto" }}>
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <div style={{ flex: 1, fontSize: 16, fontWeight: 800, color: c.text900, lineHeight: 1.35, wordBreak: "break-word" }}>{t.title}</div>
+            <div style={{ flex: 1, fontSize: 16, fontWeight:600, color: c.text900, lineHeight: 1.35, wordBreak: "break-word" }}>{t.title}</div>
             <button onClick={onClose} style={{ background: c.borderSoft, border: "none", color: c.text500, cursor: "pointer", fontSize: 14, width: 30, height: 30, borderRadius: 8, flexShrink: 0 }}>✕</button>
           </div>
 

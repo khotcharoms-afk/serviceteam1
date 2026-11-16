@@ -102,12 +102,12 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
   const label = { fontSize: 11.5, fontWeight: 700, color: c.text500, marginBottom: 4, display: "block" };
 
   return (
-    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Noto Sans Thai','Sora',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, padding: "14px 16px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 1000, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: c.bg, border: "none", borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: "pointer", color: c.text500 }}>←</button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900 }}>ใบเบิกของ</div>
+            <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>ใบเบิกของ</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>กรอกรายการแล้วดาวน์โหลดใบขอเบิกสินค้าเป็น PDF หรือ Excel</div>
           </div>
           <button onClick={() => setForm(emptyForm())} style={btn(c.ink, c.onInk)}>+ สร้างใบเบิก</button>
@@ -128,7 +128,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
             <div key={r.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: c.text900 }}>{(() => { const n = normalizeReq(r); return [n.location, n.site].filter(Boolean).join(" · ") || "—"; })()} <span style={{ fontWeight: 500, color: c.text400, fontSize: 12.5 }}>· {thaiDate(r.date)}</span></div>
+                  <div style={{ fontSize: 14, fontWeight:600, color: c.text900 }}>{(() => { const n = normalizeReq(r); return [n.location, n.site].filter(Boolean).join(" · ") || "—"; })()} <span style={{ fontWeight: 500, color: c.text400, fontSize: 12.5 }}>· {thaiDate(r.date)}</span></div>
                   <div style={{ fontSize: 12.5, color: c.text500, marginTop: 2 }}>{r.project}{r.jobNo ? ` · JOB ${r.jobNo}` : ""}</div>
                   <div style={{ fontSize: 12.5, color: c.text900, marginTop: 8, lineHeight: 1.7 }}>
                     {(r.items || []).slice(0, 4).map((it, i) => (
@@ -160,7 +160,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
           <div onClick={(e) => e.stopPropagation()}
             style={{ background: c.card, borderRadius: narrow ? 0 : 16, width: "100%", maxWidth: 860, maxHeight: narrow ? "100vh" : "92vh", overflowY: "auto", padding: 18 }}>
             <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ fontSize: 15.5, fontWeight: 800, color: c.text900, flex: 1 }}>{form.id ? "แก้ไขใบเบิก" : "สร้างใบเบิก"}</div>
+              <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900, flex: 1 }}>{form.id ? "แก้ไขใบเบิก" : "สร้างใบเบิก"}</div>
               <button onClick={() => setForm(null)} style={{ background: "none", border: "none", fontSize: 18, color: c.text400, cursor: "pointer" }}>✕</button>
             </div>
 
@@ -199,7 +199,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
               </div>
             </div>
 
-            <div style={{ fontSize: 13, fontWeight: 800, color: c.text900, margin: "14px 0 8px" }}>
+            <div style={{ fontSize: 13, fontWeight:600, color: c.text900, margin: "14px 0 8px" }}>
               รายการสินค้า <span style={{ fontWeight: 500, color: c.text400, fontSize: 12 }}>({form.items.length}/{MAX_ITEMS})</span>
             </div>
             <datalist id="req-items">{[...suggest.names.keys()].map((n) => <option key={n} value={n} />)}</datalist>
