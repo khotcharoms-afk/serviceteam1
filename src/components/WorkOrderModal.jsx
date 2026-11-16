@@ -52,7 +52,7 @@ function buildWorkOrderHTML(c, proj) {
 
 <div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#fafafa;padding:10px 16px;display:flex;gap:10px;border-bottom:1px solid #e4e4e7;z-index:99">
   <button onclick="window.close()" style="background:#f4f4f5;border:1px solid #e4e4e7;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:inherit">← ปิด</button>
-  <button onclick="window.print()" style="background:${PURPLE};border:none;border-radius:8px;padding:6px 18px;cursor:pointer;font-size:13px;font-family:inherit;color:#fff;margin-left:auto">🖨 พิมพ์ / Export PDF</button>
+  <button onclick="window.print()" style="background:${PURPLE};border:none;border-radius:8px;padding:6px 18px;cursor:pointer;font-size:13px;font-family:inherit;color:#fff;margin-left:auto">พิมพ์ / Export PDF</button>
 </div>
 
 <div style="margin-top:48px">
@@ -178,19 +178,19 @@ export default function WorkOrderModal({ c, proj, onClose }) {
     <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.6)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}
       onClick={onClose}>
-      <div style={{ background:t.card,borderRadius:16,padding:24,maxWidth:360,width:"100%",
+      <div style={{ background:t.card,borderRadius:12,padding:24,maxWidth:360,width:"100%",
         boxShadow:"0 20px 60px rgba(0,0,0,.35)" }}
         onClick={e=>e.stopPropagation()}>
-        <div style={{ fontSize:15,fontWeight:700,color:t.text900,marginBottom:8 }}>🖨 พิมพ์ใบงาน</div>
+        <div style={{ fontSize:15,fontWeight:600,color:t.text900,marginBottom:8 }}>พิมพ์ใบงาน</div>
         <div style={{ fontSize:13,color:t.text500,marginBottom:20,lineHeight:1.6 }}>
           ระบบจะเปิดแท็บใหม่แสดงใบงาน กดพิมพ์หรือ Save PDF ได้เลย
         </div>
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:t.bg,border:`1px solid ${t.border}`,
-            color:t.text500,borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:t.text500,borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={openWorkOrder} style={{ flex:2,background:t.purple,border:"none",
-            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#fff",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
             เปิดใบงาน →
           </button>

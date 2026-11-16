@@ -129,7 +129,7 @@ export default function DeviceReportPage({ onBack }) {
       <button onClick={() => setOpen((o) => ({ ...o, [id]: !o[id] }))}
         style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, textAlign: "left" }}>
         <span style={{ color: c.text400, fontSize: 11, width: 10 }}>{open[id] ? "▾" : "▸"}</span>
-        <span style={{ fontSize: 14, fontWeight: 700, color: c.text900 }}>{title}</span>
+        <span style={{ fontSize: 14, fontWeight:600, color: c.text900 }}>{title}</span>
         <span style={sub}>{status}</span>
       </button>
       {children}
@@ -156,7 +156,7 @@ export default function DeviceReportPage({ onBack }) {
               {cam.online === null ? "Imou: ไม่พบกล้อง" : `Imou: กล้องออนไลน์ ${cam.camsOnline}/4`}
             </span>
           )}
-          {hasNums && r.undated && <span title="query ของ panel นี้ไม่ได้แยกตามวัน — ตัวเลขอาจเป็นของวันนี้เสมอ ไม่ว่าจะเลือกวันไหน" style={{ display: "block", fontSize: 10.5, color: c.warn, fontWeight: 400 }}>⚠ ตัวเลขอาจไม่เปลี่ยนตามวันที่</span>}
+          {hasNums && r.undated && <span title="query ของ panel นี้ไม่ได้แยกตามวัน — ตัวเลขอาจเป็นของวันนี้เสมอ ไม่ว่าจะเลือกวันไหน" style={{ display: "block", fontSize: 10.5, color: c.warn, fontWeight: 400 }}>ตัวเลขอาจไม่เปลี่ยนตามวันที่</span>}
           {hasNums && !r.fromGrafana && <span style={{ fontSize: 10.5, color: c.text400, fontWeight: 400 }}> (กรอกเอง)</span>}
         </span>
         <button onClick={() => setPref(r.key, { offline: !r.offline })}
@@ -235,7 +235,7 @@ export default function DeviceReportPage({ onBack }) {
         {/* ข้อความรวม */}
         <div style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: c.text900, flex: 1 }}>ข้อความรายงาน</span>
+            <span style={{ fontSize: 14, fontWeight:600, color: c.text900, flex: 1 }}>ข้อความรายงาน</span>
             {loadingAny && <span style={sub}>กำลังโหลดข้อมูลวันที่ {fmtLong(date)}…</span>}
             <button onClick={copy} disabled={loadingAny} style={btn(true, { opacity: loadingAny ? 0.5 : 1 })}>{copied ? "✓ คัดลอกแล้ว" : "คัดลอกข้อความ"}</button>
           </div>

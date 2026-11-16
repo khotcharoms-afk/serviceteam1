@@ -42,11 +42,11 @@ function LogModal({ record, onClose, onSave, saving }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(15,23,42,.5)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onClose}>
-      <div style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 480,
+      <div style={{ background: c.card, borderRadius:12, width: "100%", maxWidth: 480,
         maxHeight: "92vh", overflowY: "auto", padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text900 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight:600, color: c.text900 }}>
             {record ? "✏️ แก้ไขบันทึก" : "🗂️ บันทึกเคส"}
           </h2>
           <button onClick={onClose} style={{ background: c.borderSoft, border: "none", color: c.text500,
@@ -73,7 +73,7 @@ function LogModal({ record, onClose, onSave, saving }) {
         </div>
 
         <div style={{ marginBottom: 18, padding: "12px 14px", background: c.bg,
-          border: `1px solid ${c.border}`, borderRadius: 10 }}>
+          border: `1px solid ${c.border}`, borderRadius:8 }}>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
             fontSize: 13, fontWeight: 600, color: c.text900 }}>
             <input type="checkbox" checked={closed} style={{ accentColor: "#16a34a", width: 16, height: 16 }}
@@ -89,15 +89,15 @@ function LogModal({ record, onClose, onSave, saving }) {
           )}
         </div>
 
-        {error && <div style={{ color: c.red, fontSize: 12, marginBottom: 12, fontWeight: 500 }}>⚠ {error}</div>}
+        {error && <div style={{ color: c.red, fontSize: 12, marginBottom: 12, fontWeight: 500 }}>{error}</div>}
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
           <button onClick={onClose} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500,
-            borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            borderRadius:8, padding: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
             ยกเลิก
           </button>
           <button onClick={submit} disabled={saving}
-            style={{ background: "#2563eb", border: "none", color: "#fff", borderRadius: 10, padding: 12,
+            style={{ background: "#2563eb", border: "none", color: "#fff", borderRadius:8, padding: 12,
               fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>
             {saving ? "กำลังบันทึก…" : "💾 บันทึก"}
           </button>
@@ -205,18 +205,18 @@ export default function CaseLogPage({ onBack, currentUser }) {
 
   const actions = r => (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-      {!r.closedAt && <button onClick={() => quickClose(r)} style={btn(`${c.green}1a`, c.green, `${c.green}55`)}>✅ ปิดเคส</button>}
-      <button onClick={() => setModal(r)} style={btn(`${c.blue}1a`, c.blue, `${c.blue}55`)}>✏️</button>
-      {isAdminOrDev && <button onClick={() => remove(r)} style={btn(`${c.red}1a`, c.red, `${c.red}55`)}>🗑</button>}
+      {!r.closedAt && <button onClick={() => quickClose(r)} style={btn(`${c.green}1a`, c.green, `${c.green}55`)}>ปิดเคส</button>}
+      <button onClick={() => setModal(r)} style={btn(`${c.blue}1a`, c.blue, `${c.blue}55`)}></button>
+      {isAdminOrDev && <button onClick={() => remove(r)} style={btn(`${c.red}1a`, c.red, `${c.red}55`)}></button>}
     </div>
   );
 
   const closedCell = r => r.closedAt
     ? <span style={{ color: c.green, fontWeight: 600 }}>{fmt(r.closedAt)}</span>
     : <span style={{ background: `${c.amber}22`, color: c.amber, borderRadius: 20, padding: "2px 8px",
-        fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>ยังไม่ปิด</span>;
+        fontSize: 11, fontWeight:600, whiteSpace: "nowrap" }}>ยังไม่ปิด</span>;
 
-  const th = { textAlign: "left", fontSize: 11, color: c.text400, fontWeight: 700,
+  const th = { textAlign: "left", fontSize: 11, color: c.text400, fontWeight:600,
     padding: "10px 12px", borderBottom: `1px solid ${c.border}`, whiteSpace: "nowrap" };
   const td = { fontSize: 13, color: c.text500, padding: "12px", verticalAlign: "top",
     borderBottom: `1px solid ${c.borderSoft}` };
@@ -230,7 +230,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
           padding: "7px 14px", cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: c.text500, fontWeight: 600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize: 16, fontWeight:600, color: c.text900, whiteSpace: "nowrap" }}>🗂️ บันทึกการรับเคส</div>
+        <div style={{ fontSize: 16, fontWeight:600, color: c.text900, whiteSpace: "nowrap" }}>บันทึกการรับเคส</div>
         <button onClick={() => setModal("new")}
           style={{ marginLeft: "auto", background: "#2563eb", border: "none", color: "#fff", borderRadius: 8,
             padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
@@ -256,7 +256,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
 
         {loadError ? (
           <div style={{ background: `${c.red}1a`, border: `1px solid ${c.red}55`, color: c.red,
-            borderRadius: 10, padding: "12px 14px", fontSize: 13 }}>⚠ {loadError}</div>
+            borderRadius:8, padding: "12px 14px", fontSize: 13 }}>{loadError}</div>
         ) : loading ? (
           <div style={{ textAlign: "center", color: c.text400, padding: 48 }}>กำลังโหลด...</div>
         ) : filtered.length === 0 ? (
@@ -267,7 +267,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {filtered.map(r => (
               <div key={r.id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 14px" }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: c.text900 }}>{r.title}</div>
+                <div style={{ fontSize: 14, fontWeight:600, color: c.text900 }}>{r.title}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "4px 10px", fontSize: 12, marginTop: 8, color: c.text500 }}>
                   <span style={{ color: c.text400 }}>รับ</span><span>{fmt(r.receivedAt) || "—"}</span>
                   <span style={{ color: c.text400 }}>ปิด</span><span>{closedCell(r)}</span>
@@ -296,7 +296,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
                 {filtered.map(r => (
                   <tr key={r.id}>
                     <td style={{ ...td, width: "26%" }}>
-                      <div style={{ fontWeight: 700, color: c.text900 }}>{r.title}</div>
+                      <div style={{ fontWeight:600, color: c.text900 }}>{r.title}</div>
                       {r.createdBy && <div style={{ fontSize: 11, color: c.text400, marginTop: 2 }}>{r.createdBy}</div>}
                     </td>
                     <td style={{ ...td, whiteSpace: "nowrap" }}>{fmt(r.receivedAt) || "—"}</td>

@@ -39,7 +39,7 @@ export default function CaseToKnowledge({ caseData, project, currentUser, onClos
   }
   return (
     <KnowledgeModal editRecord={draft} saving={saving} onClose={onClose} onSave={save}
-      heading="💡 บันทึกวิธีแก้ลง Knowledge Hub"
-      intro={<>✅ ปิดเคส "<b>{caseData.title}</b>" แล้ว — เก็บวิธีแก้ไว้ให้ทีมไหม? ข้อมูลด้านล่างเติมจากเคสให้แล้ว แก้ให้กระชับก่อนบันทึกได้ (ไม่บันทึกก็กดปิดได้เลย)</>} />
+      heading="บันทึกวิธีแก้ลง Knowledge Hub"
+      intro={<>ปิดเคส "<b>{caseData.title}</b>" แล้ว — เก็บวิธีแก้ไว้ให้ทีมไหม? ข้อมูลด้านล่างเติมจากเคสให้แล้ว แก้ให้กระชับก่อนบันทึกได้ (ไม่บันทึกก็กดปิดได้เลย)</>} />
   );
 }

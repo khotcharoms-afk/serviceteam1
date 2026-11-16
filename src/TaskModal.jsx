@@ -55,19 +55,19 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
   const IS2 = { width:"100%", border:`1px solid ${c.border}`, borderRadius:8,
     padding:"8px 12px", fontSize:13, fontFamily:"inherit",
     outline:"none", background:c.bg, color:c.text900, boxSizing:"border-box" };
-  const LB = { fontSize:11, color:c.text400, fontWeight:700,
+  const LB = { fontSize:11, color:c.text400, fontWeight:600,
     textTransform:"uppercase", letterSpacing:.5, marginBottom:4, display:"block" };
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:c.card,borderRadius:16,width:"100%",maxWidth:520,
+      <div style={{ background:c.card,borderRadius:12,width:"100%",maxWidth:520,
         maxHeight:"92vh",overflowY:"auto",padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
 
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:c.text900 }}>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:600,color:c.text900 }}>
             📋 {isEdit?"แก้ไขงาน":"ลงงานใหม่"}
           </h2>
           <button onClick={onClose} style={{ background:c.borderSoft,border:"none",
@@ -170,7 +170,7 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
           <div style={{ display:"flex",gap:8 }}>
             {PRIORITY_OPTS.map(p=>(
               <button key={p.value} type="button" onClick={()=>setPriority(p.value)}
-                style={{ flex:1,padding:"7px",borderRadius:8,fontSize:12,fontWeight:700,
+                style={{ flex:1,padding:"7px",borderRadius:8,fontSize:12,fontWeight:600,
                   fontFamily:"inherit",cursor:"pointer",
                   background:priority===p.value?c.ink:c.bg,
                   border:`1px solid ${priority===p.value?c.ink:c.border}`,
@@ -208,14 +208,14 @@ export default function TaskModal({ onClose, onSave, saving, projects, users, cu
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
           <button onClick={onClose} style={{ background:c.bg,border:`1px solid ${c.border}`,
-            color:c.text500,borderRadius:10,padding:12,fontSize:14,fontWeight:600,
+            color:c.text500,borderRadius:8,padding:12,fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={handleSave}
             disabled={saving||!title.trim()}
-            style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:10,
+            style={{ background:c.ink,border:"none",color:c.onInk,borderRadius:8,
               padding:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:saving||!title.trim()?0.5:1 }}>
-            {saving?"กำลังบันทึก...":(isEdit?"💾 บันทึก":"➕ ลงงาน")}
+            {saving?"กำลังบันทึก...":(isEdit?"บันทึก":"ลงงาน")}
           </button>
         </div>
       </div>

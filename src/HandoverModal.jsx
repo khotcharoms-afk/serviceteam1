@@ -26,20 +26,20 @@ function HandoverModal({ open, onClose, caseData, onSave, users, currentUser }) 
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(15,23,42,.5)",
       backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,transition:"background .2s" }}
       onClick={onClose}>
-      <div style={{ background:c.card,borderRadius:16,padding:"24px",width:"100%",maxWidth:460,
+      <div style={{ background:c.card,borderRadius:12,padding:"24px",width:"100%",maxWidth:460,
         maxHeight:"calc(100vh - 32px)",overflowY:"auto",
         boxShadow:"0 20px 60px rgba(0,0,0,.35)" }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:c.text900 }}>📤 ส่งต่องาน</h2>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:600,color:c.text900 }}>ส่งต่องาน</h2>
           <button onClick={onClose} style={{ background:c.borderSoft,border:"none",color:c.text500,
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14,display:"flex",
             alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
 
         {/* Current assignee */}
-        <div style={{ background:c.bg,borderRadius:10,padding:'12px 14px',marginBottom:16,
+        <div style={{ background:c.bg,borderRadius:8,padding:'12px 14px',marginBottom:16,
           border:`1px solid ${c.border}` }}>
-          <div style={{ fontSize:10,color:c.text400,fontWeight:700,letterSpacing:1,marginBottom:4 }}>ผู้รับผิดชอบปัจจุบัน</div>
+          <div style={{ fontSize:10,color:c.text400,fontWeight:600,letterSpacing:1,marginBottom:4 }}>ผู้รับผิดชอบปัจจุบัน</div>
           <div style={{ fontSize:14,fontWeight:600,color:c.text900 }}>{caseData.tech||"ไม่ระบุ"}</div>
         </div>
 
@@ -66,7 +66,7 @@ function HandoverModal({ open, onClose, caseData, onSave, users, currentUser }) 
         {/* Handover log */}
         {(caseData.handoverLog||[]).length>0 && (
           <div style={{ marginBottom:16 }}>
-            <div style={{ fontSize:10,color:c.text400,fontWeight:700,letterSpacing:1,marginBottom:8 }}>ประวัติการส่งต่อ</div>
+            <div style={{ fontSize:10,color:c.text400,fontWeight:600,letterSpacing:1,marginBottom:8 }}>ประวัติการส่งต่อ</div>
             <div style={{ display:"flex",flexDirection:"column",gap:6,maxHeight:160,overflowY:"auto" }}>
               {[...(caseData.handoverLog||[])].reverse().map((h,i)=>(
                 <div key={i} style={{ background:c.bg,borderRadius:8,padding:"8px 12px",
@@ -86,11 +86,11 @@ function HandoverModal({ open, onClose, caseData, onSave, users, currentUser }) 
 
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ background:c.bg,border:`1px solid ${c.border}`,
-            color:c.text500,borderRadius:10,padding:"11px 18px",fontSize:14,fontWeight:600,
+            color:c.text500,borderRadius:8,padding:"11px 18px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={submit} style={{ flex:1,background:c.blue,border:"none",color:"#fff",
-            borderRadius:10,padding:"11px",fontSize:14,fontWeight:600,
-            cursor:"pointer",fontFamily:"inherit" }}>📤 ส่งต่องาน</button>
+            borderRadius:8,padding:"11px",fontSize:14,fontWeight:600,
+            cursor:"pointer",fontFamily:"inherit" }}>ส่งต่องาน</button>
         </div>
       </div>
     </div>

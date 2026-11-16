@@ -227,7 +227,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 <body>
 <div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#fafafa;padding:8px 14px;display:flex;gap:10px;border-bottom:1px solid #e4e4e7;z-index:99">
   <button onclick="window.close()" style="background:#f4f4f5;border:1px solid #e4e4e7;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:inherit">← ปิด</button>
-  <button onclick="window.print()" style="background:#16a34a;border:none;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit;color:#fff;margin-left:auto">🖨 พิมพ์ / Export PDF</button>
+  <button onclick="window.print()" style="background:#16a34a;border:none;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit;color:#fff;margin-left:auto">พิมพ์ / Export PDF</button>
 </div>
 <div style="margin-top:36px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -260,7 +260,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#52525b",fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:600,color:"#09090b" }}>📅 ตารางกะ</div>
+        <div style={{ fontSize:16,fontWeight:600,color:"#09090b" }}>ตารางกะ</div>
         <div style={{ marginLeft:"auto",display:"flex",gap:10,alignItems:"center" }}>
 
           <button onClick={exportCalendarPDF}
@@ -331,7 +331,7 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
 
         {/* Calendar */}
         <div style={{ flex:1,minWidth:0 }}>
-        <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:14,overflow:"hidden" }}>
+        <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:8,overflow:"hidden" }}>
           <table style={{ width:"100%",borderCollapse:"collapse",tableLayout:"fixed" }}>
             <thead>
               <tr>
@@ -404,15 +404,15 @@ export default function ShiftCalendar({ onBack, currentUser, users, shiftTypes, 
         {/* ตารางวันหยุด */}
         <div className="shift-holiday-table" style={{ width:160,flexShrink:0 }}>
           <div style={{ background:"#1E3A5F",padding:"8px 12px",borderRadius:"12px 12px 0 0" }}>
-            <div style={{ fontSize:12,fontWeight:700,color:"#fff",textAlign:"center" }}>ตารางวันหยุด</div>
+            <div style={{ fontSize:12,fontWeight:600,color:"#fff",textAlign:"center" }}>ตารางวันหยุด</div>
             <div style={{ fontSize:10,color:"#93C5FD",textAlign:"center",marginTop:2 }}>{MONTH_NAMES[month].slice(0,3)}. {year+543}</div>
           </div>
           <div style={{ background:"#fff",border:"1px solid #e4e4e7",borderRadius:"0 0 12px 12px",overflow:"hidden" }}>
             <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
               <thead>
                 <tr style={{ background:"#fafafa" }}>
-                  <th style={{ padding:"6px 10px",textAlign:"left",fontSize:10,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>ชื่อ</th>
-                  <th style={{ padding:"6px 8px",textAlign:"left",fontSize:10,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>วันหยุด</th>
+                  <th style={{ padding:"6px 10px",textAlign:"left",fontSize:10,color:"#a1a1aa",fontWeight:600,borderBottom:"1px solid #e4e4e7" }}>ชื่อ</th>
+                  <th style={{ padding:"6px 8px",textAlign:"left",fontSize:10,color:"#a1a1aa",fontWeight:600,borderBottom:"1px solid #e4e4e7" }}>วันหยุด</th>
                 </tr>
               </thead>
               <tbody>
@@ -576,11 +576,11 @@ function MemberManager({ users, shiftMembers, onClose }) {
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:380,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:380,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>👥 สมาชิกทีม CS</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>สมาชิกทีม CS</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
@@ -624,17 +624,17 @@ function MemberManager({ users, shiftMembers, onClose }) {
         )}
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
-            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#52525b",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
-            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#fff",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
             {saving?"กำลังบันทึก…":"บันทึก"}
           </button>
         </div>
         <button onClick={()=>setSchedules(s=>s.map(x=>({...x,offDays:[]})))}
           style={{ width:"100%",marginTop:8,background:"#fff5f5",border:"1px solid #fecaca",
-            color:"#ef4444",borderRadius:10,padding:"9px",fontSize:13,fontWeight:600,
+            color:"#ef4444",borderRadius:8,padding:"9px",fontSize:13,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
           🗑 เคลียร์วันหยุดทั้งหมด
         </button>
@@ -710,11 +710,11 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:520,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:520,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"80vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📋 กำหนดวันหยุดประจำ</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>กำหนดวันหยุดประจำ</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
@@ -735,9 +735,9 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
         <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:18 }}>
           <thead>
             <tr style={{ background:"#fafafa" }}>
-              <th style={{ padding:"7px 10px",textAlign:"left",fontSize:11,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>ชื่อ</th>
+              <th style={{ padding:"7px 10px",textAlign:"left",fontSize:11,color:"#a1a1aa",fontWeight:600,borderBottom:"1px solid #e4e4e7" }}>ชื่อ</th>
               {DAY_SHORT.map(d=>(
-                <th key={d} style={{ padding:"7px 6px",textAlign:"center",fontSize:11,color:"#a1a1aa",fontWeight:700,borderBottom:"1px solid #e4e4e7" }}>{d}</th>
+                <th key={d} style={{ padding:"7px 6px",textAlign:"center",fontSize:11,color:"#a1a1aa",fontWeight:600,borderBottom:"1px solid #e4e4e7" }}>{d}</th>
               ))}
             </tr>
           </thead>
@@ -758,17 +758,17 @@ function ScheduleManager({ users, userSchedules, onClose, initYear, initMonth, o
         </table>
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
-            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#52525b",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
-            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#fff",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
             {saving?"กำลังบันทึก…":`บันทึก ${MONTH_TH[selMonth]} ${selYear+543}`}
           </button>
         </div>
         <button onClick={()=>setSchedules(s=>s.map(x=>({...x,offDays:[]})))}
           style={{ width:"100%",marginTop:8,background:"#fff5f5",border:"1px solid #fecaca",
-            color:"#ef4444",borderRadius:10,padding:"9px",fontSize:13,fontWeight:600,
+            color:"#ef4444",borderRadius:8,padding:"9px",fontSize:13,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
           🗑 เคลียร์วันหยุดทั้งหมด
         </button>
@@ -792,11 +792,11 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:400,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:400,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:holiday?8:16 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📅 {label}</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>{label}</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
@@ -821,9 +821,9 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
               const c = e.isOff ? {bg:"#f4f4f5",text:"#a1a1aa"} : COLORS[Math.max(0,ci)];
               return (
                 <div key={i} style={{ display:"flex",alignItems:"center",gap:10,
-                  padding:"10px 12px",background:c.bg,borderRadius:10 }}>
+                  padding:"10px 12px",background:c.bg,borderRadius:8 }}>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:13,fontWeight:700,color:c.text }}>{e.userName}</div>
+                    <div style={{ fontSize:13,fontWeight:600,color:c.text }}>{e.userName}</div>
                     <div style={{ fontSize:12,color:c.text,opacity:.8 }}>
                       {e.isOff ? "หยุด" : type ? `${type.name} · ${type.startTime}–${type.endTime}` : ""}
                     </div>
@@ -835,7 +835,7 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
         ); })()}
         {isAdmin && (
           <button onClick={onEdit} style={{ width:"100%",background:"#2563eb",border:"none",
-            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#fff",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
             ✎ แก้ไขกะวันนี้
           </button>
@@ -849,21 +849,21 @@ function ViewDayModal({ date, entries, shiftTypes, isAdmin, onEdit, onClose }) {
 function SettingsMenu({ onClose, onMembers, onSchedule, onTypes, onBulk, onClear }) {
   const isMobile = window.innerWidth < 640;
   const items = [
-    ...(isMobile && onBulk ? [{ icon:"📆", label:"ลงกะหลายวัน", desc:"ลงกะหลายคนพร้อมกัน", action:onBulk }] : []),
-    ...(isMobile && onClear ? [{ icon:"🗑", label:"เคลียร์กะ", desc:"ลบกะในช่วงวันที่เลือก", action:onClear }] : []),
-    { icon:"👥", label:"สมาชิกทีม CS", desc:"เลือกและเรียงลำดับสมาชิก", action:onMembers },
-    { icon:"📋", label:"วันหยุดประจำ", desc:"กำหนดวันหยุดของแต่ละคน", action:onSchedule },
-    { icon:"⚙", label:"จัดการกะ", desc:"เพิ่ม/ลบประเภทกะและเวลา", action:onTypes },
+    ...(isMobile && onBulk ? [{ icon:"", label:"ลงกะหลายวัน", desc:"ลงกะหลายคนพร้อมกัน", action:onBulk }] : []),
+    ...(isMobile && onClear ? [{ icon:"", label:"เคลียร์กะ", desc:"ลบกะในช่วงวันที่เลือก", action:onClear }] : []),
+    { icon:"", label:"สมาชิกทีม CS", desc:"เลือกและเรียงลำดับสมาชิก", action:onMembers },
+    { icon:"", label:"วันหยุดประจำ", desc:"กำหนดวันหยุดของแต่ละคน", action:onSchedule },
+    { icon:"", label:"จัดการกะ", desc:"เพิ่ม/ลบประเภทกะและเวลา", action:onTypes },
   ];
   return (
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:340,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:340,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>⚙ ตั้งค่าตารางกะ</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>ตั้งค่าตารางกะ</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
@@ -871,7 +871,7 @@ function SettingsMenu({ onClose, onMembers, onSchedule, onTypes, onBulk, onClear
           {items.map(item=>(
             <button key={item.label} onClick={item.action}
               style={{ display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
-                background:"#fafafa",border:"1px solid #e4e4e7",borderRadius:10,
+                background:"#fafafa",border:"1px solid #e4e4e7",borderRadius:8,
                 cursor:"pointer",fontFamily:"inherit",textAlign:"left",width:"100%" }}>
               <span style={{ fontSize:20 }}>{item.icon}</span>
               <div>
@@ -924,17 +924,17 @@ function ClearShiftModal({ year, month, users, daysInMonth, onClose }) {
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:420,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:420,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"85vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>🗑 เคลียร์กะ</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>เคลียร์กะ</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
 
         {/* Date range */}
-        <div style={{ background:"#fafafa",borderRadius:10,padding:"12px 14px",marginBottom:14 }}>
+        <div style={{ background:"#fafafa",borderRadius:8,padding:"12px 14px",marginBottom:14 }}>
           <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:8 }}>
             ช่วงวันที่ — {MONTH_TH[month]} {year+543}
           </div>
@@ -993,11 +993,11 @@ function ClearShiftModal({ year, month, users, daysInMonth, onClose }) {
 
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
-            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#52525b",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={clear}
             disabled={saving||dateFrom>dateTo||selectedUsers.length===0}
-            style={{ flex:2,background:"#ef4444",border:"none",color:"#fff",borderRadius:10,
+            style={{ flex:2,background:"#ef4444",border:"none",color:"#fff",borderRadius:8,
               padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:(saving||dateFrom>dateTo||selectedUsers.length===0)?0.5:1 }}>
             {saving?"กำลังเคลียร์…":`เคลียร์กะ ${Math.max(0,dateTo-dateFrom+1)} วัน`}
@@ -1052,17 +1052,17 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:480,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:480,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"85vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📆 ลงกะหลายวัน</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>ลงกะหลายวัน</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
 
         {/* Date range */}
-        <div style={{ background:"#fafafa",borderRadius:10,padding:"12px 14px",marginBottom:16 }}>
+        <div style={{ background:"#fafafa",borderRadius:8,padding:"12px 14px",marginBottom:16 }}>
           <div style={{ fontSize:12,color:"#71717a",fontWeight:600,marginBottom:8 }}>
             ช่วงวันที่ — {MONTH_TH[month]} {year+543}
           </div>
@@ -1090,7 +1090,7 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
             </div>
           </div>
           {dateFrom > dateTo && (
-            <div style={{ fontSize:11,color:"#ef4444",marginTop:6 }}>⚠ วันเริ่มต้องน้อยกว่าหรือเท่ากับวันสิ้นสุด</div>
+            <div style={{ fontSize:11,color:"#ef4444",marginTop:6 }}>วันเริ่มต้องน้อยกว่าหรือเท่ากับวันสิ้นสุด</div>
           )}
           <div style={{ fontSize:11,color:"#71717a",marginTop:6 }}>
             จะลงกะ {Math.max(0, dateTo-dateFrom+1)} วัน ({dateFrom}–{dateTo} {MONTH_TH[month]})
@@ -1136,10 +1136,10 @@ function BulkEditModal({ year, month, users, shiftTypes, userSchedules=[], daysI
 
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
-            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#52525b",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving||dateFrom>dateTo}
-            style={{ flex:2,background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
+            style={{ flex:2,background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
               padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:(saving||dateFrom>dateTo)?0.5:1 }}>
             {saving?`กำลังบันทึก…`:`บันทึก ${Math.max(0,dateTo-dateFrom+1)} วัน`}
@@ -1196,11 +1196,11 @@ function EditDayModal({ date, entries, users, shiftTypes, onClose }) {
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:440,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:440,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)",maxHeight:"80vh",overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>📅 จัดกะ — {label}</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>จัดกะ — {label}</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
@@ -1227,10 +1227,10 @@ function EditDayModal({ date, entries, users, shiftTypes, onClose }) {
 
         <div style={{ display:"flex",gap:10 }}>
           <button onClick={onClose} style={{ flex:1,background:"#fafafa",border:"1px solid #e4e4e7",
-            color:"#52525b",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#52525b",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>ยกเลิก</button>
           <button onClick={save} disabled={saving} style={{ flex:2,background:"#2563eb",border:"none",
-            color:"#fff",borderRadius:10,padding:"10px",fontSize:14,fontWeight:600,
+            color:"#fff",borderRadius:8,padding:"10px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
             {saving ? "กำลังบันทึก…" : "บันทึก"}
           </button>
@@ -1269,11 +1269,11 @@ function ShiftTypeManager({ shiftTypes, onClose }) {
     <div style={{ position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:"#fff",borderRadius:16,padding:24,width:"100%",maxWidth:420,
+      <div style={{ background:"#fff",borderRadius:12,padding:24,width:"100%",maxWidth:420,
         boxShadow:"0 20px 60px rgba(0,0,0,.15)" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <div style={{ fontSize:15,fontWeight:700,color:"#09090b" }}>⚙ จัดการประเภทกะ</div>
+          <div style={{ fontSize:15,fontWeight:600,color:"#09090b" }}>จัดการประเภทกะ</div>
           <button onClick={onClose} style={{ background:"#f4f4f5",border:"none",color:"#71717a",
             cursor:"pointer",width:30,height:30,borderRadius:8,fontSize:14 }}>✕</button>
         </div>
@@ -1321,7 +1321,7 @@ function ShiftTypeManager({ shiftTypes, onClose }) {
             </div>
           </div>
           <button onClick={addType} disabled={saving||!name.trim()||!start||!end}
-            style={{ width:"100%",background:"#2563eb",border:"none",color:"#fff",borderRadius:10,
+            style={{ width:"100%",background:"#2563eb",border:"none",color:"#fff",borderRadius:8,
               padding:"10px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
               opacity:(!name.trim()||!start||!end)?0.5:1 }}>
             {saving ? "กำลังเพิ่ม…" : "+ เพิ่มกะ"}

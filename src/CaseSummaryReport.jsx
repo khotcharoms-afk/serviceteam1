@@ -113,7 +113,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           padding:"7px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:c.text500,fontWeight:600 }}>
           ← กลับ
         </button>
-        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>📄 รายงานสรุปเคส</div>
+        <div style={{ fontSize:16,fontWeight:600,color:c.text900 }}>รายงานสรุปเคส</div>
         <button onClick={printReport}
           style={{ marginLeft:"auto",background:c.blue,border:"none",color:"#fff",
             borderRadius:8,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit" }}>
@@ -200,14 +200,14 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
         {/* สถิติต่อโครงการ — compact table */}
         {projStats.length>0 && (
           <div style={{ marginBottom:24 }}>
-            <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:8,
+            <div style={{ fontSize:13,fontWeight:600,color:c.text900,marginBottom:8,
               paddingBottom:6,borderBottom:`1px solid ${c.border}` }}>◆ สถิติต่อโครงการ</div>
             <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
               <thead>
                 <tr style={{ background:c.borderSoft }}>
                   {["โครงการ","ทั้งหมด","เปิดเคส","กำลังทำ","เสร็จ","รอ"].map((h,i)=>(
                     <th key={h} style={{ padding:"6px 10px",textAlign:i===0?"left":"center",
-                      fontSize:10,color:c.text400,fontWeight:700,
+                      fontSize:10,color:c.text400,fontWeight:600,
                       borderBottom:`1px solid ${c.border}`,letterSpacing:.3 }}>{h.toUpperCase()}</th>
                   ))}
                 </tr>
@@ -230,7 +230,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
                     ].map((x,j)=>(
                       <td key={j} style={{ padding:"6px 10px",textAlign:"center",
                         borderBottom:`1px solid ${c.borderSoft}`,
-                        fontWeight:700,color:x.col,fontSize:13 }}>{x.v}</td>
+                        fontWeight:600,color:x.col,fontSize:13 }}>{x.v}</td>
                     ))}
                   </tr>
                 ))}
@@ -249,12 +249,12 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           }).sort((a,b)=>b.total-a.total);
           return (
             <div style={{ marginBottom:24 }}>
-              <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:8,paddingBottom:6,borderBottom:`1px solid ${c.border}` }}>👤 สรุปรายทีม</div>
+              <div style={{ fontSize:13,fontWeight:600,color:c.text900,marginBottom:8,paddingBottom:6,borderBottom:`1px solid ${c.border}` }}>สรุปรายทีม</div>
               <table style={{ width:"100%",borderCollapse:"collapse",fontSize:12 }}>
                 <thead>
                   <tr style={{ background:c.borderSoft }}>
                     {["ชื่อ","เคสทั้งหมด","เสร็จแล้ว","อัตราปิดงาน","ค้างอยู่"].map((h,i)=>(
-                      <th key={h} style={{ padding:"6px 10px",textAlign:i===0?"left":"center",fontSize:10,color:c.text400,fontWeight:700,borderBottom:`1px solid ${c.border}`,letterSpacing:.3 }}>{h.toUpperCase()}</th>
+                      <th key={h} style={{ padding:"6px 10px",textAlign:i===0?"left":"center",fontSize:10,color:c.text400,fontWeight:600,borderBottom:`1px solid ${c.border}`,letterSpacing:.3 }}>{h.toUpperCase()}</th>
                     ))}
                   </tr>
                 </thead>
@@ -262,14 +262,14 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
                   {teamStats.map((t,i)=>(
                     <tr key={t.name} style={{ background:i%2===0?c.card:c.borderSoft }}>
                       <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,fontWeight:600,color:c.text900 }}>{t.name}</td>
-                      <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,textAlign:"center",fontWeight:700,color:c.text500 }}>{t.total}</td>
-                      <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,textAlign:"center",fontWeight:700,color:c.green }}>{t.done}</td>
+                      <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,textAlign:"center",fontWeight:600,color:c.text500 }}>{t.total}</td>
+                      <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,textAlign:"center",fontWeight:600,color:c.green }}>{t.done}</td>
                       <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,textAlign:"center" }}>
-                        <span style={{ background:tint(c.green,"14"),color:c.green,borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700 }}>
+                        <span style={{ background:tint(c.green,"14"),color:c.green,borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:600 }}>
                           {t.total>0?Math.round(t.done/t.total*100):0}%
                         </span>
                       </td>
-                      <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,textAlign:"center",fontWeight:700,color:t.pending>0?c.red:c.text400 }}>{t.pending}</td>
+                      <td style={{ padding:"6px 10px",borderBottom:`1px solid ${c.borderSoft}`,textAlign:"center",fontWeight:600,color:t.pending>0?c.red:c.text400 }}>{t.pending}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -291,11 +291,11 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           const MONTH_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
           return (
             <div style={{ marginBottom:24 }}>
-              <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:12,paddingBottom:6,borderBottom:`1px solid ${c.border}` }}>📊 เคสรายเดือน</div>
+              <div style={{ fontSize:13,fontWeight:600,color:c.text900,marginBottom:12,paddingBottom:6,borderBottom:`1px solid ${c.border}` }}>เคสรายเดือน</div>
               <div style={{ display:"flex",alignItems:"flex-end",gap:4,height:100,padding:"0 4px" }}>
                 {months.map(m=>(
                   <div key={m.m} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
-                    {m.count>0 && <span style={{ fontSize:9,fontWeight:700,color:c.blue }}>{m.count}</span>}
+                    {m.count>0 && <span style={{ fontSize:9,fontWeight:600,color:c.blue }}>{m.count}</span>}
                     <div style={{ width:"100%",background:m.count>0?c.blue:c.border,borderRadius:"3px 3px 0 0",
                       height:`${Math.round((m.count/max)*80)+4}px`,minHeight:4,transition:"height .2s" }}/>
                     <span style={{ fontSize:8,color:c.text400,fontWeight:500 }}>{MONTH_SHORT[m.m-1]}</span>
@@ -315,7 +315,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
           const maxT = types[0][1];
           return (
             <div style={{ marginBottom:24 }}>
-              <div style={{ fontSize:13,fontWeight:700,color:c.text900,marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${c.border}` }}>🔧 ประเภทงานที่พบบ่อย</div>
+              <div style={{ fontSize:13,fontWeight:600,color:c.text900,marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${c.border}` }}>ประเภทงานที่พบบ่อย</div>
               <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                 {types.map(([type,count])=>(
                   <div key={type} style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -323,7 +323,7 @@ export default function CaseSummaryReport({ onBack, cases, projects }) {
                     <div style={{ flex:1,background:c.borderSoft,borderRadius:4,height:16,overflow:"hidden" }}>
                       <div style={{ width:`${Math.round(count/maxT*100)}%`,height:"100%",background:c.purple,borderRadius:4 }}/>
                     </div>
-                    <div style={{ width:28,fontSize:11,fontWeight:700,color:c.purple,textAlign:"right" }}>{count}</div>
+                    <div style={{ width:28,fontSize:11,fontWeight:600,color:c.purple,textAlign:"right" }}>{count}</div>
                     <div style={{ width:32,fontSize:10,color:c.text400 }}>{filtered.length>0?Math.round(count/filtered.length*100):0}%</div>
                   </div>
                 ))}

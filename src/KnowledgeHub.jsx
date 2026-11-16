@@ -13,15 +13,15 @@ const WmsToolkit = lazy(() => import("./WmsToolkit.jsx"));
 
 
 export const KB_CATEGORIES = [
-  { key: "WMS",            icon: "📦", color: "#2563EB" },
-  { key: "หุ่นยนต์",         icon: "🤖", color: "#C026D3" },
-  { key: "CCTV / NVR",     icon: "📹", color: "#0F766E" },
-  { key: "Network",        icon: "🌐", color: "#EA580C" },
-  { key: "Access Control", icon: "🚪", color: "#7C3AED" },
-  { key: "Smart Pole",     icon: "🗼", color: "#0891B2" },
-  { key: "Software อื่นๆ",  icon: "💻", color: "#52525b" },
-  { key: "Hardware",       icon: "🔧", color: "#92400E" },
-  { key: "อื่นๆ",           icon: "💡", color: "#71717a" },
+  { key: "WMS",            icon: "", color: "#2563EB" },
+  { key: "หุ่นยนต์",         icon: "", color: "#C026D3" },
+  { key: "CCTV / NVR",     icon: "", color: "#0F766E" },
+  { key: "Network",        icon: "", color: "#EA580C" },
+  { key: "Access Control", icon: "", color: "#7C3AED" },
+  { key: "Smart Pole",     icon: "", color: "#0891B2" },
+  { key: "Software อื่นๆ",  icon: "", color: "#52525b" },
+  { key: "Hardware",       icon: "", color: "#92400E" },
+  { key: "อื่นๆ",           icon: "", color: "#71717a" },
 ];
 const catInfo = (k) => KB_CATEGORIES.find((x) => x.key === k) || KB_CATEGORIES[KB_CATEGORIES.length - 1];
 
@@ -67,9 +67,9 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
   const [solution, setSolution] = useState(editRecord?.solution || "");
   const [tagText, setTagText] = useState((editRecord?.tags || []).join(", "));
 
-  const IS = { width: "100%", boxSizing: "border-box", border: `1px solid ${c.border}`, borderRadius: 10, padding: "9px 12px", fontSize: 13.5,
+  const IS = { width: "100%", boxSizing: "border-box", border: `1px solid ${c.border}`, borderRadius:8, padding: "9px 12px", fontSize: 13.5,
     fontFamily: "inherit", outline: "none", background: c.bg, color: c.text900, lineHeight: 1.6 };
-  const LB = { fontSize: 12, color: c.text500, fontWeight: 700, marginBottom: 5, display: "block" };
+  const LB = { fontSize: 12, color: c.text500, fontWeight:600, marginBottom: 5, display: "block" };
   const HINT = { fontWeight: 400, color: c.text400, fontSize: 11.5 };
 
   const shortTitle = title.trim() && (title.trim().length < 10 || !/\s/.test(title.trim()));
@@ -87,13 +87,13 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}
       onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius: 16, width: "100%", maxWidth: 600, maxHeight: "94vh",
+      <div onClick={(e) => e.stopPropagation()} style={{ background: c.card, borderRadius:12, width: "100%", maxWidth: 600, maxHeight: "94vh",
         overflowY: "auto", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight:600, color: c.text900 }}>{editRecord?.id ? "แก้ไขบทความ" : heading || "เพิ่มบทความ"}</h2>
           <button onClick={onClose} style={{ background: c.borderSoft, border: "none", color: c.text500, cursor: "pointer", fontSize: 14, width: 30, height: 30, borderRadius: 8 }}>✕</button>
         </div>
-        {intro && <div style={{ fontSize: 13, color: c.text500, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 10,
+        {intro && <div style={{ fontSize: 13, color: c.text500, background: c.bg, border: `1px solid ${c.border}`, borderRadius:8,
           padding: "9px 12px", margin: "-4px 0 14px", lineHeight: 1.6 }}>{intro}</div>}
 
         <div style={{ marginBottom: 14 }}>
@@ -103,7 +103,7 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
               const on = category === k.key;
               return (
                 <button key={k.key} type="button" onClick={() => setCategory(k.key)}
-                  style={{ padding: "6px 11px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  style={{ padding: "6px 11px", borderRadius: 999, fontSize: 12.5, fontWeight:600, cursor: "pointer", fontFamily: "inherit",
                     border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.bg, color: on ? c.onInk : c.text500 }}>
                   {k.key}
                 </button>
@@ -119,17 +119,17 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={LB}>🔴 อาการ <span style={HINT}>— เจออะไร error อะไร ที่หน้าไหน</span></label>
+          <label style={LB}>อาการ <span style={HINT}>— เจออะไร error อะไร ที่หน้าไหน</span></label>
           <textarea value={problem} onChange={(e) => setProblem(e.target.value)} rows={2} placeholder="เช่น กดปุ่ม D/O แล้วขึ้น error 500 / หุ่นยนต์หยุดกลางทาง ไฟแดงกระพริบ" style={{ ...IS, resize: "vertical" }} />
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={LB}>🟠 สาเหตุ <span style={HINT}>— ถ้ารู้ (ไม่บังคับ)</span></label>
+          <label style={LB}>สาเหตุ <span style={HINT}>— ถ้ารู้ (ไม่บังคับ)</span></label>
           <textarea value={cause} onChange={(e) => setCause(e.target.value)} rows={2} placeholder="เช่น ข้อมูล shipment ไม่ครบ / แบตต่ำกว่า 10%" style={{ ...IS, resize: "vertical" }} />
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={LB}>✅ วิธีแก้ * <span style={HINT}>— ขึ้นบรรทัดใหม่ = ขั้นตอนถัดไป</span></label>
+          <label style={LB}>วิธีแก้ * <span style={HINT}>— ขึ้นบรรทัดใหม่ = ขั้นตอนถัดไป</span></label>
           <textarea value={solution} onChange={(e) => setSolution(e.target.value)} rows={5}
             placeholder={"เข้าเมนู Booking\nแก้น้ำหนักให้ตรงกับใบ AWB\nกด Save แล้วไปที่หน้า Shipment"} style={{ ...IS, resize: "vertical" }} />
           {steps.length > 1 && <div style={{ fontSize: 11.5, color: c.text400, marginTop: 4 }}>จะแสดงเป็น {steps.length} ขั้นตอน</div>}
@@ -141,11 +141,11 @@ export function KnowledgeModal({ onClose, onSave, saving, editRecord, heading, i
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
-          <button onClick={onClose} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500, borderRadius: 10, padding: 12, fontSize: 14,
+          <button onClick={onClose} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500, borderRadius:8, padding: 12, fontSize: 14,
             fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>ยกเลิก</button>
-          <button onClick={handleSave} disabled={!canSave} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: 12, fontSize: 14,
-            fontWeight: 700, cursor: canSave ? "pointer" : "default", fontFamily: "inherit", opacity: canSave ? 1 : 0.5 }}>
-            {saving ? "กำลังบันทึก..." : !category ? "เลือกหมวดก่อน" : "💾 บันทึก"}
+          <button onClick={handleSave} disabled={!canSave} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius:8, padding: 12, fontSize: 14,
+            fontWeight:600, cursor: canSave ? "pointer" : "default", fontFamily: "inherit", opacity: canSave ? 1 : 0.5 }}>
+            {saving ? "กำลังบันทึก..." : !category ? "เลือกหมวดก่อน" : "บันทึก"}
           </button>
         </div>
       </div>
@@ -202,7 +202,7 @@ function Article({ a, open, onToggle, words, c, canDelete, onEdit, onDelete }) {
               <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
                 {steps.map((s, i) => (
                   <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                    <span style={{ width: 22, height: 22, borderRadius: "50%", background: c.borderSoft, color: c.text900, fontSize: 12, fontWeight: 700,
+                    <span style={{ width: 22, height: 22, borderRadius: "50%", background: c.borderSoft, color: c.text900, fontSize: 12, fontWeight:600,
                       display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
                     <span style={{ fontSize: 13.5, color: c.text900, lineHeight: 1.65, wordBreak: "break-word" }}><Highlight text={s} words={words} /></span>
                   </li>
@@ -210,7 +210,7 @@ function Article({ a, open, onToggle, words, c, canDelete, onEdit, onDelete }) {
               </ol>
             ) : (
               <div style={{ fontSize: 13.5, color: c.text900, lineHeight: 1.7, whiteSpace: "pre-wrap", background: c.bg, border: `1px solid ${c.border}`,
-                borderRadius: 10, padding: "10px 12px" }}><Highlight text={a.solution} words={words} /></div>
+                borderRadius:8, padding: "10px 12px" }}><Highlight text={a.solution} words={words} /></div>
             )}
           </Section>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -292,14 +292,14 @@ export default function KnowledgeHub({ onBack, currentUser }) {
             <div style={{ fontSize: 15.5, fontWeight:600, color: c.text900 }}>Knowledge Hub</div>
             <div style={{ fontSize: 11.5, color: c.text400 }}>วิธีแก้ปัญหาที่ทีมบันทึกไว้ · {articles.length} บทความ</div>
           </div>
-          {!showWms && <button onClick={() => setModal({})} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius: 10, padding: "8px 14px", fontSize: 13,
-            fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ เพิ่มบทความ</button>}
+          {!showWms && <button onClick={() => setModal({})} style={{ background: c.ink, border: "none", color: c.onInk, borderRadius:8, padding: "8px 14px", fontSize: 13,
+            fontWeight:600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ เพิ่มบทความ</button>}
         </div>
         {(
           <div style={{ display: "flex", gap: 4, padding: "0 16px", maxWidth: 860, margin: "0 auto" }}>
-            {[["articles", "บทความ"], ["wms", "🛠 WMS Toolkit"]].map(([k, l]) => (
+            {[["articles", "บทความ"], ["wms", "WMS Toolkit"]].map(([k, l]) => (
               <button key={k} onClick={() => setView(k)} style={{ background: "none", border: "none", borderBottom: `2px solid ${view === k ? c.ink : "transparent"}`,
-                color: view === k ? c.text900 : c.text400, padding: "8px 10px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
+                color: view === k ? c.text900 : c.text400, padding: "8px 10px", fontSize: 13, fontWeight:600, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
             ))}
           </div>
         )}
@@ -334,7 +334,7 @@ export default function KnowledgeHub({ onBack, currentUser }) {
           <section key={g.key || "all"} style={{ marginTop: 14 }}>
             {grouped && (
               <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 6px" }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: c.text900 }}>{g.key}</span>
+                <span style={{ fontSize: 12.5, fontWeight:600, color: c.text900 }}>{g.key}</span>
                 <span style={{ fontSize: 11.5, color: c.text400 }}>{g.items.length}</span>
               </div>
             )}
@@ -353,14 +353,14 @@ export default function KnowledgeHub({ onBack, currentUser }) {
 
       {confirmId && (
         <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: c.card, borderRadius: 16, padding: 22, maxWidth: 320, width: "100%", textAlign: "center" }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: c.text900, marginBottom: 6 }}>ลบบทความนี้?</div>
+          <div style={{ background: c.card, borderRadius:12, padding: 22, maxWidth: 320, width: "100%", textAlign: "center" }}>
+            <div style={{ fontSize: 15, fontWeight:600, color: c.text900, marginBottom: 6 }}>ลบบทความนี้?</div>
             <div style={{ fontSize: 13, color: c.text500, marginBottom: 18 }}>ลบแล้วกู้คืนไม่ได้</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <button onClick={() => setConfirmId(null)} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500, borderRadius: 10, padding: 10,
+              <button onClick={() => setConfirmId(null)} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500, borderRadius:8, padding: 10,
                 fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>ยกเลิก</button>
-              <button onClick={() => deleteArticle(confirmId)} style={{ background: c.danger, border: "none", color: "#fff", borderRadius: 10, padding: 10, fontSize: 14,
-                fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>ลบ</button>
+              <button onClick={() => deleteArticle(confirmId)} style={{ background: c.danger, border: "none", color: "#fff", borderRadius:8, padding: 10, fontSize: 14,
+                fontWeight:600, cursor: "pointer", fontFamily: "inherit" }}>ลบ</button>
             </div>
           </div>
         </div>

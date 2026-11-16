@@ -70,7 +70,7 @@ export default function CaliperConnector({ onValue, disabled }) {
       }
     } catch (e) {
       console.error("Caliper connect error:", e);
-      appendLog("⚠️ เชื่อมต่อไม่สำเร็จ: " + e.message);
+      appendLog("เชื่อมต่อไม่สำเร็จ: " + e.message);
       setConnected(false);
     }
   }, [supported, baud, onValue]);
@@ -91,7 +91,7 @@ export default function CaliperConnector({ onValue, disabled }) {
   if (!supported) {
     return (
       <div style={{
-        background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10,
+        background: "#fffbeb", border: "1px solid #fde68a", borderRadius:8,
         padding: 12, fontSize: 11, color: "#92400e", marginBottom: 12,
       }}>
         ⚠️ เบราว์เซอร์นี้ไม่รองรับการเชื่อมต่อคาลิปเปอร์โดยตรง — ใช้ Chrome หรือ Edge บนคอมพิวเตอร์
@@ -101,10 +101,10 @@ export default function CaliperConnector({ onValue, disabled }) {
 
   return (
     <div style={{
-      background: "#fff", border: "1px solid #e4e4e7", borderRadius: 10, padding: 12, marginBottom: 12,
+      background: "#fff", border: "1px solid #e4e4e7", borderRadius:8, padding: 12, marginBottom: 12,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: "#52525b" }}>📏 คาลิปเปอร์</span>
+        <span style={{ fontSize: 12, fontWeight:600, color: "#52525b" }}>คาลิปเปอร์</span>
 
         {!connected ? (
           <>
@@ -115,19 +115,19 @@ export default function CaliperConnector({ onValue, disabled }) {
             </select>
             <button onClick={connect} disabled={disabled} style={{
               background: "#F97316", color: "#fff", border: "none", borderRadius: 6,
-              padding: "5px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+              padding: "5px 12px", fontSize: 11, fontWeight:600, cursor: "pointer", fontFamily: "inherit",
               opacity: disabled ? 0.5 : 1,
-            }}>🔌 เชื่อมต่อ</button>
+            }}>เชื่อมต่อ</button>
           </>
         ) : (
           <>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: "#16a34a", background: "#f0fdf4",
+              fontSize: 11, fontWeight:600, color: "#16a34a", background: "#f0fdf4",
               border: "1px solid #bbf7d0", borderRadius: 6, padding: "4px 10px",
             }}>● เชื่อมต่อแล้ว</span>
             <button onClick={disconnect} style={{
               background: "#f4f4f5", color: "#52525b", border: "none", borderRadius: 6,
-              padding: "5px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+              padding: "5px 12px", fontSize: 11, fontWeight:600, cursor: "pointer", fontFamily: "inherit",
             }}>ตัดการเชื่อมต่อ</button>
           </>
         )}

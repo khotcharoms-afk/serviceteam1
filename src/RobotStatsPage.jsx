@@ -56,7 +56,7 @@ function ProgressBar({ pct }) {
       <div style={{ flex: 1, height: 7, borderRadius: 20, background: c.borderSoft, overflow: 'hidden' }}>
         <div style={{ width: `${width}%`, height: '100%', background: color, borderRadius: 20, transition: 'width .3s' }} />
       </div>
-      <span style={{ fontSize: 12.5, fontWeight: 700, color, minWidth: 40, textAlign: 'right' }}>
+      <span style={{ fontSize: 12.5, fontWeight:600, color, minWidth: 40, textAlign: 'right' }}>
         {pct === null ? '—' : `${pct.toFixed(0)}%`}
       </span>
     </div>
@@ -71,7 +71,7 @@ function StatusBadge({ worked }) {
       background: worked ? '#f0fdf4' : '#fff5f5',
       color: worked ? c.green : c.red,
       border: `1px solid ${worked ? '#bbf7d0' : '#fecaca'}`,
-      borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+      borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight:600, whiteSpace: 'nowrap',
     }}>
       {worked ? '✅ ทำงาน' : '⛔ ไม่ได้ทำงาน'}
     </span>
@@ -105,7 +105,7 @@ function StatCard({ label, value, sub, color }) {
   const { c } = useTheme();
   return (
     <div style={{
-      background: c.card, border: `1px solid ${c.border}`, borderRadius: 14,
+      background: c.card, border: `1px solid ${c.border}`, borderRadius:8,
       padding: '14px 16px', flex: 1, minWidth: 130, borderLeft: `4px solid ${color}`,
     }}>
       <div style={{ fontSize: 22, fontWeight:600, color: c.text900, lineHeight: 1.15 }}>{value}</div>
@@ -124,7 +124,7 @@ function WeekBarChart({ data, maxValue }) {
         const isToday = d.date === todayStr();
         return (
           <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: c.text500, whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 10.5, fontWeight:600, color: c.text500, whiteSpace: 'nowrap' }}>
               {d.actual_clean_area > 0 ? d.actual_clean_area.toLocaleString() : '-'}
             </div>
             <div style={{ width: '100%', height: 110, display: 'flex', alignItems: 'flex-end' }}>
@@ -253,17 +253,17 @@ function VehicleDetail({ vehicle, onBack }) {
         {/* เลือกช่วงที่จะดู: เลื่อนทีละ 7 วัน หรือเลือกวันสุดท้ายของช่วง */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
           <button onClick={() => setEndDay(addDays(endDay, -7))} disabled={loading}
-            style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', color: c.text900, fontFamily: 'inherit' }}>‹ 7 วันก่อน</button>
+            style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight:600, cursor: 'pointer', color: c.text900, fontFamily: 'inherit' }}>‹ 7 วันก่อน</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: c.text500 }}>
             <span>{fmtShort(startDay)} – </span>
             <input type="date" value={endDay} max={todayStr()} onChange={(e) => e.target.value && setEndDay(e.target.value > todayStr() ? todayStr() : e.target.value)}
               style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 8px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
           </div>
           <button onClick={() => setEndDay(addDays(endDay, 7) > todayStr() ? todayStr() : addDays(endDay, 7))} disabled={loading || atToday}
-            style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, cursor: atToday ? 'default' : 'pointer', color: c.text900, opacity: atToday ? 0.4 : 1, fontFamily: 'inherit' }}>7 วันถัดไป ›</button>
+            style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight:600, cursor: atToday ? 'default' : 'pointer', color: c.text900, opacity: atToday ? 0.4 : 1, fontFamily: 'inherit' }}>7 วันถัดไป ›</button>
           {!atToday && (
             <button onClick={() => setEndDay(todayStr())}
-              style={{ background: 'none', border: 'none', color: c.purple, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>กลับมาวันนี้</button>
+              style={{ background: 'none', border: 'none', color: c.purple, fontSize: 13, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit' }}>กลับมาวันนี้</button>
           )}
         </div>
 
@@ -283,24 +283,24 @@ function VehicleDetail({ vehicle, onBack }) {
               <StatCard label="วันที่ทำงาน" value={`${daysWorked}/7`} color={c.green} sub="วัน" />
             </div>
 
-            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, marginBottom: 14 }}>พื้นที่ทำความสะอาดรายวัน (ตร.ม.)</div>
+            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: 18, marginBottom: 14 }}>
+              <div style={{ fontSize: 13.5, fontWeight:600, color: c.text900, marginBottom: 14 }}>พื้นที่ทำความสะอาดรายวัน (ตร.ม.)</div>
               <WeekBarChart data={weekData} maxValue={maxArea} />
             </div>
 
-            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: c.bg, borderBottom: `1px solid ${c.border}` }}>
                     {['วัน', 'วันที่', 'งาน', 'เวลาทำงาน', 'พื้นที่ (ตร.ม.)'].map((h) => (
-                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, color: c.text500, fontWeight: 700 }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, color: c.text500, fontWeight:600 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {weekData.map((d) => (
                     <tr key={d.date} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: d.date === todayStr() ? `${c.orange}14` : 'transparent' }}>
-                      <td style={{ padding: '10px 14px', fontWeight: 700, color: c.text900 }}>{d.dayLabel}</td>
+                      <td style={{ padding: '10px 14px', fontWeight:600, color: c.text900 }}>{d.dayLabel}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.dateShort}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.failed ? '—' : d.task_num}</td>
                       <td style={{ padding: '10px 14px', color: c.text500 }}>{d.failed ? '—' : formatHours(d.total_time)}</td>
@@ -309,11 +309,11 @@ function VehicleDetail({ vehicle, onBack }) {
                         {!d.failed && !isWorked(d) && d.date <= todayStr() && (
                           <button onClick={() => pullRaw(d.date)} disabled={!!pulling}
                             title="ดึงงานดิบจาก VIGGO มาเติม (กรณีหุ่นส่งข้อมูลย้อนหลังหลังเน็ตกลับมา)"
-                            style={{ marginLeft: 8, background: 'none', border: `1px solid ${c.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 11.5, fontWeight: 700, color: c.purple, cursor: pulling ? 'default' : 'pointer', fontFamily: 'inherit', opacity: pulling && pulling !== d.date ? 0.5 : 1 }}>
+                            style={{ marginLeft: 8, background: 'none', border: `1px solid ${c.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 11.5, fontWeight:600, color: c.purple, cursor: pulling ? 'default' : 'pointer', fontFamily: 'inherit', opacity: pulling && pulling !== d.date ? 0.5 : 1 }}>
                             {pulling === d.date ? 'กำลังดึง…' : (d.rawNote ? `⟲ ${d.rawNote}` : '⟲ ดึงข้อมูล')}
                           </button>
                         )}
-                        {d.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706' }}>⟲ ย้อนหลัง</span>}
+                        {d.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight:600, color: c.amber || '#d97706' }}>⟲ ย้อนหลัง</span>}
                       </td>
                     </tr>
                   ))}
@@ -608,7 +608,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
           <button onClick={onBack} style={{ background: c.bg, border: 'none', borderRadius: 8, width: 30, height: 30, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.text500, flexShrink: 0 }}>←</button>
           <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
             <div style={{ fontSize: isMobile ? 14 : 15.5, fontWeight:600, color: c.text900, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              <span style={{ fontSize: isMobile ? 15 : 17, flexShrink: 0 }}>📊</span>
+              <span style={{ fontSize: isMobile ? 15 : 17, flexShrink: 0 }}></span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>สถิติการทำงานหุ่นยนต์</span>
             </div>
             {!isMobile && <div style={{ fontSize: 11.5, color: c.text400, marginTop: 1 }}>ข้อมูลจากระบบ VIGGO</div>}
@@ -618,9 +618,9 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
       <div style={{ padding: isMobile ? 12 : 16, maxWidth: 1400, margin: '0 auto' }}>
         {/* Date filter */}
-        <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+        <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: 14, marginBottom: 14 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: isMobile ? 'stretch' : 'center', flexWrap: 'wrap', marginBottom: 10, flexDirection: isMobile ? 'column' : 'row' }}>
-            <span style={{ fontSize: 12, color: c.text500, fontWeight: 600 }}>📅 ช่วงวันที่:</span>
+            <span style={{ fontSize: 12, color: c.text500, fontWeight: 600 }}>ช่วงวันที่:</span>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: isMobile ? '100%' : 'auto' }}>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
                 style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '9px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit', flex: isMobile ? 1 : 'none', minWidth: 0 }} />
@@ -629,7 +629,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '9px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit', flex: isMobile ? 1 : 'none', minWidth: 0 }} />
             </div>
             <button onClick={() => fetchData()} disabled={loading}
-              style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: isMobile ? '100%' : 'auto' }}>
+              style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit', width: isMobile ? '100%' : 'auto' }}>
               {loading ? 'กำลังโหลด…' : 'ค้นหา'}
             </button>
           </div>
@@ -674,7 +674,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 <button onClick={pullRawForZeros} disabled={rawLoading}
                   title="หุ่นที่เน็ตหน้างานล่มจะส่งข้อมูลย้อนหลังมาทีหลัง แต่สรุปของ VIGGO ยังเป็น 0 — กดเพื่อดึงงานดิบมาเติม"
                   style={{ background: c.card, color: c.text900, border: `1px solid ${c.border}`, borderRadius: 8, padding: '8px 13px',
-                    fontSize: 12.5, fontWeight: 700, cursor: rawLoading ? 'default' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flex: isMobile ? 1 : 'none' }}>
+                    fontSize: 12.5, fontWeight:600, cursor: rawLoading ? 'default' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flex: isMobile ? 1 : 'none' }}>
                   {rawLoading ? 'กำลังดึง…' : `⟲ ดึงข้อมูลย้อนหลัง (${notWorkedCount} คันที่เป็น 0)`}
                 </button>
               )}
@@ -683,7 +683,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 style={{
                   background: showReport ? c.purple : c.card, color: showReport ? '#fff' : c.purple,
                   border: `1px solid ${c.purple}`, borderRadius: 8, padding: '8px 13px',
-                  fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  fontSize: 12.5, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
                   flex: isMobile ? 1 : 'none',
                 }}
               >
@@ -694,7 +694,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 style={{
                   background: showSheetSync ? c.green : c.card, color: showSheetSync ? '#fff' : c.green,
                   border: `1px solid ${c.green}`, borderRadius: 8, padding: '8px 13px',
-                  fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  fontSize: 12.5, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
                   flex: isMobile ? 1 : 'none',
                 }}
               >
@@ -704,7 +704,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 onClick={() => setShowSlides(true)}
                 style={{
                   background: c.card, color: c.ink, border: `1px solid ${c.ink}`, borderRadius: 8, padding: '8px 13px',
-                  fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  fontSize: 12.5, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
                   flex: isMobile ? 1 : 'none',
                 }}
               >
@@ -718,8 +718,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
         {/* Google Sheet sync panel */}
         {showSheetSync && (
-          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: c.text900, marginBottom: 10 }}>📤 ส่งข้อมูลเข้า Google Sheet (Weekly สรุป)</div>
+          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 13.5, fontWeight:600, color: c.text900, marginBottom: 10 }}>ส่งข้อมูลเข้า Google Sheet (Weekly สรุป)</div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               <span style={{ fontSize: 12, color: c.text500, fontWeight: 600 }}>จาก:</span>
               <input type="date" value={sheetSyncStart} onChange={(e) => { setSheetSyncStart(e.target.value); setSheetPreview(null); setSheetWriteDone(false); }}
@@ -728,19 +728,19 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
               <input type="date" value={sheetSyncEnd} onChange={(e) => { setSheetSyncEnd(e.target.value); setSheetPreview(null); setSheetWriteDone(false); }}
                 style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, color: c.text900, padding: '7px 10px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
               <button onClick={loadSheetPreview} disabled={sheetSyncLoading}
-                style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ background: c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {sheetSyncLoading ? 'กำลังโหลด…' : 'ดูตัวอย่าง'}
               </button>
             </div>
 
             {sheetSyncError && (
-              <div style={{ background: '#fff5f5', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 13 }}>
+              <div style={{ background: '#fff5f5', border: '1px solid #fecaca', color: '#b91c1c', borderRadius:8, padding: '10px 14px', marginBottom: 12, fontSize: 13 }}>
                 ⚠️ {sheetSyncError}
               </div>
             )}
 
             {sheetWriteDone && (
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: c.green, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 13, fontWeight: 700 }}>
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: c.green, borderRadius:8, padding: '10px 14px', marginBottom: 12, fontSize: 13, fontWeight:600 }}>
                 ✓ เขียนข้อมูลเข้า Google Sheet เรียบร้อยแล้ว ({sheetPreview?.totalCells || 0} ช่อง){typeof sheetWriteDone === 'number' && sheetWriteDone > 0 ? ` · ต่ำกว่า target ${sheetWriteDone} ช่อง (ทำตัวแดงในชีตแล้ว)` : ''}
               </div>
             )}
@@ -753,7 +753,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
                 {sheetPreview.perDate?.map((day) => (
                   <div key={day.date} style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: c.purple, marginBottom: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight:600, color: c.purple, marginBottom: 6 }}>
                       {day.date} {day.weekday ? `(${day.weekday})` : ''}
                     </div>
                     {day.error ? (
@@ -783,9 +783,9 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                                   <td style={{ padding: '6px 10px', color: c.text900, fontWeight: 600 }}>{u.column}</td>
                                   <td style={{ padding: '6px 10px', color: c.text400, fontFamily: 'monospace' }}>{u.cell}</td>
                                   <td style={{ padding: '6px 10px', color: c.text500 }}>{u.currentValue || '-'}</td>
-                                  <td style={{ padding: '6px 10px', color: c.green, fontWeight: 700 }}>{u.newValue.toLocaleString()}</td>
+                                  <td style={{ padding: '6px 10px', color: c.green, fontWeight:600 }}>{u.newValue.toLocaleString()}</td>
                                   <td style={{ padding: '6px 10px', color: c.text400 }}>{hasTarget ? u.target.toLocaleString() : '-'}</td>
-                                  <td style={{ padding: '6px 10px', fontWeight: 700, color: hasTarget ? (belowTarget ? c.red : c.green) : c.text400 }}>
+                                  <td style={{ padding: '6px 10px', fontWeight:600, color: hasTarget ? (belowTarget ? c.red : c.green) : c.text400 }}>
                                     {hasTarget ? `${pct.toFixed(0)}%` : '-'}
                                   </td>
                                 </tr>
@@ -804,7 +804,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                   </div>
                 )}
                 <button onClick={confirmSheetWrite} disabled={sheetSyncLoading || sheetPreview.totalCells === 0}
-                  style={{ background: c.green, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ background: c.green, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13.5, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {sheetSyncLoading ? 'กำลังเขียน…' : `✓ ยืนยันเขียนข้อมูลจริง (${sheetPreview.totalCells} ช่อง)`}
                 </button>
               </>
@@ -814,10 +814,10 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
         {/* Daily report panel */}
         {showReport && rows.length > 0 && (
-          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: 16, marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 13.5, fontWeight: 700, color: c.text900 }}>รายงานประจำวัน</span>
+                <span style={{ fontSize: 13.5, fontWeight:600, color: c.text900 }}>รายงานประจำวัน</span>
                 <button onClick={() => setReportDate(addDays(reportDate, -1))} title="วันก่อนหน้า"
                   style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: 30, height: 32, cursor: 'pointer', color: c.text500, fontFamily: 'inherit' }}>‹</button>
                 <input type="date" value={reportDate} max={todayStr()} onChange={(e) => e.target.value && setReportDate(e.target.value)}
@@ -826,21 +826,21 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                   style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, width: 30, height: 32, cursor: reportDate >= todayStr() ? 'default' : 'pointer', color: c.text500, opacity: reportDate >= todayStr() ? 0.4 : 1, fontFamily: 'inherit' }}>›</button>
                 {reportDate !== todayStr() && (
                   <button onClick={() => setReportDate(todayStr())}
-                    style={{ background: 'none', border: 'none', color: c.purple, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>วันนี้</button>
+                    style={{ background: 'none', border: 'none', color: c.purple, fontSize: 12.5, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit' }}>วันนี้</button>
                 )}
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <QuickRangeBtn label="🌅 เช้า" active={reportMode === 'morning'} onClick={() => setReportMode('morning')} />
                 <QuickRangeBtn label="🌙 เย็น" active={reportMode === 'evening'} onClick={() => setReportMode('evening')} />
                 <button onClick={copyReport} disabled={reportLoading || !!reportError}
-                  style={{ background: copied ? c.green : c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ background: copied ? c.green : c.orange, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {copied ? '✓ คัดลอกแล้ว' : '📋 คัดลอกข้อความ'}
                 </button>
               </div>
             </div>
             <pre style={{
               whiteSpace: 'pre-wrap', fontFamily: "'Noto Sans Thai',sans-serif", fontSize: 13.5,
-              color: c.text900, background: c.bg, borderRadius: 10, padding: 14, margin: 0, lineHeight: 1.7,
+              color: c.text900, background: c.bg, borderRadius:8, padding: 14, margin: 0, lineHeight: 1.7,
               maxHeight: 420, overflowY: 'auto',
             }}>
               {reportLoading ? 'กำลังโหลดข้อมูลวันที่ ' + reportDate + '…'
@@ -862,17 +862,17 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                 placeholder="ค้นหารถ, VIN หรือโปรเจกต์..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                style={{ width: '100%', background: c.card, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
+                style={{ width: '100%', background: c.card, border: `1px solid ${c.border}`, borderRadius:8, color: c.text900, padding: '10px 14px 10px 34px', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }}
               />
             </div>
-            <div style={{ fontSize: 11, color: c.text400, marginTop: 6 }}>💡 กดที่รถแต่ละคันเพื่อดูผลงานย้อนหลัง 7 วัน</div>
+            <div style={{ fontSize: 11, color: c.text400, marginTop: 6 }}>กดที่รถแต่ละคันเพื่อดูผลงานย้อนหลัง 7 วัน</div>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && rows.length === 0 && !error && (
-          <div style={{ background: c.card, border: `1.5px solid ${c.border}`, borderRadius: 14, padding: '48px 20px', textAlign: 'center', color: c.text400 }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
+          <div style={{ background: c.card, border: `1.5px solid ${c.border}`, borderRadius:8, padding: '48px 20px', textAlign: 'center', color: c.text400 }}>
+            
             <div style={{ fontSize: 14 }}>ไม่พบข้อมูลในช่วงวันที่นี้</div>
           </div>
         )}
@@ -883,7 +883,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             {filteredRows.map((r) => {
               const pct = pctOf(r);
               return (
-                <div key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14, cursor: 'pointer' }}>
+                <div key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, padding: 14, cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
                       <div style={{ fontSize: 14.5, fontWeight:600, color: c.text900 }}>{r.vehicle_name}</div>
@@ -892,9 +892,9 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                       <div style={{ fontSize: 10, color: '#d4d4d8', marginTop: 1, fontFamily: 'monospace' }}>{r.vin}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <StatusBadge worked={isWorked(r)} />{r.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706', whiteSpace: 'nowrap' }}>⟲ ย้อนหลัง</span>}
+                      <StatusBadge worked={isWorked(r)} />{r.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight:600, color: c.amber || '#d97706', whiteSpace: 'nowrap' }}>⟲ ย้อนหลัง</span>}
                       {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS) && (
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: c.red }}>
+                        <span style={{ fontSize: 10.5, fontWeight:600, color: c.red }}>
                           ⏱ ไม่ได้ทำงานมา {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}
                         </span>
                       )}
@@ -911,10 +911,10 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                   </div>
                   {(idleDays[r.vin] || 0) >= IDLE_CASE_THRESHOLD && (
                     caseCreatedFor[r.vin] ? (
-                      <div style={{ marginTop: 10, textAlign: 'center', fontSize: 12, color: c.green, fontWeight: 700 }}>✓ สร้างเคสแล้ว</div>
+                      <div style={{ marginTop: 10, textAlign: 'center', fontSize: 12, color: c.green, fontWeight:600 }}>✓ สร้างเคสแล้ว</div>
                     ) : (
                       <button onClick={(e) => { e.stopPropagation(); openCreateCase(r); }}
-                        style={{ marginTop: 10, width: '100%', background: '#fff5f5', border: '1px solid #fecaca', color: c.red, borderRadius: 8, padding: '8px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        style={{ marginTop: 10, width: '100%', background: '#fff5f5', border: '1px solid #fecaca', color: c.red, borderRadius: 8, padding: '8px', fontSize: 12.5, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit' }}>
                         🔧 สร้างเคส
                       </button>
                     )
@@ -927,13 +927,13 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
         {/* Desktop: table */}
         {!isMobile && filteredRows.length > 0 && (
-          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius:8, overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: c.bg, borderBottom: `1px solid ${c.border}` }}>
                     {['สถานะ', 'ไม่ทำงานมา', 'รถ', 'ไซต์', 'งาน', 'เวลาทำงาน', 'ทำสำเร็จ (ตร.ม.)', 'ยังไม่ทำ (ตร.ม.)', 'ผลงาน', 'จัดการ'].map((h) => (
-                      <th key={h} style={{ padding: '10px 10px', textAlign: 'left', fontSize: 11.5, color: c.text500, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 10px', textAlign: 'left', fontSize: 11.5, color: c.text500, fontWeight:600, whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -942,13 +942,13 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                     const pct = pctOf(r);
                     return (
                       <tr key={r.vin} onClick={() => setSelectedVehicle(r)} style={{ borderBottom: `1px solid ${c.borderSoft}`, background: isWorked(r) ? 'transparent' : redBg, cursor: 'pointer' }}>
-                        <td style={{ padding: '10px 10px' }}><StatusBadge worked={isWorked(r)} />{r.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: c.amber || '#d97706', whiteSpace: 'nowrap' }}>⟲ ย้อนหลัง</span>}</td>
+                        <td style={{ padding: '10px 10px' }}><StatusBadge worked={isWorked(r)} />{r.from_raw && <span title="VIGGO ยังไม่อัปเดตสรุปของวันนี้ (หุ่นส่งข้อมูลย้อนหลัง) — ตัวเลขนี้คำนวณจากงานดิบ" style={{ marginLeft: 6, fontSize: 10.5, fontWeight:600, color: c.amber || '#d97706', whiteSpace: 'nowrap' }}>⟲ ย้อนหลัง</span>}</td>
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)
-                            ? <span style={{ color: c.red, fontWeight: 700, fontSize: 12.5 }}>⏱ {formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>
+                            ? <span style={{ color: c.red, fontWeight:600, fontSize: 12.5 }}>{formatIdleDays(idleDays[r.vin], IDLE_MAX_DAYS)}</span>
                             : (idleLoading ? <span style={{ color: c.text400, fontSize: 12 }}>…</span> : <span style={{ color: c.text400 }}>-</span>)}
                         </td>
-                        <td style={{ padding: '10px 10px', fontWeight: 700, color: c.text900, whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '10px 10px', fontWeight:600, color: c.text900, whiteSpace: 'nowrap' }}>
                           {r.vehicle_name}
                           <div style={{ fontSize: 10, color: c.text400, fontWeight: 400, fontFamily: 'monospace' }}>{r.vin}</div>
                         </td>
@@ -964,10 +964,10 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
                         <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
                           {(idleDays[r.vin] || 0) >= IDLE_CASE_THRESHOLD && (
                             caseCreatedFor[r.vin] ? (
-                              <span style={{ fontSize: 12, color: c.green, fontWeight: 700 }}>✓ สร้างแล้ว</span>
+                              <span style={{ fontSize: 12, color: c.green, fontWeight:600 }}>✓ สร้างแล้ว</span>
                             ) : (
                               <button onClick={(e) => { e.stopPropagation(); openCreateCase(r); }}
-                                style={{ background: '#fff5f5', border: '1px solid #fecaca', color: c.red, borderRadius: 7, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                                style={{ background: '#fff5f5', border: '1px solid #fecaca', color: c.red, borderRadius: 7, padding: '5px 10px', fontSize: 12, fontWeight:600, cursor: 'pointer', fontFamily: 'inherit' }}>
                                 🔧 สร้างเคส
                               </button>
                             )
@@ -992,8 +992,8 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
         <div onClick={() => { if (!caseSaving) { setCaseModalFor(null); setProjPickerOpen(false); } }}
           style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: c.card, borderRadius: 16, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif", maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
-            <div style={{ fontSize: 15, fontWeight:600, color: c.text900, marginBottom: 4 }}>🔧 สร้างเคส</div>
+            style={{ background: c.card, borderRadius:12, width: '100%', maxWidth: 440, padding: 20, fontFamily: "'Noto Sans Thai',sans-serif", maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
+            <div style={{ fontSize: 15, fontWeight:600, color: c.text900, marginBottom: 4 }}>สร้างเคส</div>
             <div style={{ fontSize: 12, color: c.text400, marginBottom: 16 }}>{caseModalFor.vehicle_name} · {siteName(caseModalFor.project_name)}</div>
 
             <label style={{ fontSize: 12.5, color: c.text500, fontWeight: 600 }}>หัวข้อเคส</label>
@@ -1011,7 +1011,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
               </button>
 
               {projPickerOpen && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 40, background: c.card, border: `1px solid ${c.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.28)', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 40, background: c.card, border: `1px solid ${c.border}`, borderRadius:8, boxShadow: '0 8px 24px rgba(0,0,0,.28)', overflow: 'hidden' }}>
                   <input autoFocus value={projSearch} onChange={(e) => setProjSearch(e.target.value)}
                     placeholder="ค้นหาโครงการ…"
                     style={{ width: '100%', border: 'none', borderBottom: `1px solid ${c.border}`, padding: '9px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: c.bg, color: c.text900 }} />
@@ -1035,11 +1035,11 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => { setCaseModalFor(null); setProjPickerOpen(false); }} disabled={caseSaving}
-                style={{ flex: 1, background: c.borderSoft, border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: c.text500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, background: c.borderSoft, border: 'none', borderRadius:8, padding: 12, fontSize: 14, fontWeight:600, color: c.text500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 ยกเลิก
               </button>
               <button onClick={submitIdleCase} disabled={!caseTitle.trim() || caseSaving}
-                style={{ flex: 1, background: !caseTitle.trim() ? '#fca5a5' : c.orange, border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: !caseTitle.trim() ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, background: !caseTitle.trim() ? '#fca5a5' : c.orange, border: 'none', borderRadius:8, padding: 12, fontSize: 14, fontWeight:600, color: '#fff', cursor: !caseTitle.trim() ? 'default' : 'pointer', fontFamily: 'inherit' }}>
                 {caseSaving ? 'กำลังบันทึก…' : 'สร้างเคส'}
               </button>
             </div>

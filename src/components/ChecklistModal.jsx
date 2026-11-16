@@ -130,9 +130,9 @@ function initChecked(template) {
 }
 
 const TEMPLATES = [
-  { key:"general",    label:"ทั่วไป",     icon:"📋", template:GENERAL_TEMPLATE },
-  { key:"smartpole",  label:"SmartPole",  icon:"🏙", template:SMARTPOLE_TEMPLATE },
-  { key:"robot",      label:"Robot",      icon:"🤖", template:ROBOT_TEMPLATE },
+  { key:"general",    label:"ทั่วไป",     icon:"", template:GENERAL_TEMPLATE },
+  { key:"smartpole",  label:"SmartPole",  icon:"", template:SMARTPOLE_TEMPLATE },
+  { key:"robot",      label:"Robot",      icon:"", template:ROBOT_TEMPLATE },
 ];
 
 function detectTemplateKey(projName) {
@@ -190,12 +190,12 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
     <div style={{ position:"fixed",inset:0,zIndex:500,background:"rgba(15,23,42,.5)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
       onClick={onClose}>
-      <div style={{ background:t.card,borderRadius:16,width:"100%",maxWidth:560,
+      <div style={{ background:t.card,borderRadius:12,width:"100%",maxWidth:560,
         maxHeight:"92vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.35)",
         padding:"24px 24px 28px" }}
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <h2 style={{ margin:0,fontSize:16,fontWeight:700,color:t.text900 }}>
+          <h2 style={{ margin:0,fontSize:16,fontWeight:600,color:t.text900 }}>
             📋 Checklist — {template.name}
           </h2>
           <button onClick={onClose}
@@ -205,7 +205,7 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
         </div>
         {/* เลือก Template */}
         <div style={{ display:"flex",gap:6,marginBottom:16,background:t.bg,
-          borderRadius:10,padding:6,border:`1px solid ${t.border}` }}>
+          borderRadius:8,padding:6,border:`1px solid ${t.border}` }}>
           {TEMPLATES.map((tpl)=>(
             <button key={tpl.key} type="button" onClick={()=>switchTemplate(tpl.key)}
               style={{ flex:1,padding:"7px 8px",borderRadius:8,border:"none",
@@ -225,7 +225,7 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ display:"flex",justifyContent:"space-between",marginBottom:6 }}>
           <span style={{ fontSize:12,color:t.text500,fontWeight:600 }}>ความคืบหน้า</span>
-          <span style={{ fontSize:12,fontWeight:700,color: allDone?t.green:t.orange }}>
+          <span style={{ fontSize:12,fontWeight:600,color: allDone?t.green:t.orange }}>
             {checkedCount}/{totalItems} รายการ
           </span>
         </div>
@@ -241,7 +241,7 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
       {/* Sections */}
       {template.sections.map(sec => (
         <div key={sec.title} style={{ marginBottom:16 }}>
-          <div style={{ fontSize:11,fontWeight:700,color:t.orange,
+          <div style={{ fontSize:11,fontWeight:600,color:t.orange,
             textTransform:"uppercase",letterSpacing:.5,marginBottom:8,
             paddingBottom:4,borderBottom:`1.5px solid ${tint(t.orange,"55")}` }}>
             {sec.title}
@@ -270,7 +270,7 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
 
       {/* หมายเหตุ */}
       <div style={{ marginBottom:16 }}>
-        <div style={{ fontSize:11,fontWeight:700,color:t.text400,
+        <div style={{ fontSize:11,fontWeight:600,color:t.text400,
           textTransform:"uppercase",letterSpacing:.5,marginBottom:6 }}>
           อุปกรณ์เพิ่มเติม / หมายเหตุ
         </div>
@@ -286,7 +286,7 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
       <label style={{ display:"flex",alignItems:"center",gap:10,cursor:"pointer",
         background: confirmed?tint(t.blue,"14"):t.bg,
         border:`1.5px solid ${confirmed?tint(t.blue,"55"):t.border}`,
-        borderRadius:10,padding:"10px 14px",marginBottom:16 }}>
+        borderRadius:8,padding:"10px 14px",marginBottom:16 }}>
         <input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}
           style={{ width:18,height:18,accentColor:t.blue,cursor:"pointer",flexShrink:0 }}/>
         <span style={{ fontSize:13,fontWeight:600,color: confirmed?t.blue:t.text500 }}>
@@ -298,16 +298,16 @@ export default function ChecklistModal({ c, proj, onClose, onSave, saving }) {
       <div style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:8 }}>
         <button onClick={onClose}
           style={{ background:t.bg,border:`1px solid ${t.border}`,color:t.text500,
-            borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,
+            borderRadius:8,padding:"12px",fontSize:14,fontWeight:600,
             cursor:"pointer",fontFamily:"inherit" }}>
           ยกเลิก
         </button>
         <button onClick={handleSave} disabled={saving}
           style={{ background:t.orange,border:"none",color:"#fff",
-            borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,
+            borderRadius:8,padding:"12px",fontSize:14,fontWeight:600,
             cursor:saving?"not-allowed":"pointer",fontFamily:"inherit",
             opacity:saving?0.7:1 }}>
-          {saving ? "กำลังบันทึก..." : "💾 บันทึก Checklist"}
+          {saving ? "กำลังบันทึก..." : "บันทึก Checklist"}
         </button>
       </div>
         </div>
