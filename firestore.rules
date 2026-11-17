@@ -159,6 +159,17 @@ service cloud.firestore {
         || (isApproved() && resource.data.createdByUid == request.auth.uid);
     }
 
+    // ── อะไหล่เสียรับคืน (+ รูปใน subcollection photos) ─────────
+    // ทุกคนที่อนุมัติแล้วดู/เพิ่ม/แก้ได้ ลบได้เฉพาะคนที่บันทึก หรือ admin/dev
+    match /brokenParts/{id} {
+      allow read, create, update: if isApproved();
+      allow delete: if isAdminOrDev() || (isApproved() && resource.data.createdBy == request.auth.uid);
+      match /photos/{pid} {
+        allow read, create, update: if isApproved();
+        allow delete: if isApproved();
+      }
+    }
+
     // ── ค่าตั้งของระบบ (เช่น target หุ่นยนต์ของสไลด์รายสัปดาห์) ──
     match /settings/{id} {
       allow read, write: if isApproved();

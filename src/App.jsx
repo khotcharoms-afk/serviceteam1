@@ -25,6 +25,7 @@ const CaseLogPage = lazy(() => import("./CaseLogPage.jsx"));
 const KnowledgeHub = lazy(() => import("./KnowledgeHub.jsx"));
 const DevicesPage = lazy(() => import("./DevicesPage.jsx"));
 const RequisitionPage = lazy(() => import("./RequisitionPage.jsx"));
+const BrokenPartsPage = lazy(() => import("./BrokenPartsPage.jsx"));
 const SmartPolePage = lazy(() => import("./SmartPolePage.jsx"));
 const DeviceReportPage = lazy(() => import("./DeviceReportPage.jsx"));
 const CaseToKnowledge = lazy(() => import("./components/CaseToKnowledge.jsx"));
@@ -61,6 +62,7 @@ export default function App({ currentUser, onSignOut }) {
   const [robotIssuesPage,setRobotIssuesPage] = useState(false);
   const [devicesPage,setDevicesPage] = useState(false);
   const [requisitionPage,setRequisitionPage] = useState(false);
+  const [brokenPartsPage,setBrokenPartsPage] = useState(false);
   const [smartPolePage,setSmartPolePage] = useState(false);
   const [deviceReportPage,setDeviceReportPage] = useState(false);
   // ผู้ช่วย AI เป็นแผงด้านซ้าย ไม่ใช่หน้าแยก — mount ครั้งแรกที่เปิด แล้วค้างไว้ให้แชทไม่หาย
@@ -95,7 +97,7 @@ export default function App({ currentUser, onSignOut }) {
     ["ot", otPage, setOtPage], ["tasks", taskPage, setTaskPage], ["onsite", onsitePage, setOnsitePage],
     ["shift", shiftPage, setShiftPage], ["knowledge", knowledgePage, setKnowledgePage],
     ["robot-stats", robotStatsPage, setRobotStatsPage], ["case-log", caseLogPage, setCaseLogPage],
-    ["robot-issues", robotIssuesPage, setRobotIssuesPage], ["devices", devicesPage, setDevicesPage], ["requisition", requisitionPage, setRequisitionPage], ["smartpole", smartPolePage, setSmartPolePage], ["status-report", deviceReportPage, setDeviceReportPage],
+    ["robot-issues", robotIssuesPage, setRobotIssuesPage], ["devices", devicesPage, setDevicesPage], ["requisition", requisitionPage, setRequisitionPage], ["broken-parts", brokenPartsPage, setBrokenPartsPage], ["smartpole", smartPolePage, setSmartPolePage], ["status-report", deviceReportPage, setDeviceReportPage],
     ["dashboard", dashboardPage, setDashboardPage],
   ];
   useEffect(() => {
@@ -719,7 +721,7 @@ export default function App({ currentUser, onSignOut }) {
   const closeAllPages = () => {
     setAdminPage(false); setDashboardPage(false); setShiftPage(false); setOnsitePage(false); setTaskPage(false);
     setKnowledgePage(false); setOtPage(false); setRobotStatsPage(false); setRobotIssuesPage(false); setDevicesPage(false);
-    setRequisitionPage(false); setSmartPolePage(false); setDeviceReportPage(false); setCaseLogPage(false);
+    setRequisitionPage(false); setBrokenPartsPage(false); setSmartPolePage(false); setDeviceReportPage(false); setCaseLogPage(false);
     setProfilePage(false); setLeavePage(false);
   };
   const darkToggle = (
@@ -831,6 +833,7 @@ export default function App({ currentUser, onSignOut }) {
   if(caseLogPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><CaseLogPage onBack={()=>setCaseLogPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(robotIssuesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><RobotIssuesPage onBack={()=>setRobotIssuesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
   if(devicesPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><DevicesPage onBack={()=>setDevicesPage(false)} currentUser={currentUser}/></Suspense></ThemeContext.Provider>;
+  if(brokenPartsPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><BrokenPartsPage onBack={()=>setBrokenPartsPage(false)} currentUser={currentUser} projects={projects} isAdminOrDev={isAdminOrDev}/></Suspense></ThemeContext.Provider>;
   if(requisitionPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><RequisitionPage onBack={()=>setRequisitionPage(false)} currentUser={currentUser} projects={projects}/></Suspense></ThemeContext.Provider>;
   if(deviceReportPage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><DeviceReportPage onBack={()=>setDeviceReportPage(false)}/></Suspense></ThemeContext.Provider>;
   if(smartPolePage) return <ThemeContext.Provider value={{ dark: darkMode, c: themeC }}>{darkToggle}<Suspense fallback={<PageLoader/>}><SmartPolePage onBack={()=>setSmartPolePage(false)}/></Suspense></ThemeContext.Provider>;
@@ -893,6 +896,7 @@ export default function App({ currentUser, onSignOut }) {
         setRobotIssuesPage={setRobotIssuesPage}
         setDevicesPage={setDevicesPage}
         setRequisitionPage={setRequisitionPage}
+        setBrokenPartsPage={setBrokenPartsPage}
         setSmartPolePage={setSmartPolePage}
         setDeviceReportPage={setDeviceReportPage}
         setAssistantPage={openAssistant}

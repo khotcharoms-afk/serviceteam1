@@ -53,6 +53,7 @@ export default function Drawer({
   setRobotIssuesPage,
   setDevicesPage,
   setRequisitionPage,
+  setBrokenPartsPage,
   setSmartPolePage,
   setDeviceReportPage,
   setAssistantPage,
@@ -130,6 +131,8 @@ export default function Drawer({
           onClick={()=>{ setDevicesPage(true); onClose(); }}/>
         <DrawerItem active={false} icon="box" label="ใบเบิกของ" count={""}
           onClick={()=>{ setRequisitionPage(true); onClose(); }}/>
+        <DrawerItem active={false} icon="wrench" label="อะไหล่เสียรับคืน" count={""}
+          onClick={()=>{ setBrokenPartsPage(true); onClose(); }}/>
         <DrawerItem active={false} icon="book" label="Knowledge Hub" count={""}
           onClick={()=>{ setKnowledgePage(true); onClose(); }}/>
         <DrawerItem active={false} icon="chat" label="ผู้ช่วย AI" count={""}
