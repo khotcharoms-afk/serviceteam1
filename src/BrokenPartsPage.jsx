@@ -5,6 +5,7 @@ import {
 } from "firebase/firestore";
 import { useTheme } from "./theme.js";
 import Icon from "./components/Icon.jsx";
+import { uiConfirm, uiAlert } from "./components/Dialogs.jsx";
 
 // ── อะไหล่เสียรับคืน ─────────────────────────────────────────────
 // เก็บใน Firestore: brokenParts/{id}  (+ รูปเต็มใน brokenParts/{id}/photos/{photoId})
@@ -451,18 +452,18 @@ function PartDetail({ item, onClose, onEdit, currentUser, isAdminOrDev }) {
         status: v, updatedAt: now, updatedBy: currentUser?.name || "",
         history: [...(item.history || []), { at: now, by: currentUser?.name || "", status: v }],
       });
-    } catch (e) { alert(e.message); }
+    } catch (e) { uiAlert(e.message); }
     setBusy(false);
   }
   async function remove() {
-    if (!confirm(`ลบรายการ "${item.partName}" และรูปทั้งหมด?\n\nลบแล้วกู้คืนไม่ได้`)) return;
+    if (!await uiConfirm(`ลบรายการ "${item.partName}" และรูปทั้งหมด?\n\nลบแล้วกู้คืนไม่ได้`)) return;
     setBusy(true);
     try {
       const s = await getDocs(collection(db, "brokenParts", item.id, "photos"));
       const b = writeBatch(db); s.docs.forEach(d => b.delete(d.ref)); await b.commit();
       await deleteDoc(doc(db, "brokenParts", item.id));
       onClose();
-    } catch (e) { alert(e.message); setBusy(false); }
+    } catch (e) { uiAlert(e.message); setBusy(false); }
   }
 
   const Row = ({ k, v }) => v ? (

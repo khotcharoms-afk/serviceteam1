@@ -4,6 +4,7 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, quer
 import OTModal from "./OTModal.jsx";
 import { useTheme } from "./theme.js";
 import { ORSettingsPanel, ORMigrateModal, planMigration } from "./ORSettingsPanel.jsx";
+import { uiAlert } from "./components/Dialogs.jsx";
 
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const { c } = useTheme();
@@ -111,7 +112,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       setShowModal(false);
       setEditRecord(null);
     } catch(err) {
-      alert("บันทึกไม่สำเร็จ: " + err.message);
+      uiAlert("บันทึกไม่สำเร็จ: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -140,7 +141,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
 
   async function exportOR(r) {
     if (!profile.nameTH?.trim()) {
-      alert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
+      uiAlert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
       setTab("profile");
       return;
     }
@@ -159,13 +160,13 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       a.click();
       URL.revokeObjectURL(url);
     } catch(err) {
-      alert("Export ใบ OR ไม่สำเร็จ: " + err.message);
+      uiAlert("Export ใบ OR ไม่สำเร็จ: " + err.message);
     }
   }
 
   async function exportAllOR() {
     if (!profile.nameTH?.trim()) {
-      alert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
+      uiAlert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
       setTab("profile");
       return;
     }
@@ -195,14 +196,14 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     try {
       for (const { r, ch } of migratePlan) await updateDoc(doc(db,"otRecords",r.id), ch);
       setMigratePlan(null);
-    } catch(err) { alert("ปรับข้อมูลไม่สำเร็จ: " + err.message); }
+    } catch(err) { uiAlert("ปรับข้อมูลไม่สำเร็จ: " + err.message); }
     setMigrating(false);
   }
 
   async function doExportAllOR() {
     const exportRecords = ownRecords.filter(inRange)
       .sort((a,b)=>`${a.dateIn||""} ${a.timeIn||""}`.localeCompare(`${b.dateIn||""} ${b.timeIn||""}`));
-    if (exportRecords.length === 0) { alert("ไม่มีรายการในช่วงวันที่นี้"); return; }
+    if (exportRecords.length === 0) { uiAlert("ไม่มีรายการในช่วงวันที่นี้"); return; }
     setShowORDatePicker(false);
     try {
       const res = await fetch("/api/generate-or", {
@@ -219,7 +220,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       a.click();
       URL.revokeObjectURL(url);
     } catch(err) {
-      alert("Export ใบ OR ไม่สำเร็จ: " + err.message);
+      uiAlert("Export ใบ OR ไม่สำเร็จ: " + err.message);
     }
   }
 
@@ -227,7 +228,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
     const exportRecords = filtered.length > 0 ? filtered : myRecords;
     if (exportRecords.length === 0) return;
     if (!profile.nameTH?.trim()) {
-      alert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
+      uiAlert("กรุณากรอกข้อมูล OT ก่อน: เมนู → โปรไฟล์ → ข้อมูล OT");
       setTab("profile");
       return;
     }
@@ -250,7 +251,7 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       a.click();
       URL.revokeObjectURL(url);
     } catch(err) {
-      alert("Export ไม่สำเร็จ: " + err.message);
+      uiAlert("Export ไม่สำเร็จ: " + err.message);
     }
   }
 

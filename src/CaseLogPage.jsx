@@ -3,6 +3,7 @@ import { db } from "./firebase";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useTheme } from "./theme.js";
 import { IS } from "./utils.js";
+import { uiConfirm, uiAlert } from "./components/Dialogs.jsx";
 
 // บันทึกการรับเคส — สมุดจดเคสที่แก้ได้ทางไกล (เช่น แนะนำวิธีแก้ผ่าน LINE OA)
 // แยกจากเคสหลัก (cases) เก็บใน collection "caseLogs"
@@ -155,7 +156,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
       setModal(null);
     } catch (e) {
       console.error(e);
-      alert("บันทึกไม่สำเร็จ: " + e.message);
+      uiAlert("บันทึกไม่สำเร็จ: " + e.message);
     }
     setSaving(false);
   }
@@ -163,13 +164,13 @@ export default function CaseLogPage({ onBack, currentUser }) {
   async function quickClose(r) {
     try {
       await updateDoc(doc(db, "caseLogs", r.id), { closedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-    } catch (e) { console.error(e); alert("ปิดเคสไม่สำเร็จ: " + e.message); }
+    } catch (e) { console.error(e); uiAlert("ปิดเคสไม่สำเร็จ: " + e.message); }
   }
 
   async function remove(r) {
-    if (!confirm(`ลบบันทึก "${r.title}"?`)) return;
+    if (!await uiConfirm(`ลบบันทึก "${r.title}"?`)) return;
     try { await deleteDoc(doc(db, "caseLogs", r.id)); }
-    catch (e) { console.error(e); alert("ลบไม่สำเร็จ: " + e.message); }
+    catch (e) { console.error(e); uiAlert("ลบไม่สำเร็จ: " + e.message); }
   }
 
   const filtered = logs.filter(r => {
@@ -195,7 +196,7 @@ export default function CaseLogPage({ onBack, currentUser }) {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "บันทึกการรับเคส");
       XLSX.writeFile(wb, `บันทึกการรับเคส_${toLocalInput().slice(0, 10)}.xlsx`);
-    } catch (e) { console.error(e); alert("Export ไม่สำเร็จ: " + e.message); }
+    } catch (e) { console.error(e); uiAlert("Export ไม่สำเร็จ: " + e.message); }
     setExporting(false);
   }
 

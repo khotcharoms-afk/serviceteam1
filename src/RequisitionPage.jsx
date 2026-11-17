@@ -7,6 +7,7 @@ import { IS as inputBase, today } from "./utils.js";
 import { downloadRequisition, thaiDate, MAX_ITEMS, normalizeReq } from "./requisitionExcel.js";
 import { downloadRequisitionPdf } from "./requisitionPdf.js";
 import { isChunkError, reloadForNewVersion } from "./staleChunk.js";
+import { uiConfirm } from "./components/Dialogs.jsx";
 
 // ชื่อโครงการในระบบส่วนใหญ่ขึ้นต้นด้วย "โครงการ" อยู่แล้ว — ไม่เติมซ้ำ
 const projLabel = (name = "") => (name.trim().startsWith("โครงการ") ? name.trim() : `โครงการ ${name.trim()}`);
@@ -76,7 +77,7 @@ export default function RequisitionPage({ onBack, currentUser, projects = [] }) 
   }
 
   async function remove(r) {
-    if (!window.confirm(`ลบใบเบิกวันที่ ${thaiDate(r.date)} (${normalizeReq(r).location || r.site || r.project}) ?`)) return;
+    if (!await uiConfirm(`ลบใบเบิกวันที่ ${thaiDate(r.date)} (${normalizeReq(r).location || r.site || r.project}) ?`)) return;
     try { await deleteDoc(doc(db, "requisitions", r.id)); flash("ลบแล้ว"); }
     catch { flash("ลบไม่สำเร็จ", false); }
   }

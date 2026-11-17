@@ -4,6 +4,7 @@ import {
   collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, getDocs, query, where
 } from "firebase/firestore";
 import OnsiteModal from "./OnsiteModal.jsx";
+import { uiAlert } from "./components/Dialogs.jsx";
 
 export default function OnsitePage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
@@ -49,7 +50,7 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
       setShowModal(false);
       setEditRecord(null);
     } catch (err) {
-      alert("บันทึกไม่สำเร็จ: " + err.message);
+      uiAlert("บันทึกไม่สำเร็จ: " + err.message);
     } finally {
       setSaving(false);
     }

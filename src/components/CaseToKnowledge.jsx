@@ -4,6 +4,7 @@ import { useState } from "react";
 import { db } from "../firebase";
 import { addDoc, collection, doc, setDoc } from "firebase/firestore";
 import { KnowledgeModal, categoryOf } from "../KnowledgeHub.jsx";
+import { uiAlert } from "./Dialogs.jsx";
 
 export function draftFromCase(caseData, project) {
   const steps = (caseData.updateLog || []).map((u) => String(u.text || "").trim()).filter(Boolean);
@@ -33,7 +34,7 @@ export default function CaseToKnowledge({ caseData, project, currentUser, onClos
       onClose();
     } catch (e) {
       console.error(e);
-      alert("บันทึกไม่สำเร็จ");
+      uiAlert("บันทึกไม่สำเร็จ");
     }
     setSaving(false);
   }

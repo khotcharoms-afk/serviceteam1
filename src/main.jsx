@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import Root from './Root.jsx'
+import { DialogHost } from './components/Dialogs.jsx'
 import { isChunkError, reloadForNewVersion } from './staleChunk.js'
 
 // ไฟล์ย่อยของเวอร์ชันเก่าหายหลัง deploy → รีเฟรชเอง
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
       <Root />
+      <DialogHost />
     </ErrorBoundary>
   </React.StrictMode>,
 )
