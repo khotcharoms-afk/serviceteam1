@@ -1,5 +1,6 @@
 import Icon from "./components/Icon.jsx";
 import { FullLoader } from "./UI.jsx";
+import { uiConfirm } from "./components/Dialogs.jsx";
 import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeContext, THEMES } from "./theme.js";
 import { db, auth, registerPushSubscription } from "./firebase";
@@ -364,6 +365,20 @@ export default function App({ currentUser, onSignOut }) {
     }
     setSaving(false);
   }
+  // ยืนยันลบเคส/โครงการด้วยหน้าต่างตามธีม (uiConfirm)
+  useEffect(()=>{
+    if(!delCase) return;
+    const cs=cases.find(x=>x.id===delCase);
+    uiConfirm(`ลบเคส "${cs?.title||""}"?\n\nเคสนี้จะถูกลบถาวร กู้คืนไม่ได้`).then(ok=>{ if(ok) deleteCase(delCase); else setDelCase(null); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[delCase]);
+  useEffect(()=>{
+    if(!delProj) return;
+    const pj=projects.find(x=>x.id===delProj);
+    uiConfirm(`ลบโครงการ "${pj?.name||""}"?\n\nโครงการและเคสทั้งหมดในโครงการจะถูกลบถาวร กู้คืนไม่ได้`).then(ok=>{ if(ok) removeProj(delProj); else setDelProj(null); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[delProj]);
+
   async function deleteCase(id){
     const c = cases.find(x=>x.id===id);
     const proj = projects.find(p=>p.id===c?.projectId);
@@ -1408,30 +1423,6 @@ export default function App({ currentUser, onSignOut }) {
           </div>
         </div>
       )}
-
-      <Modal open={!!delCase} onClose={()=>setDelCase(null)} title="ลบเคส?">
-        {delCase&&(()=>{ const c=cases.find(x=>x.id===delCase); return c&&(
-          <div style={{ background:"#fff5f5",border:"1px solid #fecaca",borderRadius:8,
-            padding:"10px 14px",marginBottom:14 }}>
-            <div style={{ fontSize:11,color:themeC.text400,marginBottom:3 }}>เคสที่จะลบ</div>
-            <div style={{ fontSize:14,fontWeight:600,color:"#b91c1c" }}>"{c.title}"</div>
-          </div>
-        ); })()}
-        <p style={{ color:themeC.text500,fontSize:14,marginBottom:20 }}>เคสนี้จะถูกลบถาวร ยืนยันหรือไม่?</p>
-        <div style={{ display:"flex",gap:10 }}>
-          <GhostBtn onClick={()=>setDelCase(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
-          <button onClick={()=>deleteCase(delCase)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14 }}>ลบ</button>
-        </div>
-      </Modal>
-
-      <Modal open={!!delProj} onClose={()=>setDelProj(null)} title="ลบโครงการ?">
-        <p style={{ color:themeC.text500,fontSize:14,marginBottom:4 }}>โครงการและเคสทั้งหมดจะถูกลบถาวร</p>
-        <p style={{ color:"#ef4444",fontSize:13,marginBottom:20 }}>ไม่สามารถกู้คืนได้</p>
-        <div style={{ display:"flex",gap:10 }}>
-          <GhostBtn onClick={()=>setDelProj(null)} style={{ flex:1 }}>ยกเลิก</GhostBtn>
-          <button onClick={()=>removeProj(delProj)} style={{ flex:1,background:"#ef4444",border:"none",color:"#fff",borderRadius:8,padding:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14 }}>ลบโครงการ</button>
-        </div>
-      </Modal>
 
       <UpdateLogModal open={!!updateCase} onClose={()=>setUpdateCase(null)}
         caseData={updateCase} onSave={saveUpdate} currentUser={currentUser}/>
