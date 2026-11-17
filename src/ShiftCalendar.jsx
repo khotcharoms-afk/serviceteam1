@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { db } from "./firebase";
 import { doc, setDoc, deleteDoc, collection, addDoc, getDocs } from "firebase/firestore";
+import { uiConfirm } from "./components/Dialogs.jsx";
 
 const DAY_NAMES = ["อา","จ","อ","พ","พฤ","ศ","ส"];
 
@@ -902,7 +903,7 @@ function ClearShiftModal({ year, month, users, daysInMonth, onClose }) {
 
   async function clear() {
     if (dateFrom > dateTo || selectedUsers.length === 0) return;
-    if (!confirm(`ยืนยันเคลียร์กะวันที่ ${dateFrom}–${dateTo} ${MONTH_TH[month]} ของ ${selectedUsers.length} คน?`)) return;
+    if (!await uiConfirm(`ยืนยันเคลียร์กะวันที่ ${dateFrom}–${dateTo} ${MONTH_TH[month]} ของ ${selectedUsers.length} คน?`)) return;
     setSaving(true);
     try {
       const { getDocs, collection, query, where, deleteDoc } = await import("firebase/firestore");

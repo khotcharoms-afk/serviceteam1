@@ -7,6 +7,7 @@ import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { db } from "./firebase";
 import { useTheme } from "./theme.js";
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { uiAlert } from "./components/Dialogs.jsx";
 
 // แท็บเครื่องมือ WMS (ตรวจ FFM / SOP / SQL template) — โหลดเฉพาะตอนเปิด ทุกคนใช้ได้
 const WmsToolkit = lazy(() => import("./WmsToolkit.jsx"));
@@ -250,7 +251,7 @@ export default function KnowledgeHub({ onBack, currentUser }) {
       if (id) await updateDoc(doc(db, "knowledge", id), { ...data, updatedAt: new Date().toISOString(), updatedBy: currentUser?.name || "" });
       else await addDoc(collection(db, "knowledge"), { ...data, createdBy: currentUser?.name || "", createdAt: new Date().toISOString() });
       setModal(null);
-    } catch (e) { console.error(e); alert("บันทึกไม่สำเร็จ"); }
+    } catch (e) { console.error(e); uiAlert("บันทึกไม่สำเร็จ"); }
     setSaving(false);
   }
 

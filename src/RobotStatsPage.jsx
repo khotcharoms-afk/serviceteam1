@@ -8,6 +8,7 @@ const redBgFor = (dark) => (dark ? '#3f1d1d' : '#fffafa');
 
 const WeeklySlidesPanel = lazy(() => import('./WeeklySlidesPanel.jsx'));
 import { SITE_CONFIG, SITE_ORDER, orderIndex, EXCLUDED_CODES, siteName, siteLabel, isWorked, buildDailyReport, normalizeRobot } from './robotReport.js';
+import { uiAlert } from "./components/Dialogs.jsx";
 
 function formatIdleDays(n, lookback) {
   if (n === undefined || n === null) return null;
@@ -518,7 +519,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
-      alert('คัดลอกไม่สำเร็จ ลองกดค้างเพื่อเลือกข้อความเองแทน');
+      uiAlert('คัดลอกไม่สำเร็จ ลองกดค้างเพื่อเลือกข้อความเองแทน');
     }
   }
 
@@ -590,7 +591,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       setCaseCreatedFor((prev) => ({ ...prev, [caseModalFor.vin]: true }));
       setCaseModalFor(null);
     } catch (e) {
-      alert('สร้างเคสไม่สำเร็จ ลองใหม่อีกครั้ง');
+      uiAlert('สร้างเคสไม่สำเร็จ ลองใหม่อีกครั้ง');
     } finally {
       setCaseSaving(false);
     }

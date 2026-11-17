@@ -5,6 +5,7 @@ import { IS as inputBase, FEATURE_SHIFT } from "./utils.js";
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, writeBatch, setDoc, getFirestore } from "firebase/firestore";
 import { initializeApp, deleteApp } from "firebase/app";
 import { initializeAuth, inMemoryPersistence, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail, signOut } from "firebase/auth";
+import { uiConfirm, uiAlert } from "./components/Dialogs.jsx";
 
 // สร้างบัญชีให้ผู้ใช้ใหม่โดยไม่ทำให้ admin หลุดจากระบบ:
 // ใช้ Firebase app ตัวที่สอง (เก็บ session ในหน่วยความจำ) สร้างบัญชีด้วยรหัสสุ่มที่ไม่มีใครเห็น
@@ -68,9 +69,9 @@ export default function AdminUsers({ onBack, currentUser }) {
     const target = users.find(u=>u.id===uid);
     // ห้าม non-dev เปลี่ยน role ของ dev หรือเปลี่ยนเป็น dev
     if (currentUser?.role !== "dev" && (target?.role === "dev" || role === "dev")) {
-      return alert("เฉพาะ Dev เท่านั้นที่จัดการสิทธิ์ระดับ Dev ได้");
+      return uiAlert("เฉพาะ Dev เท่านั้นที่จัดการสิทธิ์ระดับ Dev ได้");
     }
-    if (uid === currentUser?.id) return alert("เปลี่ยนสิทธิ์ของตัวเองไม่ได้");
+    if (uid === currentUser?.id) return uiAlert("เปลี่ยนสิทธิ์ของตัวเองไม่ได้");
     await updateDoc(doc(db,"users",uid), { role });
   }
 
@@ -79,10 +80,10 @@ export default function AdminUsers({ onBack, currentUser }) {
   async function disableUser(uid) {
     const target = users.find(u => u.id === uid);
     if (currentUser?.role !== "dev" && target?.role === "dev") {
-      return alert("เฉพาะ Dev เท่านั้นที่ระงับบัญชี Dev ได้");
+      return uiAlert("เฉพาะ Dev เท่านั้นที่ระงับบัญชี Dev ได้");
     }
-    if (uid === currentUser?.id) return alert("ระงับบัญชีตัวเองไม่ได้");
-    if (!confirm(`ระงับการใช้งานของ "${target?.name || "ผู้ใช้นี้"}"?\n\nผู้ใช้จะเข้าระบบไม่ได้ แต่ข้อมูลและประวัติเคสยังอยู่ครบ\nคืนสิทธิ์ภายหลังได้`)) return;
+    if (uid === currentUser?.id) return uiAlert("ระงับบัญชีตัวเองไม่ได้");
+    if (!await uiConfirm(`ระงับการใช้งานของ "${target?.name || "ผู้ใช้นี้"}"?\n\nผู้ใช้จะเข้าระบบไม่ได้ แต่ข้อมูลและประวัติเคสยังอยู่ครบ\nคืนสิทธิ์ภายหลังได้`)) return;
     await updateDoc(doc(db,"users",uid), {
       role:"disabled", prevRole:target?.role || "user", disabledAt:new Date().toISOString(),
     });
@@ -93,10 +94,10 @@ export default function AdminUsers({ onBack, currentUser }) {
     // คืน role เดิมที่เก็บไว้ตอนระงับ — ถ้าเดิมเป็น dev ต้องเป็น dev เท่านั้นที่คืนได้
     const back = target?.prevRole || "user";
     if (currentUser?.role !== "dev" && back === "dev") {
-      return alert("เฉพาะ Dev เท่านั้นที่คืนสิทธิ์ระดับ Dev ได้");
+      return uiAlert("เฉพาะ Dev เท่านั้นที่คืนสิทธิ์ระดับ Dev ได้");
     }
     const roleLabel = ROLE_OPTS.find(r=>r.value===back)?.label || back;
-    if (!confirm(`คืนสิทธิ์ให้ "${target?.name || "ผู้ใช้นี้"}" เป็น ${roleLabel}?`)) return;
+    if (!await uiConfirm(`คืนสิทธิ์ให้ "${target?.name || "ผู้ใช้นี้"}" เป็น ${roleLabel}?`)) return;
     await updateDoc(doc(db,"users",uid), { role:back, prevRole:null, disabledAt:null });
   }
 
@@ -339,7 +340,7 @@ function EditUserModal({ user, onClose, onSave }) {
   }
   async function setPassword() {
     if (newPw.length < 8) return setPwState("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
-    if (!confirm(`ตั้งรหัสผ่านใหม่ให้ ${user.name||user.email}?\n\nผู้ใช้จะถูกออกจากระบบทุกเครื่อง และต้องเข้าด้วยรหัสใหม่`)) return;
+    if (!await uiConfirm(`ตั้งรหัสผ่านใหม่ให้ ${user.name||user.email}?\n\nผู้ใช้จะถูกออกจากระบบทุกเครื่อง และต้องเข้าด้วยรหัสใหม่`)) return;
     setPwState("saving");
     try {
       const token = await auth.currentUser.getIdToken();
@@ -353,7 +354,7 @@ function EditUserModal({ user, onClose, onSave }) {
   }
   async function sendReset() {
     if (!user.email) return setResetState("ผู้ใช้นี้ไม่มีอีเมลในระบบ");
-    if (!confirm(`ส่งอีเมลลิงก์ตั้งรหัสผ่านใหม่ไปที่ ${user.email}?\n\nรหัสเดิมยังใช้ได้จนกว่าผู้ใช้จะตั้งรหัสใหม่`)) return;
+    if (!await uiConfirm(`ส่งอีเมลลิงก์ตั้งรหัสผ่านใหม่ไปที่ ${user.email}?\n\nรหัสเดิมยังใช้ได้จนกว่าผู้ใช้จะตั้งรหัสใหม่`)) return;
     setResetState("sending");
     try { await sendPasswordResetEmail(auth, user.email); setResetState("sent"); }
     catch (ex) { setResetState(AUTH_ERR[ex.code] || ex.message); }
@@ -372,8 +373,8 @@ function EditUserModal({ user, onClose, onSave }) {
 
   async function handleSave() {
     const newName = name.trim().replace(/\s+/g," ");
-    if (!newName) { alert("กรุณาใส่ชื่อ"); return; }
-    if (newName !== user.name && !confirm(`เปลี่ยนชื่อ "${user.name||"-"}" เป็น "${newName}"?\n\nเคส งาน Onsite และ OT ที่บันทึกไว้แล้วจะยังแสดงชื่อเดิม`)) return;
+    if (!newName) { uiAlert("กรุณาใส่ชื่อ"); return; }
+    if (newName !== user.name && !await uiConfirm(`เปลี่ยนชื่อ "${user.name||"-"}" เป็น "${newName}"?\n\nเคส งาน Onsite และ OT ที่บันทึกไว้แล้วจะยังแสดงชื่อเดิม`)) return;
     setSaving(true);
     await onSave(user.id, {
       ...(newName !== user.name ? { name: newName } : {}),

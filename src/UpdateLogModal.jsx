@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { STATUS_OPTS, today, IS } from "./utils.js";
 import { useTheme } from "./theme.js";
+import { uiConfirm } from "./components/Dialogs.jsx";
 
 const tint = (hex, a = "22") => `${hex}${a}`;
 
@@ -30,8 +31,8 @@ function UpdateLogModal({ open, onClose, caseData, onSave, currentUser }) {
     setEditIndex(null);
   }
 
-  function deleteEntry(realIndex) {
-    if (!window.confirm("ลบอัปเดตนี้?")) return;
+  async function deleteEntry(realIndex) {
+    if (!await uiConfirm("ลบอัปเดตนี้?")) return;
     const log = (caseData.updateLog||[]).filter((_,i) => i !== realIndex);
     onSave({ ...caseData, updateLog: log });
   }

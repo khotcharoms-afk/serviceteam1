@@ -4,6 +4,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useTheme } from "./theme.js";
+import { uiConfirm, uiAlert } from "./components/Dialogs.jsx";
 
 const ORANGE = "#F97316";
 const PURPLE = "#6B21A8";
@@ -153,7 +154,7 @@ function IssueCard({ issue, onUpdateStatus, onDelete, canDelete, c }) {
   }
 
   async function handleDelete() {
-    const ok = window.confirm(
+    const ok = await uiConfirm(
       `ยืนยันลบเคส #${issue.ticketNo}?\n\nการลบนี้ถาวร กู้คืนไม่ได้ (รูป/วิดีโอที่แนบไว้จะยังอยู่ใน Storage แต่จะหาเคสนี้ไม่เจออีก)`
     );
     if (!ok) return;
@@ -270,7 +271,7 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
       await load();
     } catch (err) {
       console.error(err);
-      alert("อัปเดตสถานะไม่สำเร็จ");
+      uiAlert("อัปเดตสถานะไม่สำเร็จ");
     }
   }
 
@@ -283,7 +284,7 @@ export default function RobotIssuesPage({ onBack, currentUser }) {
       await load();
     } catch (err) {
       console.error(err);
-      alert("ลบเคสไม่สำเร็จ");
+      uiAlert("ลบเคสไม่สำเร็จ");
     }
   }
 

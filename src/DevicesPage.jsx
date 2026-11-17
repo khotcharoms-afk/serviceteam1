@@ -12,6 +12,7 @@ import {
   DEVICE_COLUMNS, rowsToDevices, devicesToRows, deviceSearchText, sortDevices, parseAccounts, formatAccounts, webHref,
 } from "./deviceImport.js";
 import EyeIcon from "./components/EyeIcon.jsx";
+import { uiConfirm, uiAlert } from "./components/Dialogs.jsx";
 
 const RED = "#DC2626";
 
@@ -391,7 +392,7 @@ function ImportDialog({ data, existingDevices, onClose, onConfirm, busy }) {
             </button>
           )}
           {existing > 0 && (
-            <button disabled={busy} onClick={() => { if (window.confirm(`ลบอุปกรณ์ทั้งหมด ${existing} รายการทุกโครงการ แล้วใส่เฉพาะชุดในไฟล์นี้?`)) onConfirm("replace"); }}
+            <button disabled={busy} onClick={async () => { if (await uiConfirm(`ลบอุปกรณ์ทั้งหมด ${existing} รายการทุกโครงการ แล้วใส่เฉพาะชุดในไฟล์นี้?`)) onConfirm("replace"); }}
               style={{ ...btn("transparent"), color: RED, border: `1px solid ${RED}55`, fontWeight: 600 }}>
               แทนที่ทั้งหมดทุกโครงการ (ลบ {existing} รายการเดิม)
             </button>
@@ -486,7 +487,7 @@ export default function DevicesPage({ onBack, currentUser }) {
       setModal(null);
     } catch (err) {
       console.error(err);
-      alert(err.code === "permission-denied" ? "ไม่มีสิทธิ์บันทึก — ต้องเพิ่มกฎ Firestore ให้ collection \"devices\"" : "บันทึกไม่สำเร็จ");
+      uiAlert(err.code === "permission-denied" ? "ไม่มีสิทธิ์บันทึก — ต้องเพิ่มกฎ Firestore ให้ collection \"devices\"" : "บันทึกไม่สำเร็จ");
     }
     setSaving(false);
   }
@@ -498,7 +499,7 @@ export default function DevicesPage({ onBack, currentUser }) {
     const items = devices.filter((d) => (d.project || "(ไม่ระบุโครงการ)") === from);
     const target = projects.find(([p]) => p.toLowerCase() === to.toLowerCase());
     const name = target ? target[0] : to;
-    if (!window.confirm(target
+    if (!await uiConfirm(target
       ? `รวม ${items.length} รายการของ "${from}" เข้ากับ "${name}" (${target[1]} รายการ)?`
       : `เปลี่ยนชื่อโครงการ "${from}" เป็น "${name}" (${items.length} รายการ)?`)) return;
     setSaving(true);
@@ -513,14 +514,14 @@ export default function DevicesPage({ onBack, currentUser }) {
       setToast(target ? `รวมเข้ากับ ${name} แล้ว` : `เปลี่ยนชื่อเป็น ${name} แล้ว`);
     } catch (err) {
       console.error(err);
-      alert("บันทึกไม่สำเร็จ");
+      uiAlert("บันทึกไม่สำเร็จ");
     }
     setSaving(false);
   }
 
   async function handleDelete(d) {
-    if (!window.confirm(`ลบ "${d.name}" (${d.project}${d.site ? " / " + d.site : ""})?`)) return;
-    try { await deleteDoc(doc(db, "devices", d.id)); } catch (err) { console.error(err); alert("ลบไม่สำเร็จ"); }
+    if (!await uiConfirm(`ลบ "${d.name}" (${d.project}${d.site ? " / " + d.site : ""})?`)) return;
+    try { await deleteDoc(doc(db, "devices", d.id)); } catch (err) { console.error(err); uiAlert("ลบไม่สำเร็จ"); }
   }
 
   async function handleFile(e) {
@@ -531,15 +532,15 @@ export default function DevicesPage({ onBack, currentUser }) {
       const XLSX = await import("xlsx");
       const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
       if (!wb.Sheets["devices"] && wb.SheetNames.length > 1 &&
-        !window.confirm(`ไฟล์นี้ไม่ใช่ไฟล์รูปแบบนำเข้า (ไม่มีชีต "devices") จะอ่านเฉพาะชีตแรก "${wb.SheetNames[0]}" ชีตอื่นอีก ${wb.SheetNames.length - 1} ชีตจะไม่ถูกนำเข้า — ทำต่อไหม?`)) return;
+        !await uiConfirm(`ไฟล์นี้ไม่ใช่ไฟล์รูปแบบนำเข้า (ไม่มีชีต "devices") จะอ่านเฉพาะชีตแรก "${wb.SheetNames[0]}" ชีตอื่นอีก ${wb.SheetNames.length - 1} ชีตจะไม่ถูกนำเข้า — ทำต่อไหม?`)) return;
       const sheet = wb.Sheets["devices"] || wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "" });
       const data = rowsToDevices(rows);
-      if (!data.devices.length) { alert("ไม่พบรายการอุปกรณ์ในไฟล์"); return; }
+      if (!data.devices.length) { uiAlert("ไม่พบรายการอุปกรณ์ในไฟล์"); return; }
       setImportData(data);
     } catch (err) {
       console.error(err);
-      alert(err.message || "อ่านไฟล์ไม่สำเร็จ");
+      uiAlert(err.message || "อ่านไฟล์ไม่สำเร็จ");
     }
   }
 
@@ -569,7 +570,7 @@ export default function DevicesPage({ onBack, currentUser }) {
       setToast(`นำเข้า ${importData.devices.length} รายการแล้ว`);
     } catch (err) {
       console.error(err);
-      alert(err.code === "permission-denied" ? "ไม่มีสิทธิ์บันทึก — ต้องเพิ่มกฎ Firestore ให้ collection \"devices\"" : "นำเข้าไม่สำเร็จ");
+      uiAlert(err.code === "permission-denied" ? "ไม่มีสิทธิ์บันทึก — ต้องเพิ่มกฎ Firestore ให้ collection \"devices\"" : "นำเข้าไม่สำเร็จ");
     }
     setSaving(false);
   }
