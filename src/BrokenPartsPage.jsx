@@ -295,10 +295,7 @@ function PartForm({ initial, onClose, onSaved, currentUser, projects }) {
       </div>
       <div style={{ marginBottom:16 }}>
         <label style={LB}>โครงการ</label>
-        <select value={f.projectId} onChange={e=>set("projectId",e.target.value)} style={IS}>
-          <option value="">— ไม่ระบุ —</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        <ProjectPicker projects={projects} value={f.projectId} onChange={id=>set("projectId",id)} IS={IS}/>
       </div>
       <div style={row}>
         <div><label style={LB}>ไซต์ / สถานที่</label>
@@ -351,6 +348,50 @@ function PartForm({ initial, onClose, onSaved, currentUser, projects }) {
         </button>
       </div>
     </Overlay>
+  );
+}
+
+// ช่องเลือกโครงการแบบพิมพ์ค้นหาได้ (ชื่อ หรือ รหัสโครงการ)
+function ProjectPicker({ projects, value, onChange, IS }) {
+  const { c } = useTheme();
+  const sel = projects.find(p => p.id === value);
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const s = q.trim().toLowerCase();
+  const list = projects.filter(p => !s || (p.name||"").toLowerCase().includes(s) || (p.code||"").toLowerCase().includes(s)).slice(0, 50);
+  return (
+    <div style={{ position:"relative" }}>
+      {sel && !open ? (
+        <div style={{ ...IS, display:"flex",alignItems:"center",gap:8,cursor:"pointer" }} onClick={()=>{ setOpen(true); setQ(""); }}>
+          <span style={{ width:6,height:6,borderRadius:"50%",background:sel.color||c.text400,flexShrink:0 }}/>
+          <span style={{ flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{sel.name}</span>
+          <button type="button" onClick={e=>{ e.stopPropagation(); onChange(""); }} aria-label="ล้างโครงการ"
+            style={{ background:"none",border:"none",color:c.text400,cursor:"pointer",padding:0,display:"inline-flex" }}><Icon name="x" size={14}/></button>
+        </div>
+      ) : (
+        <input value={q} autoFocus={open} placeholder="พิมพ์ค้นหาชื่อหรือรหัสโครงการ..."
+          onChange={e=>{ setQ(e.target.value); setOpen(true); }} onFocus={()=>setOpen(true)}
+          onBlur={()=>setTimeout(()=>setOpen(false),150)} style={IS}/>
+      )}
+      {open && (
+        <div style={{ position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:5,background:c.card,border:`1px solid ${c.border}`,
+          borderRadius:8,boxShadow:"0 8px 24px rgba(0,0,0,.12)",maxHeight:240,overflowY:"auto" }}>
+          {list.length === 0 ? (
+            <div style={{ padding:12,fontSize:13,color:c.text500,textAlign:"center" }}>ไม่พบโครงการ</div>
+          ) : list.map(p => (
+            <div key={p.id} onMouseDown={()=>{ onChange(p.id); setOpen(false); setQ(""); }}
+              onMouseEnter={e=>e.currentTarget.style.background=c.borderSoft}
+              onMouseLeave={e=>e.currentTarget.style.background=p.id===value?c.inkSoft:"transparent"}
+              style={{ padding:"8px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontSize:14,
+                background:p.id===value?c.inkSoft:"transparent" }}>
+              <span style={{ width:6,height:6,borderRadius:"50%",background:p.color||c.text400,flexShrink:0 }}/>
+              <span style={{ flex:1,minWidth:0 }}>{p.name}</span>
+              {p.code && <span style={{ fontSize:12,color:c.text400 }}>{p.code}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
