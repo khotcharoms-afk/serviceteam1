@@ -7,7 +7,7 @@ import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { db } from "./firebase";
 import { useTheme } from "./theme.js";
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { uiAlert } from "./components/Dialogs.jsx";
+import { uiAlert, uiConfirm } from "./components/Dialogs.jsx";
 
 // แท็บเครื่องมือ WMS (ตรวจ FFM / SOP / SQL template) — โหลดเฉพาะตอนเปิด ทุกคนใช้ได้
 const WmsToolkit = lazy(() => import("./WmsToolkit.jsx"));
@@ -284,6 +284,14 @@ export default function KnowledgeHub({ onBack, currentUser }) {
   const chip = (on) => ({ padding: "6px 12px", borderRadius: 8, fontSize:13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
     whiteSpace: "nowrap", border: `1px solid ${on ? c.ink : c.border}`, background: on ? c.ink : c.card, color: on ? c.onInk : c.text500 });
 
+  // ยืนยันลบด้วยหน้าต่างตามธีม
+  useEffect(() => {
+    if (!confirmId) return;
+    const id = confirmId;
+    uiConfirm("ลบบทความนี้?\n\nลบแล้วกู้คืนไม่ได้").then(ok => { if (ok) deleteArticle(id); else setConfirmId(null); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmId]);
+
   return (
     <div style={{ minHeight: "100vh", background: c.bg, fontFamily: "'Geist','Noto Sans Thai',system-ui,sans-serif" }}>
       <div style={{ background: c.card, borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, zIndex: 10 }}>
@@ -350,21 +358,6 @@ export default function KnowledgeHub({ onBack, currentUser }) {
           </section>
         ))}
       </div>
-      )}
-
-      {confirmId && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: c.card, borderRadius:12, padding: 22, maxWidth: 320, width: "100%", textAlign: "center" }}>
-            <div style={{ fontSize: 15, fontWeight:600, color: c.text900, marginBottom: 6 }}>ลบบทความนี้?</div>
-            <div style={{ fontSize: 13, color: c.text500, marginBottom: 18 }}>ลบแล้วกู้คืนไม่ได้</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <button onClick={() => setConfirmId(null)} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text500, borderRadius:8, padding: 10,
-                fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>ยกเลิก</button>
-              <button onClick={() => deleteArticle(confirmId)} style={{ background: c.danger, border: "none", color: "#fff", borderRadius:8, padding: 10, fontSize: 14,
-                fontWeight:600, cursor: "pointer", fontFamily: "inherit" }}>ลบ</button>
-            </div>
-          </div>
-        </div>
       )}
 
       {modal && <KnowledgeModal onClose={() => setModal(null)} onSave={saveArticle} saving={saving} editRecord={modal.id ? modal : null} />}

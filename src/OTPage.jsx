@@ -4,7 +4,7 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, quer
 import OTModal from "./OTModal.jsx";
 import { useTheme } from "./theme.js";
 import { ORSettingsPanel, ORMigrateModal, planMigration } from "./ORSettingsPanel.jsx";
-import { uiAlert } from "./components/Dialogs.jsx";
+import { uiAlert, uiConfirm } from "./components/Dialogs.jsx";
 
 export default function OTPage({ onBack, projects, users, currentUser }) {
   const { c } = useTheme();
@@ -37,7 +37,15 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    // ยืนยันลบด้วยหน้าต่างตามธีม
+  useEffect(() => {
+    if (!confirmId) return;
+    const id = confirmId;
+    uiConfirm("ลบรายการ OT นี้?\n\nลบแล้วกู้คืนไม่ได้").then(ok => { if (ok) deleteOT(id); else setConfirmId(null); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmId]);
+
+  return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -421,20 +429,6 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
       </div>
 
       {/* Confirm delete */}
-      {confirmId && (
-        <div style={{ position:"fixed",inset:0,zIndex:700,background:"rgba(0,0,0,.5)",
-          display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
-          <div style={{ ...card,borderRadius:12,padding:24,maxWidth:340,width:"100%",boxShadow:"0 16px 48px rgba(0,0,0,.16)" }}>
-            <div style={{ fontSize:16,fontWeight:600,marginBottom:8 }}>ลบรายการ OT นี้?</div>
-            <div style={{ fontSize:13,color:c.text500,marginBottom:24 }}>ลบแล้วกู้คืนไม่ได้</div>
-            <div style={{ display:"flex",justifyContent:"flex-end",gap:8 }}>
-              <button onClick={()=>setConfirmId(null)} style={{ ...btnOutline,height:36 }}>ยกเลิก</button>
-              <button onClick={()=>deleteOT(confirmId)} style={{ ...btnPrimary,height:36,background:c.danger,color:"#fff" }}>ลบ</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {showORDatePicker && (
         <div style={{ position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)",
           display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}

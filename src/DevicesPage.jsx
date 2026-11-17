@@ -12,7 +12,7 @@ import {
   DEVICE_COLUMNS, rowsToDevices, devicesToRows, deviceSearchText, sortDevices, parseAccounts, formatAccounts, webHref,
 } from "./deviceImport.js";
 import EyeIcon from "./components/EyeIcon.jsx";
-import { uiConfirm, uiAlert } from "./components/Dialogs.jsx";
+import { uiConfirm, uiAlert, uiPrompt } from "./components/Dialogs.jsx";
 
 const RED = "#DC2626";
 
@@ -494,7 +494,7 @@ export default function DevicesPage({ onBack, currentUser }) {
 
   // เปลี่ยนชื่อโครงการ หรือรวมเข้ากับโครงการที่มีอยู่ (ย้ายทุกเครื่องไปชื่อใหม่)
   async function renameProject(from) {
-    const to = window.prompt(`ย้ายอุปกรณ์ทั้งหมดของ "${from}" ไปที่โครงการ:\n(พิมพ์ชื่อโครงการที่มีอยู่แล้วเพื่อรวม หรือชื่อใหม่เพื่อเปลี่ยนชื่อ)`, from)?.trim();
+    const to = (await uiPrompt(`ย้ายอุปกรณ์ทั้งหมดของ "${from}" ไปที่โครงการ:\n(พิมพ์ชื่อโครงการที่มีอยู่แล้วเพื่อรวม หรือชื่อใหม่เพื่อเปลี่ยนชื่อ)`, from))?.trim();
     if (!to || to === from) return;
     const items = devices.filter((d) => (d.project || "(ไม่ระบุโครงการ)") === from);
     const target = projects.find(([p]) => p.toLowerCase() === to.toLowerCase());

@@ -4,7 +4,7 @@ import {
   collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, getDocs, query, where
 } from "firebase/firestore";
 import OnsiteModal from "./OnsiteModal.jsx";
-import { uiAlert } from "./components/Dialogs.jsx";
+import { uiAlert, uiConfirm } from "./components/Dialogs.jsx";
 
 export default function OnsitePage({ onBack, projects, users, currentUser }) {
   const [tab, setTab]           = useState("list");
@@ -25,7 +25,15 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    // ยืนยันลบด้วยหน้าต่างตามธีม
+  useEffect(() => {
+    if (!confirmId) return;
+    const id = confirmId;
+    uiConfirm("ลบรายการ Onsite นี้?\n\nลบแล้วกู้คืนไม่ได้").then(ok => { if (ok) deleteOnsite(id); else setConfirmId(null); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmId]);
+
+  return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -388,31 +396,6 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
       </div>
 
       {/* Confirm delete */}
-      {confirmId && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.5)",
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius:12, padding: 24, maxWidth: 320, width: "100%",
-            textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
-            
-            <div style={{ fontSize: 15, fontWeight:600, color: "#09090b", marginBottom: 8 }}>ลบรายการนี้?</div>
-            <div style={{ fontSize: 13, color: "#71717a", marginBottom: 20 }}>ไม่สามารถกู้คืนได้</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <button onClick={() => setConfirmId(null)}
-                style={{ background: "#fafafa", border: "1px solid #e4e4e7", color: "#52525b",
-                  borderRadius:8, padding: "10px", fontSize: 14, fontWeight: 600,
-                  cursor: "pointer", fontFamily: "inherit" }}>
-                ยกเลิก
-              </button>
-              <button onClick={() => deleteOnsite(confirmId)}
-                style={{ background: "#ef4444", border: "none", color: "#fff",
-                  borderRadius:8, padding: "10px", fontSize: 14, fontWeight: 600,
-                  cursor: "pointer", fontFamily: "inherit" }}>
-                ลบ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showModal && (
         <OnsiteModal
