@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { db } from "./firebase.js";
-import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, query, where } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, query, where, writeBatch } from "firebase/firestore";
 import OTModal from "./OTModal.jsx";
 import { useTheme } from "./theme.js";
 import { ORSettingsPanel, ORMigrateModal, planMigration } from "./ORSettingsPanel.jsx";
@@ -129,6 +129,25 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   async function deleteOT(id) {
     await deleteDoc(doc(db, "otRecords", id));
     setConfirmId(null);
+  }
+
+  // ลบทั้งหมดที่แสดงอยู่ (ตามตัวกรองเดือน) — เฉพาะรายการของตัวเอง
+  const [deletingAll, setDeletingAll] = useState(false);
+  async function deleteAllShown() {
+    const list = filtered.filter(r => r.createdBy === uid);
+    const skipped = filtered.length - list.length;
+    if (!list.length) { uiAlert("ไม่มีรายการของคุณที่ลบได้ในตัวกรองนี้"); return; }
+    const scope = filterMonth ? `เดือน ${fmtMonth(filterMonth)}` : "ทุกเดือน";
+    if (!(await uiConfirm(`ลบรายการ OT ทั้งหมด ${list.length} รายการ (${scope})?\n\nลบแล้วกู้คืนไม่ได้${skipped ? `\nข้าม ${skipped} รายการที่ยังไม่ได้ผูกกับบัญชีคุณ (กด "ปรับข้อมูลเก่า" ก่อนถ้าต้องการลบด้วย)` : ""}`))) return;
+    setDeletingAll(true);
+    try {
+      for (let i = 0; i < list.length; i += 400) {
+        const b = writeBatch(db);
+        list.slice(i, i + 400).forEach(r => b.delete(doc(db, "otRecords", r.id)));
+        await b.commit();
+      }
+    } catch (e) { uiAlert("ลบไม่สำเร็จ: " + e.message); }
+    setDeletingAll(false);
   }
 
   // filter
@@ -372,6 +391,12 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
           </select>
           {(filterName!=="all"||filterMonth) && (
             <button onClick={()=>{ setFilterName("all"); setFilterMonth(""); }} style={btnGhost}>ล้าง</button>
+          )}
+          {filtered.length > 0 && (
+            <button onClick={deleteAllShown} disabled={deletingAll}
+              style={{ ...btnOutline,color:c.danger,opacity:deletingAll?.6:1 }}>
+              {deletingAll ? "กำลังลบ..." : `ลบทั้งหมด (${filtered.length})`}
+            </button>
           )}
         </div>
 
