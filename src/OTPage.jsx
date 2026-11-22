@@ -37,16 +37,16 @@ export default function OTPage({ onBack, projects, users, currentUser }) {
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener("resize", onResize);
-    // ยืนยันลบด้วยหน้าต่างตามธีม
+  return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // ยืนยันลบด้วยหน้าต่างตามธีม
   useEffect(() => {
     if (!confirmId) return;
     const id = confirmId;
     uiConfirm("ลบรายการ OT นี้?\n\nลบแล้วกู้คืนไม่ได้").then(ok => { if (ok) deleteOT(id); else setConfirmId(null); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmId]);
-
-  return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   useEffect(() => {
     // โหลด profile ของ user นี้
