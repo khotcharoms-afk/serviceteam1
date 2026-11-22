@@ -25,16 +25,16 @@ export default function OnsitePage({ onBack, projects, users, currentUser }) {
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener("resize", onResize);
-    // ยืนยันลบด้วยหน้าต่างตามธีม
+  return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // ยืนยันลบด้วยหน้าต่างตามธีม
   useEffect(() => {
     if (!confirmId) return;
     const id = confirmId;
     uiConfirm("ลบรายการ Onsite นี้?\n\nลบแล้วกู้คืนไม่ได้").then(ok => { if (ok) deleteOnsite(id); else setConfirmId(null); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmId]);
-
-  return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   useEffect(() => {
     const u = onSnapshot(collection(db, "onsiteRecords"), snap => {
