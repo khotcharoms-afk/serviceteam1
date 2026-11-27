@@ -83,7 +83,7 @@ export function parseFFM(raw) {
 
 // อัปเดต SOP ทุกครั้งที่เคสใหม่สอนอะไรใหม่ — แก้ SOP_UPDATED ด้วย
 // when = ใช้เมื่อไหร่ (ภาษาหน้างาน), steps = ทีละขั้น อ้างชื่อปุ่ม/template ในหน้านี้ให้มากที่สุด
-const SOP_UPDATED = "8 พ.ย. 2569";
+const SOP_UPDATED = "27 พ.ย. 2569";
 
 export const SOPS = [
   {
@@ -232,6 +232,8 @@ export const SOPS = [
       "SQL template 'ค้น AWB ขาเข้า' (หรือขาออก) → ดูแถว routing ว่าตอนนี้ผูกกับ flight ไหนอยู่",
       "วิธีแก้: นำ flight_id ของเที่ยวที่ต้องการย้ายไป มาเปลี่ยนที่ routing ของ AWB นั้น",
       "ค้นซ้ำให้ routing ชี้ไปเที่ยวบินใหม่แล้ว → ให้หน้างานเปิดหน้าจอเช็ก",
+      "ขาออกที่ split แล้ว: ย้ายเฉพาะ routing ของตัว Newest (ที่ยังไม่มี shipment) · อย่าย้ายใบ pre-manifest (preman_histories) ของเที่ยวเดิมไปด้วย เพราะใบเดียวมี AWB อื่นปนอยู่ — ให้หน้างานทำ Pre-Manifest ใหม่ในเที่ยวใหม่",
+      "ตัวอย่าง 235-91695951 TK173 22NOV → 23NOV (23/11/2569): Newest 225684 (33/356) ย้าย routing 308615 อย่างเดียว · ใบ PM26111745/49/50 มี AWB อื่น 5–7 ใบ ไม่แตะ",
       "ที่มา: บทความ 'WMS Partial Shipment' ใน Knowledge Hub (Sayan, 13/9/2569)",
     ],
   },
@@ -330,6 +332,63 @@ export const SOPS = [
       "ถ้าไม่มี = สาเหตุ → ส่งผู้พัฒนาเพิ่มรหัสสนามบิน/เมืองนั้นเข้าระบบ (อย่าเพิ่มเอง เป็นข้อมูลกลางของทุกสถานี) แล้วให้หน้างานลองใหม่",
       "ไม่ใช่สาเหตุ (ตรวจแล้วตัดออกได้): Agent ผูกลูกค้า AOTGA, ไม่มี FWB / charge code, เวลา std อยู่หลัง sta",
       "ตัวอย่าง 630-08045973 DK2576/31OCT (8/11/2569): origin STO ไม่มีในระบบ → ผู้พัฒนาเพิ่ม STO แล้วออกบิลได้",
+    ],
+  },
+  {
+    key: "ts-no-newest", title: "🧩 T/S แล้วขึ้นเครื่องไม่ครบ แต่ระบบไม่แยก Newest — ส่วนที่ค้างเลือกเข้าเที่ยวใหม่ไม่ได้",
+    when: "หน้างานขอ transit ของที่ค้าง (เช่น ล็อตที่มาอีกเที่ยว) ไปเที่ยวใหม่ แต่ booking ขาออกเป็น DEP ไปทั้งใบแล้ว",
+    steps: [
+      "ค้น booking ขาออก (kn_cargo_bookings ที่ ref_transhipment = booking ขาเข้า): ถ้ามีใบเดียว, split_status ว่าง, เป็น DEP แต่ booking_warehouses มีหลายแถว (เช่น 155 + 9) และ shipment ใน manifest มีแค่บางส่วน = ระบบไม่ได้แยกส่วนที่ค้าง",
+      "Back up ทุกแถวของ AWB เป็น JSON ก่อน (booking, routing, warehouses, customers, booking_flights, shipment)",
+      "แยกเองในคำสั่งเดียว (แบบเดียวกับที่ระบบทำตอน Partial): ① booking เดิม split_status = 'Splited' ② สร้าง booking ใหม่ copy จากเดิม: split_status = 'Newest', ref_split = id เดิม, ref_group / ref_transhipment เหมือนเดิม, mvt_status = 'PRE-MAN' ③ routing ใหม่ไปเที่ยวที่หน้างานขอ ④ copy แถว booking_warehouses เฉพาะส่วนที่ค้าง ⑤ copy booking_customers 3 แถว และ booking_flights",
+      "ไม่แตะ: shipment / manifest ของเที่ยวที่บินไปแล้ว, booking ขาเข้า, transit_histories / PDF TFD เดิม",
+      "ให้หน้างานปิดหน้าจอเปิดใหม่ แล้ว Manifest เข้าเที่ยวใหม่ · ย้อนกลับ: ลบแถวที่สร้าง แล้วตั้ง split_status เดิมกลับเป็นว่าง",
+      "ตัวอย่าง 514-11986332 (27/11/2569): T/S ไป G9715/26NOV บินไป 155 ชิ้น ค้าง 9/111.76 → สร้าง Newest 227376 ผูก G9688/27NOV → หน้างาน Manifest ได้ บินไปแล้ว (DEP)",
+    ],
+  },
+  {
+    key: "ts-departed", title: "🛫 T/S ไปเที่ยวบินที่ออกไปแล้ว (เลือกในหน้าจอไม่ได้)",
+    when: "ของต่อเครื่องไปเที่ยวที่ departed แล้ว หน้างานเลือกเที่ยวนั้นใน T/S ไม่ได้",
+    steps: [
+      "ให้หน้างานทำ T/S ไปเที่ยวที่ยังไม่ออก (เที่ยวไหนก็ได้ของสายการบินเดียวกัน) ก่อน — ระบบจะสร้าง booking ขาออก, transit_histories (เลข TFD + PDF), transit_history_details และตั้งสถานะ TFD ให้เอง",
+      "แล้วเราย้ายไปเที่ยวที่ถูก: แก้ routing.flight_id ของ booking ขาออก และ transit_histories.to_flight เป็น flight id ที่ต้องการ (back up ค่าเดิมก่อน)",
+      "PDF ใบ TFD จะยังพิมพ์เที่ยวเดิมอยู่ (สร้างไว้ตอนทำ T/S) — ถ้าหน้างานต้องใช้ PDF ที่ถูก ให้แจ้งผู้พัฒนา",
+      "ตัวอย่าง 607-53940320 (8/11/2569): หน้างาน T/S ไป EY411/08NOV → ย้าย routing 304479 และ transit_histories 18762 ไป EY411/01NOV (744189)",
+    ],
+  },
+  {
+    key: "ts-dest", title: "🏷 แก้ปลายทาง (destination) ของ AWB ที่ทำ T/S แล้ว",
+    when: "หน้างานขอแก้ปลายทาง เช่น ALT → ATL ของ AWB ที่มีทั้งขาเข้าและขาออก",
+    steps: [
+      "เช็กก่อนว่ารหัสใหม่มีใน aotga_center.kn_cargo_airports (ไม่งั้นหน้า Handling & Rating จะ Something Wrong)",
+      "ค้นทุกตารางที่มีคอลัมน์ awb + ตารางลูกของ booking ทั้งขาเข้า/ขาออก แล้วหาแถวที่ destination เป็นค่าเดิม — ระวัง AWB เลขเดียวกันคนละ prefix (ใส่ prefix ทุกครั้ง)",
+      "จุดที่เจอ: kn_cargo_bookings (ขาออก), kn_cargo_preman_history_details, kn_cargo_pretransit_history_details, kn_cargo_transit_history_details, kn_cargo_in_bookings, kn_cargo_in_shipments (ทุก shipment ของ booking ขาเข้า)",
+      "Back up แล้วแก้ทุกจุดในคำสั่งเดียว ใส่ WHERE destination = ค่าเดิม · ค้นซ้ำต้องไม่เหลือค่าเดิม",
+      "ไม่แก้ message_centers (FSU ที่ส่งไปแล้ว) — แก้ใน DB ไม่ทำให้ส่งใหม่ ถ้าต้องส่ง message ใหม่ให้หน้างานส่งจากหน้าจอ",
+      "ตัวอย่าง 235-01014974 KTI → TK173 (16/11/2569): ALT → ATL แก้ 9 แถว (booking 224464, preman 280009, pretransit 29193, transit 28813, in_booking 213150, in_shipments 4 แถว)",
+    ],
+  },
+  {
+    key: "ffm-missing-awb", title: "🕳 AWB อยู่ใน FFM แต่หายจากระบบ / ขอเพิ่ม AWB ที่ FFM ไม่มี",
+    when: "หน้างานขอ 'เพิ่ม AWB' เข้าเที่ยวที่ import FFM ไปแล้ว",
+    steps: [
+      "ค้นทุกตารางด้วยเลข AWB + ค้น imp_messages ที่ message มีเลขนี้ (ไม่ต้องจำกัดเที่ยว) + ดู FFM ของเที่ยวว่ามี AWB นี้ไหม",
+      "แบบที่ 1 — FFM มีใบนี้ แต่ booking หายไป: ถ้ามี NFD/AWD ใน message_centers (มี booking_id เดิม) และเลข shipment ใน manifest เรียงข้ามไปหนึ่งเลข = เคยลงแล้วถูกลบทีหลัง → ลงใหม่ใน manifest เดิม และแจ้งหน้างานว่าเคยมีคนลบ (เคส 160-18065596 CX787/20NOV, 23/11/2569)",
+      "แบบที่ 2 — FFM ไม่มีใบนี้: วันที่ในเคสกับใน FWB (FLT/...) อาจไม่ตรงกัน → ให้หน้างานยืนยันวันก่อน แล้วลงใน manifest BULK เดิมของเที่ยว (เคส 089-01515662 9C8521/13NOV, 15/11/2569)",
+      "ส่ง FWB (+ FHL ถ้ามี) เข้า Postman ก่อนทุกครั้ง แล้วลงตาม JSON: booking, routing, booking_flight, shipment, breakdown (เวลา RCF เดียวกับใบอื่นในเที่ยว), in_accountings (บรรทัด ACC), customer 3 แถว, HAWB + customer ของ HAWB",
+      "ปริมาตร (cbm) ไม่มีใน FWB → ใช้ MC ในบรรทัด FFM / บรรทัดที่หน้างานแปะมา (เช่น T24K211.0MC2 = 2 ลบ.ม.) · ชนิดสินค้า / SHC ดูจากบรรทัด FFM",
+      "AGT// ว่าง: Postman จะหยิบบรรทัด SSR มาใส่เป็นชื่อ Agent — ห้ามใช้ ให้สร้าง Agent เป็นแถวว่าง (agent_code '' / customer_name '') แบบที่ระบบทำกับ AWB อื่น",
+      "airline_version_id, destination_name ฯลฯ copy จาก AWB อื่นในเที่ยวเดียวกัน",
+    ],
+  },
+  {
+    key: "imp-move-flight", title: "🔀 ย้าย AWB ขาเข้าข้ามเที่ยวที่มี breakdown / D/O แล้ว",
+    when: "หน้างานขอย้าย AWB ขาเข้าไปอีกวัน/อีกเที่ยว แต่ทำ breakdown หรือออก D/O ไปแล้ว",
+    steps: [
+      "ค้นทั้ง 2 เที่ยว: routing, shipment, breakdown, in_awb_delivery_orders, in_delivery_orders (flight_id), booking_flights — บางครั้ง FFM ของเที่ยวใหม่สร้าง shipment / routing ไว้แล้ว",
+      "Back up ทุกแถวก่อน",
+      "ย้าย breakdown ไปผูก shipment ของเที่ยวใหม่ · แก้ flight_id ที่หัว D/O (in_delivery_orders) · แก้ flight_date ใน in_booking_flights · routing เที่ยวใหม่ mvt_status = RCF · ลบ shipment / routing ของเที่ยวเดิม",
+      "ตัวอย่าง 999-97403585 CA821 11NOV → 12NOV (12/11/2569): breakdown 220018 → shipment 246572, D/O 168567 → flight 747978, ลบ shipment 246160 และ routing 224162",
     ],
   },
   {
