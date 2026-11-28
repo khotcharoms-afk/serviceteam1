@@ -346,6 +346,25 @@ export default async function handler(req, res) {
   }
 
   // โหมดอ่านอย่างเดียว: ตารางทั้งสัปดาห์จากชีต (ไว้ทำสไลด์รายสัปดาห์) — ไม่ต้องใช้ ROBOT_API_TOKEN
+  // ตรวจโครงตาราง (อ่านอย่างเดียว): ค่าและสูตรของคอลัมน์ A–C ในช่วงแถว
+  if (req.query.mode === 'inspect') {
+    try {
+      const sheets = google.sheets({ version: 'v4', auth: getAuth() });
+      const from = Math.max(1, parseInt(req.query.from, 10) || 1);
+      const to = Math.min(from + 80, parseInt(req.query.to, 10) || from + 40);
+      const rng = `'${TAB_NAME}'!A${from}:C${to}`;
+      const [v, f] = await Promise.all([
+        sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng }),
+        sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng, valueRenderOption: 'FORMULA' }),
+      ]);
+      const all = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB_NAME}'!A1:A3000` });
+      const titles = (all.data.values || []).map((r, i) => [i + 1, r[0]]).filter(([, t]) => parseDateRangeHeader(t));
+      return res.status(200).json({ from, values: v.data.values || [], formulas: f.data.values || [], titles: titles.slice(-6) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (req.query.mode === 'week') {
     try {
       const sheets = google.sheets({ version: 'v4', auth: getAuth() });
