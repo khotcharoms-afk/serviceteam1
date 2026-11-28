@@ -164,6 +164,15 @@ function toISO(d) {
 const MAX_NEW_WEEKS = 8;
 const DAY_NAMES_ORDER = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
 
+// ล้างเฉพาะช่องตัวเลขที่พิมพ์ไว้ — ข้อความ (ชื่อวัน หัวตาราง Site/Target) และสูตรเก็บไว้ตามต้นแบบ
+function isClearableCell(f) {
+  if (f === undefined || f === null || f === '') return false;
+  if (typeof f === 'number') return true;
+  const t = String(f).trim();
+  if (t.startsWith('=')) return false;
+  return /^-?[\d,]+(\.\d+)?%?$/.test(t);
+}
+
 function listBlocks(rows) {
   const out = [];
   for (let i = 0; i < rows.length; i++) {
@@ -233,8 +242,7 @@ function simulateNewWeeks(rows, plan, formulaRows) {
     if (i === 0) r[0] = title;
     const dayIdx = newest.dataStartRow - newest.titleRow;
     if (i >= dayIdx && i < dayIdx + 7) for (let c = 1; c < r.length; c++) {
-      const f = formulaRows?.[i]?.[c];
-      if (!(typeof f === 'string' && f.startsWith('='))) r[c] = '';
+      if (isClearableCell(formulaRows?.[i]?.[c])) r[c] = '';
     }
     return r;
   });
@@ -292,8 +300,7 @@ async function createNewWeeks(sheets, plan, formulaRows) {
     for (let d = 0; d < 7; d++) {
       const fr = formulaRows?.[dayOffset + d] || [];
       for (let c = 1; c < colCount; c++) {
-        const f = fr[c];
-        if (typeof f === 'string' && f.startsWith('=')) continue;
+        if (!isClearableCell(fr[c])) continue;
         clearRanges.push({ row: finalRow + dayOffset + d, col: c });
       }
     }
@@ -352,7 +359,7 @@ export default async function handler(req, res) {
       const sheets = google.sheets({ version: 'v4', auth: getAuth() });
       const from = Math.max(1, parseInt(req.query.from, 10) || 1);
       const to = Math.min(from + 80, parseInt(req.query.to, 10) || from + 40);
-      const rng = `'${TAB_NAME}'!A${from}:C${to}`;
+      const rng = `'${TAB_NAME}'!A${from}:${req.query.cols || 'C'}${to}`;
       const [v, f] = await Promise.all([
         sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng }),
         sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng, valueRenderOption: 'FORMULA' }),
