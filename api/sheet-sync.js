@@ -357,9 +357,12 @@ export default async function handler(req, res) {
         sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng }),
         sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng, valueRenderOption: 'FORMULA' }),
       ]);
-      const all = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB_NAME}'!A1:A3000` });
+      const all = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB_NAME}'!A1:CZ3000` });
+      const hits = [];
+      (all.data.values || []).forEach((r, i) => r.forEach((x, c) => { if (/(30\/11|\/12\/2569)/.test(String(x))) hits.push([i + 1, colIndexToLetter(c), x]); }));
+      const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID, fields: 'sheets.properties(title,gridProperties)' });
       const titles = (all.data.values || []).map((r, i) => [i + 1, r[0]]).filter(([, t]) => parseDateRangeHeader(t));
-      return res.status(200).json({ from, values: v.data.values || [], formulas: f.data.values || [], titles: titles.slice(-6) });
+      return res.status(200).json({ from, values: v.data.values || [], formulas: f.data.values || [], titles: titles.filter(([, t]) => /\/1[12]\/2569/.test(t)), nonEmptyAfter: (all.data.values || []).length, hits: hits.slice(0, 40), tabs: (meta.data.sheets || []).map((x) => [x.properties.title, x.properties.gridProperties.rowCount]) });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
