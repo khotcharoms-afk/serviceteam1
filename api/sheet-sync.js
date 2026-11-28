@@ -157,6 +157,169 @@ function toISO(d) {
   return d.toISOString().split('T')[0];
 }
 
+// ── สร้างตารางสัปดาห์ใหม่อัตโนมัติ ─────────────────────────────────────
+// ถ้าวันที่ที่จะเขียนเลยตารางสัปดาห์ล่าสุดในชีตไปแล้ว ระบบจะคัดลอกตารางสัปดาห์ล่าสุด
+// (หัวคอลัมน์ไซต์ แถววัน แถว Target สูตร และรูปแบบ) ไปวางเป็นสัปดาห์ใหม่ เปลี่ยนหัวข้อเป็นช่วงวันที่ใหม่
+// และล้างตัวเลขในแถววัน (ช่องที่เป็นสูตรไม่แตะ) — วางต่อท้ายหรือแทรกด้านบน ตามที่ชีตเรียงอยู่
+const MAX_NEW_WEEKS = 8;
+const DAY_NAMES_ORDER = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+
+function listBlocks(rows) {
+  const out = [];
+  for (let i = 0; i < rows.length; i++) {
+    const parsed = parseDateRangeHeader(rows[i]?.[0]);
+    if (!parsed) continue;
+    for (let r = i + 1; r < Math.min(i + 10, rows.length); r++) {
+      if ((rows[r]?.[0] || '').trim() === 'จันทร์') {
+        out.push({ titleRow: i, headerRow: r - 1, dataStartRow: r, start: parsed.startDate, end: parsed.endDate });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+const mondayOf = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const addDaysD = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+
+function makeTitle(sample, start, end) {
+  const pad = /(^|[^\d])0\d\//.test(sample) ? (n) => String(n).padStart(2, '0') : (n) => String(n);
+  const be = (d) => d.getFullYear() + 543;
+  if (/^\d{1,2}-\d{1,2}\/\d{1,2}\/\d{4}$/.test(sample.trim())) {
+    return `${pad(start.getDate())}-${pad(end.getDate())}/${pad(end.getMonth() + 1)}/${be(end)}`;
+  }
+  return `${pad(start.getDate())}/${pad(start.getMonth() + 1)}/${be(start)}-${pad(end.getDate())}/${pad(end.getMonth() + 1)}/${be(end)}`;
+}
+
+// วางแผนสร้างสัปดาห์ที่ขาด (ไม่แตะชีต) — คืน null ถ้าไม่ต้องสร้าง
+function planNewWeeks(rows, dates) {
+  const blocks = listBlocks(rows);
+  if (!blocks.length) return { error: 'ไม่พบตารางสัปดาห์ต้นแบบในชีต (ต้องมีอย่างน้อย 1 ตาราง)' };
+  const newest = blocks.reduce((a, b) => (b.start > a.start ? b : a));
+  const lastDate = dates.map((d) => new Date(d + 'T00:00:00')).reduce((a, b) => (b > a ? b : a));
+  if (lastDate <= newest.end) return null;
+  const weeks = [];
+  for (let m = mondayOf(addDaysD(newest.end, 1)); m <= lastDate; m = addDaysD(m, 7)) {
+    weeks.push({ start: m, end: addDaysD(m, 6) });
+  }
+  if (weeks.length > MAX_NEW_WEEKS) return { error: `ต้องสร้างตารางใหม่ ${weeks.length} สัปดาห์ เกินกว่าที่ตั้งไว้ (${MAX_NEW_WEEKS}) — ตรวจวันที่อีกครั้ง` };
+  // ชีตเรียงสัปดาห์ใหม่ไว้ล่าง หรือไว้บน
+  const byRow = [...blocks].sort((a, b) => a.titleRow - b.titleRow);
+  const appendBottom = blocks.length < 2 || byRow[byRow.length - 1] === newest;
+  let span;
+  if (blocks.length >= 2) {
+    const idx = byRow.indexOf(newest);
+    const neighbor = appendBottom ? byRow[idx - 1] : byRow[idx + 1];
+    span = Math.abs(newest.titleRow - neighbor.titleRow);
+  } else {
+    let last = newest.dataStartRow + 7;
+    for (let r = newest.dataStartRow + 7; r < newest.dataStartRow + 10; r++) if ((rows[r] || []).some((v) => String(v ?? '').trim())) last = r;
+    span = last - newest.titleRow + 2;
+  }
+  const titleSample = String(rows[newest.titleRow]?.[0] || '');
+  return {
+    newest, span, appendBottom,
+    weeks: weeks.map((w) => ({ ...w, title: makeTitle(titleSample, w.start, w.end) })),
+  };
+}
+
+// จำลองผลหลังสร้าง (ใช้ตอนดูตัวอย่าง ไม่เขียนชีต)
+function simulateNewWeeks(rows, plan, formulaRows) {
+  const { newest, span, appendBottom, weeks } = plan;
+  const tpl = [];
+  for (let i = 0; i < span; i++) tpl.push([...(rows[newest.titleRow + i] || [])]);
+  const makeBlock = (title) => tpl.map((row, i) => {
+    const r = [...row];
+    if (i === 0) r[0] = title;
+    const dayIdx = newest.dataStartRow - newest.titleRow;
+    if (i >= dayIdx && i < dayIdx + 7) for (let c = 1; c < r.length; c++) {
+      const f = formulaRows?.[i]?.[c];
+      if (!(typeof f === 'string' && f.startsWith('='))) r[c] = '';
+    }
+    return r;
+  });
+  let out = rows.map((r) => [...(r || [])]);
+  if (appendBottom) {
+    weeks.forEach((w, k) => {
+      const dest = newest.titleRow + span * (k + 1);
+      while (out.length < dest) out.push([]);
+      makeBlock(w.title).forEach((r, i) => { out[dest + i] = r; });
+    });
+  } else {
+    weeks.forEach((w) => { out = [...out.slice(0, newest.titleRow), ...makeBlock(w.title), ...out.slice(newest.titleRow)]; });
+  }
+  return out;
+}
+
+// สร้างจริงในชีต
+async function createNewWeeks(sheets, plan, formulaRows) {
+  const { newest, span, appendBottom, weeks } = plan;
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID, fields: 'sheets.properties(sheetId,title,gridProperties)' });
+  const tab = (meta.data.sheets || []).find((x) => x.properties?.title === TAB_NAME);
+  if (!tab) throw new Error(`ไม่พบแท็บ ${TAB_NAME}`);
+  const sheetId = tab.properties.sheetId;
+  const colCount = tab.properties.gridProperties.columnCount;
+  let rowCount = tab.properties.gridProperties.rowCount;
+  const dayOffset = newest.dataStartRow - newest.titleRow;
+  const titleCells = [];
+  const clearRanges = [];
+  const requests = [];
+
+  weeks.forEach((w, k) => {
+    let dest, src;
+    if (appendBottom) {
+      src = newest.titleRow;
+      dest = newest.titleRow + span * (k + 1);
+      if (dest + span > rowCount) {
+        requests.push({ appendDimension: { sheetId, dimension: 'ROWS', length: dest + span - rowCount } });
+        rowCount = dest + span;
+      }
+    } else {
+      // แทรกแถวว่างเหนือสัปดาห์ล่าสุด แล้วคัดลอกสัปดาห์ล่าสุด (ซึ่งถูกดันลงไป span แถว) ขึ้นมา
+      dest = newest.titleRow;
+      src = newest.titleRow + span;
+      requests.push({ insertDimension: { range: { sheetId, dimension: 'ROWS', startIndex: dest, endIndex: dest + span }, inheritFromBefore: false } });
+    }
+    requests.push({ copyPaste: {
+      source: { sheetId, startRowIndex: src, endRowIndex: src + span, startColumnIndex: 0, endColumnIndex: colCount },
+      destination: { sheetId, startRowIndex: dest, endRowIndex: dest + span, startColumnIndex: 0, endColumnIndex: colCount },
+      pasteType: 'PASTE_NORMAL',
+    } });
+    // ตำแหน่งสุดท้ายของสัปดาห์นี้ (กรณีแทรกด้านบน สัปดาห์ที่ใส่ทีหลังจะดันสัปดาห์ก่อนหน้าลงไป)
+    const finalRow = appendBottom ? dest : newest.titleRow + span * (weeks.length - 1 - k);
+    titleCells.push({ row: finalRow, title: w.title });
+    // ล้างตัวเลขในแถววัน (เฉพาะช่องที่ไม่ใช่สูตร)
+    for (let d = 0; d < 7; d++) {
+      const fr = formulaRows?.[dayOffset + d] || [];
+      for (let c = 1; c < colCount; c++) {
+        const f = fr[c];
+        if (typeof f === 'string' && f.startsWith('=')) continue;
+        clearRanges.push({ row: finalRow + dayOffset + d, col: c });
+      }
+    }
+  });
+
+  // ทำทีละสัปดาห์ตามลำดับ (กรณีแทรกด้านบน ตำแหน่งต้องคำนวณต่อจากรอบก่อน)
+  await sheets.spreadsheets.batchUpdate({ spreadsheetId: SHEET_ID, requestBody: { requests } });
+  const data = titleCells.map((t) => ({ range: `'${TAB_NAME}'!A${t.row + 1}`, values: [[t.title]] }));
+  await sheets.spreadsheets.values.batchUpdate({ spreadsheetId: SHEET_ID, requestBody: { valueInputOption: 'USER_ENTERED', data } });
+  // รวมช่องที่ต้องล้างเป็นช่วงต่อเนื่องในแต่ละแถว
+  const byRow = {};
+  clearRanges.forEach(({ row, col }) => { (byRow[row] = byRow[row] || []).push(col); });
+  const ranges = [];
+  Object.entries(byRow).forEach(([row, cols]) => {
+    cols.sort((a, b) => a - b);
+    let s0 = cols[0], prev = cols[0];
+    for (let i = 1; i <= cols.length; i++) {
+      if (i < cols.length && cols[i] === prev + 1) { prev = cols[i]; continue; }
+      ranges.push(`'${TAB_NAME}'!${colIndexToLetter(s0)}${+row + 1}:${colIndexToLetter(prev)}${+row + 1}`);
+      if (i < cols.length) { s0 = cols[i]; prev = cols[i]; }
+    }
+  });
+  if (ranges.length) await sheets.spreadsheets.values.batchClear({ spreadsheetId: SHEET_ID, requestBody: { ranges } });
+  return weeks.map((w) => w.title);
+}
+
 async function fetchViggoDay(dateStr, robotToken) {
   // ใช้ตัวเดียวกับหน้าสถิติ: ครบทุกหน้า + เติมวันที่สรุปค้างเป็น 0 จากงานดิบ
   const { result } = await getCars(robotToken, dateStr, dateStr, { pageSize: 100 });
@@ -212,7 +375,25 @@ export default async function handler(req, res) {
 
     const range = `'${TAB_NAME}'!A1:CZ3000`;
     const readRes = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
-    const rows = readRes.data.values || [];
+    let rows = readRes.data.values || [];
+
+    // สัปดาห์ที่ยังไม่มีตาราง → สร้างใหม่จากตารางสัปดาห์ล่าสุด
+    let createdWeeks = [];
+    const plan = planNewWeeks(rows, dates);
+    if (plan?.error) return res.status(400).json({ error: plan.error });
+    if (plan) {
+      const tplRange = `'${TAB_NAME}'!A${plan.newest.titleRow + 1}:CZ${plan.newest.titleRow + plan.span}`;
+      const fr = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: tplRange, valueRenderOption: 'FORMULA' });
+      const formulaRows = fr.data.values || [];
+      createdWeeks = plan.weeks.map((w) => w.title);
+      if (write) {
+        await createNewWeeks(sheets, plan, formulaRows);
+        const again = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
+        rows = again.data.values || [];
+      } else {
+        rows = simulateNewWeeks(rows, plan, formulaRows);
+      }
+    }
 
     const perDate = [];
     const allUpdates = [];
@@ -269,6 +450,7 @@ export default async function handler(req, res) {
     if (!write) {
       return res.status(200).json({
         mode: 'preview',
+        createdWeeks,
         startDate: startParam,
         endDate: endParam,
         perDate,
@@ -311,6 +493,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({
       mode: 'written',
+      createdWeeks,
       startDate: startParam,
       endDate: endParam,
       updated: allUpdates.length,

@@ -550,6 +550,7 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
       const data = await res.json();
       if (!res.ok) throw new Error((data.error || 'เขียนข้อมูลไม่สำเร็จ') + (data.detail ? ` — ${data.detail}` : ''));
       setSheetWriteDone(data.belowTarget > 0 ? data.belowTarget : true);
+      if (data.createdWeeks?.length) setSheetPreview(p => ({ ...p, createdWeeks: data.createdWeeks, createdDone: true }));
     } catch (err) {
       setSheetSyncError(err.message);
     } finally {
@@ -743,11 +744,18 @@ export default function RobotStatsPage({ onBack, projects = [], currentUser }) {
             {sheetWriteDone && (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: c.green, borderRadius:8, padding: '10px 14px', marginBottom: 12, fontSize: 13, fontWeight:600 }}>
                 ✓ เขียนข้อมูลเข้า Google Sheet เรียบร้อยแล้ว ({sheetPreview?.totalCells || 0} ช่อง){typeof sheetWriteDone === 'number' && sheetWriteDone > 0 ? ` · ต่ำกว่า target ${sheetWriteDone} ช่อง (ทำตัวแดงในชีตแล้ว)` : ''}
+                {sheetPreview?.createdDone && ` · สร้างตารางสัปดาห์ใหม่ ${sheetPreview.createdWeeks.join(', ')}`}
               </div>
             )}
 
             {sheetPreview && !sheetWriteDone && (
               <>
+                {sheetPreview.createdWeeks?.length > 0 && (
+                  <div style={{ background: c.inkSoft, border: `1px solid ${c.border}`, color: c.text900, borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+                    ยังไม่มีตารางของสัปดาห์ <strong>{sheetPreview.createdWeeks.join(', ')}</strong> ในชีต — ตอนกดเขียนจะสร้างตารางให้อัตโนมัติ
+                    (คัดลอกหัวคอลัมน์ ไซต์ และ Target จากสัปดาห์ล่าสุด แล้วเว้นแถววันให้ว่าง)
+                  </div>
+                )}
                 <div style={{ fontSize:13, color: c.text500, marginBottom: 10 }}>
                   รวม <strong>{sheetPreview.totalCells}</strong> ช่อง ใน {sheetPreview.perDate?.length || 0} วัน — จะเขียนทับตามนี้:
                 </div>
