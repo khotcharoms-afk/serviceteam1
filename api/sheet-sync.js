@@ -270,6 +270,7 @@ async function createNewWeeks(sheets, plan, formulaRows) {
   let rowCount = tab.properties.gridProperties.rowCount;
   const dayOffset = newest.dataStartRow - newest.titleRow;
   const titleCells = [];
+  const labelCells = [];
   const clearRanges = [];
   const requests = [];
 
@@ -296,6 +297,11 @@ async function createNewWeeks(sheets, plan, formulaRows) {
     // ตำแหน่งสุดท้ายของสัปดาห์นี้ (กรณีแทรกด้านบน สัปดาห์ที่ใส่ทีหลังจะดันสัปดาห์ก่อนหน้าลงไป)
     const finalRow = appendBottom ? dest : newest.titleRow + span * (weeks.length - 1 - k);
     titleCells.push({ row: finalRow, title: w.title });
+    // เขียนป้ายในคอลัมน์ A (ชื่อวัน / หัวตาราง / TARGET) ตามต้นแบบซ้ำอีกรอบ กันป้ายหาย
+    for (let i = 1; i < span; i++) {
+      const a = formulaRows?.[i]?.[0];
+      if (typeof a === 'string' && a.trim() && !a.startsWith('=')) labelCells.push({ row: finalRow + i, value: a });
+    }
     // ล้างตัวเลขในแถววัน (เฉพาะช่องที่ไม่ใช่สูตร)
     for (let d = 0; d < 7; d++) {
       const fr = formulaRows?.[dayOffset + d] || [];
@@ -308,8 +314,6 @@ async function createNewWeeks(sheets, plan, formulaRows) {
 
   // ทำทีละสัปดาห์ตามลำดับ (กรณีแทรกด้านบน ตำแหน่งต้องคำนวณต่อจากรอบก่อน)
   await sheets.spreadsheets.batchUpdate({ spreadsheetId: SHEET_ID, requestBody: { requests } });
-  const data = titleCells.map((t) => ({ range: `'${TAB_NAME}'!A${t.row + 1}`, values: [[t.title]] }));
-  await sheets.spreadsheets.values.batchUpdate({ spreadsheetId: SHEET_ID, requestBody: { valueInputOption: 'USER_ENTERED', data } });
   // รวมช่องที่ต้องล้างเป็นช่วงต่อเนื่องในแต่ละแถว
   const byRow = {};
   clearRanges.forEach(({ row, col }) => { (byRow[row] = byRow[row] || []).push(col); });
@@ -324,6 +328,11 @@ async function createNewWeeks(sheets, plan, formulaRows) {
     }
   });
   if (ranges.length) await sheets.spreadsheets.values.batchClear({ spreadsheetId: SHEET_ID, requestBody: { ranges } });
+  const data = [
+    ...titleCells.map((t) => ({ range: `'${TAB_NAME}'!A${t.row + 1}`, values: [[t.title]] })),
+    ...labelCells.map((t) => ({ range: `'${TAB_NAME}'!A${t.row + 1}`, values: [[t.value]] })),
+  ];
+  await sheets.spreadsheets.values.batchUpdate({ spreadsheetId: SHEET_ID, requestBody: { valueInputOption: 'USER_ENTERED', data } });
   return weeks.map((w) => w.title);
 }
 
@@ -353,28 +362,6 @@ export default async function handler(req, res) {
   }
 
   // โหมดอ่านอย่างเดียว: ตารางทั้งสัปดาห์จากชีต (ไว้ทำสไลด์รายสัปดาห์) — ไม่ต้องใช้ ROBOT_API_TOKEN
-  // ตรวจโครงตาราง (อ่านอย่างเดียว): ค่าและสูตรของคอลัมน์ A–C ในช่วงแถว
-  if (req.query.mode === 'inspect') {
-    try {
-      const sheets = google.sheets({ version: 'v4', auth: getAuth() });
-      const from = Math.max(1, parseInt(req.query.from, 10) || 1);
-      const to = Math.min(from + 80, parseInt(req.query.to, 10) || from + 40);
-      const rng = `'${TAB_NAME}'!A${from}:${req.query.cols || 'C'}${to}`;
-      const [v, f] = await Promise.all([
-        sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng }),
-        sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: rng, valueRenderOption: 'FORMULA' }),
-      ]);
-      const all = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB_NAME}'!A1:CZ3000` });
-      const hits = [];
-      (all.data.values || []).forEach((r, i) => r.forEach((x, c) => { if (/(30\/11|\/12\/2569)/.test(String(x))) hits.push([i + 1, colIndexToLetter(c), x]); }));
-      const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID, fields: 'sheets.properties(title,gridProperties)' });
-      const titles = (all.data.values || []).map((r, i) => [i + 1, r[0]]).filter(([, t]) => parseDateRangeHeader(t));
-      return res.status(200).json({ from, values: v.data.values || [], formulas: f.data.values || [], titles: titles.filter(([, t]) => /\/1[12]\/2569/.test(t)), nonEmptyAfter: (all.data.values || []).length, hits: hits.slice(0, 40), tabs: (meta.data.sheets || []).map((x) => [x.properties.title, x.properties.gridProperties.rowCount]) });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
   if (req.query.mode === 'week') {
     try {
       const sheets = google.sheets({ version: 'v4', auth: getAuth() });
@@ -419,6 +406,8 @@ export default async function handler(req, res) {
         await createNewWeeks(sheets, plan, formulaRows);
         const again = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
         rows = again.data.values || [];
+        const broken = plan.weeks.filter((w) => !findBlockForDate(rows, w.start));
+        if (broken.length) return res.status(500).json({ error: `สร้างตารางสัปดาห์ ${broken.map((w) => w.title).join(', ')} แล้ว แต่ตรวจไม่พบแถวชื่อวันในคอลัมน์ A — ตรวจชีตอีกครั้ง` });
       } else {
         rows = simulateNewWeeks(rows, plan, formulaRows);
       }
